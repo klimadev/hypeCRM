@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,10 +9,10 @@ import {
   aplicaMascaraMoedaBr,
   aplicaMascaraTelefoneBr,
 } from "@/lib/utils";
-import type { Estagio, Funcionario, KanbanFilters, ResumoPendencias, OrdenacaoKanban, Pdv } from "../types";
+import type { Estagio, Funcionario, KanbanFilters, ResumoPendencias, OrdenacaoKanban, Pdv, OrigemStats } from "../types";
 import { PendenciaBadge } from "./pendencia-badge";
 import { cn } from "@/lib/utils";
-import { Filter, X, Bell, BellOff, Search, ArrowUpDown, RefreshCw } from "lucide-react";
+import { Filter, X, Bell, BellOff, Search, ArrowUpDown, RefreshCw, Megaphone, MessageCircle, PenLine, Store, Gauge } from "lucide-react";
 import { useToast } from "@/components/ui/toast";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ActionButton } from "./action-button";
@@ -48,18 +48,22 @@ type KanbanHeaderProps = {
   resumoPendencias: ResumoPendencias | null;
   totalLeads?: number;
   pendenciasCriticas?: number;
+  origemStats: OrigemStats;
+  ultimaSincronizacaoWhatsapp: Date | null;
+  instanciasAtivasCount: number;
   notificacoesAtivadas: boolean;
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";
   sincronizandoWhatsapp: boolean;
-  sincronizarWhatsapp: () => Promise<{
+  sincronizarWhatsapp: (params?: string) => Promise<{
     ok: boolean;
     erro?: string;
     criados?: number;
+    timestampSync?: Date;
     instanciasIgnoradas?: Array<{ id: string; nome: string; motivo: string }>;
   }>;
-  redistribuindoEmAtendimento: boolean;
-  redistribuirLeadsEmAtendimento: () => Promise<
+  redistribuindoEmAtendimento?: boolean;
+  redistribuirLeadsEmAtendimento?: () => Promise<
     | { ok: false; erro: string }
     | {
       ok: true;
@@ -102,6 +106,9 @@ export function KanbanHeader({
   resumoPendencias,
   totalLeads = 0,
   pendenciasCriticas = 0,
+  origemStats,
+  ultimaSincronizacaoWhatsapp,
+  instanciasAtivasCount,
   notificacoesAtivadas,
   alternarNotificacoes,
   permissaoNotificacao,
@@ -111,7 +118,9 @@ export function KanbanHeader({
   redistribuirLeadsEmAtendimento,
 }: KanbanHeaderProps) {
   const { addToast } = useToast();
-  const filtrosAtivos = filtros.status !== "todos" || filtros.gravidade !== "todas" || filtros.tipo !== "todos" || filtros.pdv !== null;
+  const [apenasAnuncios, setApenasAnuncios] = useState(false);
+  const [agoraMs, setAgoraMs] = useState<number>(() => Date.now());
+  const filtrosAtivos = filtros.status !== "todos" || filtros.gravidade !== "todas" || filtros.tipo !== "todos" || filtros.pdv !== null || filtros.origem !== "todos";
   const inputBuscaRef = useRef<HTMLInputElement>(null);
   const inputNomeNovoLeadRef = useRef<HTMLInputElement>(null);
 
@@ -159,19 +168,49 @@ export function KanbanHeader({
   }, [dialogNovoLeadAberto]);
 
   const limparFiltros = () => {
-    setFiltros({ status: "todos", gravidade: "todas", tipo: "todos", pdv: null });
+    setFiltros({ status: "todos", gravidade: "todas", tipo: "todos", pdv: null, origem: "todos" });
   };
+
+  useEffect(() => {
+    const intervalo = window.setInterval(() => setAgoraMs(Date.now()), 60000);
+    return () => window.clearInterval(intervalo);
+  }, []);
+
+  const tempoUltimaSincronizacao = (() => {
+    if (!ultimaSincronizacaoWhatsapp) {
+      return null;
+    }
+
+    const diff = agoraMs - ultimaSincronizacaoWhatsapp.getTime();
+    const minutes = Math.floor(diff / 60000);
+
+    if (minutes < 1) return "agora";
+    if (minutes < 60) return `${minutes}min`;
+
+    const hours = Math.floor(minutes / 60);
+    if (hours < 24) return `${hours}h`;
+
+    const days = Math.floor(hours / 24);
+    return `${days}d`;
+  })();
 
   return (
     <ModulePageHeader
       title="Leads"
       subtitle={(() => {
-        const partes = [];
-        partes.push(`${totalLeads} lead${totalLeads !== 1 ? 's' : ''}`);
+        const partes: string[] = [];
+
+        partes.push(`${totalLeads} lead${totalLeads !== 1 ? 's' : ''} ativo${totalLeads !== 1 ? 's' : ''}`);
+
         if (pendenciasCriticas > 0) {
-          partes.push(`${pendenciasCriticas} crítica${pendenciasCriticas !== 1 ? 's' : ''}`);
+          partes.push(`${pendenciasCriticas} pendência${pendenciasCriticas !== 1 ? 's' : ''} crítica${pendenciasCriticas !== 1 ? 's' : ''}`);
         }
-        return partes.join(" • ");
+
+        if (origemStats?.anuncios > 0) {
+          partes.push(`${origemStats.anuncios} anúncio${origemStats.anuncios !== 1 ? 's' : ''}`);
+        }
+
+        return partes.join(' • ');
       })()}
       icon={(
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -218,11 +257,12 @@ export function KanbanHeader({
             value={filtros.pdv ?? "todos"}
             onValueChange={(v) => setFiltros({ ...filtros, pdv: v === "todos" ? null : v })}
           >
-            <SelectTrigger className="h-9 w-40 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600">
-              <SelectValue placeholder="Todos os PDVs" />
+            <SelectTrigger className="h-9 w-36 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600">
+              <Store className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Loja" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="todos">Todos os PDVs</SelectItem>
+              <SelectItem value="todos">Todas as lojas</SelectItem>
               {pdvs.map((pdv) => (
                 <SelectItem key={pdv.id} value={pdv.id}>
                   {pdv.nome}
@@ -231,6 +271,46 @@ export function KanbanHeader({
             </SelectContent>
           </Select>
         )}
+
+        {/* Filter by Origin - renamed to "Como chegou" for clarity */}
+        <Select
+          value={filtros.origem}
+          onValueChange={(v) => setFiltros({ ...filtros, origem: v as KanbanFilters["origem"] })}
+        >
+          <SelectTrigger className={cn(
+            "h-9 w-40 rounded-xl border border-slate-200 bg-white text-sm font-medium",
+            filtros.origem !== "todos" ? "border-purple-300 bg-purple-50 text-purple-700" : "text-slate-600"
+          )}>
+            <div className="flex items-center gap-1.5">
+              {filtros.origem === "ANUNCIO_CTWA" && <Megaphone className="h-3.5 w-3.5" />}
+              {filtros.origem === "SINCRONIZACAO_WHATSAPP" && <MessageCircle className="h-3.5 w-3.5" />}
+              {filtros.origem === "MANUAL" && <PenLine className="h-3.5 w-3.5" />}
+              <SelectValue placeholder="Como chegou" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="todos">
+              <span className="flex items-center gap-2">
+                <span className="h-2 w-2 rounded-full bg-slate-400" /> Todas as origens
+              </span>
+            </SelectItem>
+            <SelectItem value="ANUNCIO_CTWA">
+              <span className="flex items-center gap-2">
+                <Megaphone className="h-3.5 w-3.5 text-purple-500" /> Anúncio
+              </span>
+            </SelectItem>
+            <SelectItem value="SINCRONIZACAO_WHATSAPP">
+              <span className="flex items-center gap-2">
+                <MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> WhatsApp
+              </span>
+            </SelectItem>
+            <SelectItem value="MANUAL">
+              <span className="flex items-center gap-2">
+                <PenLine className="h-3.5 w-3.5 text-blue-500" /> Manual
+              </span>
+            </SelectItem>
+          </SelectContent>
+        </Select>
 
         {resumoPendencias && (
           <div className="flex items-center gap-2 rounded-xl bg-slate-50 px-3 py-2">
@@ -246,9 +326,10 @@ export function KanbanHeader({
             "rounded-xl text-sm font-medium",
             modoFocoPendencias ? "bg-red-500 hover:bg-red-600" : "border-slate-200"
           )}
+          title={modoFocoPendencias ? "Mostrar todos os leads" : "Mostrar apenas leads com pendências"}
         >
-          <Filter className="mr-2 h-4 w-4" />
-          Foco Pendências
+          <Gauge className="mr-2 h-4 w-4" />
+          {modoFocoPendencias ? "Mostrando urgências" : "Apenas urgências"}
         </Button>
 
         <Button
@@ -281,7 +362,7 @@ export function KanbanHeader({
           )}
         </Button>
 
-        {/* Sección de filtros de pendências */}
+        {/* Filters group - pendências */}
         <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
           <div className="flex items-center gap-1">
             <Filter className="h-3.5 w-3.5 text-slate-400" />
@@ -290,7 +371,7 @@ export function KanbanHeader({
               onValueChange={(v) => setFiltros({ ...filtros, status: v as KanbanFilters["status"] })}
             >
               <SelectTrigger className="h-8 w-36 border-0 bg-transparent text-sm font-medium text-slate-600 focus:ring-0">
-                <SelectValue placeholder="Status" />
+                <SelectValue placeholder="Pendência" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todos">
@@ -319,18 +400,18 @@ export function KanbanHeader({
               value={filtros.gravidade}
               onValueChange={(v) => setFiltros({ ...filtros, gravidade: v as KanbanFilters["gravidade"] })}
             >
-              <SelectTrigger className="h-8 w-32 border-0 bg-transparent text-sm font-medium text-slate-600 focus:ring-0">
-                <SelectValue placeholder="Gravidade" />
+              <SelectTrigger className="h-8 w-28 border-0 bg-transparent text-sm font-medium text-slate-600 focus:ring-0">
+                <SelectValue placeholder="Nível" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="todas">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-slate-400" /> Todas
+                    <span className="h-2 w-2 rounded-full bg-slate-400" /> Todos
                   </span>
                 </SelectItem>
                 <SelectItem value="critica">
                   <span className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-rose-500" /> Crítica
+                    <span className="h-2 w-2 rounded-full bg-rose-500" /> Crítico
                   </span>
                 </SelectItem>
                 <SelectItem value="alerta">
@@ -399,7 +480,7 @@ export function KanbanHeader({
               />
               <Input
                 className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
-                name="valor_oportunidade"
+                name="valor_consorcio"
                 placeholder="Valor"
                 inputMode="numeric"
                 value={valorNovoLead}
@@ -464,66 +545,115 @@ export function KanbanHeader({
           loading={sincronizandoWhatsapp}
           loadingText="Sincronizando..."
           onClick={async () => {
-            const resultado = await sincronizarWhatsapp();
+            const params = apenasAnuncios ? "?origem=anuncio" : "";
+            const resultado = await sincronizarWhatsapp(params);
             if (!resultado.ok) {
               addToast({
                 type: "error",
-                title: "Falha na sincronizacao",
-                description: resultado.erro ?? "Nao foi possivel sincronizar contatos.",
+                title: "Falha na sincronização",
+                description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
               });
               return;
             }
 
+            const tipoImportacao = apenasAnuncios ? "de anúncios" : "do WhatsApp";
             addToast({
               type: "success",
-              title: "Sincronizacao concluida",
+              title: "Sincronização concluída",
               description:
                 resultado.criados && resultado.criados > 0
-                  ? `${resultado.criados} lead(s) novo(s) importado(s).`
-                  : "Nenhum novo contato para importar.",
+                  ? `${resultado.criados} novo(s) lead(s) importado(s) ${tipoImportacao}.`
+                  : `Nenhum contato novo para importar ${tipoImportacao}.`,
             });
 
             if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
               addToast({
                 type: "warning",
-                title: "Instancias ignoradas",
+                title: "Instâncias ignoradas",
                 description: resultado.instanciasIgnoradas
                   .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
                   .join(" "),
               });
             }
           }}
-          iconeEsquerda={<RefreshCw className="h-4 w-4" />}
+          title="Importar novos contatos das instâncias WhatsApp conectadas"
+          iconeEsquerda={<RefreshCw className={cn("h-4 w-4", sincronizandoWhatsapp && "animate-spin")} />}
         >
-          Sincronizar WhatsApp
+          <span className="flex items-center gap-1.5">
+            <span>Importar WhatsApp</span>
+            {instanciasAtivasCount > 0 && (
+              <span className="ml-1 rounded-full bg-emerald-100 px-1.5 py-0.5 text-xs font-medium text-emerald-700">
+                {instanciasAtivasCount}
+              </span>
+            )}
+          </span>
+          {tempoUltimaSincronizacao && !sincronizandoWhatsapp && (
+            <span className="ml-2 text-xs text-slate-400">
+              {tempoUltimaSincronizacao}
+            </span>
+          )}
         </ActionButton>
+
+        {/* Toggle Apenas Anúncios */}
+        <button
+          type="button"
+          onClick={() => setApenasAnuncios(!apenasAnuncios)}
+          disabled={sincronizandoWhatsapp}
+          className={cn(
+            "flex items-center gap-2 rounded-lg border px-3 py-1.5 text-sm font-medium transition-colors",
+            sincronizandoWhatsapp && "opacity-50 cursor-not-allowed",
+            apenasAnuncios
+              ? "border-purple-300 bg-purple-50 text-purple-700"
+              : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"
+          )}
+          title="Ao ativar, importa apenas leadsoriginados de anúncios do WhatsApp"
+        >
+          <Megaphone className={cn("h-4 w-4", apenasAnuncios ? "text-purple-500" : "text-slate-400")} />
+          <span>Apenas anúncios</span>
+          {apenasAnuncios && (
+            <span className="ml-1 rounded-full bg-purple-200 px-1.5 py-0.5 text-xs font-medium text-purple-700">
+              ON
+            </span>
+          )}
+        </button>
 
         <ActionButton
           variant="outline"
           className="rounded-xl border-slate-200"
-          disabled={redistribuindoEmAtendimento}
+          disabled={!redistribuirLeadsEmAtendimento || redistribuindoEmAtendimento}
           loading={redistribuindoEmAtendimento}
           loadingText="Redistribuindo..."
           onClick={async () => {
+            if (!redistribuirLeadsEmAtendimento) {
+              addToast({
+                type: "warning",
+                title: "Funcionalidade indisponível",
+                description: "A função de redistribuição não está disponível.",
+              });
+              return;
+            }
+
             const resultado = await redistribuirLeadsEmAtendimento();
+            
             if (!resultado.ok) {
               addToast({
                 type: "error",
-                title: "Falha na redistribuicao",
-                description: resultado.erro,
+                title: "Falha na redistribuição",
+                description: resultado.erro ?? "Não foi possível redistribuir os leads.",
               });
               return;
             }
 
             addToast({
               type: "success",
-              title: "Redistribuicao concluida",
-              description: `${resultado.reatribuidos} lead(s) reatribuido(s) de ${resultado.elegiveis} elegivel(is).`,
+              title: "Redistribuição concluída",
+              description: `${resultado.reatribuidos} lead(s) reatribuído(s). ${resultado.ignoradosSemDestino} ignorado(s) por falta de destino.`,
             });
           }}
-          iconeEsquerda={<RefreshCw className="h-4 w-4" />}
+          title="Reatribuir leads sem atendimento recente para outros colaboradores"
+          iconeEsquerda={<RefreshCw className={cn("h-4 w-4", redistribuindoEmAtendimento && "animate-spin")} />}
         >
-          Redistribuir em Atendimento
+          Redistribuir
         </ActionButton>
       </div>}
     />

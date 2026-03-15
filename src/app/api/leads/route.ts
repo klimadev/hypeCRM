@@ -51,7 +51,12 @@ export async function GET(request: NextRequest) {
     id_pdv: lead.funcionario.id_pdv,
   }));
 
-  return NextResponse.json({ estagios, leads: leadsComPdv, funcionarios, pdvs });
+  const estagiosSerializaveis = estagios.map((e) => ({
+    ...e,
+    ordem: Number(e.ordem),
+  }));
+
+  return NextResponse.json({ estagios: estagiosSerializaveis, leads: leadsComPdv, funcionarios, pdvs });
 }
 
 export async function POST(request: NextRequest) {

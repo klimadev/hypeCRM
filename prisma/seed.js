@@ -5,12 +5,12 @@ const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
 const ESTAGIOS_PADRAO = [
-  { nome: "Novo Lead", tipo: "ABERTO", ordem: 1 },
-  { nome: "Em Contato", tipo: "ABERTO", ordem: 2 },
-  { nome: "Qualificação", tipo: "ABERTO", ordem: 3 },
-  { nome: "Proposta", tipo: "ABERTO", ordem: 4 },
-  { nome: "Negócio Fechado", tipo: "GANHO", ordem: 5 },
-  { nome: "Em Execução", tipo: "GANHO", ordem: 6 },
+  { nome: "Indefinido", tipo: "ABERTO", ordem: 1 },
+  { nome: "Em Atendimento", tipo: "ABERTO", ordem: 2 },
+  { nome: "Proposta Enviada", tipo: "ABERTO", ordem: 3 },
+  { nome: "Pré Aprovação", tipo: "ABERTO", ordem: 4 },
+  { nome: "Fechado", tipo: "GANHO", ordem: 5 },
+  { nome: "Pós Vendas", tipo: "GANHO", ordem: 6 },
   { nome: "Perdido", tipo: "PERDIDO", ordem: 7 },
 ];
 

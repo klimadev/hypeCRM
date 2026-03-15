@@ -13,6 +13,11 @@ export async function GET(request: NextRequest) {
       orderBy: { ordem: "asc" },
     });
 
-    return ok({ estagios });
+    const estagiosSerializaveis = estagios.map((e) => ({
+      ...e,
+      ordem: Number(e.ordem),
+    }));
+
+    return ok({ estagios: estagiosSerializaveis });
   });
 }

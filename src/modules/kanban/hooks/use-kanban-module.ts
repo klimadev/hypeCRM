@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { obterWhatsappStats } from "@/lib/api/whatsapp";
 import type { Lead, UseKanbanModuleReturn, Props } from "../types";
 import { useToast } from "@/components/ui/toast";
 import { useKanbanDerivacoes } from "./use-kanban-derivacoes";
@@ -33,6 +34,27 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
   const [estagioNovoLead, setEstagioNovoLead] = useState("");
   const [telefoneNovoLead, setTelefoneNovoLead] = useState("");
   const [valorNovoLead, setValorNovoLead] = useState("");
+  const [ultimaSincronizacaoWhatsapp, setUltimaSincronizacaoWhatsapp] = useState<Date | null>(null);
+  const [instanciasAtivasCount, setInstanciasAtivasCount] = useState(0);
+
+  useEffect(() => {
+    let ativo = true;
+
+    async function carregarStatsWhatsapp() {
+      const resultado = await obterWhatsappStats();
+      if (!ativo || !resultado.ok) {
+        return;
+      }
+
+      setInstanciasAtivasCount(resultado.dados.ativas);
+    }
+
+    void carregarStatsWhatsapp();
+
+    return () => {
+      ativo = false;
+    };
+  }, []);
 
   const {
     filtros,
@@ -48,6 +70,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     leadsPorEstagio,
     leadsFiltradosPorEstagio,
     estagioAberto,
+    origemStats,
   } = useKanbanDerivacoes({
     estagios,
     leads,
@@ -112,6 +135,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     setValorNovoLead,
     bootstrap,
     setErroDetalhesLead,
+    aoSincronizarWhatsapp: setUltimaSincronizacaoWhatsapp,
   });
 
   return {
@@ -175,6 +199,9 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     recarregarPendencias,
     totalLeads: leads.length,
     pendenciasCriticas: resumoPendencias?.porGravidade.critica ?? 0,
+    origemStats,
+    ultimaSincronizacaoWhatsapp,
+    instanciasAtivasCount,
     notificacoesAtivadas,
     alternarNotificacoes,
     permissaoNotificacao,

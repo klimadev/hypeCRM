@@ -80,13 +80,16 @@ export async function criarLeadKanban(payload: PayloadCriarLead): Promise<Result
   return { ok: true, dados: { lead: json.lead } };
 }
 
-export async function sincronizarWhatsappKanban(): Promise<
+export async function sincronizarWhatsappKanban(params?: string): Promise<
   ResultadoApi<{
     criados: number;
     instancias_ignoradas: Array<{ id: string; nome: string; motivo: string }>;
+    timestamp_sync: string;
   }>
 > {
-  const resposta = await fetch("/api/leads/sync-whatsapp", {
+  const url = params ? `/api/leads/sync-whatsapp?${params}` : "/api/leads/sync-whatsapp";
+
+  const resposta = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -94,6 +97,7 @@ export async function sincronizarWhatsappKanban(): Promise<
   const json = await lerJsonSeguro<{
     criados?: number;
     instancias_ignoradas?: Array<{ id: string; nome: string; motivo: string }>;
+    timestamp_sync?: string;
   } & ApiErro>(resposta);
   if (!resposta.ok) {
     return { ok: false, erro: json.erro ?? "Erro ao sincronizar contatos do WhatsApp." };
@@ -104,6 +108,7 @@ export async function sincronizarWhatsappKanban(): Promise<
     dados: {
       criados: json.criados ?? 0,
       instancias_ignoradas: json.instancias_ignoradas ?? [],
+      timestamp_sync: json.timestamp_sync ?? new Date().toISOString(),
     },
   };
 }

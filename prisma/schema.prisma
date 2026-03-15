@@ -100,7 +100,7 @@ model EstagioFunil {
   id            String   @id @default(uuid())
   id_empresa    String
   nome          String
-  ordem         Int
+  ordem         BigInt
   tipo          String
   criado_em     DateTime @default(now())
   atualizado_em DateTime @default(now()) @updatedAt
@@ -127,7 +127,11 @@ model Lead {
   criado_em               DateTime           @default(now())
   atualizado_em           DateTime           @default(now()) @updatedAt
   origem                  String             @default("MANUAL")
-  dados_extras            String?              // Campos customizáveis (JSON serializado)
+  // Campos para anúncios CTWA (Click to WhatsApp)
+  anuncio_titulo         String?
+  anuncio_descricao      String?
+  anuncio_url            String?
+  dados_extras           String?              // Campos customizáveis (JSON serializado)
   estagio                 EstagioFunil       @relation(fields: [id_estagio], references: [id])
   funcionario             Funcionario        @relation(fields: [id_funcionario], references: [id])
   empresa                 Empresa            @relation(fields: [id_empresa], references: [id])

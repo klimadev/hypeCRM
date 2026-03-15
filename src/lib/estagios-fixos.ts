@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 export const ESTAGIOS_FIXOS_PADRAO = [
   { nome: "Indefinido", tipo: "ABERTO", ordem: 1 },
   { nome: "Em Atendimento", tipo: "ABERTO", ordem: 2 },
-  { nome: "Proposta", tipo: "ABERTO", ordem: 3 },
+  { nome: "Proposta Enviada", tipo: "ABERTO", ordem: 3 },
   { nome: "Pré Aprovação", tipo: "ABERTO", ordem: 4 },
   { nome: "Fechado", tipo: "GANHO", ordem: 5 },
   { nome: "Pós Vendas", tipo: "GANHO", ordem: 6 },

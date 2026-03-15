@@ -9,7 +9,7 @@ import type { Estagio, Lead, PendenciaLeadInfo, Funcionario } from "../types";
 import { getClasseBordaGravidade } from "./pendencia-badge";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Trash2, Loader2, FileWarning, Clock, CheckCircle, AlertTriangle, Users, GripVertical } from "lucide-react";
+import { Trash2, Loader2, Clock, AlertTriangle, Users, GripVertical, Megaphone, MessageCircle, PenLine } from "lucide-react";
 import { EmptyState } from "./empty-state";
 
 type KanbanBoardProps = {
@@ -45,7 +45,7 @@ function getColumnTint(estagio: Estagio): string {
   return "bg-gradient-to-b from-slate-50/50 to-white/90";
 }
 
-function getLeadVisualCue(lead: Lead, estagio: Estagio, pendencias?: PendenciaLeadInfo): LeadVisualCue {
+function getLeadVisualCue(lead: Lead, estagio: Estagio): LeadVisualCue {
   // Visual cue simplificado - apenas pendências de estágio parado
   if (estagio.tipo === "GANHO") {
     return {
@@ -85,7 +85,6 @@ function formatarTempoRelativo(atualizadoEm: string, agoraMs: number): string {
 
 export function KanbanBoard({
   estagios,
-  leadsPorEstagio,
   leadsFiltradosPorEstagio,
   pendenciasPorLead,
   onDragEnd,
@@ -93,10 +92,7 @@ export function KanbanBoard({
   modoFocoPendencias = false,
   funcionarios = [],
   excluirTodosIndefinidos,
-  temFiltrosAtivos = false,
 }: KanbanBoardProps) {
-  // Usa filtrados se há filtros ativos OU modoFocoPendencias, caso contrário usa todos
-  const usarFiltrados = temFiltrosAtivos || modoFocoPendencias;
   const [agoraMs, setAgoraMs] = useState<number | null>(() => typeof window === "undefined" ? null : Date.now());
   const [excluindoIndefinidos, setExcluindoIndefinidos] = useState(false);
 
@@ -118,7 +114,7 @@ export function KanbanBoard({
     <DragDropContext onDragEnd={onDragEnd}>
       <div className="grid gap-4 md:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
         {estagios.map((estagio) => {
-          const leads = usarFiltrados ? leadsFiltradosPorEstagio[estagio.id] ?? [] : leadsPorEstagio[estagio.id] ?? [];
+          const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
           
           return (
             <Droppable key={estagio.id} droppableId={estagio.id}>
@@ -181,7 +177,7 @@ export function KanbanBoard({
                           {(draggableProvided, draggableSnapshot) => (
                             (() => {
                               const pendencias = pendenciasPorLead[lead.id];
-                              const visualCue = getLeadVisualCue(lead, estagio, pendencias);
+                              const visualCue = getLeadVisualCue(lead, estagio);
                               const diasParados = agoraMs 
                                 ? Math.floor((agoraMs - new Date(lead.atualizado_em).getTime()) / (1000 * 60 * 60 * 24))
                                 : 0;
@@ -224,6 +220,20 @@ export function KanbanBoard({
                                       
                                       {/* Badges de indicadores */}
                                       <div className="flex flex-wrap gap-1.5 mt-2.5">
+                                        {/* Badge de origem */}
+                                        {lead.origem && (
+                                          <span className={cn(
+                                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border",
+                                            lead.origem === "ANUNCIO_CTWA" && "bg-purple-100 text-purple-700 border-purple-200",
+                                            lead.origem === "SINCRONIZACAO_WHATSAPP" && "bg-emerald-100 text-emerald-700 border-emerald-200",
+                                            lead.origem === "MANUAL" && "bg-blue-100 text-blue-700 border-blue-200"
+                                          )}>
+                                            {lead.origem === "ANUNCIO_CTWA" && <Megaphone className="w-3 h-3" />}
+                                            {lead.origem === "SINCRONIZACAO_WHATSAPP" && <MessageCircle className="w-3 h-3" />}
+                                            {lead.origem === "MANUAL" && <PenLine className="w-3 h-3" />}
+                                            {lead.origem === "ANUNCIO_CTWA" ? "Anúncio" : lead.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
+                                          </span>
+                                        )}
                                         {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
                                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">
                                             <Clock className="w-3 h-3" /> {diasParados}d parado

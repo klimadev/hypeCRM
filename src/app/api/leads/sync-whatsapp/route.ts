@@ -8,10 +8,16 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
+  const origem = request.nextUrl.searchParams.get("origem");
+  const origemFiltro = origem === "anuncio" ? "anuncio" : "all";
+
   const resultado = await sincronizarLeadsWhatsapp({
     tipo: "sessao",
     sessao: auth.sessao,
-  });
+  }, origemFiltro);
 
-  return NextResponse.json(resultado);
+  return NextResponse.json({
+    ...resultado,
+    timestamp_sync: new Date().toISOString(),
+  });
 }

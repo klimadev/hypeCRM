@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { enviarMensagemWhatsapp, listarMensagensWhatsapp, marcarMensagensComoLidas } from "@/lib/api/whatsapp";
+import { traduzirTipoMensagem, normalizarTimestampParaIso } from "@/lib/whatsapp-utils";
 import type { ChatConnectionStatus, ChatMessageStatus, WhatsappChatBlockedState, WhatsappChatMessage } from "@/modules/whatsapp/types";
 
 type UseWhatsappChatParams = {
@@ -143,19 +144,24 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
       if (!normalizedText) return;
 
       const tempId = retryId ?? `temp-${Date.now()}`;
+      const now = Math.floor(Date.now() / 1000);
       const optimisticMessage: WhatsappChatMessage = {
         id: tempId,
         messageId: tempId,
         leadId,
         remoteJid: "",
+        remoteJidAlt: null,
         fromMe: true,
         direction: "outgoing",
         text: normalizedText,
         kind: "text",
+        tipoLabel: traduzirTipoMensagem("text"),
         status: "PENDING",
-        timestamp: Math.floor(Date.now() / 1000),
+        timestamp: now,
+        timestampIso: normalizarTimestampParaIso(now),
         createdAtIso: new Date().toISOString(),
         readAtIso: null,
+        dadosAd: null,
         optimistic: true,
         error: null,
       };

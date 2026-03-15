@@ -3,6 +3,18 @@ import type { PendenciaGravidade, ResumoPendencias } from "./hooks/use-pendencia
 
 export type { ResumoPendencias, PendenciaGravidade };
 
+// Tipos para origem do lead (WhatsApp Ads)
+export type OrigemLead = "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
+
+export type FiltroOrigem = "todos" | "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
+
+export type OrigemStats = {
+  total: number;
+  anuncios: number;
+  whatsapp: number;
+  manual: number;
+};
+
 export type Estagio = {
   id: string;
   nome: string;
@@ -27,10 +39,14 @@ export type Lead = {
   empresa_origem?: string | null;
   observacoes: string | null;
   motivo_perda: string | null;
-  origem?: "MANUAL" | "SINCRONIZACAO_WHATSAPP" | string;
+  origem?: OrigemLead;
   atualizado_em: string;
   id_pdv?: string | null;
   dados_extras?: string | null;
+  // Campos para anúncios CTWA
+  anuncio_titulo?: string | null;
+  anuncio_descricao?: string | null;
+  anuncio_url?: string | null;
 };
 
 export type Funcionario = {
@@ -62,6 +78,7 @@ export type KanbanFilters = {
   gravidade: FiltroGravidade;
   tipo: FiltroTipo;
   pdv: string | null;
+  origem: FiltroOrigem;
 };
 
 export type OrdenacaoKanban = "valor_maior" | "valor_menor" | "recente" | "antigo" | "nome";
@@ -118,10 +135,11 @@ export type UseKanbanModuleReturn = {
   criarLead: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
   sincronizandoWhatsapp: boolean;
   redistribuindoEmAtendimento: boolean;
-  sincronizarWhatsapp: () => Promise<{
+  sincronizarWhatsapp: (params?: string) => Promise<{
     ok: boolean;
     erro?: string;
     criados?: number;
+    timestampSync?: Date;
     instanciasIgnoradas?: Array<{ id: string; nome: string; motivo: string }>;
   }>;
   redistribuirLeadsEmAtendimento: () => Promise<
@@ -154,6 +172,9 @@ export type UseKanbanModuleReturn = {
   recarregarPendencias: () => void;
   totalLeads: number;
   pendenciasCriticas: number;
+  origemStats: OrigemStats;
+  ultimaSincronizacaoWhatsapp: Date | null;
+  instanciasAtivasCount: number;
   notificacoesAtivadas: boolean;
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";

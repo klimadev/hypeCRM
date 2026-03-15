@@ -15,16 +15,29 @@ export type WhatsappChatMessage = {
   messageId: string;
   leadId: string;
   remoteJid: string;
+  remoteJidAlt?: string | null;
   fromMe: boolean;
   direction: "incoming" | "outgoing";
   text: string;
-  kind: "text" | "unsupported";
+  kind: "text" | "conversation" | "extendedTextMessage" | "imageMessage" | "videoMessage" | "audioMessage" | "documentMessage" | "stickerMessage" | "reactionMessage" | "listMessage" | "buttonsMessage" | "templateMessage" | "locationMessage" | "contactMessage" | "groupInviteMessage" | "liveLocationMessage" | "orderMessage" | "protocolMessage" | "unknown" | "unsupported";
+  tipoLabel?: string;
   status: ChatMessageStatus;
   timestamp: number;
+  timestampIso?: string;
   createdAtIso: string;
   readAtIso: string | null;
   optimistic: boolean;
   error: string | null;
+  dadosAd?: {
+    titulo: string | null;
+    corpo: string | null;
+    urlOrigem: string | null;
+    idConversao: string | null;
+    urlThumbnail: string | null;
+    tipoOrigem: string | null;
+    appOrigem: string | null;
+    formato: "ctwa" | null;
+  } | null;
 };
 
 export type WhatsappInstancia = {

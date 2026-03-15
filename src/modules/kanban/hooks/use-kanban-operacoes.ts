@@ -26,15 +26,17 @@ type UseKanbanOperacoesParams = {
   setValorNovoLead: (valor: string) => void;
   bootstrap: () => Promise<void>;
   setErroDetalhesLead: (erro: string | null) => void;
+  aoSincronizarWhatsapp?: (data: Date) => void;
 };
 
 type ResultadoSincronizacaoWhatsapp =
   | { ok: false; erro: string }
-  | {
-      ok: true;
-      criados: number;
-      instanciasIgnoradas: Array<{ id: string; nome: string; motivo: string }>;
-    };
+    | {
+        ok: true;
+        criados: number;
+        instanciasIgnoradas: Array<{ id: string; nome: string; motivo: string }>;
+        timestampSync: Date;
+      };
 
 export function useKanbanOperacoes({
   perfil,
@@ -51,6 +53,7 @@ export function useKanbanOperacoes({
   setValorNovoLead,
   bootstrap,
   setErroDetalhesLead,
+  aoSincronizarWhatsapp,
 }: UseKanbanOperacoesParams) {
   const { addToast } = useToast();
   const [erroNovoLead, setErroNovoLead] = useState<string | null>(null);
@@ -164,30 +167,34 @@ export function useKanbanOperacoes({
     ],
   );
 
-  const sincronizarWhatsapp = useCallback(async (): Promise<ResultadoSincronizacaoWhatsapp> => {
+  const sincronizarWhatsapp = useCallback(async (params?: string): Promise<ResultadoSincronizacaoWhatsapp> => {
     if (sincronizandoWhatsapp) {
       return { ok: false, erro: "Sincronizacao ja em andamento." };
     }
 
     setSincronizandoWhatsapp(true);
     try {
-      const resposta = await sincronizarWhatsappKanban();
+      const resposta = await sincronizarWhatsappKanban(params?.replace(/^\?/, ""));
       if (!resposta.ok) {
         return { ok: false, erro: resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.sincronizarWhatsapp };
       }
 
+      const timestampSync = new Date(resposta.dados.timestamp_sync);
+      aoSincronizarWhatsapp?.(timestampSync);
       await bootstrap();
+
       return {
         ok: true,
         criados: resposta.dados.criados,
         instanciasIgnoradas: resposta.dados.instancias_ignoradas,
+        timestampSync,
       };
     } catch (erro) {
       return { ok: false, erro: obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.sincronizarWhatsapp) };
     } finally {
       setSincronizandoWhatsapp(false);
     }
-  }, [bootstrap, sincronizandoWhatsapp]);
+  }, [aoSincronizarWhatsapp, bootstrap, sincronizandoWhatsapp]);
 
   const excluirLead = useCallback(
     async (id: string) => {
