@@ -1,0 +1,394 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Empresa {
+  id            String         @id @default(uuid())
+  nome          String
+  email         String         @unique
+  senha_hash    String
+  criado_em     DateTime       @default(now())
+  atualizado_em DateTime       @default(now()) @updatedAt
+  estagios      EstagioFunil[]
+  funcionarios  Funcionario[]
+  leads         Lead[]
+  metas         Meta[]
+  metasProgresso MetaProgresso[]
+  produtos      Produto[]
+  leads_produto LeadProduto[]
+  pdvs          Pdv[]
+  parcelas      Parcela[]
+}
+
+model Pdv {
+  id                    String             @id @default(uuid())
+  id_empresa            String
+  id_whatsapp_instancia String?
+  nome                  String
+  criado_em             DateTime           @default(now())
+  atualizado_em         DateTime           @default(now()) @updatedAt
+  funcionarios          Funcionario[]
+  metas                 Meta[]
+  empresa               Empresa            @relation(fields: [id_empresa], references: [id])
+  whatsapp_instancia    WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: SetNull)
+
+  @@index([id_empresa])
+  @@index([id_empresa, id_whatsapp_instancia])
+}
+
+model Funcionario {
+  id            String    @id @default(uuid())
+  id_empresa    String
+  id_pdv        String
+  nome          String
+  email         String    @unique
+  senha_hash    String
+  cargo         String
+  ativo         Boolean   @default(true)
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @default(now()) @updatedAt
+  inativado_em  DateTime?
+  metas         Meta[]
+  pdv           Pdv       @relation(fields: [id_pdv], references: [id])
+  empresa       Empresa   @relation(fields: [id_empresa], references: [id])
+  leads         Lead[]
+
+  @@index([id_empresa])
+  @@index([id_pdv])
+}
+
+model ReatribuicaoFuncionario {
+  id                     String   @id @default(uuid())
+  id_empresa             String
+  id_funcionario_origem  String
+  id_funcionario_destino String
+  quantidade_leads       Int
+  observacao             String?
+  criado_por_tipo        String
+  criado_por_id          String
+  criado_em              DateTime @default(now())
+
+  @@index([id_empresa])
+  @@index([id_funcionario_origem])
+  @@index([id_funcionario_destino])
+}
+
+model AuditoriaEquipe {
+  id                  String   @id @default(uuid())
+  id_empresa          String
+  id_funcionario_alvo String
+  acao                String
+  campo               String?
+  valor_anterior      String?
+  valor_novo          String?
+  observacao          String?
+  autor_tipo          String
+  autor_id            String
+  criado_em           DateTime @default(now())
+
+  @@index([id_empresa])
+  @@index([id_funcionario_alvo])
+  @@index([acao])
+}
+
+model EstagioFunil {
+  id            String   @id @default(uuid())
+  id_empresa    String
+  nome          String
+  ordem         Int
+  tipo          String
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @default(now()) @updatedAt
+  empresa       Empresa  @relation(fields: [id_empresa], references: [id])
+  leads         Lead[]
+
+  @@unique([id_empresa, ordem])
+  @@index([id_empresa])
+}
+
+model Lead {
+  id                      String             @id @default(uuid())
+  id_empresa              String
+  id_funcionario          String
+  id_estagio              String
+  nome                    String
+  telefone                String
+  valor_oportunidade      Float              @default(0)
+  probabilidade           Float             @default(0.5)  // 0-100%
+  fonte                   String?            // De onde veio o lead
+  empresa_origem          String?            // Para B2B
+  observacoes             String?
+  motivo_perda            String?
+  criado_em               DateTime           @default(now())
+  atualizado_em           DateTime           @default(now()) @updatedAt
+  origem                  String             @default("MANUAL")
+  dados_extras            String?              // Campos customizáveis (JSON serializado)
+  estagio                 EstagioFunil       @relation(fields: [id_estagio], references: [id])
+  funcionario             Funcionario        @relation(fields: [id_funcionario], references: [id])
+  empresa                 Empresa            @relation(fields: [id_empresa], references: [id])
+  produtos                LeadProduto[]
+  pendencias              Pendencia[]
+  parcelas                Parcela[]
+  whatsapp_mensagens      WhatsappMensagem[]
+
+  @@index([id_empresa])
+  @@index([id_funcionario])
+  @@index([id_estagio])
+}
+
+model Produto {
+  id             String       @id @default(uuid())
+  id_empresa     String
+  nome           String
+  slug           String
+  descricao      String?
+  ativo          Boolean      @default(true)
+  schema_layout  String
+  criado_em      DateTime     @default(now())
+  atualizado_em  DateTime     @default(now()) @updatedAt
+  empresa        Empresa      @relation(fields: [id_empresa], references: [id])
+  leads_produto  LeadProduto[]
+
+  @@unique([id_empresa, slug])
+  @@index([id_empresa])
+  @@index([id_empresa, ativo])
+}
+
+model LeadProduto {
+  id              String   @id @default(uuid())
+  id_empresa      String
+  id_lead         String
+  id_produto      String
+  nome_snapshot   String
+  schema_snapshot String
+  valores_layout  String
+  observacoes     String?
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @default(now()) @updatedAt
+  empresa         Empresa  @relation(fields: [id_empresa], references: [id])
+  lead            Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  produto         Produto  @relation(fields: [id_produto], references: [id])
+
+  @@index([id_empresa])
+  @@index([id_lead])
+  @@index([id_produto])
+}
+
+model Parcela {
+  id               String   @id @default(uuid())
+  id_empresa       String
+  id_lead          String
+  numero_parcela   Int
+  quantidade_total Int
+  valor            Float
+  data_vencimento  DateTime
+  data_pagamento   DateTime?
+  status           String   @default("PENDENTE")
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @default(now()) @updatedAt
+
+  lead    Lead    @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [id_empresa], references: [id])
+
+  @@unique([id_lead, numero_parcela])
+  @@index([id_empresa])
+  @@index([id_lead])
+  @@index([id_empresa, status])
+  @@index([id_empresa, data_vencimento])
+}
+
+model Meta {
+  id             String       @id @default(uuid())
+  id_empresa     String
+  tipo           String
+  tipo_meta      String
+  alvo           Float
+  periodo        String
+  data_inicio    DateTime
+  data_fim       DateTime
+  ativo          Boolean      @default(true)
+  criado_em      DateTime     @default(now())
+  atualizado_em  DateTime     @default(now()) @updatedAt
+  id_pdv         String?
+  id_funcionario String?
+
+  empresa     Empresa        @relation(fields: [id_empresa], references: [id])
+  pdv         Pdv?           @relation(fields: [id_pdv], references: [id])
+  funcionario Funcionario?   @relation(fields: [id_funcionario], references: [id])
+  progressos  MetaProgresso[]
+
+  @@index([id_empresa, tipo, ativo])
+  @@index([id_empresa, ativo, data_inicio, data_fim])
+  @@index([id_pdv])
+  @@index([id_funcionario])
+}
+
+model MetaProgresso {
+  id            String   @id @default(uuid())
+  id_meta       String
+  id_empresa    String
+  periodo       String
+  realizado     Float
+  atualizado_em DateTime @default(now()) @updatedAt
+
+  meta    Meta    @relation(fields: [id_meta], references: [id], onDelete: Cascade)
+  empresa Empresa @relation(fields: [id_empresa], references: [id])
+
+  @@unique([id_meta, periodo])
+  @@index([id_empresa, periodo])
+}
+
+model Pendencia {
+  id            String    @id @default(uuid())
+  id_empresa    String
+  id_lead       String
+  tipo          String
+  descricao     String
+  documento_url String?
+  resolvida     Boolean   @default(false)
+  resolvida_em  DateTime?
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @default(now()) @updatedAt
+  lead          Lead      @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+
+  @@index([id_empresa])
+  @@index([id_lead])
+}
+
+model WhatsappInstancia {
+  id            String             @id @default(uuid())
+  id_empresa    String
+  id_criador    String
+  nome          String
+  instance_name String             @unique
+  status        String
+  phone         String?
+  criado_em     DateTime           @default(now())
+  atualizado_em DateTime           @default(now()) @updatedAt
+  profile_name  String?
+  profile_pic   String?
+  mensagens     WhatsappMensagem[]
+  pdvs          Pdv[]
+
+  @@index([id_empresa])
+  @@index([id_criador])
+  @@index([id_empresa, instance_name])
+  @@index([id_empresa, status])
+}
+
+model WhatsappMensagem {
+  id                    String @id @default(uuid())
+  id_empresa            String
+  id_lead               String
+  id_whatsapp_instancia String
+
+  mensagem_id    String
+  remote_jid     String
+  from_me        Boolean
+  tipo           String    @default("text")
+  conteudo       String?
+  status         String    @default("PENDING")
+  timestamp      Int
+  lida_no_crm_em DateTime?
+  erro           String?
+  payload_json   String?
+
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @default(now()) @updatedAt
+
+  lead      Lead              @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  instancia WhatsappInstancia @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: Cascade)
+
+  @@unique([id_whatsapp_instancia, mensagem_id])
+  @@index([id_empresa, id_lead, timestamp])
+  @@index([id_empresa, id_lead, lida_no_crm_em])
+  @@index([id_empresa, remote_jid])
+}
+
+model WhatsappAutomacao {
+  id                          String                         @id @default(uuid())
+  id_empresa                  String
+  id_whatsapp_instancia       String
+  evento                      String
+  id_estagio_destino          String?
+  tipo_destino                String                         @default("FIXO")
+  telefone_destino            String?
+  mensagem                    String?
+  ativo                       Boolean                        @default(true)
+  horario_raw                 String?
+  horario_normalizado         String?
+  timezone                    String                         @default("America/Sao_Paulo")
+  status                      String                         @default("ATIVA")
+  job_id                      String?
+  job_status                  String?
+  ultima_sincronizacao_job_em DateTime?
+  ultima_execucao_em          DateTime?
+  proxima_execucao_em         DateTime?
+  deleted_at                  DateTime?
+  criado_em                   DateTime                       @default(now())
+  atualizado_em               DateTime                       @default(now()) @updatedAt
+  delay_minutos               Int?
+  agendamentos                WhatsappAutomacaoAgendamento[]
+  etapas                      WhatsappAutomacaoEtapa[]
+
+  @@index([id_empresa, status])
+  @@index([id_empresa, deleted_at])
+  @@index([id_whatsapp_instancia])
+  @@index([evento])
+  @@index([ativo])
+  @@index([job_id])
+}
+
+model WhatsappAutomacaoEtapa {
+  id                    String                         @id @default(uuid())
+  id_empresa            String
+  id_whatsapp_automacao String
+  ordem                 Int
+  delay_minutos         Int
+  mensagem_template     String
+  ativo                 Boolean                        @default(true)
+  criado_em             DateTime                       @default(now())
+  atualizado_em         DateTime                       @default(now()) @updatedAt
+  agendamentos          WhatsappAutomacaoAgendamento[]
+  automacao             WhatsappAutomacao              @relation(fields: [id_whatsapp_automacao], references: [id], onDelete: Cascade)
+
+  @@unique([id_whatsapp_automacao, ordem])
+  @@index([id_empresa])
+  @@index([id_whatsapp_automacao])
+}
+
+model WhatsappAutomacaoAgendamento {
+  id                    String                 @id @default(uuid())
+  id_empresa            String
+  id_whatsapp_automacao String
+  id_etapa              String
+  id_lead               String
+  referencia_evento     String
+  mensagem_template     String
+  contexto_json         String
+  agendado_para         DateTime
+  status                String                 @default("PENDENTE")
+  tentativas            Int                    @default(0)
+  erro_ultimo           String?
+  enviado_em            DateTime?
+  criado_em             DateTime               @default(now())
+  atualizado_em         DateTime               @default(now()) @updatedAt
+  chave_idempotencia    String?
+  id_estagio_trigger    String?
+  etapa                 WhatsappAutomacaoEtapa @relation(fields: [id_etapa], references: [id], onDelete: Cascade)
+  automacao             WhatsappAutomacao      @relation(fields: [id_whatsapp_automacao], references: [id], onDelete: Cascade)
+
+  @@unique([id_empresa, chave_idempotencia])
+  @@unique([id_whatsapp_automacao, id_etapa, id_lead, referencia_evento])
+  @@index([id_empresa])
+  @@index([id_whatsapp_automacao])
+  @@index([id_etapa])
+  @@index([id_lead])
+  @@index([status, agendado_para])
+  @@index([status])
+}
