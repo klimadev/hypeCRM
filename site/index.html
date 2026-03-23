@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HYPE CRM | Organize seu atendimento no WhatsApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            background-color: #09090b; /* zinc-950 */
+            color: #d4d4d8; /* zinc-300 */
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #09090b; }
+        ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+        @keyframes float-reverse {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(6px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float { animation: float 6s ease-in-out infinite; }
+        .animate-float-reverse { animation: float-reverse 7s ease-in-out infinite; }
+        
+        @keyframes pulse-soft {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(1.05); }
+        }
+        .animate-pulse-soft { animation: pulse-soft 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+
+        .glass-panel {
+            background: rgba(9, 9, 11, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+        }
+
+        .text-gradient {
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Cascata editorial para depoimentos (v2) */
+        .depoimentos-cascata-v2 {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+        }
+        @media (min-width: 1024px) {
+            .depoimentos-cascata-v2 {
+                grid-template-columns: repeat(12, minmax(0, 1fr));
+                gap: 1.25rem;
+            }
+        }
+        .faixa-cascata {
+            position: relative;
+            height: 40rem;
+            overflow: hidden;
+            border: 1px solid rgba(63, 63, 70, 0.8);
+            border-radius: 1.75rem;
+            background: linear-gradient(180deg, rgba(9, 9, 11, 0.88) 0%, rgba(12, 12, 14, 0.68) 100%);
+            mask-image: linear-gradient(to bottom, transparent 0%, black 9%, black 91%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 9%, black 91%, transparent 100%);
+        }
+        .faixa-cascata--a { transform: perspective(900px) rotateX(2deg) rotateZ(-0.8deg); }
+        .faixa-cascata--b { transform: perspective(900px) rotateX(2deg) rotateZ(0.8deg); }
+        .faixa-cascata--c { transform: perspective(900px) rotateX(2deg) rotateZ(-0.4deg); }
+        @media (max-width: 1023px) {
+            .faixa-cascata--a,
+            .faixa-cascata--b,
+            .faixa-cascata--c {
+                transform: none;
+            }
+        }
+        .trilho-cascata-v2 {
+            display: flex;
+            flex-direction: column;
+            gap: 0.95rem;
+            position: absolute;
+            inset: 0;
+            padding: 0.85rem;
+        }
+        .trilho-cascata-v2--subir {
+            animation: cascata-v2-subir 28s linear infinite;
+        }
+        .trilho-cascata-v2--descer {
+            animation: cascata-v2-descer 24s linear infinite;
+        }
+        .trilho-cascata-v2--subir-lento {
+            animation: cascata-v2-subir 34s linear infinite;
+        }
+        .faixa-cascata:hover .trilho-cascata-v2 {
+            animation-play-state: paused;
+        }
+        @keyframes cascata-v2-subir {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-52%); }
+        }
+        @keyframes cascata-v2-descer {
+            0% { transform: translateY(-52%); }
+            100% { transform: translateY(0); }
+        }
+
+        /* Subtle noise texture for specific sections */
+        .bg-noise {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+            opacity: 0.015;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="antialiased overflow-x-hidden selection:bg-violet-500/30 selection:text-white">
+
+    <!-- Global Background Noise -->
+    <div class="fixed inset-0 z-[-1] bg-noise"></div>
+
+    <!-- Localized Background Glows (Subtler) -->
+    <div class="fixed inset-0 z-[-2] pointer-events-none overflow-hidden">
+        <div class="absolute top-[-20%] left-[10%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[150px]"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-transparent transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                        <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold text-white tracking-tight">HYPE</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#solucao" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Solução</a>
+                        <a href="#como-funciona" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Como Funciona</a>
+                        <a href="#beneficios" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Benefícios</a>
+                        <a href="#preco" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Preços</a>
+                    </div>
+                </div>
+                <div>
+                    <a href="#preco" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-full text-white bg-zinc-800 hover:bg-zinc-700 transition-all duration-300 shadow-sm border-white/5">
+                        Assinar agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 1. Hero Section -->
+    <section class="relative pt-32 pb-24 lg:pt-40 lg:pb-32 overflow-hidden">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center max-w-4xl mx-auto">
+                <!-- Badge -->
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 text-zinc-300 text-xs font-medium tracking-wide mb-8 shadow-sm backdrop-blur-sm">
+                    <span class="relative flex h-2 w-2">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                    O CRM para quem atende no WhatsApp
+                </div>
+                
+                <!-- Headline -->
+                <h1 class="text-5xl md:text-6xl lg:text-[5.5rem] font-extrabold text-white tracking-tighter mb-6 leading-[1.05]">
+                    Organize seu WhatsApp e tenha <span class="bg-gradient-to-r from-violet-400 to-indigo-400 text-gradient">controle real</span> da equipe.
+                </h1>
+                
+                <!-- Micro-proofs -->
+                <div class="flex flex-wrap justify-center gap-x-6 gap-y-3 text-sm font-medium text-zinc-400 mb-8">
+                    <div class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Sem limite de usuários</div>
+                    <div class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Pronto para usar</div>
+                    <div class="flex items-center gap-1.5"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> 1 Número p/ toda a equipe</div>
+                </div>
+
+                <!-- Subtitle -->
+                <p class="text-lg md:text-xl text-zinc-400 leading-relaxed max-w-2xl mx-auto mb-10">
+                    Uma camada de gestão simples e visual sobre o seu WhatsApp. Centralize conversas, distribua leads e acompanhe metas sem complicação.
+                </p>
+                
+                <!-- CTA -->
+                <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <a href="#preco" class="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-zinc-950 font-semibold text-lg hover:bg-zinc-200 transition-all duration-300 shadow-[0_0_40px_-10px_rgba(255,255,255,0.3)] flex items-center justify-center gap-2 group">
+                        Começar agora <i data-lucide="arrow-right" class="w-5 h-5 transition-transform group-hover:translate-x-1"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Alive UI Mockup -->
+            <div class="mt-24 relative mx-auto max-w-[1050px]">
+                
+                <!-- Background Glow for Mockup -->
+                <div class="absolute inset-0 bg-gradient-to-b from-violet-500/10 to-transparent blur-3xl -z-10 rounded-[3rem]"></div>
+
+                <!-- Floating Badges (Subtler) -->
+                <div class="hidden md:flex absolute -left-6 top-32 z-20 bg-zinc-900/90 backdrop-blur-md border border-white/5 px-4 py-3 rounded-2xl shadow-xl items-center gap-3 animate-float">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20"><i data-lucide="users" class="w-4 h-4 text-emerald-400"></i></div>
+                    <div>
+                        <div class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-0.5">Equipe</div>
+                        <div class="text-sm font-medium text-white">Usuários Ilimitados</div>
+                    </div>
+                </div>
+                <div class="hidden md:flex absolute -right-6 bottom-40 z-20 bg-zinc-900/90 backdrop-blur-md border border-white/5 px-4 py-3 rounded-2xl shadow-xl items-center gap-3 animate-float-reverse">
+                    <div class="w-8 h-8 rounded-full bg-violet-500/10 flex items-center justify-center border border-violet-500/20"><i data-lucide="activity" class="w-4 h-4 text-violet-400"></i></div>
+                    <div>
+                        <div class="text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-0.5">Visão do Gestor</div>
+                        <div class="text-sm font-medium text-white">Tempo Real</div>
+                    </div>
+                </div>
+
+                <!-- Main Mockup Container -->
+                <div class="relative rounded-[2rem] bg-[#0c0c0e] border border-zinc-800 shadow-2xl overflow-hidden flex flex-col h-[650px] ring-1 ring-white/5">
+                    
+                    <!-- Topbar -->
+                    <div class="h-14 border-b border-zinc-800/80 flex items-center justify-between px-6 bg-[#0c0c0e]">
+                        <div class="flex items-center gap-6">
+                            <!-- Window Controls -->
+                            <div class="flex gap-2">
+                                <div class="w-3 h-3 rounded-full bg-zinc-800"></div>
+                                <div class="w-3 h-3 rounded-full bg-zinc-800"></div>
+                                <div class="w-3 h-3 rounded-full bg-zinc-800"></div>
+                            </div>
+                            <!-- Connection Status -->
+                            <div class="hidden sm:flex items-center gap-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1.5 rounded-full">
+                                <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+                                <span class="text-xs font-medium text-emerald-400">WhatsApp Conectado</span>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini Goal Bar -->
+                        <div class="flex items-center gap-3 bg-zinc-900 border border-zinc-800 px-4 py-1.5 rounded-full">
+                            <span class="text-xs text-zinc-400 font-medium">Meta Mensal</span>
+                            <div class="w-24 h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                                <div class="w-[75%] h-full bg-violet-500 rounded-full relative">
+                                    <div class="absolute right-0 top-0 bottom-0 w-4 bg-white/20 blur-[2px]"></div>
+                                </div>
+                            </div>
+                            <span class="text-xs font-bold text-white">75%</span>
+                        </div>
+                    </div>
+
+                    <!-- App Body -->
+                    <div class="flex flex-1 overflow-hidden">
+                        
+                        <!-- Sidebar Icons -->
+                        <div class="w-16 border-r border-zinc-800/80 flex flex-col items-center py-6 gap-6 bg-[#09090b]">
+                            <div class="w-10 h-10 rounded-xl bg-violet-600 text-white flex items-center justify-center shadow-lg shadow-violet-900/30"><i data-lucide="layout-dashboard" class="w-5 h-5"></i></div>
+                            <div class="w-10 h-10 rounded-xl text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors flex items-center justify-center"><i data-lucide="inbox" class="w-5 h-5"></i></div>
+                            <div class="w-10 h-10 rounded-xl text-zinc-500 hover:text-zinc-300 hover:bg-zinc-900 transition-colors flex items-center justify-center">
+                                <i data-lucide="pie-chart" class="w-5 h-5"></i>
+                            </div>
+                        </div>
+
+                        <!-- Kanban Board -->
+                        <div class="flex-1 p-6 flex gap-4 overflow-hidden bg-[#0c0c0e]/50">
+                            <!-- Column 1 -->
+                            <div class="w-1/3 flex flex-col gap-3 min-w-[260px]">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-zinc-600"></div> 
+                                        <span class="text-sm font-semibold text-zinc-300">Novos Contatos</span>
+                                    </div>
+                                    <span class="bg-zinc-800 text-zinc-400 px-2 py-0.5 rounded text-xs font-medium">3</span>
+                                </div>
+                                <!-- Card -->
+                                <div class="bg-zinc-900/80 border border-zinc-800 p-4 rounded-xl hover:border-zinc-700 transition-colors cursor-pointer group">
+                                    <div class="flex justify-between items-start mb-2">
+                                        <div class="font-medium text-zinc-200 text-sm">Carlos Mendes</div>
+                                        <div class="text-[10px] text-zinc-500 font-medium">10:42</div>
+                                    </div>
+                                    <div class="text-xs text-zinc-400 line-clamp-1 mb-4">Olá, vi o anúncio no Instagram.</div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="w-6 h-6 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-[10px] text-zinc-500 border-dashed">?</div>
+                                        <span class="text-[10px] bg-zinc-800 px-2 py-1 rounded text-zinc-400 font-medium">Aguardando</span>
+                                    </div>
+                                </div>
+                                 <!-- Card Skeleton -->
+                                <div class="bg-zinc-900/30 border border-zinc-800/50 p-4 rounded-xl">
+                                    <div class="h-3 w-24 bg-zinc-800/50 rounded mb-4"></div>
+                                    <div class="h-2 w-full bg-zinc-800/50 rounded mb-2"></div>
+                                    <div class="h-2 w-2/3 bg-zinc-800/50 rounded"></div>
+                                </div>
+                            </div>
+
+                            <!-- Column 2 (Active) -->
+                            <div class="w-1/3 flex flex-col gap-3 min-w-[260px]">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.6)]"></div> 
+                                        <span class="text-sm font-semibold text-white">Em Atendimento</span>
+                                    </div>
+                                    <span class="bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded text-xs font-medium border border-violet-500/20">2</span>
+                                </div>
+                                <!-- Active Card (Visual flow to Chat) -->
+                                <div class="bg-zinc-900 border border-violet-500/40 p-4 rounded-xl shadow-[0_8px_30px_-4px_rgba(139,92,246,0.15)] relative z-10 translate-x-1">
+                                    <!-- Connection Line Indicator -->
+                                    <div class="absolute -right-4 top-1/2 w-4 h-px bg-violet-500/40"></div>
+                                    
+                                    <div class="absolute left-0 top-3 bottom-3 w-1 bg-violet-500 rounded-r-full"></div>
+                                    <div class="flex justify-between items-start mb-2 pl-2">
+                                        <div class="font-semibold text-white text-sm">Empresa XYZ</div>
+                                        <div class="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-1.5 py-0.5 rounded">R$ 5k</div>
+                                    </div>
+                                    <div class="text-xs text-zinc-400 pl-2 mb-4">Enviando proposta comercial...</div>
+                                    <div class="flex items-center justify-between pl-2">
+                                        <div class="flex items-center gap-2">
+                                            <div class="w-6 h-6 rounded-full bg-violet-600 flex items-center justify-center text-[10px] text-white font-bold ring-2 ring-zinc-900">A</div>
+                                            <span class="text-[10px] text-zinc-400 font-medium">Ana Silva</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Column 3 -->
+                            <div class="w-1/3 flex flex-col gap-3 min-w-[260px] opacity-60">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-2 h-2 rounded-full bg-emerald-500"></div> 
+                                        <span class="text-sm font-semibold text-zinc-300">Fechamento</span>
+                                    </div>
+                                </div>
+                                <div class="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl border-dashed">
+                                    <div class="text-center text-xs text-zinc-500 py-4">Arraste para cá</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Active Chat Panel -->
+                        <div class="hidden lg:flex w-[340px] border-l border-zinc-800/80 bg-[#0c0c0e] flex-col relative shadow-[-10px_0_30px_rgba(0,0,0,0.2)]">
+                            <!-- Chat Header -->
+                            <div class="p-4 border-b border-zinc-800/80 flex items-center gap-3 bg-zinc-900/30">
+                                <div class="w-10 h-10 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-400 relative shrink-0">
+                                    <i data-lucide="building-2" class="w-5 h-5"></i>
+                                    <div class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-[#0c0c0e] rounded-full"></div>
+                                </div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="text-sm font-semibold text-white truncate">Empresa XYZ</div>
+                                    <div class="flex items-center gap-1.5 mt-0.5">
+                                        <div class="w-3 h-3 rounded-full bg-violet-600 flex items-center justify-center text-[6px] text-white font-bold">A</div>
+                                        <span class="text-[10px] text-zinc-500 font-medium truncate">Ana Silva (Você)</span>
+                                    </div>
+                                </div>
+                                <button class="text-zinc-500 hover:text-white transition-colors"><i data-lucide="more-vertical" class="w-4 h-4"></i></button>
+                            </div>
+                            
+                            <!-- Chat Body -->
+                            <div class="flex-1 p-5 flex flex-col gap-4 overflow-y-auto bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')]">
+                                <div class="text-center text-[10px] text-zinc-600 font-medium mb-2">Hoje</div>
+                                
+                                <!-- Incoming -->
+                                <div class="self-start max-w-[85%]">
+                                    <div class="bg-zinc-800/80 border border-zinc-700/50 rounded-2xl rounded-tl-sm p-3 shadow-sm">
+                                        <p class="text-xs text-zinc-200 leading-relaxed">Bom dia, Ana! Conseguimos fechar naquele valor?</p>
+                                    </div>
+                                    <span class="text-[9px] text-zinc-500 block mt-1 ml-1">10:30</span>
+                                </div>
+                                
+                                <!-- Outgoing -->
+                                <div class="self-end max-w-[85%]">
+                                    <div class="bg-violet-600 rounded-2xl rounded-tr-sm p-3 shadow-sm">
+                                        <p class="text-xs text-white leading-relaxed">Bom dia! Sim, consegui aprovar a condição. Vou enviar o link da proposta agora mesmo.</p>
+                                    </div>
+                                    <div class="flex items-center justify-end gap-1 mt-1 mr-1">
+                                        <span class="text-[9px] text-zinc-500">10:32</span>
+                                        <i data-lucide="check-check" class="w-3 h-3 text-emerald-500"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Chat Input -->
+                            <div class="p-4 border-t border-zinc-800/80 bg-zinc-900/30">
+                                <div class="bg-zinc-900 border border-zinc-700/50 rounded-full pl-4 pr-1.5 py-1.5 flex items-center gap-3">
+                                    <button class="text-zinc-500 hover:text-white transition-colors"><i data-lucide="paperclip" class="w-4 h-4"></i></button>
+                                    <div class="flex-1 text-xs text-zinc-500">Digite uma mensagem...</div>
+                                    <button class="w-8 h-8 rounded-full bg-violet-600 hover:bg-violet-500 transition-colors flex items-center justify-center shadow-sm">
+                                        <i data-lucide="send" class="w-3 h-3 text-white ml-0.5"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 2. A dor do cliente (Organized Chaos) -->
+    <section class="py-32 bg-[#09090b] relative border-y border-white/5" id="dor">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                    Seu atendimento acontece no WhatsApp,<br class="hidden md:block"> mas sua operação fica <span class="text-red-400/90">sem controle.</span>
+                </h2>
+                <p class="text-lg text-zinc-400">A realidade de quem atende apenas com o celular ou WhatsApp Web:</p>
+            </div>
+            
+            <div class="grid sm:grid-cols-2 gap-6 max-w-4xl mx-auto relative">
+                <!-- Background subtle noise/lines -->
+                <div class="absolute inset-0 z-0 opacity-10 pointer-events-none flex flex-col gap-8 justify-center items-center">
+                    <div class="w-full h-px bg-gradient-to-r from-transparent via-red-500 to-transparent rotate-3"></div>
+                    <div class="w-full h-px bg-gradient-to-r from-transparent via-zinc-500 to-transparent -rotate-2"></div>
+                </div>
+
+                <!-- Card 1 -->
+                <div class="bg-zinc-900/80 border border-zinc-800 p-8 rounded-[2rem] flex items-start gap-5 relative z-10 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="users" class="w-6 h-6 text-red-400/80"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-lg mb-2">Confusão na equipe</h4>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Ninguém sabe exatamente quem está atendendo quem. Clientes ficam sem resposta ou recebem mensagens duplicadas.</p>
+                    </div>
+                </div>
+                <!-- Card 2 -->
+                <div class="bg-zinc-900/80 border border-zinc-800 p-8 rounded-[2rem] flex items-start gap-5 relative z-10 transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="eye-off" class="w-6 h-6 text-red-400/80"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-lg mb-2">Ponto cego do dono</h4>
+                        <p class="text-sm text-zinc-400 leading-relaxed">O gestor não tem visão clara da operação, não sabe quantas vendas estão travadas e depende de perguntar para a equipe.</p>
+                    </div>
+                </div>
+                <!-- Card 3 -->
+                <div class="bg-zinc-900/80 border border-zinc-800 p-8 rounded-[2rem] flex items-start gap-5 relative z-10 transform rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="target" class="w-6 h-6 text-red-400/80"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-lg mb-2">Metas no achismo</h4>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Impossível acompanhar o desempenho real de cada vendedor ao longo do mês. Os dados ficam presos nos celulares.</p>
+                    </div>
+                </div>
+                <!-- Card 4 -->
+                <div class="bg-zinc-900/80 border border-zinc-800 p-8 rounded-[2rem] flex items-start gap-5 relative z-10 transform -rotate-1 hover:rotate-0 transition-transform duration-300">
+                    <div class="w-12 h-12 rounded-2xl bg-red-500/5 border border-red-500/10 flex items-center justify-center shrink-0">
+                        <i data-lucide="history" class="w-6 h-6 text-red-400/80"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-white font-semibold text-lg mb-2">Histórico perdido</h4>
+                        <p class="text-sm text-zinc-400 leading-relaxed">Informações valiosas sobre o cliente se perdem no meio de milhares de mensagens. Sem contexto para a próxima venda.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Closing Statement -->
+            <div class="mt-24 text-center relative z-10">
+                <div class="inline-block relative">
+                    <div class="absolute -inset-1 bg-gradient-to-r from-red-500/10 via-zinc-800/50 to-zinc-800/50 rounded-2xl blur-md"></div>
+                    <div class="relative bg-zinc-950 px-10 py-8 rounded-2xl border border-zinc-800">
+                        <p class="text-xl md:text-2xl font-semibold text-white tracking-tight">
+                            "Se o atendimento cresce, o WhatsApp sozinho deixa de ser suficiente."
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. A solução (Mini-previews) -->
+    <section class="py-32 relative bg-[#0c0c0e]" id="solucao">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">
+                    Com o HYPE, seu atendimento vira uma <span class="text-emerald-400">operação clara.</span>
+                </h2>
+                <p class="text-lg text-zinc-400">Funcionalidades desenhadas para resolver problemas reais, sem complicação.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Block 1: WhatsApp -->
+                <div class="bg-zinc-900/40 border border-zinc-800 p-8 rounded-[2rem] relative overflow-hidden group hover:bg-zinc-900/80 transition-colors duration-300">
+                    <!-- Mini UI -->
+                    <div class="mb-8 h-36 bg-[#09090b] rounded-2xl border border-zinc-800 p-5 flex flex-col justify-end relative overflow-hidden shadow-inner">
+                        <div class="absolute top-4 left-4 flex items-center gap-2 bg-emerald-500/10 px-2.5 py-1 rounded-md text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
+                            <div class="w-1.5 h-1.5 rounded-full bg-emerald-500"></div> 1 Número Integrado
+                        </div>
+                        <div class="flex gap-3 items-end">
+                            <div class="w-8 h-8 rounded-full bg-emerald-900/30 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                <i data-lucide="user" class="w-4 h-4 text-emerald-500"></i>
+                            </div>
+                            <div class="bg-zinc-800/80 rounded-xl rounded-bl-none p-3 text-xs text-zinc-300 w-3/4 border border-zinc-700/50">Olá, quero saber os valores.</div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Centralize o WhatsApp</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Conecte seu número em poucos cliques e permita que toda a equipe atenda pelo CRM, em um único lugar.</p>
+                </div>
+
+                <!-- Block 2: Equipe -->
+                <div class="bg-zinc-900/40 border border-zinc-800 p-8 rounded-[2rem] relative overflow-hidden group hover:bg-zinc-900/80 transition-colors duration-300">
+                    <!-- Mini UI -->
+                    <div class="mb-8 h-36 bg-[#09090b] rounded-2xl border border-zinc-800 p-5 flex flex-col justify-center gap-3 shadow-inner">
+                        <div class="flex items-center justify-between bg-zinc-800/50 p-3 rounded-xl border border-zinc-700/50">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-violet-500/20 text-violet-400 flex items-center justify-center text-xs font-bold ring-1 ring-violet-500/30">A</div> 
+                                <span class="text-sm font-medium text-white">Ana</span>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-400 bg-zinc-900 px-2 py-1 rounded">12 Leads</span>
+                        </div>
+                        <div class="flex items-center justify-between bg-zinc-800/30 p-3 rounded-xl border border-zinc-800 opacity-60">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-xs font-bold">C</div> 
+                                <span class="text-sm font-medium text-white">Carlos</span>
+                            </div>
+                            <span class="text-xs font-medium text-zinc-500 bg-zinc-900 px-2 py-1 rounded">8 Leads</span>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Distribua responsabilidades</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Cada colaborador atende os leads que estão com ele. Fim da bagunça de "quem vai responder esse?".</p>
+                </div>
+
+                <!-- Block 3: Metas -->
+                <div class="bg-zinc-900/40 border border-zinc-800 p-8 rounded-[2rem] relative overflow-hidden group hover:bg-zinc-900/80 transition-colors duration-300">
+                    <!-- Mini UI -->
+                    <div class="mb-8 h-36 bg-[#09090b] rounded-2xl border border-zinc-800 p-5 flex flex-col justify-center shadow-inner">
+                        <div class="text-xs font-medium text-zinc-400 mb-3 uppercase tracking-wider">Meta da Equipe</div>
+                        <div class="flex items-end gap-2 mb-4">
+                            <div class="text-3xl font-extrabold text-white tracking-tight">R$ 45k</div>
+                            <div class="text-sm font-medium text-zinc-500 mb-1">/ R$ 50k</div>
+                        </div>
+                        <div class="w-full h-2.5 bg-zinc-800 rounded-full overflow-hidden">
+                            <div class="w-[90%] h-full bg-gradient-to-r from-emerald-500 to-emerald-400 rounded-full"></div>
+                        </div>
+                    </div>
+                    <h3 class="text-xl font-bold text-white mb-3">Acompanhe metas</h3>
+                    <p class="text-sm text-zinc-400 leading-relaxed">Veja quem está performando, o que está parado e como a equipe evolui em tempo real, sem planilhas.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. Como funciona (Timeline Flow) -->
+    <section class="py-32 border-y border-white/5 bg-[#09090b]" id="como-funciona">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Começar é um fluxo simples</h2>
+                <p class="text-lg text-zinc-400">Sem implantações demoradas. Você configura e roda no mesmo dia.</p>
+            </div>
+
+            <div class="relative max-w-5xl mx-auto">
+                <!-- Connecting line (Desktop) -->
+                <div class="hidden md:block absolute top-[44px] left-[12%] right-[12%] h-px bg-zinc-800 z-0">
+                    <div class="absolute top-0 left-0 h-full w-[60%] bg-gradient-to-r from-zinc-800 via-emerald-500/50 to-emerald-500"></div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-10 md:gap-6 relative z-10">
+                    <!-- Step 1 -->
+                    <div class="flex flex-row md:flex-col items-center md:text-center gap-6 md:gap-0">
+                        <div class="w-24 h-24 rounded-[2rem] bg-[#0c0c0e] border border-zinc-800 flex items-center justify-center text-zinc-400 md:mb-6 shrink-0 shadow-sm relative z-10">
+                            <i data-lucide="user-plus" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg mb-2">1. Crie a conta</h4>
+                            <p class="text-sm text-zinc-400 leading-relaxed">Cadastro rápido em 2 minutos.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 2 -->
+                    <div class="flex flex-row md:flex-col items-center md:text-center gap-6 md:gap-0">
+                        <div class="w-24 h-24 rounded-[2rem] bg-[#0c0c0e] border border-zinc-800 flex items-center justify-center text-zinc-400 md:mb-6 shrink-0 shadow-sm relative z-10">
+                            <i data-lucide="users" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg mb-2">2. Adicione a equipe</h4>
+                            <p class="text-sm text-zinc-400 leading-relaxed">Sem limite de usuários.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 3 (Highlight - The Magic Moment) -->
+                    <div class="flex flex-row md:flex-col items-center md:text-center gap-6 md:gap-0 relative">
+                        <!-- Glow effect -->
+                        <div class="absolute md:top-0 md:left-1/2 md:-translate-x-1/2 left-0 top-1/2 -translate-y-1/2 md:translate-y-0 w-24 h-24 bg-emerald-500/20 blur-xl rounded-full -z-10"></div>
+                        
+                        <div class="w-24 h-24 rounded-[2rem] bg-[#0c0c0e] border border-emerald-500/40 shadow-[0_0_30px_rgba(16,185,129,0.15)] flex items-center justify-center text-emerald-400 md:mb-6 shrink-0 relative z-10">
+                            <div class="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-emerald-500 border-2 border-[#0c0c0e] animate-pulse-soft"></div>
+                            <i data-lucide="smartphone" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg mb-2">3. Conecte o WhatsApp</h4>
+                            <p class="text-sm text-zinc-400 leading-relaxed">Leia o QR Code e integre na hora.</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Step 4 -->
+                    <div class="flex flex-row md:flex-col items-center md:text-center gap-6 md:gap-0">
+                        <div class="w-24 h-24 rounded-[2rem] bg-[#0c0c0e] border border-zinc-800 flex items-center justify-center text-violet-400 md:mb-6 shrink-0 shadow-sm relative z-10">
+                            <i data-lucide="play" class="w-8 h-8"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-white font-bold text-lg mb-2">4. Comece a operar</h4>
+                            <p class="text-sm text-zinc-400 leading-relaxed">Atenda e acompanhe tudo.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 5. Benefícios (Bento Grid) -->
+    <section class="py-32 relative bg-[#0c0c0e]" id="beneficios">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">O que você ganha na prática</h2>
+                <p class="text-lg text-zinc-400">Resultados visíveis no dia a dia da sua operação.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-min">
+                <!-- Large Card 1 -->
+                <div class="md:col-span-2 bg-zinc-900/60 border border-zinc-800 p-10 rounded-[2.5rem] flex flex-col justify-between group relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-3xl rounded-full -z-10 transition-opacity group-hover:opacity-100 opacity-50"></div>
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-[#09090b] border border-zinc-800 flex items-center justify-center mb-8 shadow-sm">
+                            <i data-lucide="smartphone" class="w-6 h-6 text-emerald-400"></i>
+                        </div>
+                        <h4 class="text-3xl font-bold text-white mb-4 tracking-tight">WhatsApp 100% Centralizado</h4>
+                        <p class="text-zinc-400 text-lg leading-relaxed max-w-lg">Vários atendentes usando o mesmo número simultaneamente. O gestor tem controle total de quem falou o quê, sem precisar pedir o celular do vendedor para conferir as conversas.</p>
+                    </div>
+                </div>
+                
+                <!-- Standard Card 1 -->
+                <div class="bg-zinc-900/60 border border-zinc-800 p-10 rounded-[2.5rem] group">
+                    <div class="w-12 h-12 rounded-2xl bg-[#09090b] border border-zinc-800 flex items-center justify-center mb-6 shadow-sm">
+                        <i data-lucide="user-check" class="w-5 h-5 text-violet-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Equipe Alinhada</h4>
+                    <p class="text-zinc-400 leading-relaxed">Cada pessoa assume sua responsabilidade. Fim da bagunça de "quem vai responder esse cliente?".</p>
+                </div>
+
+                <!-- Standard Card 2 -->
+                <div class="bg-zinc-900/60 border border-zinc-800 p-10 rounded-[2.5rem] group">
+                    <div class="w-12 h-12 rounded-2xl bg-[#09090b] border border-zinc-800 flex items-center justify-center mb-6 shadow-sm">
+                        <i data-lucide="eye" class="w-5 h-5 text-blue-400"></i>
+                    </div>
+                    <h4 class="text-xl font-bold text-white mb-3">Visão do Dono</h4>
+                    <p class="text-zinc-400 leading-relaxed">Acompanhe a operação de onde estiver, sem precisar perguntar como estão as vendas.</p>
+                </div>
+
+                <!-- Large Card 2 -->
+                <div class="md:col-span-2 bg-zinc-900/60 border border-zinc-800 p-10 rounded-[2.5rem] flex flex-col justify-between group relative overflow-hidden">
+                    <div class="absolute bottom-0 left-0 w-64 h-64 bg-amber-500/5 blur-3xl rounded-full -z-10 transition-opacity group-hover:opacity-100 opacity-50"></div>
+                    <div>
+                        <div class="w-14 h-14 rounded-2xl bg-[#09090b] border border-zinc-800 flex items-center justify-center mb-8 shadow-sm">
+                            <i data-lucide="trending-up" class="w-6 h-6 text-amber-400"></i>
+                        </div>
+                        <h4 class="text-3xl font-bold text-white mb-4 tracking-tight">Metas Claras e Visuais</h4>
+                        <p class="text-zinc-400 text-lg leading-relaxed max-w-lg">Defina e acompanhe metas por empresa, ponto de venda, equipe ou colaborador. O sistema mostra o progresso de forma automática conforme os negócios avançam pelo funil.</p>
+                    </div>
+                </div>
+
+                <!-- Summary Card -->
+                <div class="md:col-span-3 bg-zinc-900/40 border border-zinc-800 p-8 rounded-[2rem] flex flex-col sm:flex-row items-start sm:items-center gap-6 mt-2">
+                    <div class="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center shrink-0 border border-zinc-700">
+                        <i data-lucide="zap" class="w-6 h-6 text-zinc-300"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-xl font-bold text-white mb-1">Simples de aprender</h4>
+                        <p class="text-zinc-400">Desenhado para o dia a dia. Sem excesso de menus ou termos complicados em inglês. Se sabe usar o WhatsApp, sabe usar o HYPE.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. Funcionalidades (Thematic Blocks) -->
+    <section class="py-32 bg-[#09090b] border-y border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Tudo que sua operação precisa</h2>
+                <p class="text-lg text-zinc-400">Robustez sem complexidade.</p>
+            </div>
+
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Block: Atendimento -->
+                <div class="bg-[#0c0c0e] border border-zinc-800 rounded-[2rem] p-8 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-emerald-500/20"></div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                            <i data-lucide="message-square" class="w-5 h-5 text-emerald-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Atendimento</h3>
+                    </div>
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">WhatsApp dentro do CRM</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Quadro visual de etapas (Kanban)</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Histórico unificado por lead</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Observações internas ocultas</span></li>
+                    </ul>
+                </div>
+
+                <!-- Block: Equipe (Highlighted) -->
+                <div class="bg-zinc-900 border border-violet-500/30 rounded-[2rem] p-8 relative overflow-hidden shadow-[0_0_30px_rgba(139,92,246,0.05)]">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-violet-500"></div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-10 h-10 rounded-xl bg-violet-500/20 flex items-center justify-center border border-violet-500/30">
+                            <i data-lucide="users" class="w-5 h-5 text-violet-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Equipe</h3>
+                    </div>
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-violet-500 shrink-0"></i><span class="text-white font-semibold">Usuários ilimitados</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Distribuição inteligente de leads</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Visão isolada por perfil de acesso</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Gestão de múltiplos PDVs</span></li>
+                    </ul>
+                </div>
+
+                <!-- Block: Gestão -->
+                <div class="bg-[#0c0c0e] border border-zinc-800 rounded-[2rem] p-8 relative overflow-hidden">
+                    <div class="absolute top-0 left-0 w-full h-1 bg-amber-500/20"></div>
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+                            <i data-lucide="bar-chart-2" class="w-5 h-5 text-amber-400"></i>
+                        </div>
+                        <h3 class="text-xl font-bold text-white">Gestão</h3>
+                    </div>
+                    <ul class="space-y-5">
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Acompanhamento em tempo real</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Metas flexíveis e configuráveis</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Relatórios visuais e diretos</span></li>
+                        <li class="flex items-start gap-3"><i data-lucide="check" class="w-5 h-5 text-zinc-600 shrink-0"></i><span class="text-zinc-300">Ações automáticas por etapa</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 7. Diferenciais (Comparação Visual) -->
+    <section class="py-32 relative bg-[#0c0c0e]">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Por que o HYPE é diferente?</h2>
+                <p class="text-lg text-zinc-400">Feito para ser usado de verdade, sem burocracia.</p>
+            </div>
+
+            <div class="flex flex-col md:flex-row items-stretch gap-6 relative">
+                
+                <!-- VS Badge -->
+                <div class="hidden md:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-12 bg-zinc-950 border border-zinc-800 rounded-full items-center justify-center text-zinc-500 font-bold z-20 shadow-xl">
+                    VS
+                </div>
+
+                <!-- Outros -->
+                <div class="flex-1 bg-zinc-900/30 border border-zinc-800 rounded-[2.5rem] p-10 opacity-70 filter grayscale-[50%]">
+                    <div class="text-xl font-medium text-zinc-500 mb-10 pb-6 border-b border-zinc-800">
+                        Outros CRMs Tradicionais
+                    </div>
+                    <ul class="space-y-6">
+                        <li class="flex items-start gap-4 text-zinc-500"><i data-lucide="x" class="w-6 h-6 text-red-900/50 shrink-0"></i> <span class="leading-relaxed">Cobram por cada usuário adicionado</span></li>
+                        <li class="flex items-start gap-4 text-zinc-500"><i data-lucide="x" class="w-6 h-6 text-red-900/50 shrink-0"></i> <span class="leading-relaxed">Implantação chata e demorada</span></li>
+                        <li class="flex items-start gap-4 text-zinc-500"><i data-lucide="x" class="w-6 h-6 text-red-900/50 shrink-0"></i> <span class="leading-relaxed">Cheios de termos difíceis em inglês</span></li>
+                        <li class="flex items-start gap-4 text-zinc-500"><i data-lucide="x" class="w-6 h-6 text-red-900/50 shrink-0"></i> <span class="leading-relaxed">Excesso de funções que ninguém usa</span></li>
+                        <li class="flex items-start gap-4 text-zinc-500"><i data-lucide="x" class="w-6 h-6 text-red-900/50 shrink-0"></i> <span class="leading-relaxed">Equipe tem resistência para aprender</span></li>
+                    </ul>
+                </div>
+
+                <!-- HYPE -->
+                <div class="flex-1 bg-zinc-900 border border-violet-500/30 rounded-[2.5rem] p-10 relative overflow-hidden shadow-[0_0_50px_rgba(139,92,246,0.1)] z-10 transform md:scale-105">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-violet-500/10 blur-[80px] -z-10"></div>
+                    <div class="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-violet-600 to-indigo-600"></div>
+                    
+                    <div class="text-2xl font-bold text-white mb-10 pb-6 border-b border-zinc-800 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-lg"><i data-lucide="zap" class="w-4 h-4 text-white"></i></div>
+                        HYPE CRM
+                    </div>
+                    <ul class="space-y-6">
+                        <li class="flex items-start gap-4 text-white font-semibold"><i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-400 shrink-0"></i> <span class="leading-relaxed">Usuários ilimitados (cresça sem pagar mais)</span></li>
+                        <li class="flex items-start gap-4 text-zinc-300"><i data-lucide="check-circle-2" class="w-6 h-6 text-violet-400 shrink-0"></i> <span class="leading-relaxed">Pronto para operar no mesmo dia</span></li>
+                        <li class="flex items-start gap-4 text-zinc-300"><i data-lucide="check-circle-2" class="w-6 h-6 text-violet-400 shrink-0"></i> <span class="leading-relaxed">Linguagem simples e em português</span></li>
+                        <li class="flex items-start gap-4 text-zinc-300"><i data-lucide="check-circle-2" class="w-6 h-6 text-violet-400 shrink-0"></i> <span class="leading-relaxed">Foco no que realmente importa na operação</span></li>
+                        <li class="flex items-start gap-4 text-zinc-300"><i data-lucide="check-circle-2" class="w-6 h-6 text-violet-400 shrink-0"></i> <span class="leading-relaxed">WhatsApp conectado em poucos cliques</span></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. Casos de uso -->
+    <section class="py-24 bg-[#09090b] border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-2xl font-bold text-white mb-10 tracking-tight">Ideal para negócios reais, não só tech</h2>
+            
+            <div class="flex flex-wrap justify-center gap-4">
+                <div class="flex items-center gap-2.5 px-6 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 transition-colors cursor-default text-sm font-medium">
+                    <i data-lucide="stethoscope" class="w-4 h-4 text-zinc-500"></i> Clínicas
+                </div>
+                <div class="flex items-center gap-2.5 px-6 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 transition-colors cursor-default text-sm font-medium">
+                    <i data-lucide="car" class="w-4 h-4 text-zinc-500"></i> Consórcios & Veículos
+                </div>
+                <div class="flex items-center gap-2.5 px-6 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 transition-colors cursor-default text-sm font-medium">
+                    <i data-lucide="home" class="w-4 h-4 text-zinc-500"></i> Imobiliárias
+                </div>
+                <div class="flex items-center gap-2.5 px-6 py-3 rounded-full bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-800 hover:border-zinc-700 transition-colors cursor-default text-sm font-medium">
+                    <i data-lucide="briefcase" class="w-4 h-4 text-zinc-500"></i> Empresas de Serviço
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 9. Prova Social (Waterfall) -->
+    <section class="py-32 bg-[#0c0c0e] border-t border-white/5">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-20">
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Quem usa, sente o alívio na operação</h2>
+            </div>
+
+            <!-- Featured Case (Editorial Style) -->
+            <div class="max-w-4xl mx-auto bg-zinc-900/60 border border-zinc-800 p-10 md:p-14 rounded-[2.5rem] mb-16 relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10">
+                    <i data-lucide="quote" class="w-32 h-32 text-white"></i>
+                </div>
+                
+                <div class="flex items-center gap-5 mb-10 pb-8 border-b border-zinc-800 relative z-10">
+                    <div class="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700">C</div>
+                    <div>
+                        <div class="text-white font-bold text-xl mb-1">Operação de Consórcios</div>
+                        <div class="text-sm text-zinc-400 font-medium">Equipe de 8 vendedores</div>
+                    </div>
+                </div>
+                
+                <div class="grid md:grid-cols-2 gap-10 relative z-10">
+                    <div>
+                        <div class="text-red-400/80 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-down-right" class="w-4 h-4"></i> Antes</div>
+                        <p class="text-zinc-400 text-base leading-relaxed">"A gente usava um sistema antigo que era lento e complexo. Os leads se perdiam no WhatsApp pessoal dos vendedores e eu como gestor não via nada. Era um voo cego."</p>
+                    </div>
+                    <div>
+                        <div class="text-emerald-400 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-up-right" class="w-4 h-4"></i> Depois do HYPE</div>
+                        <p class="text-white text-base leading-relaxed font-medium">"O atendimento ficou muito mais rápido. Agora eu acompanho a operação em tempo real e a organização das etapas de venda é total. Mudou o jogo da equipe."</p>
+                    </div>
+                </div>
+            </div>
+
+             <!-- Waterfall Testimonials (novo estilo em cascata) -->
+             <div class="relative">
+                 <div class="pointer-events-none absolute inset-0">
+                     <div class="absolute top-6 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-cyan-500/10 blur-[90px]"></div>
+                     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-emerald-500/10 blur-[90px]"></div>
+                 </div>
+
+                 <div class="depoimentos-cascata-v2 relative">
+                     <div class="faixa-cascata faixa-cascata--a lg:col-span-4">
+                         <div class="trilho-cascata-v2 trilho-cascata-v2--subir">
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-cyan-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Corretora</span>
+                                     <div class="flex items-center gap-1 text-amber-400"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i></div>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Em 10 dias reduzimos mensagens sem dono. O time para de disputar lead e passa a vender com processo."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center justify-center">LG</div>
+                                         <div><p class="text-sm font-semibold text-white">Larissa Gomes</p><p class="text-xs text-zinc-500">Prime Seguros</p></div>
+                                     </div>
+                                     <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">-58% lead parado</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-emerald-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Clínica</span>
+                                     <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Quando trocou vendedor, o histórico continuou inteiro. Nenhum paciente precisou explicar tudo de novo."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center">MS</div>
+                                         <div><p class="text-sm font-semibold text-white">Marcos Silva</p><p class="text-xs text-zinc-500">Sorriso Center</p></div>
+                                     </div>
+                                     <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">continuidade 100%</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-amber-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Consórcio</span>
+                                     <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Conectamos um único número para sete pessoas. Em uma tarde já estávamos operando sem improviso."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center">RF</div>
+                                         <div><p class="text-sm font-semibold text-white">Rafael Freitas</p><p class="text-xs text-zinc-500">Nova Fase</p></div>
+                                     </div>
+                                     <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">setup em 45 min</span>
+                                 </div>
+                             </article>
+
+                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
+                                 <p class="text-sm text-zinc-300 leading-relaxed">"Em 10 dias reduzimos mensagens sem dono. O time para de disputar lead e passa a vender com processo."</p>
+                             </article>
+                         </div>
+                     </div>
+
+                     <div class="faixa-cascata faixa-cascata--b lg:col-span-4 lg:mt-8">
+                         <div class="trilho-cascata-v2 trilho-cascata-v2--descer">
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-violet-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                     <i data-lucide="bar-chart-2" class="w-4 h-4 text-violet-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Antes eu pedia planilha no fim do dia. Agora abro o painel e já sei quem precisa de apoio na hora."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center">JC</div>
+                                         <div><p class="text-sm font-semibold text-white">Juliana Costa</p><p class="text-xs text-zinc-500">Belo Horizonte Imóveis</p></div>
+                                     </div>
+                                     <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">-70% reuniões</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-rose-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Serviços</span>
+                                     <i data-lucide="clock-3" class="w-4 h-4 text-rose-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Nosso tempo de resposta despencou. O cliente percebe na primeira conversa que existe organização."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center justify-center">PA</div>
+                                         <div><p class="text-sm font-semibold text-white">Paulo Amaral</p><p class="text-xs text-zinc-500">Suporte Max</p></div>
+                                     </div>
+                                     <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">SLA em 5 min</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-blue-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Financeiro</span>
+                                     <i data-lucide="badge-percent" class="w-4 h-4 text-blue-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Escalamos o comercial sem aumentar custo por usuário. Isso mudou nosso caixa no semestre."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center">RM</div>
+                                         <div><p class="text-sm font-semibold text-white">Rogério Melo</p><p class="text-xs text-zinc-500">Credline</p></div>
+                                     </div>
+                                     <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">+130% equipe</span>
+                                 </div>
+                             </article>
+
+                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
+                                 <p class="text-sm text-zinc-300 leading-relaxed">"Antes eu pedia planilha no fim do dia. Agora abro o painel e já sei quem precisa de apoio na hora."</p>
+                             </article>
+                         </div>
+                     </div>
+
+                     <div class="faixa-cascata faixa-cascata--c lg:col-span-4 lg:mt-4">
+                         <div class="trilho-cascata-v2 trilho-cascata-v2--subir-lento">
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-emerald-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Distribuidor</span>
+                                     <i data-lucide="truck" class="w-4 h-4 text-emerald-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"O dono finalmente enxerga tudo sem interromper vendedor. A operação ficou madura de verdade."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center">EL</div>
+                                         <div><p class="text-sm font-semibold text-white">Eduardo Lima</p><p class="text-xs text-zinc-500">Nova Rota</p></div>
+                                     </div>
+                                     <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">visão em tempo real</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-amber-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                     <i data-lucide="funnel" class="w-4 h-4 text-amber-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Em duas semanas limpamos o funil. Hoje o time sabe exatamente o próximo passo para fechar."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center">RA</div>
+                                         <div><p class="text-sm font-semibold text-white">Renata Alves</p><p class="text-xs text-zinc-500">TopCar</p></div>
+                                     </div>
+                                     <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">14 dias para virar</span>
+                                 </div>
+                             </article>
+
+                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-violet-500/30 hover:-translate-y-1">
+                                 <div class="flex items-center justify-between mb-4">
+                                     <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Saúde</span>
+                                     <i data-lucide="sparkles" class="w-4 h-4 text-violet-400"></i>
+                                 </div>
+                                 <p class="text-sm leading-relaxed text-zinc-200">"Treinamos rápido, o time adotou de verdade e parou de retrabalhar atendimento."</p>
+                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
+                                     <div class="flex items-center gap-3">
+                                         <div class="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center">PN</div>
+                                         <div><p class="text-sm font-semibold text-white">Patrícia Nunes</p><p class="text-xs text-zinc-500">Vita Clinic</p></div>
+                                     </div>
+                                     <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">adoção em 1 semana</span>
+                                 </div>
+                             </article>
+
+                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
+                                 <p class="text-sm text-zinc-300 leading-relaxed">"O dono finalmente enxerga tudo sem interromper vendedor. A operação ficou madura de verdade."</p>
+                             </article>
+                         </div>
+                     </div>
+                 </div>
+
+                 <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
+                         <div class="text-2xl font-bold text-white mb-1">500+</div>
+                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">empresas ativas</div>
+                     </div>
+                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
+                         <div class="text-2xl font-bold text-white mb-1">94%</div>
+                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">retenção anual</div>
+                     </div>
+                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
+                         <div class="text-2xl font-bold text-white mb-1">340%</div>
+                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">ROI médio</div>
+                     </div>
+                 </div>
+             </div>
+        </div>
+    </section>
+
+    <!-- 10. Preço -->
+    <section class="py-32 relative bg-[#09090b]" id="preco">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Plano único e direto</h2>
+            <p class="text-lg text-zinc-400 mb-12">Sem taxa escondida. Sem cobrança por usuário.</p>
+            
+            <div class="bg-zinc-900 border border-zinc-800 rounded-[3rem] p-10 md:p-14 relative overflow-hidden shadow-2xl">
+                <!-- Highlight line -->
+                <div class="absolute top-0 inset-x-0 h-1.5 bg-violet-500"></div>
+                <!-- Soft glow -->
+                <div class="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-32 bg-violet-500/20 blur-[60px] pointer-events-none"></div>
+                
+                <div class="mb-10 relative z-10">
+                    <h3 class="text-xl font-semibold text-zinc-400 mb-6 uppercase tracking-wider">HYPE Pro</h3>
+                    <div class="flex items-baseline justify-center gap-2">
+                        <span class="text-2xl text-zinc-500 font-medium">R$</span>
+                        <span class="text-7xl font-extrabold text-white tracking-tighter">200</span>
+                        <span class="text-lg text-zinc-500 font-medium">/mês</span>
+                    </div>
+                </div>
+
+                <!-- Big highlight -->
+                <div class="bg-violet-500/10 border border-violet-500/20 py-4 px-6 rounded-2xl inline-flex items-center gap-3 mb-10 relative z-10">
+                    <i data-lucide="users" class="w-6 h-6 text-violet-400"></i>
+                    <span class="text-white font-bold text-lg tracking-tight">Usuários ilimitados inclusos</span>
+                </div>
+
+                <div class="grid sm:grid-cols-2 gap-y-5 gap-x-8 text-left mb-12 max-w-lg mx-auto relative z-10">
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-zinc-300"></i></div>
+                        <span class="text-zinc-300 text-sm font-medium">1 WhatsApp incluído</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-zinc-300"></i></div>
+                        <span class="text-zinc-300 text-sm font-medium">Atendimento centralizado</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-zinc-300"></i></div>
+                        <span class="text-zinc-300 text-sm font-medium">Metas e gestão visual</span>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-6 h-6 rounded-full bg-zinc-800 flex items-center justify-center shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-zinc-300"></i></div>
+                        <span class="text-zinc-300 text-sm font-medium">Suporte humanizado</span>
+                    </div>
+                </div>
+
+                <button class="w-full md:w-auto md:px-14 py-5 rounded-full bg-white text-zinc-950 font-bold text-lg hover:bg-zinc-200 transition-colors mb-8 relative z-10 shadow-[0_0_30px_-5px_rgba(255,255,255,0.3)]">
+                    Assinar agora
+                </button>
+
+                <div class="flex justify-center items-center gap-2 text-sm text-zinc-500 font-medium relative z-10">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i> 7 dias de garantia • Sem fidelidade
+                </div>
+            </div>
+
+            <!-- Add-on -->
+            <div class="mt-8 max-w-xl mx-auto bg-[#0c0c0e] border border-zinc-800 rounded-2xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-4 text-left">
+                    <div class="w-12 h-12 rounded-full bg-zinc-900 flex items-center justify-center shrink-0 border border-zinc-800">
+                        <i data-lucide="plus" class="w-5 h-5 text-zinc-400"></i>
+                    </div>
+                    <div>
+                        <div class="text-sm font-bold text-white mb-0.5">Precisa de mais números?</div>
+                        <div class="text-xs text-zinc-400">Adicione WhatsApps extras à sua operação.</div>
+                    </div>
+                </div>
+                <div class="text-sm font-bold text-zinc-300 bg-zinc-900 border border-zinc-800 px-4 py-2 rounded-xl whitespace-nowrap">
+                    R$ 50/mês cada
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 11. FAQ -->
+    <section class="py-32 bg-[#0c0c0e] border-t border-white/5">
+        <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl font-bold text-white mb-4 tracking-tight">Perguntas Frequentes</h2>
+            </div>
+
+            <div class="space-y-4 mb-32">
+                <details class="group bg-zinc-900/40 border border-zinc-800 rounded-2xl open:bg-zinc-900 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-white text-lg">
+                        <span>É difícil de usar?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-zinc-500"></i></span>
+                    </summary>
+                    <div class="text-zinc-400 px-6 pb-6 pt-0 text-base leading-relaxed">
+                        Não. O HYPE foi desenhado para ser intuitivo. Sem jargões em inglês ou excesso de menus. Se você sabe usar o WhatsApp, vai saber usar o HYPE.
+                    </div>
+                </details>
+                <details class="group bg-zinc-900/40 border border-zinc-800 rounded-2xl open:bg-zinc-900 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-white text-lg">
+                        <span>Quantas pessoas podem acessar?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-zinc-500"></i></span>
+                    </summary>
+                    <div class="text-zinc-400 px-6 pb-6 pt-0 text-base leading-relaxed">
+                        Usuários ilimitados. Você não paga a mais para adicionar novos vendedores ou atendentes na sua equipe. O valor é fixo.
+                    </div>
+                </details>
+                <details class="group bg-zinc-900/40 border border-zinc-800 rounded-2xl open:bg-zinc-900 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-white text-lg">
+                        <span>Em quanto tempo começo a usar?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-zinc-500"></i></span>
+                    </summary>
+                    <div class="text-zinc-400 px-6 pb-6 pt-0 text-base leading-relaxed">
+                        Imediatamente. Após criar a conta, você cadastra sua equipe, lê o QR Code do seu WhatsApp e já pode começar a atender.
+                    </div>
+                </details>
+                <details class="group bg-zinc-900/40 border border-zinc-800 rounded-2xl open:bg-zinc-900 transition-colors">
+                    <summary class="flex justify-between items-center font-semibold cursor-pointer list-none p-6 text-white text-lg">
+                        <span>Tem fidelidade? E se eu não gostar?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-zinc-500"></i></span>
+                    </summary>
+                    <div class="text-zinc-400 px-6 pb-6 pt-0 text-base leading-relaxed">
+                        Sem contrato de fidelidade. Você pode cancelar quando quiser. Além disso, oferecemos 7 dias de garantia: se não gostar, devolvemos seu dinheiro.
+                    </div>
+                </details>
+            </div>
+
+            <!-- Final CTA -->
+            <div class="bg-violet-600 rounded-[3rem] p-12 md:p-20 text-center relative overflow-hidden shadow-2xl">
+                <!-- Background Pattern -->
+                <div class="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml,%3Csvg width=\'20\' height=\'20\' viewBox=\'0 0 20 20\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'%23ffffff\' fill-opacity=\'1\' fill-rule=\'evenodd\'%3E%3Ccircle cx=\'3\' cy=\'3\' r=\'3\'/%3E%3Ccircle cx=\'13\' cy=\'13\' r=\'3\'/%3E%3C/g%3E%3C/svg%3E')]"></div>
+                
+                <div class="relative z-10">
+                    <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Se o seu atendimento já acontece no WhatsApp...</h2>
+                    <p class="text-violet-200 text-xl mb-10 font-medium">Falta só organizar isso do jeito certo.</p>
+                    <a href="#preco" class="inline-block px-12 py-5 rounded-full bg-white text-zinc-950 font-bold text-lg hover:bg-zinc-100 transition-colors shadow-xl">
+                        Começar agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-12 bg-[#09090b] border-t border-white/5 text-center text-zinc-600 text-sm">
+        <div class="flex items-center justify-center gap-2 mb-6">
+            <div class="w-8 h-8 rounded-lg bg-zinc-900 border border-zinc-800 flex items-center justify-center">
+                <i data-lucide="zap" class="w-4 h-4 text-zinc-500"></i>
+            </div>
+            <span class="font-bold text-zinc-400 tracking-tight text-base">HYPE CRM</span>
+        </div>
+        <p class="font-medium">&copy; 2024 HYPE CRM. Todos os direitos reservados.</p>
+    </footer>
+
+    <script>
+        lucide.createIcons();
+
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 20) {
+                nav.classList.add('bg-[#09090b]/80', 'shadow-lg', 'border-white/5');
+                nav.classList.remove('border-transparent');
+            } else {
+                nav.classList.remove('bg-[#09090b]/80', 'shadow-lg', 'border-white/5');
+                nav.classList.add('border-transparent');
+            }
+        });
+    </script>
+</body>
+</html>
