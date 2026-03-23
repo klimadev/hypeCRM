@@ -1,0 +1,34 @@
+    <!-- Global Background Noise -->
+    <div class="fixed inset-0 z-[-1] bg-noise"></div>
+
+    <!-- Localized Background Glows (Subtler) -->
+    <div class="fixed inset-0 z-[-2] pointer-events-none overflow-hidden">
+        <div class="absolute top-[-20%] left-[10%] w-[50%] h-[50%] rounded-full bg-violet-900/10 blur-[150px]"></div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-panel border-b border-transparent transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 rounded-lg bg-violet-600 flex items-center justify-center shadow-lg shadow-violet-500/20">
+                        <i data-lucide="zap" class="w-4 h-4 text-white"></i>
+                    </div>
+                    <span class="text-xl font-bold text-white tracking-tight">HYPE</span>
+                </div>
+                <div class="hidden md:block">
+                    <div class="ml-10 flex items-baseline space-x-8">
+                        <a href="#solucao" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Solução</a>
+                        <a href="#como-funciona" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Como Funciona</a>
+                        <a href="#beneficios" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Benefícios</a>
+                        <a href="#preco" class="text-zinc-400 hover:text-white transition-colors text-sm font-medium">Preços</a>
+                    </div>
+                </div>
+                <div>
+                    <a href="#preco" class="inline-flex items-center justify-center px-5 py-2.5 border border-transparent text-sm font-medium rounded-full text-white bg-zinc-800 hover:bg-zinc-700 transition-all duration-300 shadow-sm border-white/5">
+                        Assinar agora
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
