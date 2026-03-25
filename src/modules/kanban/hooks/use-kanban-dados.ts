@@ -18,6 +18,7 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [pdvs, setPdvs] = useState<Pdv[]>([]);
   const leadsRef = useRef<Lead[]>([]);
+  const bootstrapSeqRef = useRef(0);
 
   const {
     resumo: resumoPendencias,
@@ -31,8 +32,12 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
   const bootstrapRef = useRef<() => Promise<void> | null>(null);
 
   const bootstrap = useCallback(async () => {
+    const seq = ++bootstrapSeqRef.current;
     const { listarKanban } = await import("@/lib/api/kanban");
     const resposta = await listarKanban();
+    
+    // Ignorar resposta se um bootstrap mais recente foi iniciado
+    if (seq !== bootstrapSeqRef.current) return;
     if (!resposta.ok) return;
 
     setEstagios(resposta.dados.estagios);

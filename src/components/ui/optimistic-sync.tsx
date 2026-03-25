@@ -1,13 +1,19 @@
+"use client";
+
 import { ReactNode } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import { springs } from "@/lib/animations/springs";
 
-const optimisticSyncVariants = cva("rounded-md border border-dashed p-2 opacity-75", {
+const optimisticSyncVariants = cva(
+  "rounded-[var(--radius-control)] border border-dashed p-2 opacity-80 shadow-[var(--shadow-sm)]",
+  {
   variants: {
     variant: {
-      warning: "border-sky-300 bg-sky-50/70",
-      info: "border-sky-300 bg-sky-50/70",
-      success: "border-emerald-300 bg-emerald-50/70",
+      warning: "border-[color:rgba(245,158,11,0.32)] bg-[color:rgba(245,158,11,0.12)]",
+      info: "border-[color:rgba(56,189,248,0.32)] bg-[color:rgba(56,189,248,0.12)]",
+      success: "border-[color:rgba(16,185,129,0.32)] bg-[color:rgba(16,185,129,0.12)]",
     },
   },
   defaultVariants: {
@@ -15,12 +21,12 @@ const optimisticSyncVariants = cva("rounded-md border border-dashed p-2 opacity-
   },
 });
 
-const optimisticSyncLabelVariants = cva("mt-1 text-xs font-medium", {
+const optimisticSyncLabelVariants = cva("mt-1 text-xs font-medium tracking-[0.01em]", {
   variants: {
     variant: {
-      warning: "text-amber-700",
-      info: "text-sky-700",
-      success: "text-emerald-700",
+      warning: "text-[var(--warning)]",
+      info: "text-[var(--info)]",
+      success: "text-[var(--success)]",
     },
   },
   defaultVariants: {
@@ -42,14 +48,34 @@ export function OptimisticSync({
   label = "Sincronizando...",
   variant,
 }: OptimisticSyncProps) {
-  if (!active) {
-    return <>{children}</>;
-  }
-
   return (
-    <div className={cn(optimisticSyncVariants({ variant }), className)}>
-      {children}
-      <p className={optimisticSyncLabelVariants({ variant })}>{label}</p>
-    </div>
+    <AnimatePresence mode="wait">
+      {active ? (
+        <motion.div
+          key="optimistic"
+          className={cn(optimisticSyncVariants({ variant }), className)}
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1, transition: springs.snappy }}
+          exit={{ opacity: 0, scale: 0.98, transition: springs.stiff }}
+        >
+          {children}
+          <motion.p
+            className={optimisticSyncLabelVariants({ variant })}
+            animate={{ opacity: [0.6, 1, 0.6] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          >
+            {label}
+          </motion.p>
+        </motion.div>
+      ) : (
+        <motion.div
+          key="confirmed"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1, transition: springs.smooth }}
+        >
+          {children}
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

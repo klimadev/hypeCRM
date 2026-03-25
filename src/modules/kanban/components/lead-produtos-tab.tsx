@@ -123,18 +123,18 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
 
   if (loading) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-xl border border-slate-200 bg-white">
-        <Loader2 className="h-5 w-5 animate-spin text-slate-500" />
+      <div className="flex h-40 items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
+        <Loader2 className="h-5 w-5 animate-spin text-[var(--text-secondary)]" />
       </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800">Produtos vinculados</h3>
-          <p className="text-xs text-slate-500">Anexe templates internos com valores proprios desta negociacao.</p>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Produtos vinculados</h3>
+          <p className="text-xs text-[var(--text-secondary)]">Anexe templates internos com valores proprios desta negociacao.</p>
         </div>
         <Button type="button" onClick={abrirDialog} className="bg-emerald-600 text-white hover:bg-emerald-700">
           <PackagePlus className="mr-2 h-4 w-4" />
@@ -143,7 +143,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
       </div>
 
       {produtosLead.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500">
+        <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4 text-sm text-[var(--text-secondary)]">
           Nenhum produto anexado a este lead.
         </div>
       ) : (
@@ -151,12 +151,12 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
           const schema = parseSchemaLayout(item.schema_snapshot);
           const valoresItem = parseValoresLayout(item.valores_layout);
           return (
-            <Card key={item.id} className="shadow-sm">
+              <Card key={item.id} className="border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
               <CardContent className="space-y-3 p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <h4 className="font-semibold text-slate-800">{item.nome_snapshot}</h4>
-                    {item.observacoes ? <p className="text-sm text-slate-500">{item.observacoes}</p> : null}
+                    <h4 className="font-semibold text-[var(--text-primary)]">{item.nome_snapshot}</h4>
+                    {item.observacoes ? <p className="text-sm text-[var(--text-secondary)]">{item.observacoes}</p> : null}
                   </div>
                   <Button type="button" variant="outline" size="icon" onClick={() => void remover(item.id)} disabled={removendoId === item.id}>
                     {removendoId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-rose-600" />}
@@ -171,7 +171,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
       )}
 
       {erro ? (
-        <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
+            <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm text-[color:#fecdd3]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {erro}
@@ -188,7 +188,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
 
           <div className="space-y-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-600">Produto</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)]">Produto</label>
               <Select value={produtoSelecionadoId} onValueChange={(value) => { setProdutoSelecionadoId(value); setValores({}); }}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione um produto" />
@@ -212,7 +212,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
             ) : null}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-slate-600">Observacoes</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)]">Observacoes</label>
               <Textarea value={observacoes} onChange={(event) => setObservacoes(event.target.value)} />
             </div>
           </div>

@@ -2,20 +2,81 @@ import { NextRequest, NextResponse } from "next/server";
 import { obterSessaoNaRequest } from "@/lib/autenticacao";
 import { SessaoToken } from "@/lib/tipos";
 import { prisma } from "@/lib/prisma";
+import { calcularEstadoTrial, podeAcessarSistema, type DadosTrial } from "@/lib/trial";
 
 function isAdmin(sessao: SessaoToken) {
   return sessao.perfil === "EMPRESA";
 }
 
+export async function verificarUsuarioExiste(sessao: SessaoToken): Promise<boolean> {
+  try {
+    if (sessao.perfil === "EMPRESA") {
+      const empresa = await prisma.empresa.findUnique({
+        where: { id: sessao.id_usuario },
+        select: { id: true },
+      });
+      return empresa !== null;
+    }
+
+    const funcionario = await prisma.funcionario.findUnique({
+      where: { id: sessao.id_usuario },
+      select: { id: true, ativo: true },
+    });
+
+    return funcionario !== null && funcionario.ativo === true;
+  } catch {
+    return false;
+  }
+}
+
+export async function verificarTrialExpirado(sessao: SessaoToken): Promise<{
+  expirado: boolean;
+  dadosTrial?: ReturnType<typeof calcularEstadoTrial>;
+}> {
+  if (sessao.perfil !== "EMPRESA") {
+    return { expirado: false };
+  }
+
+  const empresa = await prisma.empresa.findUnique({
+    where: { id: sessao.id_empresa },
+    select: {
+      status_assinatura: true,
+      trial_inicio: true,
+      trial_fim: true,
+      assinatura_inicio: true,
+      assinatura_fim: true,
+      plano: true,
+    },
+  }) as unknown as DadosTrial | null;
+
+  if (!empresa) {
+    return { expirado: true };
+  }
+
+  if (!empresa) {
+    return { expirado: true };
+  }
+
+  return { expirado: !podeAcessarSistema(empresa), dadosTrial: calcularEstadoTrial(empresa) };
+}
+
 export async function exigirSessao(request: NextRequest): Promise<
   | { sessao: SessaoToken; erro: null }
-  | { sessao: null; erro: NextResponse<{ erro: string }> }
+  | { sessao: null; erro: NextResponse }
 > {
   const sessao = await obterSessaoNaRequest(request);
   if (!sessao) {
     return {
       sessao: null,
-      erro: NextResponse.json({ erro: "Nao autenticado." }, { status: 401 }),
+      erro: NextResponse.redirect(new URL("/login", request.url)),
+    };
+  }
+
+  const usuarioValido = await verificarUsuarioExiste(sessao);
+  if (!usuarioValido) {
+    return {
+      sessao: null,
+      erro: NextResponse.redirect(new URL("/login", request.url)),
     };
   }
 

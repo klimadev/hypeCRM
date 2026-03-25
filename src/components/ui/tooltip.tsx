@@ -42,8 +42,8 @@ export function Tooltip({ content, children, side = "top", delayDuration = 300 }
       {isVisible && (
         <div
           className={cn(
-            "absolute z-50 whitespace-nowrap rounded-md bg-slate-900 px-3 py-1.5 text-xs text-slate-50 shadow-lg animate-in fade-in-0 zoom-in-95",
-            positions[side]
+            "absolute z-50 whitespace-nowrap rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-glass)] px-3 py-1.5 text-[11px] font-medium text-[var(--text-primary)] shadow-[var(--shadow-overlay)] backdrop-blur-md animate-in fade-in-0 zoom-in-95",
+            positions[side],
           )}
         >
           {content}

@@ -1,5 +1,7 @@
 import { mascararTelefoneParaLog, normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 
+import { instanciaWhatsappEstaConectada, normalizarStatusInstanciaWhatsapp } from "@/lib/whatsapp-instancia-status";
+
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
 
@@ -108,8 +110,11 @@ function extrairTelefone(raw: unknown): string | null {
 }
 
 function normalizarStatusEvolution(raw: unknown): string {
-  if (typeof raw !== "string" || raw.trim().length === 0) return "unknown";
-  return raw.trim().toLowerCase();
+  if (typeof raw !== "string") {
+    return "unknown";
+  }
+
+  return normalizarStatusInstanciaWhatsapp(raw);
 }
 
 function normalizarQrCode(json: Record<string, unknown>): EvolutionQrCode | null {
@@ -166,7 +171,7 @@ export async function obterEstadoConexao(instanceName: string): Promise<Evolutio
     const data = (json.instance ?? json) as Record<string, unknown>;
     const status = normalizarStatusEvolution(data.state ?? data.status ?? json.state ?? json.status);
     const phoneNumber = extrairTelefone(data.owner ?? data.phoneNumber ?? json.owner ?? json.phoneNumber);
-    const connected = status === "open" || status === "connected" || phoneNumber !== null;
+    const connected = instanciaWhatsappEstaConectada({ status, phone: phoneNumber });
 
     return {
       instanceName:

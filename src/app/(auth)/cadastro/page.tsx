@@ -42,7 +42,8 @@ export default function PaginaCadastroEmpresa() {
     if (!resposta.ok) {
       const erroApi = (json as { erro?: string }).erro;
       const mensagem = erroApi
-        ?? (resposta.status === 409 ? "Este e-mail ja esta cadastrado."
+        ?? (resposta.status === 409 ? "Este e-mail ja esta cadastrado ou possui um trial."
+        : resposta.status === 429 ? "Muitas contas foram criadas nesta rede. Tente mais tarde ou use outro endereco."
         : resposta.status === 0 ? "Servidor indisponivel. Tente mais tarde."
         : "Falha ao criar conta. Tente novamente.");
       setErro(mensagem);
@@ -50,41 +51,57 @@ export default function PaginaCadastroEmpresa() {
       return;
     }
 
-setErro(null);
+    setErro(null);
     setCarregando(false);
     addToast({ type: "success", title: "Conta criada com sucesso!" });
     router.push("/resumo");
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <section className="w-full max-w-md rounded-xl border border-sky-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold">Criar conta da empresa</h1>
-        <p className="mt-1 text-sm text-sky-500">Ao cadastrar, o funil inicial sera criado automaticamente.</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--background)] px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(16,185,129,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.14),transparent_30%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-noise opacity-60" />
+      <section className="glass-panel relative w-full max-w-md rounded-[var(--radius-shell)] border border-[var(--border-subtle)] px-6 py-6 shadow-[var(--shadow-overlay)] md:px-7">
+        <div className="mb-6 space-y-3">
+          <span className="inline-flex rounded-full border border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--success)]">
+            Trial onboarding
+          </span>
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Criar conta da empresa</h1>
+            <p className="text-sm leading-6 text-[var(--text-secondary)]">Ao cadastrar, o funil inicial sera criado automaticamente.</p>
+          </div>
+        </div>
 
         <form className="mt-6 space-y-4" onSubmit={aoCadastrar}>
           <div>
-            <label className="mb-1 block text-sm font-medium">Nome da empresa</label>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Nome da empresa</label>
             <Input name="nome" required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">E-mail</label>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">E-mail</label>
             <Input name="email" type="email" required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Senha</label>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Senha</label>
             <Input name="senha" type="password" minLength={6} required />
           </div>
 
-          {erro ? <p className="text-sm text-red-600">{erro}</p> : null}
+          {erro ? (
+            <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] px-3 py-2 text-sm text-[var(--danger)]">
+              {erro}
+            </p>
+          ) : null}
 
           <Button className="w-full" disabled={carregando}>
             {carregando ? "Criando..." : "Criar conta"}
           </Button>
         </form>
 
-        <p className="mt-4 text-sm text-sky-600">
-          Ja possui conta? <a className="font-medium underline" href="/login">Fazer login</a>
+        <p className="mt-5 text-sm text-[var(--text-secondary)]">
+          Ja possui conta?{" "}
+          <a className="font-medium text-[var(--brand)] underline decoration-[color:rgba(139,92,246,0.4)] underline-offset-4" href="/login">
+            Fazer login
+          </a>
         </p>
       </section>
     </main>

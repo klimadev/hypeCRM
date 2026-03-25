@@ -12,18 +12,18 @@ export function RecebimentosHeader({ quantidadeMonitoradas, temFiltrosAtivos }: 
     <ModulePageHeader
       title="Recebimentos"
       subtitle="Acompanhe o que entrou, o que vence e o que exige acao agora em toda a empresa."
-      iconTone="emerald"
+      iconTone="blue"
       icon={<WalletCards className="h-6 w-6" />}
       badges={[
-        <Badge key="monitorados" className="rounded-full border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-50">
+        <Badge key="monitorados" variant="success">
           {quantidadeMonitoradas} parcelas monitoradas
         </Badge>,
         temFiltrosAtivos ? (
-          <Badge key="filtros" className="rounded-full border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-50">
+          <Badge key="filtros" variant="warning">
             filtros ativos
           </Badge>
         ) : (
-          <Badge key="geral" className="rounded-full border-cyan-200 bg-cyan-50 text-cyan-700 hover:bg-cyan-50">
+          <Badge key="geral" variant="info">
             visao geral da operacao
           </Badge>
         ),

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ensureSqliteOptimizations, prisma } from "@/lib/prisma";
 import { exigirSessao, podeVerEquipe, respostaSemPermissao } from "@/lib/permissoes";
+import { instanciaWhatsappEstaConectada } from "@/lib/whatsapp-instancia-status";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
@@ -22,6 +23,7 @@ export async function GET(request: NextRequest) {
     select: {
       id: true,
       instance_name: true,
+      phone: true,
       status: true,
     },
   });
@@ -52,19 +54,23 @@ export async function GET(request: NextRequest) {
     );
 
     let statusFinal = inst.status;
+    let phoneFinal = inst.phone;
+
     if (instanciaApi) {
       const estado = (instanciaApi.connectionStatus as string) ?? "unknown";
       statusFinal = estado;
+      phoneFinal = (instanciaApi.ownerJid as string)?.replace("@s.whatsapp.net", "") ?? inst.phone;
     }
 
     // Considerar ativa se o status for "open" ou "connected"
-    const isAtiva = statusFinal === "open" || statusFinal === "connected";
+    const isAtiva = instanciaWhatsappEstaConectada({ status: statusFinal, phone: phoneFinal });
     if (isAtiva) {
       ativas += 1;
     }
 
     return {
-      ...inst,
+      id: inst.id,
+      instance_name: inst.instance_name,
       status: statusFinal,
     };
   });

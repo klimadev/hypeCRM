@@ -1,218 +1,415 @@
-    <!-- 9. Prova Social (Waterfall) -->
-    <section class="py-32 bg-[#0c0c0e] border-t border-white/5">
+    <!-- 9. Prova Social (Carrossel Lateral) -->
+    <style>
+        .carrossel-lateral {
+            overflow: hidden;
+            padding: 1.5rem 0;
+            mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+            -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+        }
+
+        .faixa-lateral {
+            display: flex;
+            gap: 1rem;
+            width: max-content;
+        }
+
+        .faixa-lateral--esquerda {
+            animation: scroll-esquerda 35s linear infinite;
+        }
+
+        .faixa-lateral--direita {
+            animation: scroll-direita 40s linear infinite;
+        }
+
+        .carrossel-lateral:hover .faixa-lateral {
+            animation-play-state: paused;
+        }
+
+        @keyframes scroll-esquerda {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(-50%); }
+        }
+
+        @keyframes scroll-direita {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        .card-segmento {
+            flex-shrink: 0;
+            width: 280px;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-segmento:hover {
+            transform: translateY(-4px) scale(1.02);
+        }
+
+        .card-segmento:hover .card-glow {
+            opacity: 1;
+        }
+
+        .card-glow {
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+    </style>
+    <section class="py-28 bg-[#09090b]" id="prova-social">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-20">
-                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Quem usa, sente o alívio na operação</h2>
+                <h2 class="text-3xl md:text-5xl font-bold text-white mb-6 tracking-tight">Feito para times que vendem, não para quem faz planilha</h2>
+                <p class="text-zinc-400 text-base md:text-lg max-w-2xl mx-auto">Organize atendimento, acompanhe resultados e cresça sem pagar por usuário extra.</p>
             </div>
 
-            <!-- Featured Case (Editorial Style) -->
-            <div class="max-w-4xl mx-auto bg-zinc-900/60 border border-zinc-800 p-10 md:p-14 rounded-[2.5rem] mb-16 relative overflow-hidden">
+            <!-- Featured Case -->
+            <div class="max-w-4xl mx-auto bg-zinc-900/60 border border-zinc-800 p-8 md:p-12 rounded-[2.5rem] mb-16 relative overflow-hidden">
                 <div class="absolute top-0 right-0 p-8 opacity-10">
                     <i data-lucide="quote" class="w-32 h-32 text-white"></i>
                 </div>
                 
                 <div class="flex items-center gap-5 mb-10 pb-8 border-b border-zinc-800 relative z-10">
-                    <div class="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700">C</div>
+                    <div class="w-14 h-14 rounded-full bg-zinc-800 flex items-center justify-center text-white font-bold text-xl border border-zinc-700">
+                        <i data-lucide="building-2" class="w-7 h-7"></i>
+                    </div>
                     <div>
-                        <div class="text-white font-bold text-xl mb-1">Operação de Consórcios</div>
-                        <div class="text-sm text-zinc-400 font-medium">Equipe de 8 vendedores</div>
+                        <div class="text-white font-bold text-xl mb-1">Clínica médica</div>
+                        <div class="text-sm text-zinc-400 font-medium">Setor de saúde com equipe multiprofissional</div>
                     </div>
                 </div>
                 
                 <div class="grid md:grid-cols-2 gap-10 relative z-10">
                     <div>
-                        <div class="text-red-400/80 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-down-right" class="w-4 h-4"></i> Antes</div>
-                        <p class="text-zinc-400 text-base leading-relaxed">"A gente usava um sistema antigo que era lento e complexo. Os leads se perdiam no WhatsApp pessoal dos vendedores e eu como gestor não via nada. Era um voo cego."</p>
+                        <div class="text-red-400/80 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-down-right" class="w-4 h-4"></i> Desafio</div>
+                        <p class="text-zinc-400 text-base leading-relaxed">"Cada médico tinha seu próprio fluxo de pacientes. Quando alguém faltava ou trocava de horário, o histórico se perdia. O paciente precisava explicar tudo novamente."</p>
                     </div>
                     <div>
-                        <div class="text-emerald-400 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-up-right" class="w-4 h-4"></i> Depois do HYPE</div>
-                        <p class="text-white text-base leading-relaxed font-medium">"O atendimento ficou muito mais rápido. Agora eu acompanho a operação em tempo real e a organização das etapas de venda é total. Mudou o jogo da equipe."</p>
+                        <div class="text-emerald-400 font-semibold text-sm mb-4 flex items-center gap-2 uppercase tracking-wide"><i data-lucide="arrow-up-right" class="w-4 h-4"></i> Com o HYPE</div>
+                        <p class="text-white text-base leading-relaxed font-medium">"Hoje o histórico é unificado. Quando trocam de profissional, tudo continua intacto. O paciente percebe a organização na primeira consulta."</p>
                     </div>
                 </div>
             </div>
 
-             <!-- Waterfall Testimonials (novo estilo em cascata) -->
-             <div class="relative">
-                 <div class="pointer-events-none absolute inset-0">
-                     <div class="absolute top-6 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-cyan-500/10 blur-[90px]"></div>
-                     <div class="absolute bottom-6 left-1/2 -translate-x-1/2 w-[70%] h-24 bg-emerald-500/10 blur-[90px]"></div>
-                 </div>
+            <!-- Carrossel Lateral -->
+            <div class="mb-16">
+                <!-- Linha 1: Esquerda -->
+                <div class="carrossel-lateral">
+                    <div class="faixa-lateral faixa-lateral--esquerda">
+                        <!-- Card 1 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="key" class="w-4 h-4 text-cyan-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Um único número para toda a equipe. O cliente nunca mais caiu em buraco negro."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">visão 360°</span>
+                            </div>
+                        </article>
 
-                 <div class="depoimentos-cascata-v2 relative">
-                     <div class="faixa-cascata faixa-cascata--a lg:col-span-4">
-                         <div class="trilho-cascata-v2 trilho-cascata-v2--subir">
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-cyan-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Corretora</span>
-                                     <div class="flex items-center gap-1 text-amber-400"><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i><i data-lucide="star" class="w-3.5 h-3.5 fill-current"></i></div>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Em 10 dias reduzimos mensagens sem dono. O time para de disputar lead e passa a vender com processo."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-bold flex items-center justify-center">LG</div>
-                                         <div><p class="text-sm font-semibold text-white">Larissa Gomes</p><p class="text-xs text-zinc-500">Prime Seguros</p></div>
-                                     </div>
-                                     <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">-58% lead parado</span>
-                                 </div>
-                             </article>
+                        <!-- Card 2 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="heart-handshake" class="w-4 h-4 text-emerald-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Setup com QR Code. Em uma tarde já estávamos operando sem help desk."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">45 min setup</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-emerald-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Clínica</span>
-                                     <i data-lucide="shield-check" class="w-4 h-4 text-emerald-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Quando trocou vendedor, o histórico continuou inteiro. Nenhum paciente precisou explicar tudo de novo."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center">MS</div>
-                                         <div><p class="text-sm font-semibold text-white">Marcos Silva</p><p class="text-xs text-zinc-500">Sorriso Center</p></div>
-                                     </div>
-                                     <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">continuidade 100%</span>
-                                 </div>
-                             </article>
+                        <!-- Card 3 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="car" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"O funil ficou claro. O time sabe exatamente o próximo passo para fechar."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">14 dias adoção</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-amber-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Consórcio</span>
-                                     <i data-lucide="zap" class="w-4 h-4 text-amber-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Conectamos um único número para sete pessoas. Em uma tarde já estávamos operando sem improviso."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center">RF</div>
-                                         <div><p class="text-sm font-semibold text-white">Rafael Freitas</p><p class="text-xs text-zinc-500">Nova Fase</p></div>
-                                     </div>
-                                     <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">setup em 45 min</span>
-                                 </div>
-                             </article>
+                        <!-- Card 4 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="chart-line" class="w-4 h-4 text-violet-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Abro o painel e já sei quem precisa de apoio. Sem pedir planilha no fim do dia."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">tempo real</span>
+                            </div>
+                        </article>
 
-                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
-                                 <p class="text-sm text-zinc-300 leading-relaxed">"Em 10 dias reduzimos mensagens sem dono. O time para de disputar lead e passa a vender com processo."</p>
-                             </article>
-                         </div>
-                     </div>
+                        <!-- Card 5 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="clock" class="w-4 h-4 text-rose-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Tempo de resposta despencou. O cliente percebe organização na primeira conversa."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">SLA &lt; 5 min</span>
+                            </div>
+                        </article>
 
-                     <div class="faixa-cascata faixa-cascata--b lg:col-span-4 lg:mt-8">
-                         <div class="trilho-cascata-v2 trilho-cascata-v2--descer">
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-violet-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Imobiliária</span>
-                                     <i data-lucide="bar-chart-2" class="w-4 h-4 text-violet-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Antes eu pedia planilha no fim do dia. Agora abro o painel e já sei quem precisa de apoio na hora."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center">JC</div>
-                                         <div><p class="text-sm font-semibold text-white">Juliana Costa</p><p class="text-xs text-zinc-500">Belo Horizonte Imóveis</p></div>
-                                     </div>
-                                     <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">-70% reuniões</span>
-                                 </div>
-                             </article>
+                        <!-- Card 6 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="gauge" class="w-4 h-4 text-blue-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Escalamos o comercial sem aumentar custo por usuário. Impacto direto no caixa."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">+130% equipe</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-rose-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Serviços</span>
-                                     <i data-lucide="clock-3" class="w-4 h-4 text-rose-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Nosso tempo de resposta despencou. O cliente percebe na primeira conversa que existe organização."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold flex items-center justify-center">PA</div>
-                                         <div><p class="text-sm font-semibold text-white">Paulo Amaral</p><p class="text-xs text-zinc-500">Suporte Max</p></div>
-                                     </div>
-                                     <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">SLA em 5 min</span>
-                                 </div>
-                             </article>
+                        <!-- Duplicatas para loop infinito -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="key" class="w-4 h-4 text-cyan-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Um único número para toda a equipe. O cliente nunca mais caiu em buraco negro."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">visão 360°</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-blue-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Financeiro</span>
-                                     <i data-lucide="badge-percent" class="w-4 h-4 text-blue-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Escalamos o comercial sem aumentar custo por usuário. Isso mudou nosso caixa no semestre."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-bold flex items-center justify-center">RM</div>
-                                         <div><p class="text-sm font-semibold text-white">Rogério Melo</p><p class="text-xs text-zinc-500">Credline</p></div>
-                                     </div>
-                                     <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">+130% equipe</span>
-                                 </div>
-                             </article>
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="heart-handshake" class="w-4 h-4 text-emerald-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Setup com QR Code. Em uma tarde já estávamos operando sem help desk."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">45 min setup</span>
+                            </div>
+                        </article>
 
-                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
-                                 <p class="text-sm text-zinc-300 leading-relaxed">"Antes eu pedia planilha no fim do dia. Agora abro o painel e já sei quem precisa de apoio na hora."</p>
-                             </article>
-                         </div>
-                     </div>
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="car" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"O funil ficou claro. O time sabe exatamente o próximo passo para fechar."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">14 dias adoção</span>
+                            </div>
+                        </article>
 
-                     <div class="faixa-cascata faixa-cascata--c lg:col-span-4 lg:mt-4">
-                         <div class="trilho-cascata-v2 trilho-cascata-v2--subir-lento">
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-emerald-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Distribuidor</span>
-                                     <i data-lucide="truck" class="w-4 h-4 text-emerald-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"O dono finalmente enxerga tudo sem interromper vendedor. A operação ficou madura de verdade."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 text-xs font-bold flex items-center justify-center">EL</div>
-                                         <div><p class="text-sm font-semibold text-white">Eduardo Lima</p><p class="text-xs text-zinc-500">Nova Rota</p></div>
-                                     </div>
-                                     <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">visão em tempo real</span>
-                                 </div>
-                             </article>
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="chart-line" class="w-4 h-4 text-violet-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Abro o painel e já sei quem precisa de apoio. Sem pedir planilha no fim do dia."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">tempo real</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-amber-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
-                                     <i data-lucide="funnel" class="w-4 h-4 text-amber-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Em duas semanas limpamos o funil. Hoje o time sabe exatamente o próximo passo para fechar."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 text-amber-300 text-xs font-bold flex items-center justify-center">RA</div>
-                                         <div><p class="text-sm font-semibold text-white">Renata Alves</p><p class="text-xs text-zinc-500">TopCar</p></div>
-                                     </div>
-                                     <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">14 dias para virar</span>
-                                 </div>
-                             </article>
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="clock" class="w-4 h-4 text-rose-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Tempo de resposta despencou. O cliente percebe organização na primeira conversa."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">SLA &lt; 5 min</span>
+                            </div>
+                        </article>
 
-                             <article class="group rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5 transition-all duration-300 hover:border-violet-500/30 hover:-translate-y-1">
-                                 <div class="flex items-center justify-between mb-4">
-                                     <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Saúde</span>
-                                     <i data-lucide="sparkles" class="w-4 h-4 text-violet-400"></i>
-                                 </div>
-                                 <p class="text-sm leading-relaxed text-zinc-200">"Treinamos rápido, o time adotou de verdade e parou de retrabalhar atendimento."</p>
-                                 <div class="mt-4 pt-4 border-t border-zinc-800 flex items-center justify-between">
-                                     <div class="flex items-center gap-3">
-                                         <div class="w-9 h-9 rounded-xl bg-violet-500/15 border border-violet-500/30 text-violet-300 text-xs font-bold flex items-center justify-center">PN</div>
-                                         <div><p class="text-sm font-semibold text-white">Patrícia Nunes</p><p class="text-xs text-zinc-500">Vita Clinic</p></div>
-                                     </div>
-                                     <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">adoção em 1 semana</span>
-                                 </div>
-                             </article>
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="gauge" class="w-4 h-4 text-blue-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Escalamos o comercial sem aumentar custo por usuário. Impacto direto no caixa."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">+130% equipe</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
 
-                             <article class="rounded-[1.35rem] border border-zinc-800/90 bg-zinc-900/75 p-5">
-                                 <p class="text-sm text-zinc-300 leading-relaxed">"O dono finalmente enxerga tudo sem interromper vendedor. A operação ficou madura de verdade."</p>
-                             </article>
-                         </div>
-                     </div>
-                 </div>
+                <!-- Linha 2: Direita (invertido) -->
+                <div class="carrossel-lateral mt-4">
+                    <div class="faixa-lateral faixa-lateral--direita">
+                        <!-- Card 7 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"O dono finalmente enxerga tudo sem interromper vendedor. Operação madura."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">visão completa</span>
+                            </div>
+                        </article>
 
-                 <div class="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-4">
-                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
-                         <div class="text-2xl font-bold text-white mb-1">500+</div>
-                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">empresas ativas</div>
-                     </div>
-                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
-                         <div class="text-2xl font-bold text-white mb-1">94%</div>
-                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">retenção anual</div>
-                     </div>
-                     <div class="rounded-2xl border border-zinc-800 bg-zinc-900/60 p-4 text-center">
-                         <div class="text-2xl font-bold text-white mb-1">340%</div>
-                         <div class="text-xs uppercase tracking-[0.16em] text-zinc-500">ROI médio</div>
-                     </div>
-                 </div>
-             </div>
+                        <!-- Card 8 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Em duas semanas limpamos o funil. Time sabe o próximo passo para fechar."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">2 semanas</span>
+                            </div>
+                        </article>
+
+                        <!-- Card 9 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="rocket" class="w-4 h-4 text-violet-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Treinamos rápido, time adotou de verdade. Parou de retrabalhar atendimento."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">adoção 1 semana</span>
+                            </div>
+                        </article>
+
+                        <!-- Card 10 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="home" class="w-4 h-4 text-cyan-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Um único número para sete corretores. Nenhum lead se perdeu."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">continuidade</span>
+                            </div>
+                        </article>
+
+                        <!-- Card 11 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="calendar" class="w-4 h-4 text-rose-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Quando trocou profissional, o histórico continuou inteiro. Nenhum paciente precisou explicar tudo de novo."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">histórico 100%</span>
+                            </div>
+                        </article>
+
+                        <!-- Card 12 -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Crescemos 3x sem aumentar custo por usuário. O caixa agradeceu."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">escala zero</span>
+                            </div>
+                        </article>
+
+                        <!-- Duplicatas -->
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="eye" class="w-4 h-4 text-emerald-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"O dono finalmente enxerga tudo sem interromper vendedor. Operação madura."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-emerald-300 bg-emerald-500/10 border border-emerald-500/20 rounded-full px-3 py-1">visão completa</span>
+                            </div>
+                        </article>
+
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-amber-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="target" class="w-4 h-4 text-amber-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Em duas semanas limpamos o funil. Time sabe o próximo passo para fechar."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-full px-3 py-1">2 semanas</span>
+                            </div>
+                        </article>
+
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-violet-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="rocket" class="w-4 h-4 text-violet-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Treinamos rápido, time adotou de verdade. Parou de retrabalhar atendimento."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-violet-300 bg-violet-500/10 border border-violet-500/20 rounded-full px-3 py-1">adoção 1 semana</span>
+                            </div>
+                        </article>
+
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-cyan-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">Imobiliária</span>
+                                <i data-lucide="home" class="w-4 h-4 text-cyan-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Um único número para sete corretores. Nenhum lead se perdeu."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 rounded-full px-3 py-1">continuidade</span>
+                            </div>
+                        </article>
+
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-rose-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">Clínica</span>
+                                <i data-lucide="calendar" class="w-4 h-4 text-rose-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Quando trocou profissional, o histórico continuou inteiro. Nenhum paciente precisou explicar tudo de novo."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-rose-300 bg-rose-500/10 border border-rose-500/20 rounded-full px-3 py-1">histórico 100%</span>
+                            </div>
+                        </article>
+
+                        <article class="card-segmento rounded-2xl border border-zinc-800/90 bg-zinc-900/75 p-5 relative overflow-hidden">
+                            <div class="card-glow absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent pointer-events-none"></div>
+                            <div class="flex items-center justify-between mb-3 relative z-10">
+                                <span class="text-[11px] uppercase tracking-[0.18em] text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">Automotivo</span>
+                                <i data-lucide="users" class="w-4 h-4 text-blue-400"></i>
+                            </div>
+                            <p class="text-sm leading-relaxed text-zinc-200 mb-4 relative z-10">"Crescemos 3x sem aumentar custo por usuário. O caixa agradeceu."</p>
+                            <div class="pt-3 border-t border-zinc-800 flex items-center justify-between relative z-10">
+                                <span class="text-xs text-blue-300 bg-blue-500/10 border border-blue-500/20 rounded-full px-3 py-1">escala zero</span>
+                            </div>
+                        </article>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Diferenciais -->
+            <div class="flex flex-wrap justify-center gap-3 text-sm text-zinc-300">
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> 7 dias de garantia</span>
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Sem fidelidade</span>
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Setup em 45 minutos</span>
+                <span class="inline-flex items-center gap-2 rounded-full border border-zinc-800 bg-zinc-900/60 px-4 py-2"><i data-lucide="check" class="w-4 h-4 text-emerald-400"></i> Sem custo por usuário</span>
+            </div>
         </div>
     </section>

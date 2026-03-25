@@ -1,6 +1,6 @@
 "use client";
 
-import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import type { TooltipRenderProps } from "@/modules/onboarding/types";
 
 export function OnboardingTooltip({
@@ -14,60 +14,65 @@ export function OnboardingTooltip({
 }: TooltipRenderProps) {
   return (
     <div
-      className="w-[min(92vw,420px)] rounded-2xl border border-slate-200 bg-white p-6 text-slate-900 shadow-[0_25px_50px_-12px_rgba(0,0,0,0.25)]"
+      className="relative w-[min(92vw,420px)] overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] text-[var(--text-primary)] shadow-[var(--shadow-overlay)]"
       role="dialog"
       aria-modal="true"
       aria-labelledby="tour-title"
       aria-describedby="tour-description"
     >
-      <div className="space-y-3">
-        <p id="tour-title" className="text-xl font-bold leading-tight text-slate-900">
-          {step.title}
-        </p>
-        <p id="tour-description" className="text-base leading-relaxed text-slate-700">
-          {step.content}
-        </p>
-      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.06),transparent_28%)]" />
 
-      <div className="mt-6 flex items-center justify-between gap-4 border-t border-slate-200 pt-4">
-        <div className="text-sm font-medium text-slate-500" aria-live="polite">
-          <span className="sr-only">Passo </span>
-          {index + 1} de {size}
+      <div className="relative p-6">
+        <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[color:rgba(139,92,246,0.2)] bg-[color:rgba(139,92,246,0.12)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--brand)]">
+          Tour guiado
+        </div>
+        <div className="space-y-3">
+          <p id="tour-title" className="text-lg font-semibold leading-tight tracking-tight text-[var(--text-primary)]">
+            {step.title}
+          </p>
+          <p id="tour-description" className="text-sm leading-relaxed text-[var(--text-secondary)]">
+            {step.content}
+          </p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={onSkip}
-            className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-            aria-label="Pular tour"
-          >
-            Pular
-          </button>
+        <div className="relative mt-6 flex items-center justify-between gap-4 border-t border-[var(--border-subtle)] pt-4">
+          <div className="text-sm font-medium text-[var(--text-tertiary)]" aria-live="polite">
+            <span className="sr-only">Passo </span>
+            {index + 1} de {size}
+          </div>
 
-          {index > 0 ? (
-            <button
+          <div className="flex items-center gap-2">
+            <Button
               type="button"
-              onClick={onPrev}
-              className="rounded-lg px-4 py-2.5 text-sm font-semibold text-slate-600 transition-all duration-200 hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400 focus-visible:ring-offset-2"
-              aria-label="Voltar para passo anterior"
+              onClick={onSkip}
+              variant="outline"
+              size="sm"
+              aria-label="Pular tour"
             >
-              Voltar
-            </button>
-          ) : null}
+              Pular
+            </Button>
 
-          <button
-            type="button"
-            onClick={onNext}
-            className={cn(
-              "rounded-lg px-5 py-2.5 text-sm font-bold text-white shadow-sm transition-all duration-200",
-              "bg-indigo-600 hover:bg-indigo-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2",
-              "active:bg-indigo-700",
-            )}
-            aria-label={isLastStep ? "Concluir tour" : "Avançar para próximo passo"}
-          >
-            {isLastStep ? "Concluir" : "Continuar"}
-          </button>
+            {index > 0 ? (
+              <Button
+                type="button"
+                onClick={onPrev}
+                variant="outline"
+                size="sm"
+                aria-label="Voltar para passo anterior"
+              >
+                Voltar
+              </Button>
+            ) : null}
+
+            <Button
+              type="button"
+              onClick={onNext}
+              size="sm"
+              aria-label={isLastStep ? "Concluir tour" : "Avançar para próximo passo"}
+            >
+              {isLastStep ? "Concluir" : "Continuar"}
+            </Button>
+          </div>
         </div>
       </div>
     </div>

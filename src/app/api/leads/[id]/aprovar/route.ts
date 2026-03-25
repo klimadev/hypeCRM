@@ -5,13 +5,9 @@
  * 
  * Esta rota será removida em versões futuras.
  */
-import { NextRequest } from "next/server";
 
-type Params = {
-  params: Promise<{ id: string }>;
-};
 
-export async function POST(request: NextRequest, { params }: Params) {
+export async function POST() {
   // Rota descontinuada - retorna 410 Gone
   return new Response(
     JSON.stringify({

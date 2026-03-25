@@ -8,21 +8,29 @@ datasource db {
 }
 
 model Empresa {
-  id            String         @id @default(uuid())
-  nome          String
-  email         String         @unique
-  senha_hash    String
-  criado_em     DateTime       @default(now())
-  atualizado_em DateTime       @default(now()) @updatedAt
-  estagios      EstagioFunil[]
-  funcionarios  Funcionario[]
-  leads         Lead[]
-  metas         Meta[]
-  metasProgresso MetaProgresso[]
-  produtos      Produto[]
-  leads_produto LeadProduto[]
-  pdvs          Pdv[]
-  parcelas      Parcela[]
+  id                String         @id @default(uuid())
+  nome              String
+  email             String         @unique
+  senha_hash        String
+  criado_em         DateTime       @default(now())
+  atualizado_em     DateTime       @default(now()) @updatedAt
+  status_assinatura String         @default("TRIAL")
+  trial_inicio      DateTime       @default(now())
+  trial_fim         DateTime?
+  assinatura_inicio DateTime?
+  assinatura_fim    DateTime?
+  plano             String         @default("trial")
+  estagios          EstagioFunil[]
+  funcionarios      Funcionario[]
+  leads             Lead[]
+  metas             Meta[]
+  metasProgresso    MetaProgresso[]
+  produtos          Produto[]
+  leads_produto     LeadProduto[]
+  pdvs              Pdv[]
+  parcelas          Parcela[]
+  automacoes        Automacao[]
+  registros_ip      RegistroIP[]
 }
 
 model Pdv {
@@ -118,6 +126,7 @@ model Lead {
   id_estagio              String
   nome                    String
   telefone                String
+  email                   String?
   valor_oportunidade      Float              @default(0)
   probabilidade           Float             @default(0.5)  // 0-100%
   fonte                   String?            // De onde veio o lead
@@ -139,10 +148,13 @@ model Lead {
   pendencias              Pendencia[]
   parcelas                Parcela[]
   whatsapp_mensagens      WhatsappMensagem[]
+  estagio_logs            LeadEstagioLog[]
+  automacao_agendamentos  AutomacaoAgendamento[]
 
   @@index([id_empresa])
   @@index([id_funcionario])
   @@index([id_estagio])
+  @@index([id_empresa, email])
 }
 
 model Produto {
@@ -278,6 +290,7 @@ model WhatsappInstancia {
   profile_pic   String?
   mensagens     WhatsappMensagem[]
   pdvs          Pdv[]
+  automacao_acoes AutomacaoAcao[]
 
   @@index([id_empresa])
   @@index([id_criador])
@@ -314,85 +327,109 @@ model WhatsappMensagem {
   @@index([id_empresa, remote_jid])
 }
 
-model WhatsappAutomacao {
-  id                          String                         @id @default(uuid())
-  id_empresa                  String
-  id_whatsapp_instancia       String
-  evento                      String
-  id_estagio_destino          String?
-  tipo_destino                String                         @default("FIXO")
-  telefone_destino            String?
-  mensagem                    String?
-  ativo                       Boolean                        @default(true)
-  horario_raw                 String?
-  horario_normalizado         String?
-  timezone                    String                         @default("America/Sao_Paulo")
-  status                      String                         @default("ATIVA")
-  job_id                      String?
-  job_status                  String?
-  ultima_sincronizacao_job_em DateTime?
-  ultima_execucao_em          DateTime?
-  proxima_execucao_em         DateTime?
-  deleted_at                  DateTime?
-  criado_em                   DateTime                       @default(now())
-  atualizado_em               DateTime                       @default(now()) @updatedAt
-  delay_minutos               Int?
-  agendamentos                WhatsappAutomacaoAgendamento[]
-  etapas                      WhatsappAutomacaoEtapa[]
+model CalComInstancia {
+  id            String    @id @default(uuid())
+  id_empresa    String
+  id_criador    String
+  nome          String
+  api_key       String
+  status        String    @default("pending")
+  profile_name  String?
+  profile_email String?
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @default(now()) @updatedAt
 
+  @@index([id_empresa])
   @@index([id_empresa, status])
-  @@index([id_empresa, deleted_at])
-  @@index([id_whatsapp_instancia])
-  @@index([evento])
-  @@index([ativo])
-  @@index([job_id])
 }
 
-model WhatsappAutomacaoEtapa {
-  id                    String                         @id @default(uuid())
-  id_empresa            String
-  id_whatsapp_automacao String
-  ordem                 Int
-  delay_minutos         Int
-  mensagem_template     String
-  ativo                 Boolean                        @default(true)
-  criado_em             DateTime                       @default(now())
-  atualizado_em         DateTime                       @default(now()) @updatedAt
-  agendamentos          WhatsappAutomacaoAgendamento[]
-  automacao             WhatsappAutomacao              @relation(fields: [id_whatsapp_automacao], references: [id], onDelete: Cascade)
+model LeadEstagioLog {
+  id                  String   @id @default(uuid())
+  id_lead             String
+  id_estagio_anterior  String?
+  id_estagio_novo     String
+  empresa_id          String
+  criado_em           DateTime @default(now())
+  lead                Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
 
-  @@unique([id_whatsapp_automacao, ordem])
-  @@index([id_empresa])
-  @@index([id_whatsapp_automacao])
-}
-
-model WhatsappAutomacaoAgendamento {
-  id                    String                 @id @default(uuid())
-  id_empresa            String
-  id_whatsapp_automacao String
-  id_etapa              String
-  id_lead               String
-  referencia_evento     String
-  mensagem_template     String
-  contexto_json         String
-  agendado_para         DateTime
-  status                String                 @default("PENDENTE")
-  tentativas            Int                    @default(0)
-  erro_ultimo           String?
-  enviado_em            DateTime?
-  criado_em             DateTime               @default(now())
-  atualizado_em         DateTime               @default(now()) @updatedAt
-  chave_idempotencia    String?
-  id_estagio_trigger    String?
-  etapa                 WhatsappAutomacaoEtapa @relation(fields: [id_etapa], references: [id], onDelete: Cascade)
-  automacao             WhatsappAutomacao      @relation(fields: [id_whatsapp_automacao], references: [id], onDelete: Cascade)
-
-  @@unique([id_empresa, chave_idempotencia])
-  @@unique([id_whatsapp_automacao, id_etapa, id_lead, referencia_evento])
-  @@index([id_empresa])
-  @@index([id_whatsapp_automacao])
-  @@index([id_etapa])
+  @@index([empresa_id, criado_em])
+  @@index([criado_em])
   @@index([id_lead])
+}
+
+model Automacao {
+  id               String                @id @default(uuid())
+  id_empresa       String
+  id_criador       String?
+  nome             String
+  fonte            String
+  gatilho          String
+  config_json      String                @default("{}")
+  ativo            Boolean               @default(true)
+  ultimo_sync_em   DateTime              @default(now())
+  criado_em        DateTime              @default(now())
+  atualizado_em    DateTime              @default(now()) @updatedAt
+  empresa          Empresa               @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  acoes            AutomacaoAcao[]
+  agendamentos     AutomacaoAgendamento[]
+
+  @@index([id_empresa, ativo])
+  @@index([fonte, gatilho])
+  @@index([id_empresa])
+}
+
+model AutomacaoAcao {
+  id                    String              @id @default(uuid())
+  id_automacao          String
+  tipo                  String
+  ordem                 Int
+  delay_minutos         Int                 @default(0)
+  id_instancia_whatsapp String?
+  telefone_destino      String?
+  id_lead_destino       String?
+  mensagem              String
+  automacao             Automacao           @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+  instancia_whatsapp    WhatsappInstancia? @relation(fields: [id_instancia_whatsapp], references: [id], onDelete: SetNull)
+
+  @@unique([id_automacao, ordem])
+  @@index([id_automacao])
+  @@index([id_instancia_whatsapp])
+}
+
+model AutomacaoAgendamento {
+  id              String    @id @default(uuid())
+  id_automacao    String
+  id_lead         String?
+  referencia_uid  String    @unique
+  tipo_origem     String
+  contexto_json   String    @default("{}")
+  agendado_para   DateTime
+  status          String    @default("PENDENTE")
+  tentativas      Int       @default(0)
+  erro            String?
+  enviado_em      DateTime?
+  criado_em       DateTime  @default(now())
+  atualizado_em   DateTime  @default(now()) @updatedAt
+  automacao       Automacao @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+  lead             Lead?     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+
   @@index([status, agendado_para])
-  @@index([status])
+  @@index([id_automacao])
+  @@index([id_lead])
+}
+
+model RegistroIP {
+  id            String   @id @default(uuid())
+  ip_address    String
+  email_hash    String
+  id_empresa    String
+  user_agent    String?
+  criado_em     DateTime @default(now())
+
+  empresa       Empresa  @relation(fields: [id_empresa], references: [id])
+
+  @@unique([ip_address, email_hash])
+  @@index([ip_address])
+  @@index([email_hash])
+  @@index([criado_em])
 }

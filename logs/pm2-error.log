@@ -1,0 +1,10 @@
+2026-03-25T00:45:11: ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.
+2026-03-25T00:47:50: Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+2026-03-25T00:47:50:     at Object.get (.next/server/chunks/[root-of-the-server]__8f5ebbc3._.js:5:16995)
+2026-03-25T00:47:50: ⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+2026-03-25T00:47:50:     at Object.get (.next/server/chunks/[root-of-the-server]__8f5ebbc3._.js:5:16995)
+2026-03-25T00:47:50: ⨯ Error [InvariantError]: Invariant: The client reference manifest for route "/" does not exist. This is a bug in Next.js.
+2026-03-25T00:47:50:     at Object.get (.next/server/chunks/[root-of-the-server]__8f5ebbc3._.js:5:16995)
+2026-03-25T00:47:50: ⨯ Error: Failed to load static file for page: /500 ENOENT: no such file or directory, open '/var/www/hypeCRM/.next/server/pages/500.html'
+2026-03-25T00:47:50:     at ignore-listed frames
+2026-03-25T01:05:05: ⚠ "next start" does not work with "output: standalone" configuration. Use "node .next/standalone/server.js" instead.

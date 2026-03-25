@@ -42,14 +42,14 @@ export function ConfirmDialog({
   const destrutivo = modo === "destrutivo";
 
   return createPortal(
-    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md animate-in zoom-in-95 rounded-2xl bg-white p-6 shadow-2xl">
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+      <div className="w-full max-w-md animate-in zoom-in-95 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6 shadow-[var(--shadow-overlay)]">
         {icone ? (
           <div className="mb-4 flex items-center justify-center">
             <div
               className={cn(
                 "flex h-12 w-12 items-center justify-center rounded-full",
-                destrutivo ? "bg-rose-100 text-rose-600" : "bg-slate-100 text-slate-700",
+                destrutivo ? "bg-[color:rgba(244,63,94,0.14)] text-[var(--danger)]" : "bg-[color:rgba(255,255,255,0.06)] text-[var(--text-secondary)]",
               )}
             >
               {icone}
@@ -57,11 +57,11 @@ export function ConfirmDialog({
           </div>
         ) : null}
 
-        <h3 className="mb-2 text-center text-lg font-semibold text-slate-900">{titulo}</h3>
-        <div className="mb-6 text-center text-sm text-slate-600">{descricao}</div>
+        <h3 className="mb-2 text-center text-lg font-semibold text-[var(--text-primary)]">{titulo}</h3>
+        <div className="mb-6 text-center text-sm text-[var(--text-secondary)]">{descricao}</div>
 
         {erro ? (
-          <div className="mb-4 flex items-start gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
+          <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] px-3 py-2 text-sm text-[color:#fecdd3]">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{erro}</span>
           </div>

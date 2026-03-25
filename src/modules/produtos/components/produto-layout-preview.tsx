@@ -1,17 +1,17 @@
 import { RenderizadorCamposProduto } from "./renderizador-campos-produto";
-import type { SchemaLayoutProduto } from "@/lib/api/produtos";
+import { parseSchemaLayout, type SchemaLayoutProduto } from "@/lib/api/produtos";
 
 type ProdutoLayoutPreviewProps = {
   schemaLayout: SchemaLayoutProduto | string;
 };
 
 export function ProdutoLayoutPreview({ schemaLayout }: ProdutoLayoutPreviewProps) {
-  const schema = typeof schemaLayout === "string" ? JSON.parse(schemaLayout) : schemaLayout;
+  const schema = typeof schemaLayout === "string" ? parseSchemaLayout(schemaLayout) : schemaLayout;
 
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
+    <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
       {schema.campos.length === 0 ? (
-        <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-6 text-center text-sm text-slate-500">
+        <div className="rounded-[14px] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] p-6 text-center text-sm text-[var(--text-secondary)]">
           <p>Adicione campos para ver o preview.</p>
         </div>
       ) : (

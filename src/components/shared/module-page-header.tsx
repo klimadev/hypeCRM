@@ -15,11 +15,26 @@ type ModulePageHeaderProps = {
 };
 
 const toneStyles: Record<Tone, { wrap: string; icon: string }> = {
-  slate: { wrap: "bg-gradient-to-br from-slate-100 to-slate-200", icon: "text-slate-600" },
-  emerald: { wrap: "bg-gradient-to-br from-emerald-500 to-emerald-600", icon: "text-white" },
-  blue: { wrap: "bg-gradient-to-br from-blue-500 to-blue-600", icon: "text-white" },
-  amber: { wrap: "bg-gradient-to-br from-amber-500 to-amber-600", icon: "text-white" },
-  rose: { wrap: "bg-gradient-to-br from-rose-500 to-rose-600", icon: "text-white" },
+  slate: {
+    wrap: "border border-[var(--border-subtle)] bg-[linear-gradient(135deg,rgba(255,255,255,0.05),rgba(255,255,255,0.02))] text-[var(--text-secondary)] shadow-[var(--shadow-sm)]",
+    icon: "text-[var(--text-secondary)]",
+  },
+  emerald: {
+    wrap: "border border-[color:rgba(16,185,129,0.24)] bg-[linear-gradient(135deg,rgba(16,185,129,0.24),rgba(16,185,129,0.08))] shadow-[0_18px_40px_-24px_rgba(16,185,129,0.55)]",
+    icon: "text-[var(--success)]",
+  },
+  blue: {
+    wrap: "border border-[color:rgba(56,189,248,0.24)] bg-[linear-gradient(135deg,rgba(56,189,248,0.24),rgba(34,211,238,0.08))] shadow-[0_18px_40px_-24px_rgba(56,189,248,0.45)]",
+    icon: "text-[var(--info)]",
+  },
+  amber: {
+    wrap: "border border-[color:rgba(245,158,11,0.24)] bg-[linear-gradient(135deg,rgba(245,158,11,0.24),rgba(245,158,11,0.08))] shadow-[0_18px_40px_-24px_rgba(245,158,11,0.45)]",
+    icon: "text-[var(--warning)]",
+  },
+  rose: {
+    wrap: "border border-[color:rgba(244,63,94,0.24)] bg-[linear-gradient(135deg,rgba(244,63,94,0.24),rgba(244,63,94,0.08))] shadow-[0_18px_40px_-24px_rgba(244,63,94,0.45)]",
+    icon: "text-[var(--danger)]",
+  },
 };
 
 export function ModulePageHeader({
@@ -35,20 +50,28 @@ export function ModulePageHeader({
   const tone = toneStyles[iconTone];
 
   return (
-    <header className={cn("flex flex-col gap-4 rounded-2xl border border-slate-200/60 bg-white px-6 py-5 shadow-[0_2px_8px_rgba(0,0,0,0.04)] md:flex-row md:items-center md:justify-between", className)}>
+    <header
+      className={cn(
+        "relative overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] px-5 py-5 text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-5",
+        className,
+      )}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.06),transparent_30%)] opacity-70" />
+      <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
       <div className="flex items-center gap-4">
-        <div className={cn("flex h-12 w-12 items-center justify-center rounded-2xl", tone.wrap)}>
+        <div className={cn("flex h-11 w-11 items-center justify-center rounded-[16px]", tone.wrap)}>
           <span className={cn(tone.icon)}>{icon}</span>
         </div>
         <div>
-          <h1 className="text-xl font-bold text-slate-800 md:text-2xl">{title}</h1>
-          {subtitle ? <p className="text-sm text-slate-500">{subtitle}</p> : null}
+          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{title}</h1>
+          {subtitle ? <p className="text-sm leading-6 text-[var(--text-secondary)]">{subtitle}</p> : null}
           {badges?.length ? <div className="mt-2 flex flex-wrap items-center gap-2">{badges}</div> : null}
         </div>
       </div>
 
       {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
       {children}
+      </div>
     </header>
   );
 }

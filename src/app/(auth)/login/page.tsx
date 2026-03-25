@@ -52,30 +52,46 @@ export default function PaginaLogin() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center p-4">
-      <section className="w-full max-w-md rounded-xl border border-sky-200 bg-white p-6 shadow-sm">
-        <h1 className="text-2xl font-semibold">Entrar no HYPE CRM</h1>
-        <p className="mt-1 text-sm text-sky-500">Use seu e-mail e senha da empresa ou funcionario.</p>
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[var(--background)] px-4 py-10">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.16),transparent_30%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.08),transparent_28%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-noise opacity-60" />
+      <section className="glass-panel relative w-full max-w-md rounded-[var(--radius-shell)] border border-[var(--border-subtle)] px-6 py-6 shadow-[var(--shadow-overlay)] md:px-7">
+        <div className="mb-6 space-y-3">
+          <span className="inline-flex rounded-full border border-[var(--border-subtle)] bg-white/5 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+            Workspace access
+          </span>
+          <div className="space-y-1.5">
+            <h1 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">Entrar no HYPE CRM</h1>
+            <p className="text-sm leading-6 text-[var(--text-secondary)]">Use seu e-mail e senha da empresa ou funcionario.</p>
+          </div>
+        </div>
 
         <form className="mt-6 space-y-4" onSubmit={aoEntrar}>
           <div>
-            <label className="mb-1 block text-sm font-medium">E-mail</label>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">E-mail</label>
             <Input name="email" type="email" required />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium">Senha</label>
+            <label className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Senha</label>
             <Input name="senha" type="password" required />
           </div>
 
-          {erro ? <p className="text-sm text-red-600">{erro}</p> : null}
+          {erro ? (
+            <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] px-3 py-2 text-sm text-[var(--danger)]">
+              {erro}
+            </p>
+          ) : null}
 
           <Button className="w-full" disabled={carregando}>
             {carregando ? "Entrando..." : "Entrar"}
           </Button>
         </form>
 
-        <p className="mt-4 text-sm text-sky-600">
-          Sem conta? <a className="font-medium underline" href="/cadastro">Cadastre sua empresa</a>
+        <p className="mt-5 text-sm text-[var(--text-secondary)]">
+          Sem conta?{" "}
+          <a className="font-medium text-[var(--brand)] underline decoration-[color:rgba(139,92,246,0.4)] underline-offset-4" href="/cadastro">
+            Cadastre sua empresa
+          </a>
         </p>
       </section>
     </main>

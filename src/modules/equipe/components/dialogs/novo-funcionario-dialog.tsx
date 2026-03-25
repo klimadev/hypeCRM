@@ -31,27 +31,27 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
         }
       }}
     >
-      <DialogContent className="rounded-2xl">
+      <DialogContent className="rounded-[var(--radius-card)]">
         <DialogHeader>
           <DialogTitle>Novo colaborador</DialogTitle>
         </DialogHeader>
 
         <form className="space-y-3" onSubmit={vm.adicionarFuncionario}>
           <Input
-            className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
             name="nome"
             placeholder="Nome completo"
             required
           />
           <Input
-            className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
             name="email"
             type="email"
             placeholder="E-mail"
             required
           />
           <Input
-            className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
             name="senha"
             type="password"
             placeholder="Senha temporaria"
@@ -63,7 +63,7 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
             value={vm.cargoSelecionado}
             onValueChange={vm.setCargoSelecionado}
           >
-            <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-slate-50/80 text-sm font-medium text-slate-600">
+            <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
               <SelectValue placeholder="Cargo" />
             </SelectTrigger>
             <SelectContent>
@@ -83,7 +83,7 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
               value={vm.pdvSelecionado}
               onValueChange={vm.setPdvSelecionado}
             >
-              <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-slate-50/80 text-sm font-medium text-slate-600">
+              <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
                 <SelectValue placeholder="PDV" />
               </SelectTrigger>
               <SelectContent>
@@ -96,9 +96,9 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
             </Select>
           )}
 
-          {vm.erroCadastro ? <p className="text-sm font-medium text-rose-600">{vm.erroCadastro}</p> : null}
+          {vm.erroCadastro ? <p className="text-sm font-medium text-[var(--danger)]">{vm.erroCadastro}</p> : null}
 
-          <Button className="w-full rounded-xl bg-slate-800 font-medium text-white hover:bg-slate-700" type="submit" disabled={vm.carregandoCadastro}>
+          <Button className="w-full rounded-[var(--radius-control)] font-medium" type="submit" disabled={vm.carregandoCadastro}>
             {vm.carregandoCadastro ? (
               <span className="flex items-center gap-2">
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">

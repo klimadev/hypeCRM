@@ -3,21 +3,27 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const badgeVariants = cva(
-  "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors",
+  "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-[11px] font-medium uppercase tracking-[0.16em] transition-[background-color,border-color,color,box-shadow] duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
   {
     variants: {
       variant: {
-        default: "bg-slate-100 text-slate-700 border border-slate-200",
-        success: "bg-emerald-50 text-emerald-700 border border-emerald-100",
-        warning: "bg-amber-50 text-amber-700 border border-amber-100",
-        error: "bg-rose-50 text-rose-700 border border-rose-100",
-        info: "bg-blue-50 text-blue-700 border border-blue-100",
-        secondary: "bg-slate-100 text-slate-600 border border-slate-200",
+        default:
+          "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] shadow-[var(--shadow-sm)]",
+        success:
+          "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.14)] text-[var(--success)]",
+        warning:
+          "border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.14)] text-[var(--warning)]",
+        error:
+          "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.14)] text-[var(--danger)]",
+        info:
+          "border-[color:rgba(56,189,248,0.24)] bg-[color:rgba(56,189,248,0.14)] text-[var(--info)]",
+        secondary:
+          "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-tertiary)]",
       },
       size: {
-        default: "px-3 py-1.5 text-xs",
-        sm: "px-2 py-1 text-[10px]",
-        lg: "px-4 py-2 text-sm",
+        default: "px-3 py-1.5",
+        sm: "px-2.5 py-1 text-[10px]",
+        lg: "px-4 py-2 text-xs",
       },
     },
     defaultVariants: {
@@ -40,11 +46,11 @@ function Badge({ className, variant, size, dot, children, ...props }: BadgeProps
         <span
           className={cn(
             "h-1.5 w-1.5 rounded-full",
-            variant === "success" && "bg-emerald-500",
-            variant === "warning" && "bg-amber-500",
-            variant === "error" && "bg-rose-500",
-            variant === "info" && "bg-blue-500",
-            (variant === "default" || variant === "secondary" || !variant) && "bg-slate-500",
+            variant === "success" && "bg-[var(--success)]",
+            variant === "warning" && "bg-[var(--warning)]",
+            variant === "error" && "bg-[var(--danger)]",
+            variant === "info" && "bg-[var(--info)]",
+            (variant === "default" || variant === "secondary" || !variant) && "bg-[var(--text-tertiary)]",
           )}
         />
       )}

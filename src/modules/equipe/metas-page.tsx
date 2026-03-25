@@ -16,7 +16,7 @@ export function ModuloMetasEquipe({ perfil, id_pdv, id_usuario }: ModuloMetasEqu
   const vm = useMetasModule({ perfil, id_pdv, id_usuario, modo: "painel" });
 
   return (
-    <ModulePageShell spacing="lg">
+    <ModulePageShell spacing="lg" className="rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] shadow-[var(--shadow-md)]">
       <MetasHeader vm={vm} />
       <InlineStatusAlert variant="error" message={vm.erro} />
       <MetaAdminPanel vm={vm} />

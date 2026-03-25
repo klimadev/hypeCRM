@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import type { FormEvent, KeyboardEvent } from "react";
 import { Mic, Paperclip, Smile, Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -20,7 +21,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
     }
   }, [disabled]);
 
-  const handleSubmit = async (e?: React.FormEvent) => {
+  const handleSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
     if (!text.trim() || disabled || sending) return;
     const content = text;
@@ -28,7 +29,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
     await onSend(content);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleSubmit();
@@ -37,7 +38,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
 
   return (
     <form
-      className="flex items-center gap-2 px-3 py-2.5 bg-[#f0f2f5]"
+      className="flex items-center gap-2 border-t border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-3"
       onSubmit={handleSubmit}
     >
       <div className="flex items-center gap-1">
@@ -45,7 +46,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
           disabled={disabled}
         >
           <Smile className="h-5 w-5" />
@@ -54,17 +55,17 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full text-slate-500 hover:bg-slate-200 hover:text-slate-700"
+          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
           disabled={disabled}
         >
           <Paperclip className="h-5 w-5" />
         </Button>
       </div>
 
-      <div className="flex-1 flex items-center bg-white rounded-[20px] px-4 py-2 shadow-sm border border-transparent focus-within:border-[#00a884] focus-within:shadow-md transition-all">
+      <div className="flex flex-1 items-center rounded-[calc(var(--radius-control)+4px)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-2 shadow-[var(--shadow-sm)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)] focus-within:border-[var(--border-focus)] focus-within:shadow-[var(--focus-ring)]">
         <input
           ref={inputRef}
-          className="flex-1 bg-transparent text-sm text-slate-800 placeholder:text-slate-400 focus:outline-none min-h-[20px] max-h-[100px]"
+          className="min-h-[20px] max-h-[100px] flex-1 bg-transparent text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
           placeholder="Digite uma mensagem..."
           value={text}
           disabled={disabled}
@@ -78,7 +79,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="submit"
           size="icon"
           disabled={disabled || sending || !text.trim()}
-          className="h-10 w-10 rounded-full bg-[#00a884] text-white hover:bg-[#008f6b] active:scale-95 transition-all shadow-sm"
+          className="h-10 w-10 rounded-full bg-[var(--brand)] text-[var(--primary-foreground)] shadow-[var(--shadow-glow)] hover:bg-[var(--brand-strong)] active:scale-[0.99]"
         >
           <Send className="h-5 w-5" />
         </Button>
@@ -87,7 +88,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           size="icon"
           disabled={disabled}
-          className="h-10 w-10 rounded-full text-slate-400 hover:bg-slate-200"
+          className="h-10 w-10 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
         >
           <Mic className="h-5 w-5" />
         </Button>

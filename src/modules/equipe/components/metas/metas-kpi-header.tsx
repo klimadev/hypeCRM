@@ -17,22 +17,22 @@ type MetasKPIHeaderProps = {
 // Cores por status
 function getStatusColor(percentual: number): { bg: string; text: string; border: string } {
   if (percentual >= 70) {
-    return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" };
+    return { bg: "bg-[color:rgba(16,185,129,0.08)]", text: "text-[var(--success)]", border: "border-[color:rgba(16,185,129,0.24)]" };
   }
   if (percentual >= 50) {
-    return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" };
+    return { bg: "bg-[color:rgba(245,158,11,0.08)]", text: "text-[var(--warning)]", border: "border-[color:rgba(245,158,11,0.24)]" };
   }
-  return { bg: "bg-rose-50", text: "text-rose-700", border: "border-rose-200" };
+    return { bg: "bg-[color:rgba(244,63,94,0.08)]", text: "text-[var(--danger)]", border: "border-[color:rgba(244,63,94,0.24)]" };
 }
 
 function getTendenciaIcon(tendencia: number | undefined) {
   if (tendencia === undefined || tendencia === 0) {
-    return <Minus className="h-4 w-4 text-slate-400" />;
+      return <Minus className="h-4 w-4 text-[var(--text-tertiary)]" />;
   }
   if (tendencia > 0) {
-    return <TrendingUp className="h-4 w-4 text-emerald-500" />;
+      return <TrendingUp className="h-4 w-4 text-[var(--success)]" />;
   }
-  return <TrendingDown className="h-4 w-4 text-rose-500" />;
+    return <TrendingDown className="h-4 w-4 text-[var(--danger)]" />;
 }
 
 function getTendenciaLabel(tendencia: number | undefined) {
@@ -61,13 +61,13 @@ export function MetasKPIHeader({ kpis, className }: MetasKPIHeaderProps) {
       >
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+          <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-secondary)]">
               Status Geral
             </p>
             <p className={cn("mt-2 text-3xl font-bold tracking-tight", status.text)}>
               {kpis.mediaGeral}%
             </p>
-            <p className="mt-1 text-sm text-slate-600">média de progresso</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">média de progresso</p>
           </div>
           <div className={cn("flex h-10 w-10 items-center justify-center rounded-xl", status.bg)}>
             <Target className={cn("h-5 w-5", status.text)} />
@@ -77,7 +77,7 @@ export function MetasKPIHeader({ kpis, className }: MetasKPIHeaderProps) {
         {temTendencia && (
           <div className="mt-3 flex items-center gap-1.5">
             {getTendenciaIcon(kpis.tendencia)}
-            <span className="text-xs font-medium text-slate-600">
+            <span className="text-xs font-medium text-[var(--text-secondary)]">
               {getTendenciaLabel(kpis.tendencia)} vs mês anterior
             </span>
           </div>
@@ -85,19 +85,19 @@ export function MetasKPIHeader({ kpis, className }: MetasKPIHeaderProps) {
       </div>
 
       {/* Total de Metas Ativas */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-5 shadow-[var(--shadow-sm)]">
         <div className="flex items-start justify-between">
           <div>
-            <p className="text-xs font-medium uppercase tracking-wider text-slate-500">
+            <p className="text-xs font-medium uppercase tracking-wider text-[var(--text-secondary)]">
               Metas Ativas
             </p>
-            <p className="mt-2 text-3xl font-bold tracking-tight text-slate-900">
+            <p className="mt-2 text-3xl font-bold tracking-tight text-[var(--text-primary)]">
               {kpis.totalAtivas}
             </p>
-            <p className="mt-1 text-sm text-slate-600">metas em andamento</p>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">metas em andamento</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50">
-            <Target className="h-5 w-5 text-blue-600" />
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:rgba(56,189,248,0.08)]">
+              <Target className="h-5 w-5 text-[var(--info)]" />
           </div>
         </div>
         
@@ -110,7 +110,7 @@ export function MetasKPIHeader({ kpis, className }: MetasKPIHeaderProps) {
       </div>
 
       {/* Em Risco */}
-      <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-5 shadow-[var(--shadow-sm)]">
         <div className="flex items-start justify-between">
           <div>
             <p className="text-xs font-medium uppercase tracking-wider text-slate-500">

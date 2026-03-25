@@ -30,15 +30,15 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-base font-semibold text-slate-900">Campos</h3>
-        <Button type="button" onClick={abrirNovoCampo} size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+        <h3 className="text-base font-semibold text-[var(--text-primary)]">Campos</h3>
+        <Button type="button" onClick={abrirNovoCampo} size="sm" className="bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
           <Plus className="mr-2 h-4 w-4" />
           Adicionar
         </Button>
       </div>
 
         {campos.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6 text-center text-sm text-slate-500">
+          <div className="rounded-[16px] border border-dashed border-[var(--border-strong)] bg-[var(--surface-elevated)] p-6 text-center text-sm text-[var(--text-secondary)]">
             Nenhum campo configurado.
           </div>
         ) : (
@@ -47,36 +47,36 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
               const expandido = campoExpandidoId === campo.id;
 
               return (
-              <div key={campo.id} className={cn("rounded-lg border border-slate-200 bg-white", expandido ? "ring-1 ring-emerald-200" : "")}>
+              <div key={campo.id} className={cn("rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)]", expandido ? "ring-1 ring-[color:rgba(139,92,246,0.18)]" : "")}>
                 <button 
                   type="button" 
-                  className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-slate-50 transition-colors"
+                  className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-[color:rgba(255,255,255,0.03)]"
                   onClick={() => setCampoExpandidoId(expandido ? null : campo.id)}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-8 w-8 items-center justify-center rounded bg-slate-100 text-slate-400">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-tertiary)]">
                       <GripVertical className="h-4 w-4" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-medium text-slate-900 truncate">
+                      <p className="truncate text-sm font-medium text-[var(--text-primary)]">
                         {campo.label.trim() || `Campo ${indice + 1}`}
                       </p>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-[var(--text-secondary)]">
                         {campo.tipo} {campo.obrigatorio ? "• Obrigatório" : ""}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={cn("text-slate-400 transition-transform", expandido && "rotate-180")}>
+                    <span className={cn("text-[var(--text-tertiary)] transition-transform", expandido && "rotate-180")}>
                       <ChevronDown className="h-4 w-4" />
                     </span>
                   </div>
                 </button>
 
                 {expandido && (
-                  <div className="border-t border-slate-200 p-4 space-y-4">
+                  <div className="space-y-4 border-t border-[var(--border-subtle)] p-4">
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 uppercase">Nome do campo</label>
+                      <label className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Nome do campo</label>
                       <Input 
                         value={campo.label} 
                         onChange={(event) => onAtualizarCampo(campo.id, { label: event.target.value })} 
@@ -85,7 +85,7 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-xs font-medium text-slate-500 uppercase">Tipo de resposta</label>
+                      <label className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Tipo de resposta</label>
                       <Select value={campo.tipo} onValueChange={(value) => onAtualizarCampo(campo.id, { tipo: value, opcoes: value === "select" ? campo.opcoes ?? [{ label: "Opção 1", value: "opcao-1" }] : undefined })}>
                         <SelectTrigger>
                           <SelectValue />
@@ -106,7 +106,7 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500 uppercase">Exemplo</label>
+                        <label className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Exemplo</label>
                         <Input
                           value={campo.placeholder ?? ""}
                           onChange={(event) => onAtualizarCampo(campo.id, { placeholder: event.target.value })}
@@ -115,7 +115,7 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
                       </div>
 
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500 uppercase">Ajuda</label>
+                        <label className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Ajuda</label>
                         <Input 
                           value={campo.ajuda ?? ""} 
                           onChange={(event) => onAtualizarCampo(campo.id, { ajuda: event.target.value })} 
@@ -126,7 +126,7 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
 
                     {campo.tipo === "select" && (
                       <div className="space-y-2">
-                        <label className="text-xs font-medium text-slate-500 uppercase">Opções (uma por vírgula)</label>
+                        <label className="text-xs font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Opções (uma por vírgula)</label>
                         <Input
                           value={(campo.opcoes ?? []).map((opcao) => opcao.label).join(", ")}
                           onChange={(event) => {
@@ -176,11 +176,11 @@ export function ProdutoLayoutBuilder(props: ProdutoLayoutBuilderProps) {
                       >
                         <ArrowDown className="h-4 w-4" />
                       </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="icon"
-                        className="text-rose-600 hover:text-rose-700"
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="icon"
+                        className="text-[var(--danger)] hover:text-[color:#ff8fa4]"
                         onClick={() => onRemoverCampo(campo.id)}
                       >
                         <Trash2 className="h-4 w-4" />

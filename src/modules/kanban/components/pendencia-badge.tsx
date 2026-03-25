@@ -22,7 +22,7 @@ export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, 
   if (!resumo || resumo.total === 0) {
     if (modoExpansivo) {
       return (
-        <div className={cn("flex items-center gap-2 text-slate-500", className)}>
+        <div className={cn("flex items-center gap-2 text-[var(--text-secondary)]", className)}>
           <Info className="h-4 w-4" />
           <span className="text-sm">Sem pendências</span>
         </div>
@@ -38,7 +38,7 @@ export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, 
           <span className={cn("flex items-center justify-center rounded-full font-semibold text-white", coresGravidade[resumo.porGravidade.critica > 0 ? "critica" : resumo.porGravidade.alerta > 0 ? "alerta" : "info"], tamanho === "sm" ? "h-5 w-5 text-xs" : "h-6 w-6 text-sm")}>
             {resumo.total}
           </span>
-          <span className="text-sm font-medium text-slate-700">
+            <span className="text-sm font-medium text-[var(--text-primary)]">
             {resumo.total} pendência{resumo.total !== 1 ? "s" : ""}
           </span>
         </div>
@@ -56,7 +56,7 @@ export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, 
             </span>
           )}
           {resumo.totalLeads > 0 && (
-            <span className="text-slate-500">
+              <span className="text-[var(--text-secondary)]">
               {resumo.totalLeads} lead{resumo.totalLeads !== 1 ? "s" : ""} impactado{resumo.totalLeads !== 1 ? "s" : ""}
             </span>
           )}

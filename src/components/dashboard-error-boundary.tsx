@@ -9,17 +9,18 @@ interface DashboardErrorBoundaryProps {
 }
 
 const ErrorFallback = () => (
-  <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 p-8 text-center">
-    <div className="rounded-full bg-rose-50 p-4">
-      <AlertCircle className="h-8 w-8 text-rose-500" />
+  <div className="relative flex min-h-[400px] flex-col items-center justify-center overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] p-8 text-center shadow-[var(--shadow-md)]">
+    <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(56,189,248,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.08),transparent_28%)]" />
+    <div className="relative rounded-[20px] border border-[color:rgba(56,189,248,0.22)] bg-[linear-gradient(135deg,rgba(56,189,248,0.16),rgba(255,255,255,0.03))] p-4 text-[var(--info)] shadow-[var(--shadow-sm)]">
+      <AlertCircle className="h-8 w-8" />
     </div>
-    <div>
-      <h2 className="text-lg font-semibold text-slate-900">Algo deu errado</h2>
-      <p className="mt-1 text-sm text-slate-500">
+    <div className="relative mt-4 max-w-md space-y-1">
+      <h2 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">Algo deu errado</h2>
+      <p className="text-sm text-[var(--text-secondary)]">
         Ocorreu um erro ao carregar esta seção.
       </p>
     </div>
-    <Button variant="outline" onClick={() => window.location.reload()}>
+    <Button className="relative mt-6" variant="outline" onClick={() => window.location.reload()}>
       Recarregar Página
     </Button>
   </div>

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import { AlertCircle, Banknote, FileText, Loader2, MessageCircle, Package, Phone, X } from "lucide-react";
+import { AlertCircle, Banknote, FileText, Loader2, MessageCircle, Phone, X } from "lucide-react";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,7 +16,6 @@ import { EmptyState } from "./empty-state";
 import { LeadDeleteConfirmDialog } from "./lead-delete-confirm-dialog";
 import { LeadDetailsTabContent } from "./lead-details-tab-content";
 import { LeadParcelasTab } from "./lead-parcelas-tab";
-import { LeadProdutosTab } from "./lead-produtos-tab";
 
 type LeadDetailsDrawerProps = {
   leadSelecionado: Lead | null;
@@ -39,7 +38,7 @@ type LeadDetailsDrawerProps = {
 };
 
 export function LeadDetailsDrawer(props: LeadDetailsDrawerProps) {
-  const { addToast } = useToast();
+  useToast();
   const {
     leadSelecionado,
     pendenciasLead,
@@ -221,18 +220,18 @@ export function LeadDetailsDrawer(props: LeadDetailsDrawerProps) {
   return (
     <>
       <Sheet open={Boolean(leadSelecionado)} onOpenChange={handleOpenChange}>
-        <SheetContent side="right" className="flex h-full w-full flex-col overflow-hidden p-0 sm:max-w-lg">
-          <SheetHeader className="space-y-0 border-b bg-gradient-to-r from-emerald-600 to-emerald-700 px-4 py-3 text-white">
+          <SheetContent side="right" className="flex h-full w-full flex-col overflow-hidden p-0 sm:max-w-lg">
+            <SheetHeader className="space-y-0 border-b border-[var(--border-subtle)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] px-4 py-3 text-[var(--text-primary)]">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 flex-1 items-center gap-2">
-                <MessageCircle className="h-5 w-5 shrink-0" />
-                <SheetTitle className="truncate text-base text-white">{leadSelecionado?.nome}</SheetTitle>
+                <MessageCircle className="h-5 w-5 shrink-0 text-[var(--success)]" />
+                <SheetTitle className="truncate text-base text-[var(--text-primary)]">{leadSelecionado?.nome}</SheetTitle>
               </div>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-white hover:bg-white/20" onClick={() => handleOpenChange(false)}>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-[var(--text-secondary)] hover:bg-[color:rgba(255,255,255,0.06)]" onClick={() => handleOpenChange(false)}>
                 <X className="h-5 w-5" />
               </Button>
             </div>
-            <SheetDescription className="flex items-center gap-2 text-emerald-100">
+            <SheetDescription className="flex items-center gap-2 text-[var(--text-secondary)]">
               <Phone className="h-3 w-3" />
               <span>{leadSelecionado?.telefone ?? "Sem telefone informado"}</span>
               <span className={`inline-flex items-center gap-1 ${statusSalvar.classe}`}>
@@ -240,23 +239,23 @@ export function LeadDetailsDrawer(props: LeadDetailsDrawerProps) {
                 {statusSalvar.texto}
               </span>
             </SheetDescription>
-            <p className="text-xs text-emerald-100/90">Atalhos: {atalhoSalvar} salva agora • Esc fecha o drawer</p>
+              <p className="text-xs text-[var(--text-tertiary)]">Atalhos: {atalhoSalvar} salva agora • Esc fecha o drawer</p>
           </SheetHeader>
 
           {podeRenderizarConteudo && leadSelecionado ? (
             <Tabs value={tabAtiva} onValueChange={setTabAtiva} className="flex min-h-0 flex-1 flex-col">
-              <div className="border-b bg-slate-50 px-4 py-2">
-                <TabsList className="grid w-full grid-cols-3 bg-slate-200">
-                  <TabsTrigger value="detalhes" className="text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+              <div className="border-b border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-4 py-2">
+                <TabsList className="grid w-full grid-cols-3 bg-[color:rgba(255,255,255,0.03)]">
+                  <TabsTrigger value="detalhes" className="text-sm data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:shadow-sm">
                     <FileText className="mr-2 h-4 w-4" />
                     Detalhes
                   </TabsTrigger>
-                  <TabsTrigger value="chat" className="relative text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <TabsTrigger value="chat" className="relative text-sm data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:shadow-sm">
                     <MessageCircle className="mr-2 h-4 w-4" />
                     Chat
                     {whatsappChat.unreadCount > 0 ? <span className="ml-1 h-2 w-2 animate-pulse rounded-full bg-red-500" /> : null}
                   </TabsTrigger>
-                  <TabsTrigger value="parcelas" className="text-sm data-[state=active]:bg-white data-[state=active]:shadow-sm">
+                  <TabsTrigger value="parcelas" className="text-sm data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:shadow-sm">
                     <Banknote className="mr-2 h-4 w-4" />
                     Parcelas
                   </TabsTrigger>

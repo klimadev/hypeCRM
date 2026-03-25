@@ -219,27 +219,27 @@ export function KanbanHeader({
       )}
       actions={<div className="flex flex-wrap items-center gap-3">
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <input
             ref={inputBuscaRef}
             type="text"
             placeholder="Buscar lead... (Ctrl+K ou /)"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="h-9 w-48 rounded-xl border border-slate-200 bg-white pl-9 pr-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-200/50"
+            className="h-9 w-48 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-[var(--focus-ring)]"
           />
           {busca && (
             <button
               onClick={() => setBusca("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-slate-200 p-0.5 hover:bg-slate-300"
+                className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.05)] p-0.5 hover:bg-[color:rgba(255,255,255,0.08)]"
             >
-              <X className="h-3 w-3 text-slate-500" />
+              <X className="h-3 w-3 text-[var(--text-secondary)]" />
             </button>
           )}
         </div>
 
         <Select value={ordenacao} onValueChange={(v) => setOrdenacao(v as OrdenacaoKanban)}>
-          <SelectTrigger className="h-9 w-36 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600">
+          <SelectTrigger className="h-9 w-36 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
             <ArrowUpDown className="mr-2 h-4 w-4" />
             <SelectValue />
           </SelectTrigger>
@@ -257,7 +257,7 @@ export function KanbanHeader({
             value={filtros.pdv ?? "todos"}
             onValueChange={(v) => setFiltros({ ...filtros, pdv: v === "todos" ? null : v })}
           >
-            <SelectTrigger className="h-9 w-36 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600">
+            <SelectTrigger className="h-9 w-36 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
               <Store className="mr-2 h-4 w-4" />
               <SelectValue placeholder="Loja" />
             </SelectTrigger>
@@ -278,8 +278,8 @@ export function KanbanHeader({
           onValueChange={(v) => setFiltros({ ...filtros, origem: v as KanbanFilters["origem"] })}
         >
           <SelectTrigger className={cn(
-            "h-9 w-40 rounded-xl border border-slate-200 bg-white text-sm font-medium",
-            filtros.origem !== "todos" ? "border-purple-300 bg-purple-50 text-purple-700" : "text-slate-600"
+            "h-9 w-40 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium",
+            filtros.origem !== "todos" ? "border-[color:rgba(139,92,246,0.4)] bg-[color:rgba(139,92,246,0.14)] text-[color:#ddd6fe]" : "text-[var(--text-secondary)]"
           )}>
             <div className="flex items-center gap-1.5">
               {filtros.origem === "ANUNCIO_CTWA" && <Megaphone className="h-3.5 w-3.5" />}
@@ -324,7 +324,7 @@ export function KanbanHeader({
           onClick={() => setModoFocoPendencias(!modoFocoPendencias)}
           className={cn(
             "rounded-xl text-sm font-medium",
-            modoFocoPendencias ? "bg-red-500 hover:bg-red-600" : "border-slate-200"
+            modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[color:#fb7185]" : "border-[var(--border-subtle)]"
           )}
           title={modoFocoPendencias ? "Mostrar todos os leads" : "Mostrar apenas leads com pendências"}
         >
@@ -347,7 +347,7 @@ export function KanbanHeader({
             "rounded-xl text-sm font-medium",
             notificacoesAtivadas
               ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100"
-              : "border-slate-200"
+              : "border-[var(--border-subtle)]"
           )}
           title={
             notificacoesAtivadas
@@ -363,14 +363,14 @@ export function KanbanHeader({
         </Button>
 
         {/* Filters group - pendências */}
-        <div className="flex items-center gap-1 rounded-xl border border-slate-200 bg-slate-50 px-2 py-1.5">
+        <div className="flex items-center gap-1 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 py-1.5">
           <div className="flex items-center gap-1">
-            <Filter className="h-3.5 w-3.5 text-slate-400" />
+            <Filter className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
             <Select
               value={filtros.status}
               onValueChange={(v) => setFiltros({ ...filtros, status: v as KanbanFilters["status"] })}
             >
-              <SelectTrigger className="h-8 w-36 border-0 bg-transparent text-sm font-medium text-slate-600 focus:ring-0">
+              <SelectTrigger className="h-8 w-36 border-0 bg-transparent text-sm font-medium text-[var(--text-secondary)] focus:ring-0">
                 <SelectValue placeholder="Pendência" />
               </SelectTrigger>
               <SelectContent>
@@ -400,7 +400,7 @@ export function KanbanHeader({
               value={filtros.gravidade}
               onValueChange={(v) => setFiltros({ ...filtros, gravidade: v as KanbanFilters["gravidade"] })}
             >
-              <SelectTrigger className="h-8 w-28 border-0 bg-transparent text-sm font-medium text-slate-600 focus:ring-0">
+              <SelectTrigger className="h-8 w-28 border-0 bg-transparent text-sm font-medium text-[var(--text-secondary)] focus:ring-0">
                 <SelectValue placeholder="Nível" />
               </SelectTrigger>
               <SelectContent>
@@ -426,7 +426,7 @@ export function KanbanHeader({
           {filtrosAtivos && (
             <button
               onClick={limparFiltros}
-              className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-slate-500 transition-colors hover:bg-slate-300"
+                className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-[color:rgba(255,255,255,0.06)] text-[var(--text-secondary)] transition-colors hover:bg-[color:rgba(255,255,255,0.1)]"
               title="Limpar filtros"
             >
               <X className="h-3.5 w-3.5" />
@@ -463,14 +463,14 @@ export function KanbanHeader({
             <form className="space-y-3" onSubmit={criarLead}>
               <Input
                 ref={inputNomeNovoLeadRef}
-                className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+                className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
                 name="nome"
                 placeholder="Nome"
                 disabled={criandoLead}
                 required
               />
               <Input
-                className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+                className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
                 name="telefone"
                 placeholder="Telefone"
                 value={telefoneNovoLead}
@@ -479,7 +479,7 @@ export function KanbanHeader({
                 required
               />
               <Input
-                className="h-11 rounded-xl border-slate-200 bg-slate-50/80 text-sm text-slate-700 placeholder:text-slate-400 focus:border-slate-400 focus:bg-white focus:ring-2 focus:ring-slate-200/50"
+                className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
                 name="valor_consorcio"
                 placeholder="Valor"
                 inputMode="numeric"
@@ -493,7 +493,7 @@ export function KanbanHeader({
               <input type="hidden" name="id_funcionario" value={cargoNovoLead?.id_funcionario ?? ""} />
 
               <Select disabled={criandoLead} value={estagioNovoLead || estagioAberto} onValueChange={setEstagioNovoLead}>
-                <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-slate-50/80 text-sm font-medium text-slate-600">
+                <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
                   <SelectValue placeholder="Estagio" />
                 </SelectTrigger>
                 <SelectContent>
@@ -511,7 +511,7 @@ export function KanbanHeader({
                   value={cargoNovoLead?.id_funcionario ?? undefined}
                   onValueChange={(valor) => setCargoNovoLead({ id_funcionario: valor })}
                 >
-                  <SelectTrigger className="h-11 w-full rounded-xl border-slate-200 bg-slate-50/80 text-sm font-medium text-slate-600">
+                <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
                     <SelectValue placeholder="Funcionario" />
                   </SelectTrigger>
                   <SelectContent>

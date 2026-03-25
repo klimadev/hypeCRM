@@ -44,23 +44,6 @@ function avancarIndiceRoundRobin(indiceAtual: number, total: number) {
   return (indiceAtual + 1) % total;
 }
 
-function extrairNumeroWhatsapp(rawId: string) {
-  const semDominio = rawId.split("@")[0] ?? "";
-  return semDominio.replace(/\D/g, "");
-}
-
-function jidEhLid(jid: string | null | undefined) {
-  return typeof jid === "string" && jid.includes("@lid");
-}
-
-function jidEhWhatsappUsuario(jid: string | null | undefined) {
-  return typeof jid === "string" && jid.includes("@s.whatsapp.net");
-}
-
-function normalizarJidWhatsappUsuario(jid?: string | null): string | null {
-  return typeof jid === "string" && jidEhWhatsappUsuario(jid) ? jid : null;
-}
-
 async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, origemFiltro?: OrigemFiltro): Promise<EmpresaProcessada> {
   const whereInstancias = sessao
     ? sessao.perfil === "EMPRESA"
@@ -227,7 +210,7 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
     if (!mapaMensagens) continue;
 
     // Iterar sobre os contatos únicos no mapa de mensagens
-    for (const [remoteJidAlt, dadosMensagem] of mapaMensagens) {
+    for (const [remoteJidAlt] of mapaMensagens) {
       processados += 1;
 
       // Usar remoteJidAlt para extrair o número

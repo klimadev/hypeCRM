@@ -13,6 +13,24 @@ export const STATUS_AUTOMACAO = {
   ERRO_JOB: "ERRO_JOB",
 } as const;
 
+export const TRIAL_DURACAO_DIAS = 30;
+export const MAX_REGISTROS_POR_IP = 3;
+export const JANELA_BLOQUEIO_IP_DIAS = 30;
+
+export const STATUS_ASSINATURA = {
+  TRIAL: "TRIAL",
+  ATIVA: "ATIVA",
+  EXPIRADA: "EXPIRADA",
+  CANCELADA: "CANCELADA",
+} as const;
+
+export const PLANOS = {
+  TRIAL: "trial",
+  BASICO: "basico",
+  PROFISSIONAL: "profissional",
+  ENTERPRISE: "enterprise",
+} as const;
+
 export type StatusAutomacao = typeof STATUS_AUTOMACAO[keyof typeof STATUS_AUTOMACAO];
 
 export const STATUS_JOB = {
@@ -187,6 +205,11 @@ export const esquemaAtualizarWhatsappInstancia = z.object({
 
 export const esquemaReconectarWhatsappInstancia = z.object({
   forcarQrCode: z.boolean().optional(),
+});
+
+export const esquemaCriarCalComInstancia = z.object({
+  nome: z.string().trim().min(3, "Nome da instancia precisa ter pelo menos 3 caracteres."),
+  api_key: z.string().trim().min(10, "Chave API invalida."),
 });
 
 export const esquemaAtualizarPdv = z.object({
@@ -644,3 +667,80 @@ export const esquemaWhatsappChatSendMessage = z.object({
 export const esquemaWhatsappChatMarkRead = z.object({
   leadId: z.string().trim().min(1, "Lead obrigatorio."),
 });
+
+// ============================================
+// Constantes de Automações Genéricas
+// ============================================
+
+export const FONTES_AUTOMACAO = {
+  WHATSAPP: "WHATSAPP",
+} as const;
+
+export type FonteAutomacao = typeof FONTES_AUTOMACAO[keyof typeof FONTES_AUTOMACAO];
+
+export const GATILHOS_AUTOMACAO = {
+  STAGE_CHANGE: "STAGE_CHANGE",
+} as const;
+
+export type GatilhoAutomacao = typeof GATILHOS_AUTOMACAO[keyof typeof GATILHOS_AUTOMACAO];
+
+export const STATUS_AGENDAMENTO = {
+  PENDENTE: "PENDENTE",
+  PROCESSANDO: "PROCESSANDO",
+  ENVIADO: "ENVIADO",
+  FALHA: "FALHA",
+  CANCELADO: "CANCELADO",
+} as const;
+
+export type StatusAgendamento = typeof STATUS_AGENDAMENTO[keyof typeof STATUS_AGENDAMENTO];
+
+export const TIPOS_ACAO = {
+  WHATSAPP_MSG: "WHATSAPP_MSG",
+} as const;
+
+export type TipoAcao = typeof TIPOS_ACAO[keyof typeof TIPOS_ACAO];
+
+// ============================================
+// Schemas de Automações
+// ============================================
+
+export const esquemaAcaoAutomacao = z.object({
+  tipo: z.enum(["WHATSAPP_MSG"], { message: "Tipo de acao invalido." }),
+  ordem: z.coerce.number().int().min(0),
+  delay_minutos: z.coerce.number().int().min(0).max(43200).default(0),
+  id_instancia_whatsapp: z.string().trim().optional(),
+  telefone_destino: z.string().trim().optional(),
+  id_lead_destino: z.string().trim().optional(),
+  mensagem: z.string().trim().min(1, "Mensagem obrigatoria.").max(4096),
+});
+
+export const esquemaConfigStageChange = z.object({
+  id_estagio_destino: z.string().trim().optional(),
+});
+
+export const esquemaCriarAutomacao = z.object({
+  nome: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres.").max(100),
+  fonte: z.enum(["WHATSAPP"], { message: "Fonte invalida." }),
+  gatilho: z.enum(["STAGE_CHANGE"], { message: "Gatilho invalido." }),
+  ativo: z.boolean().default(true),
+  acoes: z.array(esquemaAcaoAutomacao).min(1, "Ao menos uma acao e obrigatoria."),
+  id_estagio_destino: z.string().trim().optional(),
+});
+
+export const esquemaAtualizarAutomacao = z.object({
+  nome: z.string().trim().min(2).max(100).optional(),
+  ativo: z.boolean().optional(),
+  acoes: z.array(esquemaAcaoAutomacao).min(1).optional(),
+  id_estagio_destino: z.string().trim().optional(),
+});
+
+export const esquemaDispatchQuery = z.object({
+  only: z.enum(["whatsapp"]).optional(),
+  automacao_id: z.string().trim().optional(),
+  teste: z.enum(["true"]).optional(),
+  lead_id: z.string().trim().optional(),
+});
+
+export type AcaoAutomacaoInput = z.infer<typeof esquemaAcaoAutomacao>;
+export type CriarAutomacaoInput = z.infer<typeof esquemaCriarAutomacao>;
+export type AtualizarAutomacaoInput = z.infer<typeof esquemaAtualizarAutomacao>;

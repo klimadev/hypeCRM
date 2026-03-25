@@ -1,9 +1,15 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
-import OnboardingTourRunner from "@/modules/onboarding/components/onboarding-tour-runner";
 import { readTourCompletion, writeTourCompletion } from "@/modules/onboarding/lib/storage";
 import type { RunnerProps, TourBundle, TourIdentity } from "@/modules/onboarding/types";
+
+// [ME2] Lazy loading do tour runner - @reactour/tour só é carregado quando o tour é iniciado
+const OnboardingTourRunner = dynamic(
+  () => import("@/modules/onboarding/components/onboarding-tour-runner"),
+  { ssr: false }
+);
 
 type OnboardingTourGateProps = {
   bundle: TourBundle;

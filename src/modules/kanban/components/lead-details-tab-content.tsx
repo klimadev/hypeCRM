@@ -32,47 +32,45 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
     perfil,
     estagios,
     funcionarios,
-    pendenciasLead,
     salvando,
     erroDetalhesLead,
-    setErroDetalhesLead,
     onMudarLead,
     onSalvar,
     onExcluir,
     temAlteracoes,
   } = props;
 
-  const estagioAtual = estagios.find((estagio) => estagio.id === leadSelecionado.id_estagio) ?? null;
+  void estagios;
   const mensagemTelefoneInvalido = validarTelefoneLead(leadSelecionado.telefone);
 
   const statusLead = { 
     rotulo: "Em andamento", 
     descricao: "Siga preenchendo os dados e conduzindo o lead no funil.", 
-    classe: "border-slate-300 bg-slate-50 text-slate-700" 
+    classe: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]" 
   };
 
   return (
     <div className="space-y-4 p-4">
-      <div className={`rounded-xl border p-4 ${statusLead.classe}`}>
+      <div className={`rounded-[var(--radius-card)] border p-4 ${statusLead.classe}`}>
         <p className="text-sm font-semibold">Status atual: {statusLead.rotulo}</p>
         <p className="mt-1 text-xs">{statusLead.descricao}</p>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="mb-3 text-sm font-semibold text-slate-800">Dados editáveis</p>
+      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+        <p className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Dados editáveis</p>
         
         <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+          <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
             <Phone className="h-4 w-4 text-emerald-600" />
             Telefone
           </label>
           <Input
-            className="h-11 rounded-xl border-slate-200"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
             value={leadSelecionado.telefone}
             onChange={(e) => onMudarLead({ ...leadSelecionado, telefone: aplicaMascaraTelefoneBr(e.target.value) })}
           />
           {mensagemTelefoneInvalido ? (
-            <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+            <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-3 py-2 text-xs text-[color:#fde68a]">
               <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
               <span>{mensagemTelefoneInvalido}</span>
             </div>
@@ -80,9 +78,9 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
         </div>
 
         <div className="mt-3 space-y-2">
-          <label className="text-sm font-medium text-slate-700">Valor da Oportunidade</label>
+          <label className="text-sm font-medium text-[var(--text-secondary)]">Valor da Oportunidade</label>
           <Input
-            className="h-11 rounded-xl border-slate-200"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
             inputMode="numeric"
             value={aplicaMascaraMoedaBr(String(Math.round(leadSelecionado.valor_oportunidade * 100)))}
             onChange={(e) => onMudarLead({ ...leadSelecionado, valor_oportunidade: converteMoedaBrParaNumero(e.target.value) })}
@@ -90,9 +88,9 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
         </div>
 
         <div className="mt-3 space-y-2">
-          <label className="text-sm font-medium text-slate-700">Observações</label>
+          <label className="text-sm font-medium text-[var(--text-secondary)]">Observações</label>
           <Textarea
-            className="min-h-[100px] rounded-xl border-slate-200"
+            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
             value={leadSelecionado.observacoes ?? ""}
             onChange={(e) => onMudarLead({ ...leadSelecionado, observacoes: e.target.value })}
           />
@@ -100,9 +98,9 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
 
         {perfil !== "COLABORADOR" ? (
           <div className="mt-3 space-y-2">
-            <label className="text-sm font-medium text-slate-700">Responsavel</label>
+            <label className="text-sm font-medium text-[var(--text-secondary)]">Responsavel</label>
             <Select value={leadSelecionado.id_funcionario} onValueChange={(id_funcionario) => onMudarLead({ ...leadSelecionado, id_funcionario })}>
-              <SelectTrigger className="h-11 rounded-xl border-slate-200">
+              <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]">
                 <SelectValue placeholder="Selecione o responsavel" />
               </SelectTrigger>
               <SelectContent>
@@ -117,7 +115,7 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
         ) : null}
 
         {erroDetalhesLead ? (
-          <p className="rounded-xl bg-rose-50 p-3 text-sm font-medium text-rose-600">
+          <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
             <span className="inline-flex items-center gap-1">
               <AlertCircle className="h-4 w-4" />
               {erroDetalhesLead}
@@ -132,7 +130,7 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
         ) : null}
 
         <div className="border-t pt-4 mt-4">
-          <Button variant="destructive" className="w-full rounded-xl text-sm font-medium" onClick={onExcluir} title="Abrir confirmacao de exclusao">
+          <Button variant="destructive" className="w-full rounded-[var(--radius-control)] text-sm font-medium" onClick={onExcluir} title="Abrir confirmacao de exclusao">
             <Trash2 className="mr-2 h-4 w-4" />
             Excluir Lead
           </Button>

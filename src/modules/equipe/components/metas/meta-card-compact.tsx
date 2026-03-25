@@ -15,10 +15,10 @@ type MetaCardCompactProps = {
 
 // Cores por status
 function getStatusColor(percentual: number) {
-  if (percentual >= 100) return "bg-emerald-500";
-  if (percentual >= 70) return "bg-emerald-500";
-  if (percentual >= 50) return "bg-amber-500";
-  return "bg-rose-500";
+  if (percentual >= 100) return "bg-[var(--success)]";
+  if (percentual >= 70) return "bg-[var(--success)]";
+  if (percentual >= 50) return "bg-[var(--warning)]";
+  return "bg-[var(--danger)]";
 }
 
 function getStatusEmoji(percentual: number) {
@@ -61,12 +61,12 @@ export function MetaCardCompact({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-2xl border border-slate-200 bg-white p-4 transition-all hover:shadow-md",
+        "group relative overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]",
         className
       )}
     >
       {/* Barra de progresso no topo */}
-      <div className="absolute inset-x-0 top-0 h-1.5 bg-slate-100">
+        <div className="absolute inset-x-0 top-0 h-1.5 bg-[color:rgba(255,255,255,0.06)]">
         <div
           className={cn("h-full transition-all duration-500", statusColor)}
           style={{ width: `${Math.min(percentual, 100)}%` }}
@@ -83,7 +83,7 @@ export function MetaCardCompact({
             </span>
             
             {/* Tipo + Nome/PDV */}
-            <div className="flex items-center gap-1.5 text-slate-500">
+            <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
               {getTipoIcon(meta.tipo)}
               <span className="text-xs font-medium">
                 {meta.tipo === "INDIVIDUAL" 
@@ -97,7 +97,7 @@ export function MetaCardCompact({
           </div>
 
           {/* Indicador + Período */}
-          <p className="mt-2 text-sm font-semibold text-slate-900 truncate">
+          <p className="mt-2 truncate text-sm font-semibold text-[var(--text-primary)]">
             {meta.tipo === "INDIVIDUAL" 
               ? formatarIndicadorMeta(meta, meta.alvo)
               : `${formatarIndicadorMeta(meta, meta.alvo)} • ${formatarPeriodoMeta(meta)}`
@@ -106,7 +106,7 @@ export function MetaCardCompact({
           
           {/* Indicador para não individuais */}
           {meta.tipo !== "INDIVIDUAL" && (
-            <p className="mt-1 text-xs text-slate-500">
+            <p className="mt-1 text-xs text-[var(--text-secondary)]">
               {formatarIndicadorMeta(meta, meta.alvo)}
             </p>
           )}
@@ -116,28 +116,28 @@ export function MetaCardCompact({
         <div className="text-right">
           <p className={cn(
             "text-2xl font-bold tracking-tight",
-            percentual >= 100 ? "text-emerald-600" :
-            percentual >= 70 ? "text-emerald-600" :
-            percentual >= 50 ? "text-amber-600" :
-            "text-rose-600"
+            percentual >= 100 ? "text-[var(--success)]" :
+            percentual >= 70 ? "text-[var(--success)]" :
+            percentual >= 50 ? "text-[var(--warning)]" :
+            "text-[var(--danger)]"
           )}>
             {percentual.toFixed(0)}%
           </p>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-[var(--text-secondary)]">
             {valorRealizado} / {valorMeta}
           </p>
         </div>
       </div>
 
       {/* Linha inferior: Dias restantes + Ações */}
-      <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3">
+      <div className="mt-3 flex items-center justify-between border-t border-[var(--border-subtle)] pt-3">
         <div className="flex items-center gap-3">
           {diasRestantes > 0 ? (
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-[var(--text-secondary)]">
               ⏰ {diasRestantes} dias restantes
             </span>
           ) : (
-            <span className="text-xs font-medium text-amber-600">
+            <span className="text-xs font-medium text-[var(--warning)]">
               ⚠️ Prazo encerrando
             </span>
           )}
@@ -148,7 +148,7 @@ export function MetaCardCompact({
             <button
               type="button"
               onClick={() => onEditar(meta)}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+              className="rounded-lg p-1.5 text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.06)] hover:text-[var(--text-primary)]"
               title="Editar"
             >
               <Pencil className="h-4 w-4" />
@@ -157,7 +157,7 @@ export function MetaCardCompact({
               type="button"
               onClick={() => onDesativar(meta.id)}
               disabled={desativando}
-              className="rounded-lg p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+              className="rounded-lg p-1.5 text-[var(--text-tertiary)] hover:bg-[color:rgba(244,63,94,0.12)] hover:text-[var(--danger)]"
               title="Desativar"
             >
               <Trash2 className="h-4 w-4" />

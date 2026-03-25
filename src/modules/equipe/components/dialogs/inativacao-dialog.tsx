@@ -21,19 +21,19 @@ export function InativacaoDialog({ vm }: InativacaoDialogProps) {
         }
       }}
     >
-        <DialogContent className="rounded-2xl">
+        <DialogContent className="rounded-[var(--radius-card)]">
           <DialogHeader>
             <DialogTitle>Inativar colaborador</DialogTitle>
           </DialogHeader>
 
           <div className="space-y-3">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--text-secondary)]">
               Ao inativar <span className="font-semibold">{vm.funcionariosDestinoInativacao?.nome}</span>, os leads precisam ser
               reatribuidos para outro colaborador ativo do mesmo PDV.
             </p>
 
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Destino da reatribuicao</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">Destino da reatribuicao</p>
               <Select
                 value={vm.destinoInativacaoIndividual}
                 onValueChange={vm.setDestinoInativacaoIndividual}
@@ -47,7 +47,7 @@ export function InativacaoDialog({ vm }: InativacaoDialogProps) {
                     <SelectItem key={funcionario.id} value={funcionario.id}>
                       <div className="flex flex-col">
                         <span className="font-medium">{funcionario.nome}</span>
-                        <span className="text-xs text-slate-500">
+                        <span className="text-xs text-[var(--text-secondary)]">
                           {funcionario.cargo} • {funcionario.pdv?.nome}
                         </span>
                       </div>
@@ -58,7 +58,7 @@ export function InativacaoDialog({ vm }: InativacaoDialogProps) {
             </div>
 
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Observacao (opcional)</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-tertiary)]">Observacao (opcional)</p>
               <Textarea
                 value={vm.observacaoInativacaoIndividual}
                 onChange={(evento) => vm.setObservacaoInativacaoIndividual(evento.target.value)}
@@ -67,21 +67,21 @@ export function InativacaoDialog({ vm }: InativacaoDialogProps) {
               />
             </div>
 
-            {vm.erroLista && <p className="text-sm font-medium text-rose-600">{vm.erroLista}</p>}
+            {vm.erroLista && <p className="text-sm font-medium text-[var(--danger)]">{vm.erroLista}</p>}
             {vm.funcionariosDestinoMesmoPdv.length === 0 ? (
-              <p className="text-sm font-medium text-amber-700">Nenhum colaborador no mesmo PDV. Atribua a um gerente geral.</p>
+              <p className="text-sm font-medium text-[var(--warning)]">Nenhum colaborador no mesmo PDV. Atribua a um gerente geral.</p>
             ) : null}
 
             <div className="flex gap-2">
             <Button
-              className="flex-1 rounded-xl border border-slate-200 bg-white text-sm font-medium text-slate-600 hover:bg-slate-50"
+              className="flex-1 rounded-[var(--radius-control)] text-sm font-medium"
               variant="outline"
               onClick={() => vm.setDialogInativacaoAberto(false)}
             >
               Cancelar
             </Button>
             <Button
-              className="flex-1 rounded-xl bg-slate-800 font-medium text-white hover:bg-slate-700"
+              className="flex-1 rounded-[var(--radius-control)] font-medium"
               onClick={() => void vm.confirmarInativacaoIndividual()}
               disabled={
                 vm.executandoInativacaoIndividual ||

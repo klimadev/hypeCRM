@@ -144,7 +144,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
     setDrawerColaboradoresAberto(true);
   };
 
-  const handleSubmitCadastroRapido = async (evento: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitCadastroRapido = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
     setErrosLocal({});
     setCadastroSucesso(false);
@@ -230,7 +230,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
 
   if (vm.carregandoPdvs) {
     return (
-      <div className="flex items-center justify-center rounded-xl border border-slate-200/70 bg-slate-50/70 p-6 text-sm text-slate-600">
+      <div className="flex items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-6 text-sm text-[var(--text-secondary)]">
         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
         Carregando gestao de PDVs...
       </div>
@@ -241,11 +241,11 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">PDVs e operacao</p>
-          <p className="text-sm text-slate-600">Clique no card para abrir a gestao da equipe do PDV no drawer lateral.</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">PDVs e operacao</p>
+          <p className="text-sm text-[var(--text-secondary)]">Clique no card para abrir a gestao da equipe do PDV no drawer lateral.</p>
         </div>
         {totalPdvsSemInstancia > 0 ? (
-          <div className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <div className="flex items-center gap-2 rounded-[var(--radius-control)] border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-3 py-2 text-sm text-[var(--warning)]">
             <AlertCircle className="h-4 w-4" />
             {totalPdvsSemInstancia} PDV(s) sem instancia WhatsApp vinculada
           </div>
@@ -253,7 +253,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
       </div>
 
       {vm.erroGestaoPdvs ? (
-        <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+        <div className="flex items-center gap-2 rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] px-4 py-3 text-sm text-[var(--danger)]">
           <AlertCircle className="h-4 w-4" />
           {vm.erroGestaoPdvs}
         </div>
@@ -271,19 +271,19 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             <article
               key={pdv.id}
               className={cn(
-                "group relative cursor-pointer space-y-3 overflow-hidden rounded-2xl border bg-white p-4 transition-all duration-200",
-                "hover:-translate-y-1 hover:shadow-xl hover:border-blue-300/50",
+                "group relative cursor-pointer space-y-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--surface-elevated)] p-4 transition-all duration-200",
+                "hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]",
                 "active:scale-[0.99]",
                 pdv.alerta_configuracao
-                  ? "border-amber-300/80 bg-gradient-to-br from-amber-50 via-white to-orange-50 shadow-[0_10px_30px_rgba(217,119,6,0.12)]"
-                  : "border-slate-200/70 shadow-[0_8px_26px_rgba(15,23,42,0.08)]",
+                  ? "border-[color:rgba(245,158,11,0.28)] bg-[linear-gradient(135deg,rgba(245,158,11,0.1),rgba(255,255,255,0.02))] shadow-[0_10px_30px_-20px_rgba(245,158,11,0.45)]"
+                  : "border-[var(--border-subtle)] shadow-[var(--shadow-sm)]",
               )}
             >
               {/* Indicador visual de clique - ícone animado */}
               <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-cyan-100/70 blur-2xl" />
               <div className="pointer-events-none absolute right-2 top-2 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-100">
-                  <svg className="h-3 w-3 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[color:rgba(255,255,255,0.06)]">
+                  <svg className="h-3 w-3 text-[var(--text-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M9 5l7 7-7 7" />
                   </svg>
                 </div>
@@ -295,14 +295,14 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                       value={nomeEdicao}
                       onChange={(evento) => setNomeEdicao(evento.target.value)}
                       disabled={salvando}
-                      className="h-9"
+                        className="h-9 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)]"
                       placeholder="Nome do PDV"
                     />
                     <Select
                       value={instanciaEdicao || VALOR_SEM_INSTANCIA}
                       onValueChange={(valor) => setInstanciaEdicao(valor === VALOR_SEM_INSTANCIA ? "" : valor)}
                     >
-                      <SelectTrigger className="h-9">
+                      <SelectTrigger className="h-9 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]">
                         <SelectValue placeholder="Selecione uma instância WhatsApp" />
                       </SelectTrigger>
                       <SelectContent>
@@ -318,13 +318,13 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                       <Button
                         type="button"
                         size="sm"
-                        className="rounded-lg bg-emerald-600 text-white hover:bg-emerald-500"
+                        className="rounded-[var(--radius-control)]"
                         disabled={salvando}
                         onClick={() => void salvarEdicaoPdv()}
                       >
                         {salvando ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Salvar"}
                       </Button>
-                      <Button type="button" size="sm" variant="outline" className="rounded-lg" disabled={salvando} onClick={cancelarEdicaoPdv}>
+                      <Button type="button" size="sm" variant="outline" className="rounded-[var(--radius-control)]" disabled={salvando} onClick={cancelarEdicaoPdv}>
                         Cancelar
                       </Button>
                     </div>
@@ -338,7 +338,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <h3 className="text-sm font-semibold text-slate-800 group-hover/btn:text-blue-700 transition-colors duration-200">{pdv.nome}</h3>
+                           <h3 className="text-sm font-semibold text-[var(--text-primary)] transition-colors duration-200 group-hover/btn:text-[var(--brand)]">{pdv.nome}</h3>
                           {temColaboradores && (
                             <div className="mt-2 flex items-center">
                               <div className="flex -space-x-2">
@@ -346,24 +346,24 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                                   <Avatar key={func.id} nome={func.nome} tamanho="sm" />
                                 ))}
                                 {excedente > 0 && (
-                                  <div className="flex h-8 w-8 items-center justify-center rounded-xl border-2 border-white bg-slate-100 text-xs font-medium text-slate-600">
+                                   <div className="flex h-8 w-8 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.05)] text-xs font-medium text-[var(--text-secondary)]">
                                     +{excedente}
                                   </div>
                                 )}
                               </div>
-                              <span className="ml-2 text-xs text-slate-500">{pdv.funcionarios?.length} colaborador(es)</span>
+                               <span className="ml-2 text-xs text-[var(--text-secondary)]">{pdv.funcionarios?.length} colaborador(es)</span>
                             </div>
                           )}
-                          {!temColaboradores && <p className="mt-1 text-xs text-slate-400">Sem colaboradores</p>}
+                           {!temColaboradores && <p className="mt-1 text-xs text-[var(--text-tertiary)]">Sem colaboradores</p>}
                         </div>
                         <div className="flex items-center gap-1">
-                          <Building2 className="h-4 w-4 text-slate-400" />
+                           <Building2 className="h-4 w-4 text-[var(--text-tertiary)]" />
                         </div>
                       </div>
                       {pdv.whatsapp_instancia ? (
-                        <p className="mt-2 text-xs text-emerald-600">WhatsApp: {pdv.whatsapp_instancia.nome}</p>
+                         <p className="mt-2 text-xs text-[var(--success)]">WhatsApp: {pdv.whatsapp_instancia.nome}</p>
                       ) : (
-                        <div className="mt-2 flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-2.5 py-2 text-xs text-amber-800">
+                         <div className="mt-2 flex items-start gap-2 rounded-lg border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-2.5 py-2 text-xs text-[var(--warning)]">
                           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                           <span>{pdv.alerta_configuracao?.mensagem ?? "Sem instancia WhatsApp vinculada."}</span>
                         </div>
@@ -393,7 +393,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             </DialogDescription>
           </DialogHeader>
 
-          <p className="text-sm text-slate-600">
+          <p className="text-sm text-[var(--text-secondary)]">
             Confirma a exclusao do PDV <span className="font-semibold">{vm.pdvParaExcluir?.nome}</span>?
           </p>
 
@@ -913,4 +913,3 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
     </div>
   );
 }
-

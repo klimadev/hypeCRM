@@ -45,7 +45,7 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
   };
 
   return (
-    <ModulePageShell>
+    <ModulePageShell className="rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] shadow-[var(--shadow-md)]">
       <KanbanHeader
         dialogNovoLeadAberto={vm.dialogNovoLeadAberto}
         setDialogNovoLeadAberto={vm.setDialogNovoLeadAberto}

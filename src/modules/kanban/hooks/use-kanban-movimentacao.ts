@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, useOptimistic, useTransition } from "react";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import type { Estagio, Lead } from "../types";
@@ -23,61 +23,72 @@ export function useKanbanMovimentacao({
   registrarMovimentoLocal,
   addToast,
 }: UseKanbanMovimentacaoParams) {
+  const [isPending, startTransition] = useTransition();
   const [movimentoPendente, setMovimentoPendente] = useState<{
     id_lead: string;
     id_estagio: string;
   } | null>(null);
   const [motivoPerda, setMotivoPerda] = useState("");
 
+  // useOptimistic replaces manual setLeads for movement
+  // React automatically handles rollback on error
+  const [optimisticLeads, addOptimisticMove] = useOptimistic(
+    leads,
+    (state, update: { id: string; id_estagio: string; motivo_perda: string | null }) =>
+      state.map((item) =>
+        item.id === update.id
+          ? { ...item, id_estagio: update.id_estagio, motivo_perda: update.motivo_perda }
+          : item,
+      ),
+  );
+
   const moverLead = useCallback(
     async (idLead: string, idEstagio: string, motivo?: string) => {
       const leadAnterior = leads.find((item) => item.id === idLead);
       if (!leadAnterior) return false;
 
-      setLeads((atual) =>
-        atual.map((item) =>
-          item.id === idLead
-            ? {
-                ...item,
-                id_estagio: idEstagio,
-                motivo_perda: motivo?.trim() ? motivo.trim() : null,
-              }
-            : item,
-        ),
-      );
+      // 1. Optimistic update — instant UI change
+      addOptimisticMove({
+        id: idLead,
+        id_estagio: idEstagio,
+        motivo_perda: motivo?.trim() ? motivo.trim() : null,
+      });
       registrarMovimentoLocal();
 
-      const resposta = await moverLeadKanban(idLead, {
-        id_estagio: idEstagio,
-        motivo_perda: motivo,
+      // 2. Server request in transition (non-blocking)
+      startTransition(async () => {
+        const resposta = await moverLeadKanban(idLead, {
+          id_estagio: idEstagio,
+          motivo_perda: motivo,
+        });
+
+        if (!resposta.ok) {
+          // React automatically rolls back optimistic state
+          addToast({
+            type: "error",
+            title: "Movimentação não permitida",
+            description: resposta.erro,
+          });
+          return;
+        }
+
+        if (resposta.dados.lead) {
+          const leadAtualizado = resposta.dados.lead;
+          setLeads((atual) => atual.map((item) => (item.id === idLead ? leadAtualizado : item)));
+        }
+
+        if (resposta.dados.mensagem) {
+          addToast({
+            type: "warning",
+            title: "Lead com pendência de análise",
+            description: resposta.dados.mensagem,
+          });
+        }
       });
-
-      if (!resposta.ok) {
-        setLeads((atual) => atual.map((item) => (item.id === idLead ? leadAnterior : item)));
-        addToast({
-          type: "error",
-          title: "Movimentação não permitida",
-          description: resposta.erro,
-        });
-        return false;
-      }
-
-      if (resposta.dados.lead) {
-        const leadAtualizado = resposta.dados.lead;
-        setLeads((atual) => atual.map((item) => (item.id === idLead ? leadAtualizado : item)));
-      }
-
-      if (resposta.dados.mensagem) {
-        addToast({
-          type: "warning",
-          title: "Lead com pendência de análise",
-          description: resposta.dados.mensagem,
-        });
-      }
 
       return true;
     },
-    [leads, setLeads, registrarMovimentoLocal, addToast],
+    [addOptimisticMove, leads, registrarMovimentoLocal, setLeads, addToast],
   );
 
   const aoDragEnd = useCallback(
@@ -129,5 +140,7 @@ export function useKanbanMovimentacao({
     moverLead,
     aoDragEnd,
     confirmarPerda,
+    optimisticLeads, // Return optimistic state for rendering
+    isPending, // Return pending state for loading indicators
   };
 }

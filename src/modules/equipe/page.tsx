@@ -25,13 +25,13 @@ export function ModuloEquipe({ perfil, id_pdv }: Props) {
   }
 
   return (
-    <ModulePageShell className="space-y-4 pb-28 md:pb-28">
+    <ModulePageShell className="space-y-4 rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] pb-28 shadow-[var(--shadow-md)] md:pb-28">
       <EquipeHeader vm={vm} onAbrirNovoPdv={() => setDrawerNovoPdvAberto(true)} />
 
       <InlineStatusAlert variant="error" message={vm.erroLista} />
 
       {vm.podeAdicionarFuncionario ? (
-        <div className="rounded-2xl border border-slate-200/70 bg-white p-3 shadow-[0_2px_8px_rgba(0,0,0,0.04)] md:p-4">
+        <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 shadow-[var(--shadow-sm)] md:p-4">
           <PdvManagementPanel vm={vm} drawerNovoPdvAberto={drawerNovoPdvAberto} setDrawerNovoPdvAberto={setDrawerNovoPdvAberto} />
         </div>
       ) : null}

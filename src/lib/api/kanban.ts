@@ -190,10 +190,10 @@ export async function uploadDocumentoKanban(arquivo: File): Promise<ResultadoApi
 }
 
 export async function aprovarLeadKanban(_idLead: string): Promise<ResultadoApi<{ lead?: Lead }>> {
-  // Função descontinuada - sistema de aprovação removido no HYPE CRM
-  return { 
-    ok: false, 
-    erro: "Sistema de aprovação descontinuado. Mova o lead para 'Fechado' usando a função de mover." 
+  void _idLead;
+  return {
+    ok: false,
+    erro: "Sistema de aprovação descontinuado. Mova o lead para 'Fechado' usando a função de mover.",
   };
 }
 

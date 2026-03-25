@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, Component, ReactNode } from "react";
+import { useEffect, Component, type ErrorInfo, type ReactNode } from "react";
+import { AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 class ErrorBoundary extends Component<
@@ -16,7 +17,7 @@ class ErrorBoundary extends Component<
     return { hasError: true, error };
   }
 
-  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 
@@ -41,34 +42,23 @@ function DefaultErrorFallback({ error, reset }: { error?: Error; reset: () => vo
   }, [error]);
 
   return (
-    <div className="flex min-h-[400px] flex-col items-center justify-center gap-4 p-8 text-center">
-      <div className="rounded-full bg-rose-50 p-4">
-        <svg
-          className="h-8 w-8 text-rose-500"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-          />
-        </svg>
+    <div className="relative flex min-h-[400px] flex-col items-center justify-center overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] p-8 text-center shadow-[var(--shadow-md)]">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(244,63,94,0.12),transparent_32%),radial-gradient(circle_at_bottom_right,rgba(139,92,246,0.08),transparent_28%)]" />
+      <div className="relative rounded-[20px] border border-[color:rgba(244,63,94,0.22)] bg-[linear-gradient(135deg,rgba(244,63,94,0.16),rgba(255,255,255,0.03))] p-4 text-[var(--danger)] shadow-[var(--shadow-sm)]">
+        <AlertTriangle className="h-8 w-8" />
       </div>
-      <div>
-        <h2 className="text-lg font-semibold text-slate-900">Algo deu errado</h2>
-        <p className="mt-1 text-sm text-slate-500">
+      <div className="relative mt-4 max-w-md space-y-1">
+        <h2 className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">Algo deu errado</h2>
+        <p className="text-sm text-[var(--text-secondary)]">
           Ocorreu um erro inesperado. Por favor, tente novamente.
         </p>
         {process.env.NODE_ENV === "development" && error && (
-          <pre className="mt-4 max-w-md overflow-auto rounded-lg bg-slate-100 p-4 text-left text-xs text-slate-600">
+          <pre className="mt-4 overflow-auto rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 text-left font-mono text-xs text-[var(--text-secondary)]">
             {error.message}
           </pre>
         )}
       </div>
-      <div className="flex gap-2">
+      <div className="relative mt-6 flex flex-wrap items-center justify-center gap-2">
         <Button variant="outline" onClick={() => window.location.reload()}>
           Recarregar Página
         </Button>

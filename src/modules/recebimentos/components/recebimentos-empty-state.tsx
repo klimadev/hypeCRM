@@ -27,12 +27,12 @@ export function RecebimentosEmptyState({ aba }: RecebimentosEmptyStateProps) {
   const conteudo = mensagens[aba];
 
   return (
-    <section className="rounded-2xl border border-dashed border-slate-300 bg-white px-6 py-12 text-center shadow-sm">
-      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100">
-        <CircleDollarSign className="h-7 w-7 text-slate-500" />
+    <section className="rounded-[16px] border border-dashed border-[var(--border-strong)] bg-[var(--surface)] px-6 py-12 text-center shadow-[var(--shadow-sm)]">
+      <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
+        <CircleDollarSign className="h-7 w-7 text-[var(--text-secondary)]" />
       </div>
-      <h3 className="mt-4 text-lg font-semibold text-slate-900">{conteudo.titulo}</h3>
-      <p className="mx-auto mt-2 max-w-xl text-sm text-slate-500">{conteudo.descricao}</p>
+      <h3 className="mt-4 text-lg font-semibold tracking-tight text-[var(--text-primary)]">{conteudo.titulo}</h3>
+      <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--text-secondary)]">{conteudo.descricao}</p>
     </section>
   );
 }

@@ -16,14 +16,14 @@ export function EquipeMobileList({ vm }: EquipeMobileListProps) {
 
   if (vm.funcionarios.length === 0 && !vm.carregandoLista) {
     return (
-      <div className="flex flex-col items-center justify-center rounded-2xl border border-slate-200/60 bg-white py-16 text-center shadow-[0_2px_8px_rgba(0,0,0,0.04)] md:hidden">
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-slate-100">
-          <Users className="h-8 w-8 text-slate-400" />
+      <div className="flex flex-col items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] py-16 text-center shadow-[var(--shadow-sm)] md:hidden">
+        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[color:rgba(255,255,255,0.05)]">
+          <Users className="h-8 w-8 text-[var(--text-tertiary)]" />
         </div>
-        <p className="text-lg font-semibold text-slate-700">Nenhum colaborador encontrado</p>
-        <p className="mt-1 max-w-xs text-sm text-slate-500">Adicione seu primeiro colaborador para gerenciar sua equipe.</p>
+        <p className="text-lg font-semibold text-[var(--text-primary)]">Nenhum colaborador encontrado</p>
+        <p className="mt-1 max-w-xs text-sm text-[var(--text-secondary)]">Adicione seu primeiro colaborador para gerenciar sua equipe.</p>
         {vm.podeGerenciarEmpresa && (
-          <Button className="mt-6 rounded-xl bg-slate-800 font-medium text-white hover:bg-slate-700" onClick={() => vm.setDialogNovoFuncionarioAberto(true)}>
+          <Button className="mt-6 rounded-[var(--radius-control)] font-medium" onClick={() => vm.setDialogNovoFuncionarioAberto(true)}>
             Adicionar colaborador
           </Button>
         )}
@@ -49,8 +49,8 @@ export function EquipeMobileList({ vm }: EquipeMobileListProps) {
         return (
           <div
             key={funcionario.id}
-            className={`relative cursor-pointer rounded-xl border bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${
-              isSelected ? "border-blue-300 bg-blue-50/30" : "border-slate-200"
+            className={`relative cursor-pointer rounded-[var(--radius-card)] border bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)] ${
+              isSelected ? "border-[color:rgba(56,189,248,0.32)] bg-[color:rgba(56,189,248,0.08)]" : "border-[var(--border-subtle)]"
             }`}
             onClick={() => vm.iniciarEdicao(funcionario)}
           >
@@ -62,7 +62,7 @@ export function EquipeMobileList({ vm }: EquipeMobileListProps) {
                   e.stopPropagation();
                   vm.alternarSelecao(funcionario.id, e.target.checked);
                 }}
-                className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
+                className="mt-1 h-4 w-4 rounded border-[var(--border-strong)] text-[var(--text-secondary)] focus:ring-[var(--focus-ring)]"
                 onClick={(e) => e.stopPropagation()}
               />
               
@@ -70,15 +70,15 @@ export function EquipeMobileList({ vm }: EquipeMobileListProps) {
               
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between">
-                  <p className="font-medium text-slate-900 truncate">{funcionario.nome}</p>
+                  <p className="truncate font-medium text-[var(--text-primary)]">{funcionario.nome}</p>
                   <StatusBadge ativo={funcionario.ativo} />
                 </div>
-                <p className="text-sm text-slate-500 truncate">{funcionario.email}</p>
-                <div className="mt-2 flex items-center gap-4 text-xs text-slate-500">
+                <p className="truncate text-sm text-[var(--text-secondary)]">{funcionario.email}</p>
+                <div className="mt-2 flex items-center gap-4 text-xs text-[var(--text-secondary)]">
                   <span className="font-medium">{funcionario.cargo}</span>
                   <span>{funcionario.pdv?.nome || "Sem PDV"}</span>
                 </div>
-                <div className="mt-2 flex items-center gap-1 text-xs text-blue-600 opacity-0 transition-opacity hover:opacity-100">
+                <div className="mt-2 flex items-center gap-1 text-xs text-[var(--info)] opacity-0 transition-opacity hover:opacity-100">
                   <Pencil className="h-3 w-3" />
                   <span>Clique para editar</span>
                 </div>

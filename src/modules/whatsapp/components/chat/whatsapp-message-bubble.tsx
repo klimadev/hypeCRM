@@ -15,12 +15,12 @@ function formatTime(timestamp: number) {
 
 function ReceiptIcon({ message }: { message: WhatsappChatMessage }) {
   if (!message.fromMe) return null;
-  if (message.status === "PENDING") return <Clock3 className="h-3 w-3 text-slate-500" />;
-  if (message.status === "SENT") return <Check className="h-3 w-3 text-slate-500" />;
-  if (message.status === "DELIVERED") return <CheckCheck className="h-3 w-3 text-slate-500" />;
-  if (message.status === "READ") return <CheckCheck className="h-3 w-3 text-blue-500" />;
-  if (message.status === "PLAYED") return <Volume2 className="h-3 w-3 text-purple-500" />;
-  if (message.status === "DELETED") return <Trash2 className="h-3 w-3 text-slate-400" />;
+  if (message.status === "PENDING") return <Clock3 className="h-3 w-3 text-[var(--text-tertiary)]" />;
+  if (message.status === "SENT") return <Check className="h-3 w-3 text-[var(--text-tertiary)]" />;
+  if (message.status === "DELIVERED") return <CheckCheck className="h-3 w-3 text-[var(--text-tertiary)]" />;
+  if (message.status === "READ") return <CheckCheck className="h-3 w-3 text-[var(--brand)]" />;
+  if (message.status === "PLAYED") return <Volume2 className="h-3 w-3 text-[var(--info-alt)]" />;
+  if (message.status === "DELETED") return <Trash2 className="h-3 w-3 text-[var(--text-tertiary)]" />;
   return null;
 }
 
@@ -30,25 +30,25 @@ export function WhatsappMessageBubble({ message, onRetry }: Props) {
   return (
     <div className={`flex w-full ${outgoing ? "justify-end" : "justify-start"}`}>
       <div
-        className={`max-w-[80%] px-3 py-2 shadow-sm text-[15px] leading-relaxed ${
+        className={`max-w-[80%] border px-3 py-2 text-[13px] leading-6 shadow-[var(--shadow-sm)] ${
           outgoing
-            ? "bg-[#d9fdd3] rounded-br-none"
-            : "bg-white rounded-bl-none"
+            ? "border-[color:rgba(139,92,246,0.22)] bg-[linear-gradient(180deg,rgba(139,92,246,0.16),rgba(139,92,246,0.12))] rounded-br-none"
+            : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] rounded-bl-none"
         } ${isDeleted ? "opacity-50" : ""}`}
         style={{
           borderRadius: outgoing ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
         }}
-      >
+        >
         {isDeleted ? (
-          <p className="whitespace-pre-wrap text-sm text-slate-400 italic">Mensagem excluída</p>
+          <p className="whitespace-pre-wrap text-sm italic text-[var(--text-tertiary)]">Mensagem excluída</p>
         ) : (
-          <p className="whitespace-pre-wrap text-slate-800">{message.text}</p>
+          <p className="whitespace-pre-wrap text-[var(--text-primary)]">{message.text}</p>
         )}
-        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-slate-500">
+        <div className="mt-1 flex items-center justify-end gap-1 text-[10px] text-[var(--text-tertiary)]">
           {message.status === "ERROR" ? (
             <button
               type="button"
-              className="inline-flex items-center gap-1 text-rose-600 hover:text-rose-700 font-medium"
+              className="inline-flex items-center gap-1 font-medium text-[var(--danger)] transition-colors hover:text-[color:#fb7185]"
               onClick={() => onRetry?.(message)}
             >
               <RotateCcw className="h-3 w-3" />

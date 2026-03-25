@@ -1,14 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  ArrowLeft, 
-  Check, 
-  ChevronRight, 
-  LayoutTemplate,
-  Eye,
-  EyeOff
-} from "lucide-react";
+import { ArrowLeft, Check, ChevronRight, Eye, EyeOff, LayoutTemplate } from "lucide-react";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { Button } from "@/components/ui/button";
@@ -42,22 +35,22 @@ function EtapaCard({
       type="button"
       onClick={() => onClique(etapa.id)}
       className={cn(
-        "w-full rounded-lg border-0 bg-transparent px-4 py-3 text-left transition-colors",
-        atual && "bg-emerald-50"
+        "w-full rounded-[14px] border border-transparent bg-transparent px-4 py-3 text-left transition-colors duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
+        atual && "border-[var(--border-subtle)] bg-[var(--surface-elevated)]"
       )}
     >
       <div className="flex items-center gap-4">
         <div className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-bold",
           atual 
-            ? "bg-emerald-600 text-white" 
-            : "bg-slate-100 text-slate-400"
+            ? "bg-[var(--brand)] text-white" 
+            : "border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-tertiary)]"
         )}>
           {indice + 1}
         </div>
         <span className={cn(
           "text-sm font-medium",
-          atual ? "text-emerald-700 font-semibold" : "text-slate-600"
+          atual ? "font-semibold text-[var(--text-primary)]" : "text-[var(--text-secondary)]"
         )}>
           {etapa.titulo}
         </span>
@@ -97,10 +90,10 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
   function renderizarConteudoEtapa(wizard: UseProdutoWizardReturn) {
     if (wizard.etapaAtual === "basico") {
       return (
-        <Card className="border-slate-200">
-          <CardContent className="pt-6 space-y-6">
+        <Card className="border border-[var(--border-subtle)] bg-[var(--surface)]">
+          <CardContent className="space-y-6 pt-6">
             <div className="space-y-3">
-              <label className="text-sm font-medium text-slate-700">Nome do Produto</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Nome do Produto</label>
               <Input
                 value={wizard.form.nome}
                 onChange={(event) => wizard.atualizarForm({ nome: event.target.value })}
@@ -110,7 +103,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
             </div>
 
             <div className="space-y-3">
-              <label className="text-sm font-medium text-slate-700">Descrição Interna</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Descrição Interna</label>
               <Textarea
                 value={wizard.form.descricao}
                 onChange={(event) => wizard.atualizarForm({ descricao: event.target.value })}
@@ -120,14 +113,12 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Status</label>
+              <label className="text-sm font-medium text-[var(--text-secondary)]">Status</label>
               <div className="grid grid-cols-2 gap-3">
                 <Button
                   type="button"
                   variant={wizard.form.ativo ? "default" : "outline"}
-                  className={cn(
-                    wizard.form.ativo ? "bg-emerald-600 hover:bg-emerald-700" : ""
-                  )}
+                  className={cn(wizard.form.ativo ? "bg-[var(--brand)] hover:bg-[var(--brand-strong)]" : "")}
                   onClick={() => wizard.atualizarForm({ ativo: true })}
                 >
                   Ativo
@@ -136,7 +127,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
                   type="button"
                   variant={!wizard.form.ativo ? "default" : "outline"}
                   className={cn(
-                    !wizard.form.ativo ? "bg-slate-600 hover:bg-slate-700" : ""
+                    !wizard.form.ativo ? "bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:bg-[color:rgba(255,255,255,0.08)]" : ""
                   )}
                   onClick={() => wizard.atualizarForm({ ativo: false })}
                 >
@@ -151,7 +142,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
 
     if (wizard.etapaAtual === "campos") {
       return (
-        <Card className="border-slate-200">
+        <Card className="border border-[var(--border-subtle)] bg-[var(--surface)]">
           <CardContent className="pt-6">
             <ProdutoLayoutBuilder
               campos={wizard.form.schemaLayout.campos}
@@ -166,29 +157,29 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
     }
 
     return (
-      <Card className="border-slate-200">
-        <CardContent className="pt-6 space-y-6">
+      <Card className="border border-[var(--border-subtle)] bg-[var(--surface)]">
+        <CardContent className="space-y-6 pt-6">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-medium text-slate-500">Nome</p>
-              <p className="text-sm font-semibold text-slate-900 truncate" title={wizard.form.nome}>
+            <div className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
+              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Nome</p>
+              <p className="truncate text-sm font-semibold text-[var(--text-primary)]" title={wizard.form.nome}>
                 {wizard.form.nome || "—"}
               </p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-              <p className="text-xs font-medium text-slate-500">Campos</p>
-              <p className="text-lg font-semibold text-slate-900">{vm.resumoFormulario.quantidadeCampos}</p>
+            <div className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
+              <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Campos</p>
+              <p className="text-lg font-semibold text-[var(--text-primary)]">{vm.resumoFormulario.quantidadeCampos}</p>
             </div>
           </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <div className="rounded-[16px] border border-[color:rgba(245,158,11,0.2)] bg-[color:rgba(245,158,11,0.1)] p-4">
             <div className="flex items-start gap-3">
-              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded bg-amber-500 text-white text-sm font-bold">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[10px] bg-[var(--warning)] text-sm font-bold text-[color:#1a1200]">
                 !
               </div>
               <div className="flex-1">
-                <p className="font-semibold text-amber-900">Revisão necessária</p>
-                <p className="mt-1 text-sm text-amber-700">
+                <p className="font-semibold text-[var(--text-primary)]">Revisão necessária</p>
+                <p className="mt-1 text-sm text-[var(--text-secondary)]">
                   {!wizard.form.nome.trim() && "• Defina um nome para o produto\n"}
                   {vm.resumoFormulario.quantidadeCampos === 0 && "• Adicione pelo menos um campo"}
                 </p>
@@ -201,7 +192,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
   }
 
   return (
-    <ModulePageShell spacing="lg" className="bg-white">
+    <ModulePageShell spacing="lg" className="bg-[linear-gradient(180deg,_#09090b_0%,_#0c0c0e_42%,_#09090b_100%)]">
       <ModulePageHeader
         title={vm.produtoEmEdicao ? "Editar Produto" : "Criar Produto"}
         icon={<LayoutTemplate className="h-6 w-6" />}
@@ -211,7 +202,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
             type="button" 
             variant="ghost" 
             onClick={vm.voltarCatalogo} 
-            className="gap-2 text-slate-600 hover:bg-slate-100"
+            className="gap-2 text-[var(--text-secondary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
           >
             <ArrowLeft className="h-4 w-4" />
             <span className="text-sm">Voltar</span>
@@ -220,16 +211,16 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
       />
 
       {vm.erro && (
-        <div className="mb-6 rounded-lg border border-rose-200 bg-rose-50 p-4">
-          <p className="font-semibold text-rose-800">Erro</p>
-          <p className="text-sm text-rose-700">{vm.erro}</p>
+        <div className="mb-6 rounded-[16px] border border-[color:rgba(244,63,94,0.2)] bg-[color:rgba(244,63,94,0.12)] p-4">
+          <p className="font-semibold text-[var(--text-primary)]">Erro</p>
+          <p className="text-sm text-[color:#ffb4c2]">{vm.erro}</p>
         </div>
       )}
 
       <div className="grid gap-6 lg:grid-cols-[240px_1fr]">
         <div className="space-y-2">
-          <div className="rounded-lg border border-slate-200 p-4">
-            <div className="text-xs font-medium text-slate-500 mb-3">Etapas</div>
+          <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
+            <div className="mb-3 text-[11px] font-medium uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Etapas</div>
             <EtapasNavegacao
               etapas={vm.etapas}
               indiceAtual={vm.indiceEtapaAtual}
@@ -246,7 +237,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
               type="button"
               variant="ghost"
               onClick={vm.voltarCatalogo}
-              className="gap-2 text-slate-600 hover:bg-slate-100"
+              className="gap-2 text-[var(--text-secondary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
             >
               <ArrowLeft className="h-4 w-4" />
               <span className="text-sm font-medium">Cancelar</span>
@@ -258,7 +249,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
                   type="button"
                   variant="outline"
                   onClick={vm.voltarEtapa}
-                  className="gap-2 border-slate-200"
+                  className="gap-2"
                 >
                   <ChevronRight className="h-4 w-4 rotate-180" />
                   <span className="text-sm font-medium">Voltar</span>
@@ -270,7 +261,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
                   type="button"
                   onClick={vm.avancarEtapa}
                   disabled={!vm.podeAvancarEtapaAtual}
-                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
+                  className="gap-2 bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)] disabled:opacity-50"
                 >
                   <span className="text-sm font-medium">Continuar</span>
                   <ChevronRight className="h-4 w-4" />
@@ -280,7 +271,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
                   type="button"
                   onClick={() => void vm.salvarProduto()}
                   disabled={vm.salvando}
-                  className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white disabled:opacity-50"
+                  className="gap-2 bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)] disabled:opacity-50"
                 >
                   {vm.salvando ? (
                     <>
@@ -297,11 +288,11 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
             </div>
           </div>
 
-          <div className="text-center">
+              <div className="text-center">
             <button
               type="button"
               onClick={() => setMostrarPreview(!mostrarPreview)}
-              className="text-sm text-slate-500 hover:text-slate-700 font-medium transition-colors"
+              className="text-sm font-medium text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]"
             >
               {mostrarPreview ? (
                 <span className="inline-flex items-center gap-1">

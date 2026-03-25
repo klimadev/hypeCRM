@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { listarKanban } from "@/lib/api/kanban";
 import type { Lead } from "../types";
 
-const POLL_VERSAO_MS = 3000;
+const POLL_VERSAO_MS = 5000;
 const JANELA_IGNORAR_MUDANCA_LOCAL_MS = 8000;
 
 type SyncResultado = {
@@ -78,25 +78,30 @@ export function useKanbanRealtime({ leadsRef, onSync, addToast }: UseKanbanRealt
 
     // Versão mudou: verifica se é mudança local ou remota
     if (novaVersao !== versaoAnterior) {
-      const ignorarToastRemoto = Date.now() < movimentoLocalAteRef.current;
+      const ignorarMudancaRemota = Date.now() < movimentoLocalAteRef.current;
 
-      if (!ignorarToastRemoto) {
-        // Buscar dados completos para contar movimentações e mostrar toast
-        const resposta = await listarKanban();
-        if (resposta.ok) {
-          const totalMovimentacoes = contarMovimentacoesRemotas(leadsRef.current, resposta.dados.leads);
+      versaoRef.current = novaVersao;
 
-          if (totalMovimentacoes > 0) {
-            addToast?.({
-              type: "warning",
-              title: `Outro usuario moveu ${totalMovimentacoes} ${totalMovimentacoes === 1 ? "lead" : "leads"}`,
-              description: "O Kanban foi sincronizado automaticamente.",
-            });
-          }
+      // Durante a janela de movimento local, NÃO recarregar dados
+      // para evitar sobrescrever a atualização otimista com dados do servidor
+      if (ignorarMudancaRemota) {
+        return;
+      }
+
+      // Buscar dados completos para contar movimentações e mostrar toast
+      const resposta = await listarKanban();
+      if (resposta.ok) {
+        const totalMovimentacoes = contarMovimentacoesRemotas(leadsRef.current, resposta.dados.leads);
+
+        if (totalMovimentacoes > 0) {
+          addToast?.({
+            type: "warning",
+            title: `Outro usuario moveu ${totalMovimentacoes} ${totalMovimentacoes === 1 ? "lead" : "leads"}`,
+            description: "O Kanban foi sincronizado automaticamente.",
+          });
         }
       }
 
-      versaoRef.current = novaVersao;
       await onSync({ silencioso: true });
     }
   }, [onSync, addToast, leadsRef]);

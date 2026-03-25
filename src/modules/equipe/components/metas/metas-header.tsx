@@ -13,13 +13,13 @@ export function MetasHeader({ vm }: MetasHeaderProps) {
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
       <div>
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-600">
+        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--success)]">
           {vm.modo === "painel" ? "Gestao de metas" : "Acompanhamento pessoal"}
         </p>
-        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-slate-900">
+        <h1 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-[var(--text-primary)]">
           {vm.modo === "painel" ? "Metas da equipe" : "Minhas metas"}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--text-secondary)]">
           {vm.modo === "painel"
             ? "Distribua metas para sua equipe e acompanhe o progresso de forma simples."
             : "Veja sua evolucao, o que falta para bater a meta e como voce esta posicionado no ranking do PDV."}
@@ -42,13 +42,13 @@ export function MetasHeader({ vm }: MetasHeaderProps) {
 
       {vm.modo === "painel" ? (
         <div className="flex flex-wrap gap-3">
-          <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.12em] text-slate-400">Metas ativas</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">{totalAtivas}</p>
+          <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3 shadow-[var(--shadow-sm)]">
+            <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Metas ativas</p>
+            <p className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{totalAtivas}</p>
           </div>
-          <div className="rounded-2xl border border-slate-200/70 bg-white px-4 py-3 shadow-sm">
-            <p className="text-xs uppercase tracking-[0.12em] text-slate-400">Media do ranking</p>
-            <p className="mt-1 text-xl font-semibold text-slate-900">{vm.mediaEquipe.toFixed(1)}%</p>
+          <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3 shadow-[var(--shadow-sm)]">
+            <p className="text-xs uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Media do ranking</p>
+            <p className="mt-1 text-xl font-semibold text-[var(--text-primary)]">{vm.mediaEquipe.toFixed(1)}%</p>
           </div>
         </div>
       ) : null}

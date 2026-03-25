@@ -34,15 +34,15 @@ type LeadVisualCue = {
 
 function getColumnTint(estagio: Estagio): string {
   if (estagio.tipo === "GANHO") {
-    return "bg-gradient-to-b from-emerald-50/90 to-white/80";
+    return "bg-[linear-gradient(180deg,rgba(16,185,129,0.08),rgba(12,12,14,0.92))]";
   }
   if (estagio.tipo === "PERDIDO") {
-    return "bg-gradient-to-b from-slate-100/90 to-white/80";
+    return "bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,12,14,0.92))]";
   }
   if (estagio.nome === "Pré Aprovação") {
-    return "bg-gradient-to-b from-amber-50/90 to-white/80";
+    return "bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(12,12,14,0.92))]";
   }
-  return "bg-gradient-to-b from-slate-50/50 to-white/90";
+  return "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(12,12,14,0.94))]";
 }
 
 function getLeadVisualCue(lead: Lead, estagio: Estagio): LeadVisualCue {
@@ -50,7 +50,7 @@ function getLeadVisualCue(lead: Lead, estagio: Estagio): LeadVisualCue {
   if (estagio.tipo === "GANHO") {
     return {
       circle: "h-2.5 w-2.5 rounded-full bg-emerald-500",
-      border: "border-emerald-200 bg-emerald-50/50",
+      border: "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.08)]",
       emoji: null,
     };
   }
@@ -58,7 +58,7 @@ function getLeadVisualCue(lead: Lead, estagio: Estagio): LeadVisualCue {
   if (estagio.tipo === "PERDIDO") {
     return {
       circle: "h-2 w-2 rounded-full bg-slate-400",
-      border: "border-slate-200 bg-slate-100/50",
+      border: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.04)]",
       emoji: null,
     };
   }
@@ -121,11 +121,11 @@ export function KanbanBoard({
               {(provided, snapshot) => (
                 <div
                   className={cn(
-                    "rounded-2xl border border-slate-200/60 p-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] transition-all duration-300",
+                    "rounded-[var(--radius-card)] border border-[var(--border-subtle)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300",
                     getColumnTint(estagio),
                     snapshot.isDraggingOver 
-                      ? "border-blue-300 bg-blue-50/50 shadow-lg shadow-blue-100/50" 
-                      : "hover:shadow-md hover:-translate-y-0.5 hover:border-blue-200/50"
+                      ? "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.08)] shadow-[0_20px_40px_-28px_rgba(56,189,248,0.5)]" 
+                      : "hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]"
                   )}
                   ref={provided.innerRef}
                   {...provided.droppableProps}
@@ -141,8 +141,8 @@ export function KanbanBoard({
                           estagio.tipo === "ABERTO" && estagio.nome !== "Pré Aprovação" && "bg-blue-400",
                         )}
                       />
-                      <p className="text-sm font-semibold text-slate-700">
-                        {estagio.nome} <span className="font-normal text-slate-400">({leads.length})</span>
+                       <p className="text-sm font-semibold text-[var(--text-primary)]">
+                         {estagio.nome} <span className="font-normal text-[var(--text-tertiary)]">({leads.length})</span>
                       </p>
                     </div>
                     {estagio.nome === "Indefinido" && leads.length > 0 && excluirTodosIndefinidos && (
@@ -150,7 +150,7 @@ export function KanbanBoard({
                         <button
                           onClick={handleExcluirIndefinidos}
                           disabled={excluindoIndefinidos}
-                          className="rounded p-1 text-slate-400 hover:bg-rose-100 hover:text-rose-600 disabled:opacity-50"
+                           className="rounded p-1 text-[var(--text-tertiary)] hover:bg-[color:rgba(244,63,94,0.12)] hover:text-[var(--danger)] disabled:opacity-50"
                         >
                           {excluindoIndefinidos ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                         </button>
@@ -189,7 +189,7 @@ export function KanbanBoard({
                                 {...draggableProvided.draggableProps}
                                 {...draggableProvided.dragHandleProps}
                                 className={cn(
-                                  lead.id.startsWith("temp-") ? "bg-transparent" : "cursor-pointer rounded-2xl border border-slate-200/60 shadow-md transition-all duration-200 hover:shadow-xl hover:-translate-y-1",
+                                  lead.id.startsWith("temp-") ? "bg-transparent" : "cursor-pointer rounded-[var(--radius-card)] border border-[var(--border-subtle)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-md)]",
                                   visualCue.border,
                                   getClasseBordaGravidade(pendenciasPorLead[lead.id]?.gravidadeMaxima),
                                   draggableSnapshot.isDragging && "shadow-2xl scale-[1.02] rotate-1 opacity-90"
@@ -203,18 +203,18 @@ export function KanbanBoard({
                                   {/* Nome em destaque */}
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
-                                      <h3 className="text-base font-bold text-slate-800 truncate flex items-center gap-1.5">
+                                      <h3 className="flex items-center gap-1.5 truncate text-base font-semibold text-[var(--text-primary)]">
                                         {!lead.id.startsWith("temp-") && draggableProvided.dragHandleProps && (
-                                          <GripVertical className="h-3.5 w-3.5 text-slate-300 flex-shrink-0" />
+                                            <GripVertical className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-tertiary)]" />
                                         )}
                                         {lead.nome}
                                       </h3>
                                       
                                       {/* Telefone */}
-                                      <p className="text-xs text-slate-500 mt-0.5">{lead.telefone}</p>
+                                       <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{lead.telefone}</p>
                                       
                                       {/* Valor em destaque */}
-                                      <p className="text-lg font-bold text-emerald-600 mt-2">
+                                       <p className="mt-2 text-lg font-semibold text-[var(--success)]">
                                         {formataMoeda(lead.valor_oportunidade)}
                                       </p>
                                       
@@ -223,10 +223,10 @@ export function KanbanBoard({
                                         {/* Badge de origem */}
                                         {lead.origem && (
                                           <span className={cn(
-                                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border",
-                                            lead.origem === "ANUNCIO_CTWA" && "bg-purple-100 text-purple-700 border-purple-200",
-                                            lead.origem === "SINCRONIZACAO_WHATSAPP" && "bg-emerald-100 text-emerald-700 border-emerald-200",
-                                            lead.origem === "MANUAL" && "bg-blue-100 text-blue-700 border-blue-200"
+                                            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+                                            lead.origem === "ANUNCIO_CTWA" && "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#ddd6fe]",
+                                            lead.origem === "SINCRONIZACAO_WHATSAPP" && "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.12)] text-[color:#bbf7d0]",
+                                            lead.origem === "MANUAL" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#c8f3ff]"
                                           )}>
                                             {lead.origem === "ANUNCIO_CTWA" && <Megaphone className="w-3 h-3" />}
                                             {lead.origem === "SINCRONIZACAO_WHATSAPP" && <MessageCircle className="w-3 h-3" />}
@@ -235,16 +235,16 @@ export function KanbanBoard({
                                           </span>
                                         )}
                                         {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
-                                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-100 text-amber-700 text-xs font-medium border border-amber-200">
+                                           <span className="inline-flex items-center gap-1 rounded-full border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] px-2 py-0.5 text-xs font-medium text-[color:#fcd34d]">
                                             <Clock className="w-3 h-3" /> {diasParados}d parado
                                           </span>
                                         ) : null}
                                         {pendencias?.naoResolvidas && pendencias.naoResolvidas > 0 && !estagio.nome.includes("Pré Aprovação") ? (
                                           <span className={cn(
-                                            "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium border",
-                                            pendencias.gravidadeMaxima === "critica" && "bg-rose-100 text-rose-700 border-rose-200",
-                                            pendencias.gravidadeMaxima === "alerta" && "bg-amber-100 text-amber-700 border-amber-200",
-                                            pendencias.gravidadeMaxima === "info" && "bg-blue-100 text-blue-700 border-blue-200"
+                                            "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
+                                             pendencias.gravidadeMaxima === "critica" && "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.12)] text-[color:#fecdd3]",
+                                             pendencias.gravidadeMaxima === "alerta" && "border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] text-[color:#fde68a]",
+                                             pendencias.gravidadeMaxima === "info" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#bae6fd]"
                                           )}>
                                             <AlertTriangle className="w-3 h-3" /> {pendencias.naoResolvidas} pendência{pendencias.naoResolvidas > 1 ? 's' : ''}
                                           </span>
@@ -252,7 +252,7 @@ export function KanbanBoard({
                                       </div>
                                       
                                       {/* Responsável e tempo */}
-                                      <div className="flex items-center gap-2 mt-2.5 text-xs text-slate-400">
+                                       <div className="mt-2.5 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
                                         {funcionarios.length > 0 && lead.id_funcionario ? (
                                           <span className="flex items-center gap-1">
                                             <Users className="w-3 h-3" />

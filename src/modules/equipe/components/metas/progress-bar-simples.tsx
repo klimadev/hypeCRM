@@ -18,44 +18,44 @@ function getStatusInfo(percentual: number) {
     return {
       label: "Meta batida! 🎉",
       emoji: Trophy,
-      color: "bg-emerald-500",
-      textColor: "text-emerald-600",
-      bgColor: "bg-emerald-50",
+      color: "bg-[var(--success)]",
+      textColor: "text-[var(--success)]",
+      bgColor: "bg-[color:rgba(16,185,129,0.08)]",
     };
   }
   if (percentual >= 80) {
     return {
       label: "Quase lá! 🔥",
       emoji: Flame,
-      color: "bg-amber-500",
-      textColor: "text-amber-600",
-      bgColor: "bg-amber-50",
+      color: "bg-[var(--warning)]",
+      textColor: "text-[var(--warning)]",
+      bgColor: "bg-[color:rgba(245,158,11,0.08)]",
     };
   }
   if (percentual >= 50) {
     return {
       label: "No caminho! 🎯",
       emoji: Target,
-      color: "bg-blue-500",
-      textColor: "text-blue-600",
-      bgColor: "bg-blue-50",
+      color: "bg-[var(--info)]",
+      textColor: "text-[var(--info)]",
+      bgColor: "bg-[color:rgba(56,189,248,0.08)]",
     };
   }
   if (percentual >= 25) {
     return {
       label: "Começando bem! ⚡",
       emoji: Zap,
-      color: "bg-slate-400",
-      textColor: "text-slate-600",
-      bgColor: "bg-slate-50",
+      color: "bg-[color:rgba(255,255,255,0.28)]",
+      textColor: "text-[var(--text-secondary)]",
+      bgColor: "bg-[color:rgba(255,255,255,0.04)]",
     };
   }
   return {
     label: "Bora começar! 💪",
     emoji: Frown,
-    color: "bg-slate-300",
-    textColor: "text-slate-500",
-    bgColor: "bg-slate-50",
+    color: "bg-[color:rgba(255,255,255,0.2)]",
+    textColor: "text-[var(--text-tertiary)]",
+    bgColor: "bg-[color:rgba(255,255,255,0.04)]",
   };
 }
 
@@ -83,22 +83,22 @@ export function ProgressBarSimples({
   return (
     <div className={cn("space-y-3", className)}>
       {/* Status Badge */}
-      <div className={cn("flex items-center gap-2 rounded-xl px-3 py-2", status.bgColor)}>
+      <div className={cn("flex items-center gap-2 rounded-[var(--radius-control)] px-3 py-2", status.bgColor)}>
         <StatusIcon className={cn("h-4 w-4", status.textColor)} />
         <span className={cn("text-sm font-medium", status.textColor)}>{status.label}</span>
         {diasRestantes !== undefined && diasRestantes > 0 && (
-          <span className="ml-auto text-xs text-slate-500">{diasRestantes} dias restantes</span>
+          <span className="ml-auto text-xs text-[var(--text-secondary)]">{diasRestantes} dias restantes</span>
         )}
       </div>
 
       {/* Progress Bar */}
-      <div className="relative h-6 overflow-hidden rounded-full bg-slate-100">
+      <div className="relative h-6 overflow-hidden rounded-full bg-[color:rgba(255,255,255,0.06)]">
         <div
           className={cn("absolute inset-y-0 left-0 rounded-full transition-all duration-500", status.color)}
           style={{ width: `${valorLimitado}%` }}
         />
         <div className="absolute inset-0 flex items-center justify-center">
-          <span className="text-xs font-semibold text-slate-700">
+            <span className="text-xs font-semibold text-[var(--text-primary)]">
             {percentual.toFixed(0)}%
           </span>
         </div>
@@ -107,28 +107,28 @@ export function ProgressBarSimples({
       {/* Details */}
       <div className="flex items-center justify-between text-sm">
         <div>
-          <span className="text-slate-500">Realizado: </span>
-          <span className="font-semibold text-slate-900">{formatValor(realizado, tipoMeta)}</span>
+          <span className="text-[var(--text-secondary)]">Realizado: </span>
+          <span className="font-semibold text-[var(--text-primary)]">{formatValor(realizado, tipoMeta)}</span>
         </div>
         <div>
-          <span className="text-slate-500">Meta: </span>
-          <span className="font-semibold text-slate-900">{formatValor(meta, tipoMeta)}</span>
+          <span className="text-[var(--text-secondary)]">Meta: </span>
+          <span className="font-semibold text-[var(--text-primary)]">{formatValor(meta, tipoMeta)}</span>
         </div>
       </div>
 
       {/* Missing amount (if applicable) */}
       {faltante !== undefined && faltante > 0 && percentual < 100 && (
-        <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-700">
+        <div className="rounded-lg border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-3 py-2 text-sm text-[var(--warning)]">
           <span className="font-medium">Falta {formatValor(faltante, tipoMeta)}</span>
-          <span className="text-amber-600"> para atingir a meta!</span>
+          <span className="text-[var(--warning)]"> para atingir a meta!</span>
         </div>
       )}
 
       {/* Celebration when goal is reached */}
       {percentual >= 100 && (
-        <div className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
+        <div className="rounded-lg border border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.08)] px-3 py-2 text-sm text-[var(--success)]">
           <span className="font-medium">Parabéns! 🎉</span>
-          <span className="text-emerald-600"> Meta atingida com sucesso!</span>
+          <span className="text-[var(--success)]"> Meta atingida com sucesso!</span>
         </div>
       )}
     </div>
