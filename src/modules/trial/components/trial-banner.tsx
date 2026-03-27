@@ -68,7 +68,7 @@ export function TrialBanner() {
   return (
     <div
       className={cn(
-        "relative flex flex-wrap items-center gap-3 overflow-hidden rounded-[var(--radius-card)] border px-4 py-3 shadow-[var(--shadow-md)] backdrop-blur-md transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
+        "relative flex flex-wrap items-center gap-3 overflow-hidden rounded-[var(--radius-card)] border px-4 py-3 shadow-[var(--shadow-md)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
         estilo.container,
       )}
     >

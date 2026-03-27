@@ -242,6 +242,111 @@ export async function marcarMensagensComoLidas(leadId: string): Promise<Resultad
   return { ok: true, dados: { unreadCount: json.unreadCount ?? 0 } };
 }
 
+export type MediaContent = {
+  base64: string;
+  mediaType: string;
+  mimetype: string;
+  fileName: string;
+  seconds: number | null;
+};
+
+// Cache em memória para mídias - evita requisições duplicadas
+const mediaCache = new Map<string, { media: MediaContent; timestamp: number }>();
+const MEDIA_CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutos
+
+function getCacheKey(leadId: string, messageId: string) {
+  return `${leadId}:${messageId}`;
+}
+
+function getCachedMedia(leadId: string, messageId: string): MediaContent | null {
+  const cached = mediaCache.get(getCacheKey(leadId, messageId));
+  if (cached && Date.now() - cached.timestamp < MEDIA_CACHE_TTL_MS) {
+    return cached.media;
+  }
+  mediaCache.delete(getCacheKey(leadId, messageId));
+  return null;
+}
+
+function setCachedMedia(leadId: string, messageId: string, media: MediaContent) {
+  mediaCache.set(getCacheKey(leadId, messageId), { media, timestamp: Date.now() });
+}
+
+export async function buscarMediaWhatsapp(
+  leadId: string,
+  messageId: string,
+  retries: number = 2,
+): Promise<ResultadoApi<{ media: MediaContent }>> {
+  // Verifica cache primeiro
+  const cached = getCachedMedia(leadId, messageId);
+  if (cached) {
+    return { ok: true, dados: { media: cached } };
+  }
+
+  let lastError = "Erro ao buscar mídia.";
+  let controller: AbortController | undefined;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    // Cancela requisição anterior se houver nova tentativa
+    controller?.abort();
+    if (timeoutId) clearTimeout(timeoutId);
+
+    const currentController = new AbortController();
+    controller = currentController;
+    timeoutId = setTimeout(() => currentController.abort(), 10000); // 10s timeout
+
+    try {
+      const resposta = await fetch(
+        `/api/whatsapp/chat/media?leadId=${encodeURIComponent(leadId)}&messageId=${encodeURIComponent(messageId)}`,
+        { 
+          cache: "no-store",
+          signal: controller.signal,
+        },
+      );
+      
+      if (!resposta.ok) {
+        const erroJson = await resposta.json().catch(() => ({}));
+        lastError = erroJson.erro ?? `Erro HTTP ${resposta.status}`;
+        
+        // Se erro de servidor (5xx), tenta novamente
+        if (resposta.status >= 500) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1))); // Backoff
+          continue;
+        }
+        break;
+      }
+
+      const json = await resposta.json().catch(() => ({}));
+      
+      if (!json.media) {
+        lastError = "Mídia não encontrada.";
+        break;
+      }
+
+      // Armazena no cache
+      setCachedMedia(leadId, messageId, json.media);
+      
+      timeoutId && clearTimeout(timeoutId);
+      return { ok: true, dados: { media: json.media } };
+    } catch (err) {
+      if (err instanceof Error && err.name === "AbortError") {
+        lastError = "Tempo limite excedido.";
+      } else {
+        lastError = err instanceof Error ? err.message : "Erro ao buscar mídia.";
+      }
+      
+      // Espera antes de retry
+      if (attempt < retries) {
+        await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+      }
+    } finally {
+      timeoutId && clearTimeout(timeoutId);
+    }
+  }
+
+  return { ok: false, erro: lastError };
+}
+
 export async function listarAutomacoesWhatsapp(): Promise<ResultadoApi<{ automacoes: WhatsappAutomacao[] }>> {
   const resposta = await fetch("/api/whatsapp/automations");
   const json = await lerJsonSeguro<{ automacoes?: WhatsappAutomacao[] } & ApiErro>(resposta);

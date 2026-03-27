@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { obterWhatsappStats } from "@/lib/api/whatsapp";
 import type { Lead, UseKanbanModuleReturn, Props } from "../types";
 import { useToast } from "@/components/ui/toast";
@@ -29,6 +29,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
 
   const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null);
   const [dialogNovoLeadAberto, setDialogNovoLeadAberto] = useState(false);
+  const [stageIdAtivo, setStageIdAtivo] = useState("");
 
   const [cargoNovoLead, setCargoNovoLead] = useState<{ id_funcionario: string } | null>(null);
   const [estagioNovoLead, setEstagioNovoLead] = useState("");
@@ -76,6 +77,26 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     leads,
     leadSelecionado,
   });
+
+  const stageIdAtivoEfetivo = useMemo(() => {
+    if (estagios.length === 0) return "";
+
+    const stageSelecionadoExiste = estagios.some((estagio) => estagio.id === stageIdAtivo);
+    const stageSelecionadoTemLeads = stageSelecionadoExiste
+      ? (leadsFiltradosPorEstagio[stageIdAtivo] ?? []).length > 0
+      : false;
+
+    if (stageSelecionadoExiste && stageSelecionadoTemLeads) {
+      return stageIdAtivo;
+    }
+
+    const primeiroStageComLeads = estagios.find((estagio) => (leadsFiltradosPorEstagio[estagio.id] ?? []).length > 0);
+    if (primeiroStageComLeads) {
+      return primeiroStageComLeads.id;
+    }
+
+    return stageSelecionadoExiste ? stageIdAtivo : estagios[0].id;
+  }, [estagios, leadsFiltradosPorEstagio, stageIdAtivo]);
 
   const {
     movimentoPendente,
@@ -196,6 +217,8 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     setOrdenacao,
     modoFocoPendencias,
     setModoFocoPendencias,
+    stageIdAtivo: stageIdAtivoEfetivo,
+    setStageIdAtivo,
     recarregarPendencias,
     totalLeads: leads.length,
     pendenciasCriticas: resumoPendencias?.porGravidade.critica ?? 0,

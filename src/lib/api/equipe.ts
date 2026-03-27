@@ -14,6 +14,25 @@ type ResultadoApi<T> =
   | { ok: true; dados: T }
   | { ok: false; erro: string };
 
+export type FuncionarioCriadoApi = {
+  funcionario: {
+    id: string;
+    id_pdv: string;
+    ativo: boolean;
+    cargo: string;
+    nome: string;
+    email: string;
+    pdv?: { id: string; nome: string } | null;
+  };
+  criado?: {
+    id: string;
+    id_pdv: string;
+    ativo: boolean;
+    cargo: string;
+    pdv?: { id: string; nome: string } | null;
+  };
+};
+
 type ListagemEquipe = {
   funcionarios: Funcionario[];
   paginacao: Paginacao;
@@ -26,7 +45,7 @@ async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
 }
 
 export async function listarEquipe(queryString: string): Promise<ResultadoApi<ListagemEquipe>> {
-  const resposta = await fetch(`/api/funcionarios?${queryString}`);
+  const resposta = await fetch(`/api/funcionarios?${queryString}`, { cache: "no-store" });
   const json = await lerJsonSeguro<Partial<ListagemEquipe> & ApiErro>(resposta);
 
   if (!resposta.ok) {
@@ -140,19 +159,21 @@ type PayloadCriarFuncionario = {
   id_pdv: FormDataEntryValue | null;
 };
 
-export async function criarFuncionario(payload: PayloadCriarFuncionario): Promise<ResultadoApi<null>> {
+export async function criarFuncionario(
+  payload: PayloadCriarFuncionario,
+): Promise<ResultadoApi<FuncionarioCriadoApi>> {
   const resposta = await fetch("/api/funcionarios", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
-  const json = await lerJsonSeguro<ApiErro>(resposta);
+  const json = await lerJsonSeguro<FuncionarioCriadoApi & ApiErro>(resposta);
 
   if (!resposta.ok) {
     return { ok: false, erro: json.erro ?? "Erro ao cadastrar funcionario" };
   }
 
-  return { ok: true, dados: null };
+  return { ok: true, dados: json };
 }
 
 export async function editarFuncionario(id: string, dados: {

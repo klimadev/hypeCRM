@@ -122,7 +122,6 @@ body {
     radial-gradient(circle at top, rgb(139 92 246 / 16%), transparent 32%),
     radial-gradient(circle at 82% 16%, rgb(34 211 238 / 8%), transparent 24%),
     linear-gradient(180deg, rgb(17 17 19 / 72%) 0%, transparent 28%);
-  background-attachment: fixed;
   color: var(--foreground);
   font-family: var(--font-inter), sans-serif;
   line-height: 1.5;
@@ -142,14 +141,18 @@ a {
 * {
   scrollbar-width: thin;
   scrollbar-color: rgb(255 255 255 / 18%) transparent;
-  transition-property: color, background-color, border-color, box-shadow, transform;
+}
+
+/* Transitions only on interactive elements — avoids scroll jank from universal transitions */
+a, button, input, select, textarea, [data-interactive] {
+  transition-property: color, background-color, border-color;
   transition-duration: var(--duration-fast);
   transition-timing-function: var(--ease-productive);
 }
 
 @media (hover: none) and (pointer: coarse) {
-  * {
-    transition-property: color, background-color, border-color, box-shadow, opacity;
+  a, button, input, select, textarea, [data-interactive] {
+    transition-property: color, background-color, border-color, opacity;
   }
 
   *:hover {
@@ -372,6 +375,20 @@ a {
 
 .animate-pulse-glow {
   animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* === CSS-ONLY PULSE SUBTLE (replaces Framer Motion infinite animation) === */
+@keyframes pulseSubtle {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 2s ease-in-out infinite;
 }
 
 /* === GPU ACCELERATION HINTS === */

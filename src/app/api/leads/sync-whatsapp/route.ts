@@ -8,7 +8,8 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
-  const origem = request.nextUrl.searchParams.get("origem");
+  const url = new URL(request.url);
+  const origem = url.searchParams.get("origem");
   const origemFiltro = origem === "anuncio" ? "anuncio" : "all";
 
   const resultado = await sincronizarLeadsWhatsapp({

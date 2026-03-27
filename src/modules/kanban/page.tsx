@@ -98,6 +98,8 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
         onDragEnd={vm.aoDragEnd}
         onLeadClick={handleLeadClick}
         modoFocoPendencias={vm.modoFocoPendencias}
+        stageIdAtivo={vm.stageIdAtivo}
+        setStageIdAtivo={vm.setStageIdAtivo}
         funcionarios={vm.funcionarios}
         excluirTodosIndefinidos={vm.excluirTodosIndefinidos}
         temFiltrosAtivos={

@@ -18,6 +18,18 @@ type PdvManagementPanelProps = {
   setDrawerNovoPdvAberto: (aberto: boolean) => void;
 };
 
+type ColaboradorDrawer = {
+  id: string;
+  nome: string;
+  cargo: string;
+  email: string;
+  ativo: boolean;
+  pdv?: {
+    id: string;
+    nome: string;
+  };
+};
+
 export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAberto }: PdvManagementPanelProps) {
   const VALOR_SEM_INSTANCIA = "__SEM_INSTANCIA__";
   const [nomeEdicao, setNomeEdicao] = useState("");
@@ -37,21 +49,23 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
   const totalPdvsSemInstancia = useMemo(() => vm.pdvs.filter((pdv) => !pdv.whatsapp_instancia).length, [vm.pdvs]);
 
   const pdvSelecionadoNoDrawer = useMemo(() => vm.pdvs.find((pdv) => pdv.id === pdvColaboradoresId) ?? null, [vm.pdvs, pdvColaboradoresId]);
-  const colaboradoresDrawer = useMemo(() => {
+  const colaboradoresDrawer = useMemo<ColaboradorDrawer[]>(() => {
     const termo = buscaColaboradoresDrawer.trim().toLowerCase();
     const base = pdvSelecionadoNoDrawer?.funcionarios ?? [];
 
-    const enriquecidos = base.map((funcionarioResumo) => {
-      const completo = vm.funcionarios.find((funcionario) => funcionario.id === funcionarioResumo.id);
-
-      return {
-        id: funcionarioResumo.id,
-        nome: funcionarioResumo.nome,
-        cargo: funcionarioResumo.cargo,
-        email: completo?.email ?? "-",
-        ativo: completo?.ativo ?? true,
-      };
-    });
+    const enriquecidos: ColaboradorDrawer[] = base.map((funcionarioResumo) => ({
+      id: funcionarioResumo.id,
+      nome: funcionarioResumo.nome,
+      cargo: funcionarioResumo.cargo,
+      email: "-",
+      ativo: true,
+      pdv: pdvSelecionadoNoDrawer
+        ? {
+            id: pdvSelecionadoNoDrawer.id,
+            nome: pdvSelecionadoNoDrawer.nome,
+          }
+        : undefined,
+    }));
 
     if (!termo) {
       return enriquecidos;
@@ -61,7 +75,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
       const alvo = `${funcionario.nome} ${funcionario.email} ${funcionario.cargo}`.toLowerCase();
       return alvo.includes(termo);
     });
-  }, [buscaColaboradoresDrawer, pdvSelecionadoNoDrawer, vm.funcionarios]);
+  }, [buscaColaboradoresDrawer, pdvSelecionadoNoDrawer]);
   const colaboradoresDrawerOrdenados = useMemo(() => {
     const lista = [...colaboradoresDrawer];
     lista.sort((a, b) => {
@@ -179,7 +193,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
   };
 
   const iniciarEdicaoFuncionarioDrawer = (id: string) => {
-    const func = vm.funcionarios.find((item) => item.id === id);
+    const func = vm.funcionarios.find((item) => item.id === id) ?? colaboradoresDrawer.find((item) => item.id === id);
     if (!func) {
       return;
     }

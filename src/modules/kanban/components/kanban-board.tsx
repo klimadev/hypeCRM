@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { DragDropContext, Draggable, Droppable, DropResult } from "@hello-pangea/dnd";
-import { motion, useReducedMotion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { OptimisticSync } from "@/components/ui/optimistic-sync";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formataMoeda } from "@/lib/utils";
 import type { Estagio, Lead, PendenciaLeadInfo, Funcionario } from "../types";
 import { getClasseBordaGravidade } from "./pendencia-badge";
@@ -21,6 +21,8 @@ type KanbanBoardProps = {
   todasPendencias: { id_lead: string }[];
   onDragEnd: (resultado: DropResult) => Promise<void>;
   onLeadClick: (lead: Lead) => void;
+  stageIdAtivo: string;
+  setStageIdAtivo: (stageId: string) => void;
   modoFocoPendencias?: boolean;
   funcionarios?: Funcionario[];
   excluirTodosIndefinidos?: () => Promise<void>;
@@ -38,164 +40,133 @@ function MobilePaneKanban({
   leadsFiltradosPorEstagio,
   pendenciasPorLead,
   onLeadClick,
+  stageIdAtivo,
+  setStageIdAtivo,
   modoFocoPendencias = false,
   funcionarios = [],
-}: Pick<KanbanBoardProps, "estagios" | "leadsFiltradosPorEstagio" | "pendenciasPorLead" | "onLeadClick" | "modoFocoPendencias" | "funcionarios">) {
-  const shouldReduce = useReducedMotion();
-  const [indiceAtivo, setIndiceAtivo] = useState(0);
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-  const scrollParaIndice = (indice: number) => {
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-    const pane = scroller.children.item(indice) as HTMLElement | null;
-    pane?.scrollIntoView({ behavior: shouldReduce ? "auto" : "smooth", inline: "start", block: "nearest" });
-    setIndiceAtivo(indice);
-  };
+}: Pick<KanbanBoardProps, "estagios" | "leadsFiltradosPorEstagio" | "pendenciasPorLead" | "onLeadClick" | "modoFocoPendencias" | "funcionarios" | "stageIdAtivo" | "setStageIdAtivo">) {
+  const stageAtual = estagios.find((estagio) => estagio.id === stageIdAtivo) ?? estagios[0] ?? null;
 
   return (
     <div className="lg:hidden">
-      <div className="sticky top-0 z-10 -mx-3 border-b border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.92)] px-3 pb-3 pt-2 backdrop-blur-xl">
-        <div className="relative flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-          {estagios.map((estagio, indice) => {
-            const ativo = indice === indiceAtivo;
-            return (
-              <button
-                key={estagio.id}
-                type="button"
-                onClick={() => scrollParaIndice(indice)}
-                className={cn(
-                  "relative min-h-12 shrink-0 rounded-full border px-4 text-sm font-medium transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
-                  ativo
-                    ? "border-[color:rgba(139,92,246,0.28)] bg-[var(--brand-soft)] text-[var(--text-primary)]"
-                    : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]",
-                )}
-              >
-                {ativo ? (
-                  <motion.span
-                    layoutId="kanban-pane-ativo"
-                    className="absolute inset-0 rounded-full bg-[color:rgba(139,92,246,0.12)]"
-                    transition={shouldReduce ? { duration: 0 } : { type: "spring", stiffness: 500, damping: 36 }}
-                  />
-                ) : null}
-                <span className="relative flex items-center gap-2">
-                  {estagio.nome}
-                  <span className="text-[11px] text-[var(--text-tertiary)]">{(leadsFiltradosPorEstagio[estagio.id] ?? []).length}</span>
-                </span>
-              </button>
-            );
-          })}
+      <Tabs value={stageIdAtivo} onValueChange={setStageIdAtivo} className="flex flex-col gap-3">
+        <div className="sticky top-0 z-10 -mx-3 border-b border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.96)] px-3 pb-3 pt-2">
+          <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            {estagios.map((estagio) => {
+              const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
+              return (
+                <TabsTrigger
+                  key={estagio.id}
+                  value={estagio.id}
+                  className={cn(
+                    "min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium text-[var(--text-secondary)] data-[state=active]:border-[color:rgba(124,58,237,0.32)] data-[state=active]:bg-[color:rgba(124,58,237,0.16)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-[0_14px_30px_-22px_rgba(124,58,237,0.75)]",
+                  )}
+                >
+                  <span className="flex items-center gap-2">
+                    {estagio.nome}
+                    <span className="font-semibold text-[var(--text-tertiary)] data-[state=active]:text-[color:#ddd6fe]">{leads.length}</span>
+                  </span>
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
         </div>
-      </div>
 
-      <div
-        ref={scrollerRef}
-        className="flex snap-x snap-mandatory overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-        onScroll={(e) => {
-          const target = e.currentTarget;
-          const largura = target.clientWidth || 1;
-          setIndiceAtivo(Math.round(target.scrollLeft / largura));
-        }}
-      >
         {estagios.map((estagio) => {
           const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
+          const ativo = stageAtual?.id === estagio.id;
           return (
-            <section
-              key={estagio.id}
-              className="min-w-full snap-start px-0 py-3"
-            >
-              <motion.div
-                initial={shouldReduce ? false : { opacity: 0, x: 12, scale: 0.99 }}
-                animate={{ opacity: 1, x: 0, scale: 1 }}
-                transition={shouldReduce ? { duration: 0 } : { duration: 0.2, ease: [0.2, 0.8, 0.2, 1] }}
-                className={cn(
-                  "rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.96))] p-3 shadow-[var(--shadow-sm)]",
-                  getColumnTint(estagio),
-                )}
-              >
-                <div className="mb-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-[var(--text-primary)]">{estagio.nome}</p>
-                    <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{leads.length} leads</p>
+            <TabsContent key={estagio.id} value={estagio.id} className="mt-0 focus-visible:outline-none">
+              {ativo ? (
+                <div
+                  className={cn(
+                    "animate-fade-in rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.96))] p-3 shadow-[var(--shadow-sm)]",
+                    getColumnTint(estagio),
+                  )}
+                >
+                  <div className="mb-3 flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-semibold text-[var(--text-primary)]">{estagio.nome}</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{leads.length} leads</p>
+                    </div>
                   </div>
-                </div>
 
-                <div className="space-y-3">
-                  {leads.length === 0 ? (
-                    <EmptyState
-                      titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum lead"}
-                      descricao={modoFocoPendencias ? "Esta etapa está limpa" : "Deslize para a próxima etapa"}
-                      variant="leads"
-                      className="py-10"
-                    />
-                  ) : (
-                    leads.map((lead) => {
-                      const pendencias = pendenciasPorLead[lead.id];
-                      const visualCue = getLeadVisualCue(lead, estagio);
-                      const diasParados = Math.floor((Date.now() - new Date(lead.atualizado_em).getTime()) / (1000 * 60 * 60 * 24));
+                  <div className="space-y-3">
+                    {leads.length === 0 ? (
+                      <EmptyState
+                        titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum lead"}
+                        descricao={modoFocoPendencias ? "Esta etapa está limpa" : "Deslize para trocar de estágio"}
+                        variant="leads"
+                        className="py-10"
+                      />
+                    ) : (
+                      leads.map((lead) => {
+                        const pendencias = pendenciasPorLead[lead.id];
+                        const visualCue = getLeadVisualCue(lead, estagio);
+                        const diasParados = Math.floor((Date.now() - new Date(lead.atualizado_em).getTime()) / (1000 * 60 * 60 * 24));
 
-                      return (
-                        <motion.button
-                          key={lead.id}
-                          type="button"
-                          whileTap={shouldReduce ? undefined : { scale: 0.98 }}
-                          className={cn(
-                            "w-full rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 text-left shadow-[var(--shadow-sm)]",
-                            visualCue.border,
-                            getClasseBordaGravidade(pendenciasPorLead[lead.id]?.gravidadeMaxima),
-                          )}
-                          onClick={() => onLeadClick(lead)}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{lead.nome}</p>
-                              <p className="mt-1 text-sm text-[var(--text-secondary)]">{lead.telefone}</p>
-                              <p className="mt-3 text-lg font-semibold text-[var(--success)]">{formataMoeda(lead.valor_oportunidade)}</p>
+                        return (
+                          <button
+                            key={lead.id}
+                            type="button"
+                            className={cn(
+                              "min-h-11 w-full rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 text-left shadow-[var(--shadow-sm)] active:scale-[0.99]",
+                              visualCue.border,
+                              getClasseBordaGravidade(pendenciasPorLead[lead.id]?.gravidadeMaxima),
+                            )}
+                            onClick={() => onLeadClick(lead)}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0 flex-1">
+                                <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{lead.nome}</p>
+                                <p className="mt-1 text-sm text-[var(--text-secondary)]">{lead.telefone}</p>
+                                <p className="mt-3 text-lg font-semibold text-[var(--success)]">{formataMoeda(lead.valor_oportunidade)}</p>
 
-                              <div className="mt-3 flex flex-wrap gap-2">
-                                {lead.origem ? (
-                                  <span className="inline-flex min-h-8 items-center gap-1 rounded-full border border-[var(--border-subtle)] px-2.5 text-[11px] text-[var(--text-secondary)]">
-                                    {lead.origem === "ANUNCIO_CTWA" ? <Megaphone className="h-3 w-3" /> : lead.origem === "SINCRONIZACAO_WHATSAPP" ? <MessageCircle className="h-3 w-3" /> : <PenLine className="h-3 w-3" />}
-                                    {lead.origem === "ANUNCIO_CTWA" ? "Anúncio" : lead.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
-                                  </span>
-                                ) : null}
-                                {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
-                                  <span className="inline-flex min-h-8 items-center gap-1 rounded-full border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] px-2.5 text-[11px] text-[color:#fde68a]">
-                                    <Clock className="h-3 w-3" /> {diasParados}d parado
-                                  </span>
-                                ) : null}
-                                {pendencias?.naoResolvidas ? (
-                                  <span className={cn(
-                                    "inline-flex min-h-8 items-center gap-1 rounded-full border px-2.5 text-[11px]",
-                                    pendencias.gravidadeMaxima === "critica" && "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.12)] text-[color:#fecdd3]",
-                                    pendencias.gravidadeMaxima === "alerta" && "border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] text-[color:#fde68a]",
-                                    pendencias.gravidadeMaxima === "info" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#bae6fd]",
-                                  )}>
-                                    <AlertTriangle className="h-3 w-3" /> {pendencias.naoResolvidas}
+                                <div className="mt-3 flex flex-wrap gap-2">
+                                  {lead.origem ? (
+                                    <span className="inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full border border-[var(--border-subtle)] px-3 text-[11px] text-[var(--text-secondary)]">
+                                      {lead.origem === "ANUNCIO_CTWA" ? <Megaphone className="h-3.5 w-3.5" /> : lead.origem === "SINCRONIZACAO_WHATSAPP" ? <MessageCircle className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
+                                      {lead.origem === "ANUNCIO_CTWA" ? "Anúncio" : lead.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
+                                    </span>
+                                  ) : null}
+                                  {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
+                                    <span className="inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] px-3 text-[11px] text-[color:#fde68a]">
+                                      <Clock className="h-3.5 w-3.5" /> {diasParados}d parado
+                                    </span>
+                                  ) : null}
+                                  {pendencias?.naoResolvidas ? (
+                                    <span className={cn(
+                                      "inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full border px-3 text-[11px]",
+                                      pendencias.gravidadeMaxima === "critica" && "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.12)] text-[color:#fecdd3]",
+                                      pendencias.gravidadeMaxima === "alerta" && "border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] text-[color:#fde68a]",
+                                      pendencias.gravidadeMaxima === "info" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#bae6fd]",
+                                    )}>
+                                      <AlertTriangle className="h-3.5 w-3.5" /> {pendencias.naoResolvidas}
+                                    </span>
+                                  ) : null}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-col items-end gap-2">
+                                {visualCue.circle ? <span className={visualCue.circle} /> : null}
+                                {funcionarios.length > 0 && lead.id_funcionario ? (
+                                  <span className="max-w-[7rem] truncate text-[11px] text-[var(--text-tertiary)]">
+                                    {funcionarios.find((f) => f.id === lead.id_funcionario)?.nome || "Responsável"}
                                   </span>
                                 ) : null}
                               </div>
                             </div>
-
-                            <div className="flex flex-col items-end gap-2">
-                              {visualCue.circle ? <span className={visualCue.circle} /> : null}
-                              {funcionarios.length > 0 && lead.id_funcionario ? (
-                                <span className="max-w-[7rem] truncate text-[11px] text-[var(--text-tertiary)]">
-                                  {funcionarios.find((f) => f.id === lead.id_funcionario)?.nome || "Responsável"}
-                                </span>
-                              ) : null}
-                            </div>
-                          </div>
-                        </motion.button>
-                      );
-                    })
-                  )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
                 </div>
-              </motion.div>
-            </section>
+              ) : null}
+            </TabsContent>
           );
         })}
-      </div>
+      </Tabs>
     </div>
   );
 }
@@ -257,6 +228,8 @@ export function KanbanBoard({
   pendenciasPorLead,
   onDragEnd,
   onLeadClick,
+  stageIdAtivo,
+  setStageIdAtivo,
   modoFocoPendencias = false,
   funcionarios = [],
   excluirTodosIndefinidos,
@@ -280,14 +253,16 @@ export function KanbanBoard({
 
   return (
     <>
-      <MobilePaneKanban
-        estagios={estagios}
-        leadsFiltradosPorEstagio={leadsFiltradosPorEstagio}
-        pendenciasPorLead={pendenciasPorLead}
-        onLeadClick={onLeadClick}
-        modoFocoPendencias={modoFocoPendencias}
-        funcionarios={funcionarios}
-      />
+        <MobilePaneKanban
+          estagios={estagios}
+          leadsFiltradosPorEstagio={leadsFiltradosPorEstagio}
+          pendenciasPorLead={pendenciasPorLead}
+          onLeadClick={onLeadClick}
+          stageIdAtivo={stageIdAtivo}
+          setStageIdAtivo={setStageIdAtivo}
+          modoFocoPendencias={modoFocoPendencias}
+          funcionarios={funcionarios}
+        />
       <DragDropContext onDragEnd={onDragEnd}>
         <div className="hidden gap-4 lg:grid lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
         {estagios.map((estagio) => {

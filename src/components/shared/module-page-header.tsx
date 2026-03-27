@@ -52,25 +52,29 @@ export function ModulePageHeader({
   return (
     <header
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] px-5 py-5 text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-5",
+        "relative overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] px-4 py-4 text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-5",
         className,
       )}
     >
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(139,92,246,0.12),transparent_34%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.06),transparent_30%)] opacity-70" />
-      <div className="relative flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-      <div className="flex items-center gap-4">
-        <div className={cn("flex h-11 w-11 items-center justify-center rounded-[16px]", tone.wrap)}>
-          <span className={cn(tone.icon)}>{icon}</span>
+      <div className="relative flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
+        <div className="flex items-start gap-3 md:items-center md:gap-4">
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-[16px] md:h-11 md:w-11", tone.wrap)}>
+            <span className={cn(tone.icon)}>{icon}</span>
+          </div>
+          <div className="min-w-0">
+            <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{title}</h1>
+            {subtitle ? <p className="mt-1 text-[12px] leading-5 text-[var(--text-secondary)] md:text-sm md:leading-6">{subtitle}</p> : null}
+            {badges?.length ? <div className="mt-2 flex flex-wrap items-center gap-2">{badges}</div> : null}
+          </div>
         </div>
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{title}</h1>
-          {subtitle ? <p className="text-sm leading-6 text-[var(--text-secondary)]">{subtitle}</p> : null}
-          {badges?.length ? <div className="mt-2 flex flex-wrap items-center gap-2">{badges}</div> : null}
-        </div>
-      </div>
 
-      {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
-      {children}
+        {actions ? (
+          <div className="flex flex-wrap items-center gap-2 md:gap-3">
+            {actions}
+          </div>
+        ) : null}
+        {children}
       </div>
     </header>
   );

@@ -702,6 +702,10 @@ export function mapearMensagemDbParaCanonica(registro: {
     (registro.tipo as WhatsappChatMessage["kind"]) ?? "unsupported";
   const tipoLabel = traduzirTipoMensagem(registro.tipo);
 
+  // Determinar se a mensagem tem mídia baseada no tipo
+  const tiposComMedia = ["imageMessage", "videoMessage", "audioMessage", "documentMessage", "stickerMessage"];
+  const hasMedia = tiposComMedia.includes(kind);
+
   return {
     id: registro.id,
     messageId: registro.mensagem_id,
@@ -721,6 +725,7 @@ export function mapearMensagemDbParaCanonica(registro: {
     optimistic: false,
     error: registro.erro,
     dadosAd: null, // Não disponível no registro do banco
+    hasMedia,
   };
 }
 
@@ -741,4 +746,60 @@ export async function marcarMensagensComoLidasEvolution(instanceName: string, me
       })),
     }),
   }).catch(() => undefined);
+}
+
+/**
+ * Busca o conteúdo base64 de uma mídia (áudio, imagem, vídeo) da Evolution API
+ * 
+ * @param instanceName - Nome da instância na Evolution API
+ * @param messageId - ID da mensagem contendo a mídia
+ * @returns Objeto com base64, mediaType, mimetype e fileName, ou null se falhar
+ */
+export async function buscarMediaBase64(instanceName: string, messageId: string): Promise<{
+  base64: string;
+  mediaType: string;
+  mimetype: string;
+  fileName: string;
+  seconds: number | null;
+} | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => {
+    controller.abort();
+  }, EVOLUTION_FETCH_TIMEOUT_MS);
+
+  let response: Response;
+  try {
+    response = await fetch(`${EVOLUTION_API_URL}/chat/getBase64FromMediaMessage/${instanceName}`, {
+      method: "POST",
+      headers: payloadHeaders(),
+      body: JSON.stringify({
+        message: {
+          key: {
+            id: messageId,
+          },
+        },
+      }),
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!response.ok) {
+    console.error("[buscarMediaBase64] Erro ao buscar mídia:", response.status);
+    return null;
+  }
+
+  const json = await response.json().catch(() => null);
+  if (!json || !json.base64) {
+    return null;
+  }
+
+  return {
+    base64: json.base64,
+    mediaType: json.mediaType ?? "unknown",
+    mimetype: json.mimetype ?? "application/octet-stream",
+    fileName: json.fileName ?? "arquivo",
+    seconds: json.seconds ?? null,
+  };
 }

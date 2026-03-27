@@ -668,6 +668,11 @@ export const esquemaWhatsappChatMarkRead = z.object({
   leadId: z.string().trim().min(1, "Lead obrigatorio."),
 });
 
+export const esquemaWhatsappChatMedia = z.object({
+  leadId: z.string().trim().min(1, "Lead obrigatorio."),
+  messageId: z.string().trim().min(1, "Message ID obrigatorio."),
+});
+
 // ============================================
 // Constantes de Automações Genéricas
 // ============================================

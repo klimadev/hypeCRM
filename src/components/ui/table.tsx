@@ -1,7 +1,5 @@
 import * as React from "react";
-import { motion, useReducedMotion } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/animations/springs";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
   return (
@@ -20,27 +18,17 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
 }
 
 function TableRow({ className, onClick, ...props }: React.ComponentProps<"tr"> & { onClick?: () => void }) {
-  const shouldReduceMotion = useReducedMotion();
   const isInteractive = !!onClick;
-  
-  if (!isInteractive) {
-    return <tr className={cn("border-b border-[var(--border-subtle)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-[color:rgba(255,255,255,0.03)] data-[state=selected]:bg-[var(--brand-soft)]", className)} {...props} />;
-  }
-  
+
   return (
-    <motion.tr
+    <tr
       className={cn(
-        "border-b border-[var(--border-subtle)] cursor-pointer transition-colors duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-[color:rgba(255,255,255,0.03)] data-[state=selected]:bg-[var(--brand-soft)]",
+        "border-b border-[var(--border-subtle)] transition-colors duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-[color:rgba(255,255,255,0.03)] data-[state=selected]:bg-[var(--brand-soft)]",
+        isInteractive && "cursor-pointer active:scale-[0.995]",
         className,
       )}
       onClick={onClick}
-      variants={{
-        rest: { scale: 1 },
-        tap: { scale: 0.995, transition: springs.snappy },
-      }}
-      initial="rest"
-      whileTap={shouldReduceMotion ? undefined : "tap"}
-      {...(props as React.ComponentProps<typeof motion.tr>)}
+      {...props}
     />
   );
 }

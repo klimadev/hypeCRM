@@ -21,7 +21,7 @@ const optimisticSyncVariants = cva(
   },
 });
 
-const optimisticSyncLabelVariants = cva("mt-1 text-xs font-medium tracking-[0.01em]", {
+const optimisticSyncLabelVariants = cva("mt-1 text-xs font-medium tracking-[0.01em] animate-pulse-subtle", {
   variants: {
     variant: {
       warning: "text-[var(--warning)]",
@@ -59,13 +59,9 @@ export function OptimisticSync({
           exit={{ opacity: 0, scale: 0.98, transition: springs.stiff }}
         >
           {children}
-          <motion.p
-            className={optimisticSyncLabelVariants({ variant })}
-            animate={{ opacity: [0.6, 1, 0.6] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <p className={optimisticSyncLabelVariants({ variant })}>
             {label}
-          </motion.p>
+          </p>
         </motion.div>
       ) : (
         <motion.div

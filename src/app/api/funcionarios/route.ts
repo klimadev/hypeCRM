@@ -125,6 +125,12 @@ export async function GET(request: NextRequest) {
       gerentes,
       colaboradores,
     },
+  }, {
+    headers: {
+      "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+      Pragma: "no-cache",
+      Expires: "0",
+    },
   });
 }
 
@@ -213,9 +219,21 @@ export async function POST(request: NextRequest) {
         senha_hash,
         cargo,
       },
+      include: {
+        pdv: { select: { id: true, nome: true } },
+      },
     });
 
-    return NextResponse.json({ funcionario });
+    return NextResponse.json({
+      funcionario,
+      criado: {
+        id: funcionario.id,
+        id_pdv: funcionario.id_pdv,
+        ativo: funcionario.ativo,
+        cargo: funcionario.cargo,
+        pdv: funcionario.pdv,
+      },
+    });
   } catch (erro: unknown) {
     const prismaErro = erro as { code?: string };
     if (prismaErro.code === "P2002") {

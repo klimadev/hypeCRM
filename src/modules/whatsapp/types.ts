@@ -38,6 +38,9 @@ export type WhatsappChatMessage = {
     appOrigem: string | null;
     formato: "ctwa" | null;
   } | null;
+  // Campos para mídia
+  hasMedia?: boolean;
+  mediaUrl?: string;
 };
 
 export type WhatsappInstancia = {

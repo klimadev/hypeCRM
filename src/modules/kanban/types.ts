@@ -169,6 +169,8 @@ export type UseKanbanModuleReturn = {
   setOrdenacao: (ordenacao: OrdenacaoKanban) => void;
   modoFocoPendencias: boolean;
   setModoFocoPendencias: (ativo: boolean) => void;
+  stageIdAtivo: string;
+  setStageIdAtivo: (stageId: string) => void;
   recarregarPendencias: () => void;
   totalLeads: number;
   pendenciasCriticas: number;

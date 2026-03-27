@@ -3,18 +3,16 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState, useTransition, useEffect, useMemo } from "react";
+import { useState, useTransition, useMemo } from "react";
 import {
   BarChart3,
   WalletCards,
   LayoutGrid,
-  Menu,
   Settings2,
   Target,
   Users,
   X,
   MessageCircle,
-  ChevronDown,
   Zap,
 } from "lucide-react";
 import { BotaoSair } from "@/components/botao-sair";
@@ -125,11 +123,6 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
   );
   const { resumo } = usePendenciasGlobais();
 
-  // Auto-close mobile sidebar on route change
-  useEffect(() => {
-    setSidebarAberta(false);
-  }, [pathname]);
-
   const toggleSubmenu = (href: string) => {
     setSubmenuAberto(submenuAberto === href ? null : href);
   };
@@ -187,7 +180,7 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
   const nomeEmpresaExibicao = dadosUsuario?.nomeEmpresa?.trim();
 
   const conteudoSidebar = (
-    <div className="relative flex h-full flex-col gap-4 overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.98))] p-4 text-[var(--text-primary)] shadow-[var(--shadow-overlay)] lg:min-h-[calc(100vh-2rem)]">
+    <div className="relative flex h-full flex-col gap-4 overflow-clip rounded-[28px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.98))] p-4 text-[var(--text-primary)] shadow-[var(--shadow-overlay)] lg:min-h-[calc(100vh-2rem)]">
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(139,92,246,0.12),transparent_32%),radial-gradient(circle_at_bottom_left,rgba(34,211,238,0.06),transparent_28%)] opacity-80" />
       <div className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/18 to-transparent" />
       <div className="relative flex h-full flex-col gap-4">
@@ -264,14 +257,14 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
                             e.preventDefault();
                             toggleSubmenu(item.href);
                           }}
-                           className="rounded-[var(--radius-control)] p-1 text-[var(--text-tertiary)] transition-[background-color,color,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-white/5 hover:text-[var(--text-primary)]"
-                         >
-                           <ChevronDown
-                             className={cn(
-                               "h-4 w-4 transition-transform duration-[var(--duration-fast)] ease-[var(--ease-snappy)]",
-                               isSubmenuOpen && "rotate-180",
-                             )}
-                           />
+                          className="rounded-[var(--radius-control)] p-1 text-[var(--text-tertiary)] transition-[background-color,color,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-white/5 hover:text-[var(--text-primary)]"
+                        >
+                          <span
+                            className={cn(
+                              "block h-4 w-4 rounded-sm border-b-2 border-r-2 border-current transition-transform duration-[var(--duration-fast)] ease-[var(--ease-snappy)]",
+                              isSubmenuOpen ? "translate-y-[2px] rotate-45" : "-translate-y-[1px] rotate-[225deg]",
+                            )}
+                          />
                         </button>
                       </div>
 
@@ -328,7 +321,7 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
         ))}
       </nav>
 
-      <div className="mt-auto rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 shadow-[var(--shadow-sm)] backdrop-blur-md">
+      <div className="mt-auto rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(255,255,255,0.02))] p-3 shadow-[var(--shadow-sm)]">
         <div className="flex items-center gap-3">
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[linear-gradient(135deg,rgba(139,92,246,0.9),rgba(34,211,238,0.7))] text-sm font-semibold uppercase text-[#09090b] shadow-[0_18px_34px_-22px_rgba(139,92,246,0.75)]">
             {iniciaisNome}
@@ -364,15 +357,6 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setSidebarAberta(true)}
-        className="fixed left-4 top-4 z-40 flex h-10 w-10 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-glass)] text-[var(--text-primary)] shadow-[var(--shadow-sm)] backdrop-blur-md lg:hidden"
-        aria-label="Abrir menu"
-      >
-        <Menu className="h-5 w-5" />
-      </button>
-
       <aside className="w-full lg:sticky lg:top-4 lg:h-[calc(100vh-2rem)] lg:w-72 lg:shrink-0 lg:self-start lg:p-4">
         <div className="hidden lg:block">{conteudoSidebar}</div>
 

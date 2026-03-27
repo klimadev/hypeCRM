@@ -28,6 +28,12 @@ type EmpresaProcessada = {
   motivo?: string;
 };
 
+export type ColaboradorAtivoPorPdv = {
+  id: string;
+  id_pdv: string;
+  nome: string;
+};
+
 export type ResultadoSyncWhatsapp = {
   ok: true;
   processados: number;
@@ -42,6 +48,19 @@ export type ResultadoSyncWhatsapp = {
 function avancarIndiceRoundRobin(indiceAtual: number, total: number) {
   if (total <= 0) return 0;
   return (indiceAtual + 1) % total;
+}
+
+export async function listarColaboradoresAtivosPorPdv(idEmpresa: string, idsPdvsElegiveis: string[]) {
+  return prisma.funcionario.findMany({
+    where: {
+      id_empresa: idEmpresa,
+      ativo: true,
+      cargo: "COLABORADOR",
+      ...(idsPdvsElegiveis.length ? { id_pdv: { in: idsPdvsElegiveis } } : { id_pdv: "__sem_pdv__" }),
+    },
+    select: { id: true, id_pdv: true, nome: true },
+    orderBy: [{ nome: "asc" }, { criado_em: "asc" }, { id: "asc" }],
+  }) as Promise<ColaboradorAtivoPorPdv[]>;
 }
 
 async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, origemFiltro?: OrigemFiltro): Promise<EmpresaProcessada> {
@@ -114,16 +133,7 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
   const [estagioIndefinido, leadsExistentes, colaboradoresAtivosPorPdv] = await Promise.all([
     obterEstagioIndefinido(idEmpresa),
     prisma.lead.findMany({ where: { id_empresa: idEmpresa }, select: { telefone: true } }),
-    prisma.funcionario.findMany({
-      where: {
-        id_empresa: idEmpresa,
-        ativo: true,
-        cargo: "COLABORADOR",
-        ...(idsPdvsElegiveis.length ? { id_pdv: { in: idsPdvsElegiveis } } : { id_pdv: "__sem_pdv__" }),
-      },
-      select: { id: true, id_pdv: true, nome: true },
-      orderBy: [{ nome: "asc" }, { criado_em: "asc" }, { id: "asc" }],
-    }),
+    listarColaboradoresAtivosPorPdv(idEmpresa, idsPdvsElegiveis),
   ]);
 
   const colaboradoresPorPdv = new Map<string, Array<{ id: string; nome: string }>>();
