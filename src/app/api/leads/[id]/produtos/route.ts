@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/permissoes";
 import { esquemaAnexarProdutoLead } from "@/lib/validacoes";
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const produtos = await prisma.leadProduto.findMany({
     where: { id_empresa: auth.sessao.id_empresa, id_lead: id },
     include: {
-      produto: {
+      Produto: {
         select: {
           id: true,
           nome: true,
@@ -88,6 +89,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const leadProduto = await prisma.leadProduto.create({
     data: {
+      id: randomUUID(),
       id_empresa: auth.sessao.id_empresa,
       id_lead: id,
       id_produto: produto.id,
@@ -97,7 +99,7 @@ export async function POST(request: NextRequest, { params }: Params) {
       observacoes: dados.observacoes ?? null,
     },
     include: {
-      produto: {
+      Produto: {
         select: {
           id: true,
           nome: true,

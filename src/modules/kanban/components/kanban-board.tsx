@@ -6,30 +6,27 @@ import { Card, CardContent } from "@/components/ui/card";
 import { OptimisticSync } from "@/components/ui/optimistic-sync";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { formataMoeda } from "@/lib/utils";
-import type { Estagio, Lead, PendenciaLeadInfo, Funcionario } from "../types";
+import type { Estagio, Lead, PendenciaNegocioInfo, Funcionario } from "../types";
 import { getClasseBordaGravidade } from "./pendencia-badge";
-import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Trash2, Loader2, Clock, AlertTriangle, Users, GripVertical, Megaphone, MessageCircle, PenLine } from "lucide-react";
+import { Clock, AlertTriangle, Users, GripVertical, Megaphone, MessageCircle, PenLine } from "lucide-react";
 import { EmptyState } from "./empty-state";
 
 type KanbanBoardProps = {
   estagios: Estagio[];
-  leadsPorEstagio: Record<string, Lead[]>;
-  leadsFiltradosPorEstagio: Record<string, Lead[]>;
-  pendenciasPorLead: Record<string, PendenciaLeadInfo>;
-  todasPendencias: { id_lead: string }[];
+  negociosPorEstagio: Record<string, Lead[]>;
+  negociosFiltradosPorEstagio: Record<string, Lead[]>;
+  pendenciasPorNegocio: Record<string, PendenciaNegocioInfo>;
   onDragEnd: (resultado: DropResult) => Promise<void>;
-  onLeadClick: (lead: Lead) => void;
+  onNegocioClick: (negocio: Lead) => void;
   stageIdAtivo: string;
   setStageIdAtivo: (stageId: string) => void;
   modoFocoPendencias?: boolean;
   funcionarios?: Funcionario[];
-  excluirTodosIndefinidos?: () => Promise<void>;
   temFiltrosAtivos?: boolean;
 };
 
-type LeadVisualCue = {
+type NegocioVisualCue = {
   circle: string | null;
   border: string | null;
   emoji: string | null;
@@ -37,14 +34,14 @@ type LeadVisualCue = {
 
 function MobilePaneKanban({
   estagios,
-  leadsFiltradosPorEstagio,
-  pendenciasPorLead,
-  onLeadClick,
+  negociosFiltradosPorEstagio,
+  pendenciasPorNegocio,
+  onNegocioClick,
   stageIdAtivo,
   setStageIdAtivo,
   modoFocoPendencias = false,
   funcionarios = [],
-}: Pick<KanbanBoardProps, "estagios" | "leadsFiltradosPorEstagio" | "pendenciasPorLead" | "onLeadClick" | "modoFocoPendencias" | "funcionarios" | "stageIdAtivo" | "setStageIdAtivo">) {
+}: Pick<KanbanBoardProps, "estagios" | "negociosFiltradosPorEstagio" | "pendenciasPorNegocio" | "onNegocioClick" | "modoFocoPendencias" | "funcionarios" | "stageIdAtivo" | "setStageIdAtivo">) {
   const stageAtual = estagios.find((estagio) => estagio.id === stageIdAtivo) ?? estagios[0] ?? null;
 
   return (
@@ -53,7 +50,7 @@ function MobilePaneKanban({
         <div className="sticky top-0 z-10 -mx-3 border-b border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.96)] px-3 pb-3 pt-2">
           <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {estagios.map((estagio) => {
-              const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
+              const negocios = negociosFiltradosPorEstagio[estagio.id] ?? [];
               return (
                 <TabsTrigger
                   key={estagio.id}
@@ -64,7 +61,7 @@ function MobilePaneKanban({
                 >
                   <span className="flex items-center gap-2">
                     {estagio.nome}
-                    <span className="font-semibold text-[var(--text-tertiary)] data-[state=active]:text-[color:#ddd6fe]">{leads.length}</span>
+                    <span className="font-semibold text-[var(--text-tertiary)] data-[state=active]:text-[color:#ddd6fe]">{negocios.length}</span>
                   </span>
                 </TabsTrigger>
               );
@@ -73,7 +70,7 @@ function MobilePaneKanban({
         </div>
 
         {estagios.map((estagio) => {
-          const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
+          const negocios = negociosFiltradosPorEstagio[estagio.id] ?? [];
           const ativo = stageAtual?.id === estagio.id;
           return (
             <TabsContent key={estagio.id} value={estagio.id} className="mt-0 focus-visible:outline-none">
@@ -87,46 +84,46 @@ function MobilePaneKanban({
                   <div className="mb-3 flex items-center justify-between">
                     <div>
                       <p className="text-sm font-semibold text-[var(--text-primary)]">{estagio.nome}</p>
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{leads.length} leads</p>
+                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{negocios.length} negócios</p>
                     </div>
                   </div>
 
                   <div className="space-y-3">
-                    {leads.length === 0 ? (
+                    {negocios.length === 0 ? (
                       <EmptyState
-                        titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum lead"}
+                        titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum negócio"}
                         descricao={modoFocoPendencias ? "Esta etapa está limpa" : "Deslize para trocar de estágio"}
                         variant="leads"
                         className="py-10"
                       />
                     ) : (
-                      leads.map((lead) => {
-                        const pendencias = pendenciasPorLead[lead.id];
-                        const visualCue = getLeadVisualCue(lead, estagio);
-                        const diasParados = Math.floor((Date.now() - new Date(lead.atualizado_em).getTime()) / (1000 * 60 * 60 * 24));
+                      negocios.map((negocio) => {
+                        const pendencias = pendenciasPorNegocio[negocio.id];
+                        const visualCue = getNegocioVisualCue(negocio, estagio);
+                        const diasParados = Math.floor((Date.now() - new Date(negocio.atualizado_em).getTime()) / (1000 * 60 * 60 * 24));
 
                         return (
                           <button
-                            key={lead.id}
+                            key={negocio.id}
                             type="button"
                             className={cn(
                               "min-h-11 w-full rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 text-left shadow-[var(--shadow-sm)] active:scale-[0.99]",
                               visualCue.border,
-                              getClasseBordaGravidade(pendenciasPorLead[lead.id]?.gravidadeMaxima),
+                              getClasseBordaGravidade(pendenciasPorNegocio[negocio.id]?.gravidadeMaxima),
                             )}
-                            onClick={() => onLeadClick(lead)}
+                            onClick={() => onNegocioClick(negocio)}
                           >
                             <div className="flex items-start justify-between gap-3">
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{lead.nome}</p>
-                                <p className="mt-1 text-sm text-[var(--text-secondary)]">{lead.telefone}</p>
-                                <p className="mt-3 text-lg font-semibold text-[var(--success)]">{formataMoeda(lead.valor_oportunidade)}</p>
+                                <p className="truncate text-[15px] font-semibold text-[var(--text-primary)]">{negocio.nome}</p>
+                                <p className="mt-1 text-sm text-[var(--text-secondary)]">{negocio.telefone}</p>
+                                <p className="mt-3 text-lg font-semibold text-[var(--success)]">{formataMoeda(negocio.valor_oportunidade)}</p>
 
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                  {lead.origem ? (
+                                  {negocio.origem ? (
                                     <span className="inline-flex min-h-11 min-w-11 items-center gap-1 rounded-full border border-[var(--border-subtle)] px-3 text-[11px] text-[var(--text-secondary)]">
-                                      {lead.origem === "ANUNCIO_CTWA" ? <Megaphone className="h-3.5 w-3.5" /> : lead.origem === "SINCRONIZACAO_WHATSAPP" ? <MessageCircle className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
-                                      {lead.origem === "ANUNCIO_CTWA" ? "Anúncio" : lead.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
+                                      {negocio.origem === "ANUNCIO_CTWA" ? <Megaphone className="h-3.5 w-3.5" /> : negocio.origem === "SINCRONIZACAO_WHATSAPP" ? <MessageCircle className="h-3.5 w-3.5" /> : <PenLine className="h-3.5 w-3.5" />}
+                                      {negocio.origem === "ANUNCIO_CTWA" ? "Anúncio" : negocio.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
                                     </span>
                                   ) : null}
                                   {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
@@ -149,9 +146,9 @@ function MobilePaneKanban({
 
                               <div className="flex flex-col items-end gap-2">
                                 {visualCue.circle ? <span className={visualCue.circle} /> : null}
-                                {funcionarios.length > 0 && lead.id_funcionario ? (
+                                {funcionarios.length > 0 && negocio.id_funcionario ? (
                                   <span className="max-w-[7rem] truncate text-[11px] text-[var(--text-tertiary)]">
-                                    {funcionarios.find((f) => f.id === lead.id_funcionario)?.nome || "Responsável"}
+                                    {funcionarios.find((f) => f.id === negocio.id_funcionario)?.nome || "Responsável"}
                                   </span>
                                 ) : null}
                               </div>
@@ -184,7 +181,7 @@ function getColumnTint(estagio: Estagio): string {
   return "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(12,12,14,0.94))]";
 }
 
-function getLeadVisualCue(lead: Lead, estagio: Estagio): LeadVisualCue {
+function getNegocioVisualCue(_negocio: Lead, estagio: Estagio): NegocioVisualCue {
   // Visual cue simplificado - apenas pendências de estágio parado
   if (estagio.tipo === "GANHO") {
     return {
@@ -224,27 +221,16 @@ function formatarTempoRelativo(atualizadoEm: string, agoraMs: number): string {
 
 export function KanbanBoard({
   estagios,
-  leadsFiltradosPorEstagio,
-  pendenciasPorLead,
+  negociosFiltradosPorEstagio,
+  pendenciasPorNegocio,
   onDragEnd,
-  onLeadClick,
+  onNegocioClick,
   stageIdAtivo,
   setStageIdAtivo,
   modoFocoPendencias = false,
   funcionarios = [],
-  excluirTodosIndefinidos,
 }: KanbanBoardProps) {
   const [agoraMs, setAgoraMs] = useState<number | null>(() => typeof window === "undefined" ? null : Date.now());
-  const [excluindoIndefinidos, setExcluindoIndefinidos] = useState(false);
-
-  const handleExcluirIndefinidos = async () => {
-    setExcluindoIndefinidos(true);
-    try {
-      await excluirTodosIndefinidos?.();
-    } finally {
-      setExcluindoIndefinidos(false);
-    }
-  };
 
   useEffect(() => {
     const intervalo = window.setInterval(() => setAgoraMs(Date.now()), 60000);
@@ -255,25 +241,25 @@ export function KanbanBoard({
     <>
         <MobilePaneKanban
           estagios={estagios}
-          leadsFiltradosPorEstagio={leadsFiltradosPorEstagio}
-          pendenciasPorLead={pendenciasPorLead}
-          onLeadClick={onLeadClick}
+          negociosFiltradosPorEstagio={negociosFiltradosPorEstagio}
+          pendenciasPorNegocio={pendenciasPorNegocio}
+          onNegocioClick={onNegocioClick}
           stageIdAtivo={stageIdAtivo}
           setStageIdAtivo={setStageIdAtivo}
           modoFocoPendencias={modoFocoPendencias}
           funcionarios={funcionarios}
         />
       <DragDropContext onDragEnd={onDragEnd}>
-        <div className="hidden gap-4 lg:grid lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
+        <div className="hidden lg:flex lg:flex-nowrap lg:gap-4 lg:overflow-x-auto lg:overflow-y-hidden lg:pb-2 w-full max-w-full">
         {estagios.map((estagio) => {
-          const leads = leadsFiltradosPorEstagio[estagio.id] ?? [];
+          const negocios = negociosFiltradosPorEstagio[estagio.id] ?? [];
           
           return (
             <Droppable key={estagio.id} droppableId={estagio.id}>
               {(provided, snapshot) => (
                 <div
                   className={cn(
-                    "rounded-[var(--radius-card)] border border-[var(--border-subtle)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300",
+                    "min-w-[280px] max-w-[320px] shrink-0 rounded-[var(--radius-card)] border border-[var(--border-subtle)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 h-full flex flex-col",
                     getColumnTint(estagio),
                     snapshot.isDraggingOver 
                       ? "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.08)] shadow-[0_20px_40px_-28px_rgba(56,189,248,0.5)]" 
@@ -294,61 +280,50 @@ export function KanbanBoard({
                         )}
                       />
                        <p className="text-sm font-semibold text-[var(--text-primary)]">
-                         {estagio.nome} <span className="font-normal text-[var(--text-tertiary)]">({leads.length})</span>
+                         {estagio.nome} <span className="font-normal text-[var(--text-tertiary)]">({negocios.length})</span>
                       </p>
                     </div>
-                    {estagio.nome === "Indefinido" && leads.length > 0 && excluirTodosIndefinidos && (
-                      <Tooltip content={excluindoIndefinidos ? "Removendo..." : `Apagar ${leads.length} lead(s) indefinido(s)`}>
-                        <button
-                          onClick={handleExcluirIndefinidos}
-                          disabled={excluindoIndefinidos}
-                           className="rounded p-1 text-[var(--text-tertiary)] hover:bg-[color:rgba(244,63,94,0.12)] hover:text-[var(--danger)] disabled:opacity-50"
-                        >
-                          {excluindoIndefinidos ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        </button>
-                      </Tooltip>
-                    )}
                   </div>
 
-                  <div className="space-y-2">
-                    {leads.length === 0 ? (
+                  <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
+                    {negocios.length === 0 ? (
                       <EmptyState 
-                        titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum lead"}
-                        descricao={modoFocoPendencias ? "Esta coluna não tem pendências" : "Arraste leads para cá ou adicione novos"}
+                        titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum negócio"}
+                        descricao={modoFocoPendencias ? "Esta coluna não tem pendências" : "Arraste negócios para cá ou adicione novos"}
                         variant="leads"
                         className="py-8"
                       />
                     ) : (
-                      leads.map((lead, index) => (
+                      negocios.map((negocio, index) => (
                         <Draggable
-                          key={lead.id}
-                          draggableId={lead.id}
+                          key={negocio.id}
+                          draggableId={negocio.id}
                           index={index}
-                          isDragDisabled={lead.id.startsWith("temp-")}
+                          isDragDisabled={negocio.id.startsWith("temp-")}
                         >
                           {(draggableProvided, draggableSnapshot) => (
                             (() => {
-                              const pendencias = pendenciasPorLead[lead.id];
-                              const visualCue = getLeadVisualCue(lead, estagio);
+                              const pendencias = pendenciasPorNegocio[negocio.id];
+                              const visualCue = getNegocioVisualCue(negocio, estagio);
                               const diasParados = agoraMs 
-                                ? Math.floor((agoraMs - new Date(lead.atualizado_em).getTime()) / (1000 * 60 * 60 * 24))
+                                ? Math.floor((agoraMs - new Date(negocio.atualizado_em).getTime()) / (1000 * 60 * 60 * 24))
                                 : 0;
                               
                               return (
-                            <OptimisticSync active={lead.id.startsWith("temp-")} className="cursor-wait">
+                            <OptimisticSync active={negocio.id.startsWith("temp-")} className="cursor-wait">
                               <Card
                                 ref={draggableProvided.innerRef}
                                 {...draggableProvided.draggableProps}
                                 {...draggableProvided.dragHandleProps}
                                 className={cn(
-                                  lead.id.startsWith("temp-") ? "bg-transparent" : "cursor-pointer rounded-[var(--radius-card)] border border-[var(--border-subtle)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-md)]",
+                                  negocio.id.startsWith("temp-") ? "bg-transparent" : "cursor-pointer rounded-[var(--radius-card)] border border-[var(--border-subtle)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-md)]",
                                   visualCue.border,
-                                  getClasseBordaGravidade(pendenciasPorLead[lead.id]?.gravidadeMaxima),
+                                  getClasseBordaGravidade(pendenciasPorNegocio[negocio.id]?.gravidadeMaxima),
                                   draggableSnapshot.isDragging && "shadow-2xl scale-[1.02] rotate-1 opacity-90"
                                 )}
                                 onClick={() => {
-                                  if (lead.id.startsWith("temp-")) return;
-                                  onLeadClick(lead);
+                                  if (negocio.id.startsWith("temp-")) return;
+                                  onNegocioClick(negocio);
                                 }}
                               >
                                 <CardContent className="p-4">
@@ -356,34 +331,34 @@ export function KanbanBoard({
                                   <div className="flex items-start justify-between gap-2">
                                     <div className="min-w-0 flex-1">
                                       <h3 className="flex items-center gap-1.5 truncate text-base font-semibold text-[var(--text-primary)]">
-                                        {!lead.id.startsWith("temp-") && draggableProvided.dragHandleProps && (
+                                        {!negocio.id.startsWith("temp-") && draggableProvided.dragHandleProps && (
                                             <GripVertical className="h-3.5 w-3.5 flex-shrink-0 text-[var(--text-tertiary)]" />
                                         )}
-                                        {lead.nome}
+                                        {negocio.nome}
                                       </h3>
                                       
                                       {/* Telefone */}
-                                       <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{lead.telefone}</p>
+                                       <p className="mt-0.5 text-xs text-[var(--text-secondary)]">{negocio.telefone}</p>
                                       
                                       {/* Valor em destaque */}
                                        <p className="mt-2 text-lg font-semibold text-[var(--success)]">
-                                        {formataMoeda(lead.valor_oportunidade)}
+                                        {formataMoeda(negocio.valor_oportunidade)}
                                       </p>
                                       
                                       {/* Badges de indicadores */}
                                       <div className="flex flex-wrap gap-1.5 mt-2.5">
                                         {/* Badge de origem */}
-                                        {lead.origem && (
+                                        {negocio.origem && (
                                           <span className={cn(
                                             "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium",
-                                            lead.origem === "ANUNCIO_CTWA" && "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#ddd6fe]",
-                                            lead.origem === "SINCRONIZACAO_WHATSAPP" && "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.12)] text-[color:#bbf7d0]",
-                                            lead.origem === "MANUAL" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#c8f3ff]"
+                                            negocio.origem === "ANUNCIO_CTWA" && "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#ddd6fe]",
+                                            negocio.origem === "SINCRONIZACAO_WHATSAPP" && "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.12)] text-[color:#bbf7d0]",
+                                            negocio.origem === "MANUAL" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#c8f3ff]"
                                           )}>
-                                            {lead.origem === "ANUNCIO_CTWA" && <Megaphone className="w-3 h-3" />}
-                                            {lead.origem === "SINCRONIZACAO_WHATSAPP" && <MessageCircle className="w-3 h-3" />}
-                                            {lead.origem === "MANUAL" && <PenLine className="w-3 h-3" />}
-                                            {lead.origem === "ANUNCIO_CTWA" ? "Anúncio" : lead.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
+                                            {negocio.origem === "ANUNCIO_CTWA" && <Megaphone className="w-3 h-3" />}
+                                            {negocio.origem === "SINCRONIZACAO_WHATSAPP" && <MessageCircle className="w-3 h-3" />}
+                                            {negocio.origem === "MANUAL" && <PenLine className="w-3 h-3" />}
+                                            {negocio.origem === "ANUNCIO_CTWA" ? "Anúncio" : negocio.origem === "SINCRONIZACAO_WHATSAPP" ? "WhatsApp" : "Manual"}
                                           </span>
                                         )}
                                         {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
@@ -405,15 +380,15 @@ export function KanbanBoard({
                                       
                                       {/* Responsável e tempo */}
                                        <div className="mt-2.5 flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
-                                        {funcionarios.length > 0 && lead.id_funcionario ? (
+                                        {funcionarios.length > 0 && negocio.id_funcionario ? (
                                           <span className="flex items-center gap-1">
                                             <Users className="w-3 h-3" />
-                                            {funcionarios.find(f => f.id === lead.id_funcionario)?.nome || "Responsável"}
+                                            {funcionarios.find(f => f.id === negocio.id_funcionario)?.nome || "Responsável"}
                                           </span>
                                         ) : null}
                                         {agoraMs !== null && (
                                           <span className="flex items-center gap-1">
-                                            {agoraMs === null ? "" : formatarTempoRelativo(lead.atualizado_em, agoraMs)}
+                                            {agoraMs === null ? "" : formatarTempoRelativo(negocio.atualizado_em, agoraMs)}
                                           </span>
                                         )}
                                       </div>

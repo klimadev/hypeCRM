@@ -55,6 +55,25 @@ export type LeadProduto = {
   };
 };
 
+export type NegocioProduto = {
+  id: string;
+  id_empresa: string;
+  id_negocio: string;
+  id_produto: string;
+  nome_snapshot: string;
+  schema_snapshot: string;
+  valores_layout: string;
+  observacoes: string | null;
+  criado_em: string;
+  atualizado_em: string;
+  produto?: {
+    id: string;
+    nome: string;
+    slug: string;
+    ativo: boolean;
+  };
+};
+
 export type PayloadCriarProduto = {
   nome: string;
   descricao?: string | null;
@@ -71,6 +90,17 @@ export type PayloadAnexarProdutoLead = {
 };
 
 export type PayloadAtualizarProdutoLead = {
+  valores_layout?: Record<string, string | number | boolean | null | string[]>;
+  observacoes?: string | null;
+};
+
+export type PayloadAnexarProdutoNegocio = {
+  id_produto: string;
+  valores_layout: Record<string, string | number | boolean | null | string[]>;
+  observacoes?: string | null;
+};
+
+export type PayloadAtualizarProdutoNegocio = {
   valores_layout?: Record<string, string | number | boolean | null | string[]>;
   observacoes?: string | null;
 };
@@ -193,6 +223,64 @@ export async function removerProdutoLead(idLead: string, idLeadProduto: string):
   const json = await lerJsonSeguro<ApiErro>(resposta);
   if (!resposta.ok) {
     return { ok: false, erro: json.erro ?? "Erro ao remover produto do lead." };
+  }
+
+  return { ok: true, dados: null };
+}
+
+export async function listarProdutosNegocio(idNegocio: string): Promise<ResultadoApi<{ produtos: NegocioProduto[] }>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}/produtos`);
+  const json = await lerJsonSeguro<{ produtos?: NegocioProduto[] } & ApiErro>(resposta);
+
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao carregar produtos do negocio." };
+  }
+
+  return { ok: true, dados: { produtos: json.produtos ?? [] } };
+}
+
+export async function anexarProdutoNegocio(idNegocio: string, payload: PayloadAnexarProdutoNegocio): Promise<ResultadoApi<{ produto: NegocioProduto }>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}/produtos`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<{ produto?: NegocioProduto } & ApiErro>(resposta);
+  if (!resposta.ok || !json.produto) {
+    return { ok: false, erro: json.erro ?? "Erro ao anexar produto ao negocio." };
+  }
+
+  return { ok: true, dados: { produto: json.produto } };
+}
+
+export async function atualizarProdutoNegocio(
+  idNegocio: string,
+  idNegocioProduto: string,
+  payload: PayloadAtualizarProdutoNegocio,
+): Promise<ResultadoApi<{ produto: NegocioProduto }>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}/produtos/${idNegocioProduto}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<{ produto?: NegocioProduto } & ApiErro>(resposta);
+  if (!resposta.ok || !json.produto) {
+    return { ok: false, erro: json.erro ?? "Erro ao atualizar produto do negocio." };
+  }
+
+  return { ok: true, dados: { produto: json.produto } };
+}
+
+export async function removerProdutoNegocio(idNegocio: string, idNegocioProduto: string): Promise<ResultadoApi<null>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}/produtos/${idNegocioProduto}`, {
+    method: "DELETE",
+  });
+
+  const json = await lerJsonSeguro<ApiErro>(resposta);
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao remover produto do negocio." };
   }
 
   return { ok: true, dados: null };

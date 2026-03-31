@@ -5,10 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import {
-  aplicaMascaraMoedaBr,
-  aplicaMascaraTelefoneBr,
-} from "@/lib/utils";
+import { aplicaMascaraMoedaBr } from "@/lib/utils";
 import type { Estagio, Funcionario, KanbanFilters, ResumoPendencias, OrdenacaoKanban, Pdv, OrigemStats } from "../types";
 import { PendenciaBadge } from "./pendencia-badge";
 import { cn } from "@/lib/utils";
@@ -17,26 +14,110 @@ import { useToast } from "@/components/ui/toast";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ActionButton } from "./action-button";
 
+type ContatoDisponivelNegocio = {
+  id: string;
+  nome: string;
+  telefone: string;
+  id_negocio?: string | null;
+};
+
+type ContatoPickerNegocioProps = {
+  contatos: ContatoDisponivelNegocio[];
+  carregando: boolean;
+  selecionados: string[];
+  setSelecionados: (ids: string[]) => void;
+};
+
+function ContatoPickerNegocio({ contatos, carregando, selecionados, setSelecionados }: ContatoPickerNegocioProps) {
+  const alternarContato = (idContato: string) => {
+    setSelecionados(
+      selecionados.includes(idContato)
+        ? selecionados.filter((id) => id !== idContato)
+        : [...selecionados, idContato],
+    );
+  };
+
+  return (
+    <div className="space-y-3 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-glass)] p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Leads vinculados</p>
+          <p className="text-xs text-[var(--text-secondary)]">Opcional. Selecione contatos que já fazem parte deste negócio.</p>
+        </div>
+        <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
+          {selecionados.length} selecionado{selecionados.length === 1 ? "" : "s"}
+        </span>
+      </div>
+
+      {carregando ? (
+        <div className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+          Carregando leads disponíveis...
+        </div>
+      ) : contatos.length === 0 ? (
+        <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+          Nenhum lead disponível para vincular.
+        </div>
+      ) : (
+        <div className="max-h-48 space-y-2 overflow-y-auto pr-1">
+          {contatos.map((contato) => {
+            const selecionado = selecionados.includes(contato.id);
+            return (
+              <button
+                key={contato.id}
+                type="button"
+                onClick={() => alternarContato(contato.id)}
+                className={cn(
+                  "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-2 text-left transition-colors",
+                  selecionado
+                    ? "border-[color:rgba(139,92,246,0.36)] bg-[color:rgba(139,92,246,0.12)] text-[var(--text-primary)]"
+                    : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",
+                )}
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{contato.nome}</p>
+                  <p className="text-xs text-[var(--text-tertiary)]">{contato.telefone}</p>
+                </div>
+                <div className="flex flex-col items-end gap-1 text-[11px]">
+                  {contato.id_negocio ? (
+                    <span className="rounded-full border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] px-2 py-0.5 text-[color:#fde68a]">
+                      Em outro negócio
+                    </span>
+                  ) : null}
+                  <span className={cn("rounded-full px-2 py-0.5", selecionado ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "bg-[color:rgba(255,255,255,0.04)] text-[var(--text-tertiary)]")}>
+                    {selecionado ? "Selecionado" : "Adicionar"}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
+      <p className="text-[11px] text-[var(--text-tertiary)]">
+        Leads já vinculados a outro negócio serão transferidos para este cadastro.
+      </p>
+    </div>
+  );
+}
+
 type KanbanHeaderProps = {
-  dialogNovoLeadAberto: boolean;
-  setDialogNovoLeadAberto: (aberto: boolean) => void;
-  criarLead: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  dialogNovoNegocioAberto: boolean;
+  setDialogNovoNegocioAberto: (aberto: boolean) => void;
+  criarNegocio: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
   estagios: Estagio[];
   funcionarios: Funcionario[];
   pdvs: Pdv[];
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
-  telefoneNovoLead: string;
-  setTelefoneNovoLead: (telefone: string) => void;
-  valorNovoLead: string;
-  setValorNovoLead: (valor: string) => void;
-  erroNovoLead: string | null;
-  setErroNovoLead: (erro: string | null) => void;
-  criandoLead: boolean;
-  cargoNovoLead: { id_funcionario: string } | null;
+  valorNovoNegocio: string;
+  setValorNovoNegocio: (valor: string) => void;
+  erroNovoNegocio: string | null;
+  setErroNovoNegocio: (erro: string | null) => void;
+  criandoNegocio: boolean;
+  cargoNovoNegocio: { id_funcionario: string } | null;
   estagioAberto: string;
-  estagioNovoLead: string;
-  setEstagioNovoLead: (estagio: string) => void;
-  setCargoNovoLead: (cargo: { id_funcionario: string } | null) => void;
+  estagioNovoNegocio: string;
+  setEstagioNovoNegocio: (estagio: string) => void;
+  setCargoNovoNegocio: (cargo: { id_funcionario: string } | null) => void;
   filtros: KanbanFilters;
   setFiltros: (filtros: KanbanFilters) => void;
   busca: string;
@@ -46,24 +127,14 @@ type KanbanHeaderProps = {
   modoFocoPendencias: boolean;
   setModoFocoPendencias: (ativo: boolean) => void;
   resumoPendencias: ResumoPendencias | null;
-  totalLeads?: number;
+  totalNegocios?: number;
   pendenciasCriticas?: number;
   origemStats: OrigemStats;
-  ultimaSincronizacaoWhatsapp: Date | null;
-  instanciasAtivasCount: number;
   notificacoesAtivadas: boolean;
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";
-  sincronizandoWhatsapp: boolean;
-  sincronizarWhatsapp: (params?: string) => Promise<{
-    ok: boolean;
-    erro?: string;
-    criados?: number;
-    timestampSync?: Date;
-    instanciasIgnoradas?: Array<{ id: string; nome: string; motivo: string }>;
-  }>;
-  redistribuindoEmAtendimento?: boolean;
-  redistribuirLeadsEmAtendimento?: () => Promise<
+  redistribuindoNegociosEmAtendimento?: boolean;
+  redistribuirNegociosEmAtendimento?: () => Promise<
     | { ok: false; erro: string }
     | {
       ok: true;
@@ -76,25 +147,23 @@ type KanbanHeaderProps = {
 };
 
 export function KanbanHeader({
-  dialogNovoLeadAberto,
-  setDialogNovoLeadAberto,
-  criarLead,
+  dialogNovoNegocioAberto,
+  setDialogNovoNegocioAberto,
+  criarNegocio,
   estagios,
   funcionarios,
   pdvs,
   perfil,
-  telefoneNovoLead,
-  setTelefoneNovoLead,
-  valorNovoLead,
-  setValorNovoLead,
-  erroNovoLead,
-  setErroNovoLead,
-  criandoLead,
-  cargoNovoLead,
+  valorNovoNegocio,
+  setValorNovoNegocio,
+  erroNovoNegocio,
+  setErroNovoNegocio,
+  criandoNegocio,
+  cargoNovoNegocio,
   estagioAberto,
-  estagioNovoLead,
-  setEstagioNovoLead,
-  setCargoNovoLead,
+  estagioNovoNegocio,
+  setEstagioNovoNegocio,
+  setCargoNovoNegocio,
   filtros,
   setFiltros,
   busca,
@@ -104,26 +173,22 @@ export function KanbanHeader({
   modoFocoPendencias,
   setModoFocoPendencias,
   resumoPendencias,
-  totalLeads = 0,
+  totalNegocios = 0,
   pendenciasCriticas = 0,
   origemStats,
-  ultimaSincronizacaoWhatsapp,
-  instanciasAtivasCount,
   notificacoesAtivadas,
   alternarNotificacoes,
   permissaoNotificacao,
-  sincronizandoWhatsapp,
-  sincronizarWhatsapp,
-  redistribuindoEmAtendimento,
-  redistribuirLeadsEmAtendimento,
+  redistribuindoNegociosEmAtendimento,
+  redistribuirNegociosEmAtendimento,
 }: KanbanHeaderProps) {
   const { addToast } = useToast();
-  const [apenasAnuncios, setApenasAnuncios] = useState(false);
-  const [dialogSincronizacaoAberto, setDialogSincronizacaoAberto] = useState(false);
-  const [agoraMs, setAgoraMs] = useState<number>(() => Date.now());
+  const [contatosDisponiveis, setContatosDisponiveis] = useState<ContatoDisponivelNegocio[]>([]);
+  const [carregandoContatosDisponiveis, setCarregandoContatosDisponiveis] = useState(false);
+  const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
   const filtrosAtivos = filtros.status !== "todos" || filtros.gravidade !== "todas" || filtros.tipo !== "todos" || filtros.pdv !== null || filtros.origem !== "todos";
   const inputBuscaRef = useRef<HTMLInputElement>(null);
-  const inputNomeNovoLeadRef = useRef<HTMLInputElement>(null);
+  const inputNomeNovoNegocioRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -138,14 +203,14 @@ export function KanbanHeader({
         e.preventDefault();
         inputBuscaRef.current?.focus();
       }
-      if (!alvoEditavel && !dialogNovoLeadAberto && e.key === "/") {
+      if (!alvoEditavel && !dialogNovoNegocioAberto && e.key === "/") {
         e.preventDefault();
         inputBuscaRef.current?.focus();
       }
-      if (e.altKey && e.key.toLowerCase() === "n" && !dialogNovoLeadAberto) {
+      if (e.altKey && e.key.toLowerCase() === "n" && !dialogNovoNegocioAberto) {
         e.preventDefault();
-        setDialogNovoLeadAberto(true);
-        setErroNovoLead(null);
+        setDialogNovoNegocioAberto(true);
+        setErroNovoNegocio(null);
       }
       if (e.key === "Escape" && document.activeElement === inputBuscaRef.current) {
         setBusca("");
@@ -154,51 +219,64 @@ export function KanbanHeader({
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [dialogNovoLeadAberto, setBusca, setDialogNovoLeadAberto, setErroNovoLead]);
+  }, [dialogNovoNegocioAberto, setBusca, setDialogNovoNegocioAberto, setErroNovoNegocio]);
 
   useEffect(() => {
-    if (!dialogNovoLeadAberto) {
+    if (!dialogNovoNegocioAberto) {
+      setContatosSelecionados([]);
       return;
     }
 
     const timeout = window.setTimeout(() => {
-      inputNomeNovoLeadRef.current?.focus();
+      inputNomeNovoNegocioRef.current?.focus();
     }, 0);
 
     return () => window.clearTimeout(timeout);
-  }, [dialogNovoLeadAberto]);
+  }, [dialogNovoNegocioAberto]);
+
+  useEffect(() => {
+    if (!dialogNovoNegocioAberto) {
+      return;
+    }
+
+    let ativo = true;
+
+    const carregarContatosDisponiveis = async () => {
+      setCarregandoContatosDisponiveis(true);
+      try {
+        const resposta = await fetch("/api/leads", { cache: "no-store" });
+        const json = (await resposta.json().catch(() => ({}))) as { leads?: ContatoDisponivelNegocio[] };
+        if (!ativo || !resposta.ok) {
+          return;
+        }
+
+        setContatosDisponiveis(json.leads ?? []);
+      } catch {
+        if (ativo) {
+          setContatosDisponiveis([]);
+        }
+      } finally {
+        if (ativo) {
+          setCarregandoContatosDisponiveis(false);
+        }
+      }
+    };
+
+    void carregarContatosDisponiveis();
+
+    return () => {
+      ativo = false;
+    };
+  }, [dialogNovoNegocioAberto]);
 
   const limparFiltros = () => {
     setFiltros({ status: "todos", gravidade: "todas", tipo: "todos", pdv: null, origem: "todos" });
   };
 
-  useEffect(() => {
-    const intervalo = window.setInterval(() => setAgoraMs(Date.now()), 60000);
-    return () => window.clearInterval(intervalo);
-  }, []);
-
-  const tempoUltimaSincronizacao = (() => {
-    if (!ultimaSincronizacaoWhatsapp) {
-      return null;
-    }
-
-    const diff = agoraMs - ultimaSincronizacaoWhatsapp.getTime();
-    const minutes = Math.floor(diff / 60000);
-
-    if (minutes < 1) return "agora";
-    if (minutes < 60) return `${minutes}min`;
-
-    const hours = Math.floor(minutes / 60);
-    if (hours < 24) return `${hours}h`;
-
-    const days = Math.floor(hours / 24);
-    return `${days}d`;
-  })();
-
   const subtitleResumo = (() => {
     const partes: string[] = [];
 
-    partes.push(`${totalLeads} lead${totalLeads !== 1 ? "s" : ""} ativo${totalLeads !== 1 ? "s" : ""}`);
+    partes.push(`${totalNegocios} negócio${totalNegocios !== 1 ? "s" : ""} ativo${totalNegocios !== 1 ? "s" : ""}`);
 
     if (pendenciasCriticas > 0) {
       partes.push(`${pendenciasCriticas} pendência${pendenciasCriticas !== 1 ? "s" : ""} crítica${pendenciasCriticas !== 1 ? "s" : ""}`);
@@ -216,21 +294,21 @@ export function KanbanHeader({
       <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] p-3 shadow-[var(--shadow-sm)]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Leads</p>
-            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[var(--text-primary)]">Kanban</h1>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Negócios</p>
+            <h1 className="mt-1 text-xl font-semibold tracking-tight text-[var(--text-primary)]">Negócios</h1>
             <p className="mt-1 text-[12px] leading-5 text-[var(--text-secondary)]">{subtitleResumo}</p>
           </div>
 
           <Dialog
-            open={dialogNovoLeadAberto}
+            open={dialogNovoNegocioAberto}
             onOpenChange={(aberto) => {
-              if (!aberto && criandoLead) {
+              if (!aberto && criandoNegocio) {
                 return;
               }
 
-              setDialogNovoLeadAberto(aberto);
+              setDialogNovoNegocioAberto(aberto);
               if (!aberto) {
-                setErroNovoLead(null);
+                setErroNovoNegocio(null);
               }
             }}
           >
@@ -241,44 +319,36 @@ export function KanbanHeader({
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Cadastrar lead</DialogTitle>
+                <DialogTitle>Cadastrar negócio</DialogTitle>
               </DialogHeader>
 
-              <form className="space-y-3" onSubmit={criarLead}>
+              <form className="space-y-3" onSubmit={criarNegocio}>
                 <Input
-                  ref={inputNomeNovoLeadRef}
+                  ref={inputNomeNovoNegocioRef}
                   className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                  name="nome"
-                  placeholder="Nome"
-                  disabled={criandoLead}
+                  name="titulo"
+                  placeholder="Título do negócio"
+                  disabled={criandoNegocio}
                   required
                 />
                 <Input
                   className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                  name="telefone"
-                  placeholder="Telefone"
-                  value={telefoneNovoLead}
-                  onChange={(e) => setTelefoneNovoLead(aplicaMascaraTelefoneBr(e.target.value))}
-                  disabled={criandoLead}
-                  required
-                />
-                <Input
-                  className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                  name="valor_consorcio"
+                  name="valor"
                   placeholder="Valor"
                   inputMode="numeric"
-                  value={valorNovoLead}
-                  onChange={(e) => setValorNovoLead(aplicaMascaraMoedaBr(e.target.value))}
-                  disabled={criandoLead}
+                  value={valorNovoNegocio}
+                  onChange={(e) => setValorNovoNegocio(aplicaMascaraMoedaBr(e.target.value))}
+                  disabled={criandoNegocio}
                   required
                 />
 
-                <input type="hidden" name="id_estagio" value={estagioNovoLead || estagioAberto} />
-                <input type="hidden" name="id_funcionario" value={cargoNovoLead?.id_funcionario ?? ""} />
+                <input type="hidden" name="id_estagio" value={estagioNovoNegocio || estagioAberto} />
+                <input type="hidden" name="id_funcionario" value={cargoNovoNegocio?.id_funcionario ?? ""} />
+                <input type="hidden" name="lead_ids_json" value={JSON.stringify(contatosSelecionados)} />
 
-                <Select disabled={criandoLead} value={estagioNovoLead || estagioAberto} onValueChange={setEstagioNovoLead}>
+                <Select disabled={criandoNegocio} value={estagioNovoNegocio || estagioAberto} onValueChange={setEstagioNovoNegocio}>
                   <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
-                    <SelectValue placeholder="Estagio" />
+                    <SelectValue placeholder="Estágio" />
                   </SelectTrigger>
                   <SelectContent>
                     {estagios.map((estagio) => (
@@ -289,14 +359,21 @@ export function KanbanHeader({
                   </SelectContent>
                 </Select>
 
+                <ContatoPickerNegocio
+                  contatos={contatosDisponiveis}
+                  carregando={carregandoContatosDisponiveis}
+                  selecionados={contatosSelecionados}
+                  setSelecionados={setContatosSelecionados}
+                />
+
                 {perfil !== "COLABORADOR" ? (
                   <Select
-                    disabled={criandoLead}
-                    value={cargoNovoLead?.id_funcionario ?? undefined}
-                    onValueChange={(valor) => setCargoNovoLead({ id_funcionario: valor })}
+                    disabled={criandoNegocio}
+                    value={cargoNovoNegocio?.id_funcionario ?? undefined}
+                    onValueChange={(valor) => setCargoNovoNegocio({ id_funcionario: valor })}
                   >
                     <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
-                      <SelectValue placeholder="Funcionario" />
+                      <SelectValue placeholder="Funcionário" />
                     </SelectTrigger>
                     <SelectContent>
                       {funcionarios.map((funcionario) => (
@@ -308,16 +385,16 @@ export function KanbanHeader({
                   </Select>
                 ) : null}
 
-                {erroNovoLead ? <p className="text-sm font-medium text-[var(--danger)]">{erroNovoLead}</p> : null}
+                {erroNovoNegocio ? <p className="text-sm font-medium text-[var(--danger)]">{erroNovoNegocio}</p> : null}
 
                 <ActionButton
                   className="h-11 w-full rounded-[var(--radius-control)] bg-[var(--brand)] font-medium text-white hover:bg-[var(--brand-strong)]"
                   type="submit"
-                  loading={criandoLead}
-                  loadingText="Criando lead..."
-                >
-                  Criar lead
-                </ActionButton>
+                  loading={criandoNegocio}
+                  loadingText="Criando negócio..."
+              >
+                Criar negócio
+              </ActionButton>
               </form>
             </DialogContent>
           </Dialog>
@@ -328,7 +405,7 @@ export function KanbanHeader({
           <input
             ref={inputBuscaRef}
             type="text"
-            placeholder="Buscar lead..."
+            placeholder="Buscar negócio..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-9 pr-10 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-[var(--focus-ring)]"
@@ -385,7 +462,7 @@ export function KanbanHeader({
                 "h-11 rounded-[18px] px-3 text-sm font-medium shadow-none",
                 modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[color:#fb7185]" : "border-[var(--border-subtle)]",
               )}
-              title={modoFocoPendencias ? "Mostrar todos os leads" : "Mostrar apenas leads com pendências"}
+          title={modoFocoPendencias ? "Mostrar todos os negócios" : "Mostrar apenas negócios com pendências"}
             >
               <Gauge className="h-4 w-4" />
               <span className="sr-only sm:not-sr-only sm:ml-2">
@@ -416,183 +493,6 @@ export function KanbanHeader({
               <span className="sr-only sm:not-sr-only sm:ml-2">Alertas</span>
             </Button>
 
-            <Dialog open={dialogSincronizacaoAberto} onOpenChange={setDialogSincronizacaoAberto}>
-              <DialogTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="h-11 rounded-[18px] border-[var(--border-subtle)] px-3 text-sm font-medium text-[var(--text-secondary)] shadow-none"
-                  title="Escolher a origem da sincronização"
-                >
-                  <span className="flex items-center gap-2">
-                    {apenasAnuncios ? <Megaphone className="h-4 w-4 text-[var(--brand)]" /> : <MessageCircle className="h-4 w-4 text-[var(--text-tertiary)]" />}
-                    <span className="sr-only sm:not-sr-only">
-                      {apenasAnuncios ? "Anúncios" : "WhatsApp"}
-                    </span>
-                  </span>
-                  <RefreshCw className="ml-2 h-4 w-4 text-[var(--text-tertiary)]" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-[92vw] p-4">
-                <DialogHeader className="space-y-1">
-                  <DialogTitle className="text-base">Sincronizar contatos</DialogTitle>
-                  <DialogDescription className="text-sm text-[var(--text-secondary)]">
-                    Escolha se a importação vai trazer todos os contatos ou apenas os vindos de anúncios.
-                  </DialogDescription>
-                </DialogHeader>
-
-                <div className="mt-4 grid gap-2">
-                  <button
-                    type="button"
-                    disabled={sincronizandoWhatsapp}
-                    onClick={async () => {
-                      setApenasAnuncios(false);
-                      const resultado = await sincronizarWhatsapp("");
-                      if (!resultado.ok) {
-                        addToast({
-                          type: "error",
-                          title: "Falha na sincronização",
-                          description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                        });
-                        return;
-                      }
-
-                      addToast({
-                        type: "success",
-                        title: "Sincronização concluída",
-                        description:
-                          resultado.criados && resultado.criados > 0
-                            ? `${resultado.criados} novo(s) lead(s) importado(s) do WhatsApp.`
-                            : "Nenhum contato novo para importar do WhatsApp.",
-                      });
-
-                      if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                        addToast({
-                          type: "warning",
-                          title: "Instâncias ignoradas",
-                          description: resultado.instanciasIgnoradas
-                            .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                            .join(" "),
-                        });
-                      }
-
-                      setDialogSincronizacaoAberto(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-[var(--radius-control)] border px-4 py-3 text-left text-sm transition-colors",
-                      sincronizandoWhatsapp
-                        ? "cursor-not-allowed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-disabled)]"
-                        : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[color:rgba(255,255,255,0.04)]",
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <MessageCircle className="h-4 w-4 text-[var(--text-tertiary)]" />
-                      <span>Importar do WhatsApp</span>
-                    </span>
-                    <span className="text-xs text-[var(--text-tertiary)]">Tudo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    disabled={sincronizandoWhatsapp}
-                    onClick={async () => {
-                      setApenasAnuncios(true);
-                      const resultado = await sincronizarWhatsapp("?origem=anuncio");
-                      if (!resultado.ok) {
-                        addToast({
-                          type: "error",
-                          title: "Falha na sincronização",
-                          description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                        });
-                        return;
-                      }
-
-                      addToast({
-                        type: "success",
-                        title: "Sincronização concluída",
-                        description:
-                          resultado.criados && resultado.criados > 0
-                            ? `${resultado.criados} novo(s) lead(s) importado(s) de anúncios.`
-                            : "Nenhum contato novo para importar de anúncios.",
-                      });
-
-                      if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                        addToast({
-                          type: "warning",
-                          title: "Instâncias ignoradas",
-                          description: resultado.instanciasIgnoradas
-                            .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                            .join(" "),
-                        });
-                      }
-
-                      setDialogSincronizacaoAberto(false);
-                    }}
-                    className={cn(
-                      "flex w-full items-center justify-between rounded-[var(--radius-control)] border px-4 py-3 text-left text-sm transition-colors",
-                      sincronizandoWhatsapp
-                        ? "cursor-not-allowed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-disabled)]"
-                        : "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#e9d5ff] hover:border-[color:rgba(139,92,246,0.42)] hover:bg-[color:rgba(139,92,246,0.18)]",
-                    )}
-                  >
-                    <span className="flex items-center gap-2">
-                      <Megaphone className="h-4 w-4 text-[var(--brand)]" />
-                      <span>Apenas anúncios</span>
-                    </span>
-                    <span className="text-xs text-[color:#c4b5fd]">CTWA</span>
-                  </button>
-                </div>
-
-                <div className="mt-4 flex items-center justify-between gap-3">
-                  <p className="text-[11px] text-[var(--text-tertiary)]">
-                    Atual: {apenasAnuncios ? "somente anúncios" : "todos os contatos"}
-                  </p>
-                  <ActionButton
-                    variant="outline"
-                    className="h-10 rounded-[var(--radius-control)] border-[var(--border-subtle)] px-4"
-                    disabled={sincronizandoWhatsapp}
-                    loading={sincronizandoWhatsapp}
-                    loadingText="Sincronizando..."
-                    onClick={async () => {
-                      const params = apenasAnuncios ? "?origem=anuncio" : "";
-                      const resultado = await sincronizarWhatsapp(params);
-                      if (!resultado.ok) {
-                        addToast({
-                          type: "error",
-                          title: "Falha na sincronização",
-                          description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                        });
-                        return;
-                      }
-
-                      const tipoImportacao = apenasAnuncios ? "de anúncios" : "do WhatsApp";
-                      addToast({
-                        type: "success",
-                        title: "Sincronização concluída",
-                        description:
-                          resultado.criados && resultado.criados > 0
-                            ? `${resultado.criados} novo(s) lead(s) importado(s) ${tipoImportacao}.`
-                            : `Nenhum contato novo para importar ${tipoImportacao}.`,
-                      });
-
-                      if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                        addToast({
-                          type: "warning",
-                          title: "Instâncias ignoradas",
-                          description: resultado.instanciasIgnoradas
-                            .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                            .join(" "),
-                        });
-                      }
-
-                      setDialogSincronizacaoAberto(false);
-                    }}
-                    iconeEsquerda={<RefreshCw className={cn("h-4 w-4", sincronizandoWhatsapp && "animate-spin")} />}
-                  >
-                    Sincronizar
-                  </ActionButton>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         </div>
       </div>
@@ -604,7 +504,7 @@ export function KanbanHeader({
       {blocoMobile}
       <div className="hidden md:block">
         <ModulePageHeader
-      title="Leads"
+      title="Negócios"
       subtitle={subtitleResumo}
       icon={(
         <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -617,7 +517,7 @@ export function KanbanHeader({
           <input
             ref={inputBuscaRef}
             type="text"
-            placeholder="Buscar lead... (Ctrl+K ou /)"
+            placeholder="Buscar negócio... (Ctrl+K ou /)"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
             className="h-9 w-48 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-[var(--focus-ring)]"
@@ -720,7 +620,7 @@ export function KanbanHeader({
             "rounded-xl text-sm font-medium",
             modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[color:#fb7185]" : "border-[var(--border-subtle)]"
           )}
-          title={modoFocoPendencias ? "Mostrar todos os leads" : "Mostrar apenas leads com pendências"}
+          title={modoFocoPendencias ? "Mostrar todos os negócios" : "Mostrar apenas negócios com pendências"}
         >
           <Gauge className="mr-2 h-4 w-4" />
           {modoFocoPendencias ? "Mostrando urgências" : "Apenas urgências"}
@@ -829,15 +729,15 @@ export function KanbanHeader({
         </div>
 
         <Dialog
-          open={dialogNovoLeadAberto}
+          open={dialogNovoNegocioAberto}
           onOpenChange={(aberto) => {
-            if (!aberto && criandoLead) {
+            if (!aberto && criandoNegocio) {
               return;
             }
 
-            setDialogNovoLeadAberto(aberto);
+            setDialogNovoNegocioAberto(aberto);
             if (!aberto) {
-              setErroNovoLead(null);
+              setErroNovoNegocio(null);
             }
           }}
         >
@@ -846,49 +746,41 @@ export function KanbanHeader({
               <svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
               </svg>
-              Novo lead
+              Novo negócio
             </Button>
           </DialogTrigger>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Cadastrar lead</DialogTitle>
+              <DialogTitle>Cadastrar negócio</DialogTitle>
             </DialogHeader>
 
-            <form className="space-y-3" onSubmit={criarLead}>
+            <form className="space-y-3" onSubmit={criarNegocio}>
               <Input
-                ref={inputNomeNovoLeadRef}
+                ref={inputNomeNovoNegocioRef}
                 className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                name="nome"
-                placeholder="Nome"
-                disabled={criandoLead}
+                name="titulo"
+                placeholder="Título do negócio"
+                disabled={criandoNegocio}
                 required
               />
               <Input
                 className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                name="telefone"
-                placeholder="Telefone"
-                value={telefoneNovoLead}
-                onChange={(e) => setTelefoneNovoLead(aplicaMascaraTelefoneBr(e.target.value))}
-                disabled={criandoLead}
-                required
-              />
-              <Input
-                className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
-                name="valor_consorcio"
+                name="valor"
                 placeholder="Valor"
                 inputMode="numeric"
-                value={valorNovoLead}
-                onChange={(e) => setValorNovoLead(aplicaMascaraMoedaBr(e.target.value))}
-                disabled={criandoLead}
+                value={valorNovoNegocio}
+                onChange={(e) => setValorNovoNegocio(aplicaMascaraMoedaBr(e.target.value))}
+                disabled={criandoNegocio}
                 required
               />
 
-              <input type="hidden" name="id_estagio" value={estagioNovoLead || estagioAberto} />
-              <input type="hidden" name="id_funcionario" value={cargoNovoLead?.id_funcionario ?? ""} />
+              <input type="hidden" name="id_estagio" value={estagioNovoNegocio || estagioAberto} />
+              <input type="hidden" name="id_funcionario" value={cargoNovoNegocio?.id_funcionario ?? ""} />
+              <input type="hidden" name="lead_ids_json" value={JSON.stringify(contatosSelecionados)} />
 
-              <Select disabled={criandoLead} value={estagioNovoLead || estagioAberto} onValueChange={setEstagioNovoLead}>
+              <Select disabled={criandoNegocio} value={estagioNovoNegocio || estagioAberto} onValueChange={setEstagioNovoNegocio}>
                 <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
-                  <SelectValue placeholder="Estagio" />
+                  <SelectValue placeholder="Estágio" />
                 </SelectTrigger>
                 <SelectContent>
                   {estagios.map((estagio) => (
@@ -899,14 +791,21 @@ export function KanbanHeader({
                 </SelectContent>
               </Select>
 
+              <ContatoPickerNegocio
+                contatos={contatosDisponiveis}
+                carregando={carregandoContatosDisponiveis}
+                selecionados={contatosSelecionados}
+                setSelecionados={setContatosSelecionados}
+              />
+
               {perfil !== "COLABORADOR" ? (
                 <Select
-                  disabled={criandoLead}
-                  value={cargoNovoLead?.id_funcionario ?? undefined}
-                  onValueChange={(valor) => setCargoNovoLead({ id_funcionario: valor })}
+                  disabled={criandoNegocio}
+                  value={cargoNovoNegocio?.id_funcionario ?? undefined}
+                  onValueChange={(valor) => setCargoNovoNegocio({ id_funcionario: valor })}
                 >
                 <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
-                    <SelectValue placeholder="Funcionario" />
+                    <SelectValue placeholder="Funcionário" />
                   </SelectTrigger>
                   <SelectContent>
                     {funcionarios.map((funcionario) => (
@@ -918,206 +817,28 @@ export function KanbanHeader({
                 </Select>
               ) : null}
 
-              {erroNovoLead ? <p className="text-sm font-medium text-red-600">{erroNovoLead}</p> : null}
+              {erroNovoNegocio ? <p className="text-sm font-medium text-red-600">{erroNovoNegocio}</p> : null}
 
               <ActionButton
                 className="w-full rounded-xl bg-slate-800 font-medium text-white hover:bg-slate-700"
                 type="submit"
-                loading={criandoLead}
-                loadingText="Criando lead..."
+                loading={criandoNegocio}
+                loadingText="Criando negócio..."
               >
-                Criar lead
+                Criar negócio
               </ActionButton>
             </form>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={dialogSincronizacaoAberto} onOpenChange={setDialogSincronizacaoAberto}>
-          <DialogTrigger asChild>
-            <Button
-              variant="outline"
-              className="rounded-xl border-[var(--border-subtle)] text-sm font-medium text-[var(--text-secondary)]"
-              title="Escolher a origem da sincronização"
-            >
-              <span className="flex items-center gap-2">
-                {apenasAnuncios ? <Megaphone className="h-4 w-4 text-[var(--brand)]" /> : <MessageCircle className="h-4 w-4 text-[var(--text-tertiary)]" />}
-                <span>{apenasAnuncios ? "Anúncios" : "WhatsApp"}</span>
-              </span>
-              <RefreshCw className="ml-3 h-4 w-4 text-[var(--text-tertiary)]" />
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-[28rem] p-5">
-            <DialogHeader className="space-y-1">
-              <DialogTitle className="text-base">Sincronizar contatos</DialogTitle>
-              <DialogDescription className="text-sm text-[var(--text-secondary)]">
-                Escolha se a importação vai trazer todos os contatos ou apenas os vindos de anúncios.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className="mt-4 grid gap-2">
-              <button
-                type="button"
-                disabled={sincronizandoWhatsapp}
-                onClick={async () => {
-                  setApenasAnuncios(false);
-                  const resultado = await sincronizarWhatsapp("");
-                  if (!resultado.ok) {
-                    addToast({
-                      type: "error",
-                      title: "Falha na sincronização",
-                      description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                    });
-                    return;
-                  }
-
-                  const tipoImportacao = "do WhatsApp";
-                  addToast({
-                    type: "success",
-                    title: "Sincronização concluída",
-                    description:
-                      resultado.criados && resultado.criados > 0
-                        ? `${resultado.criados} novo(s) lead(s) importado(s) ${tipoImportacao}.`
-                        : `Nenhum contato novo para importar ${tipoImportacao}.`,
-                  });
-
-                  if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                    addToast({
-                      type: "warning",
-                      title: "Instâncias ignoradas",
-                      description: resultado.instanciasIgnoradas
-                        .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                        .join(" "),
-                    });
-                  }
-
-                  setDialogSincronizacaoAberto(false);
-                }}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-[var(--radius-control)] border px-4 py-3 text-left text-sm transition-colors",
-                  sincronizandoWhatsapp
-                    ? "cursor-not-allowed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-disabled)]"
-                    : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[color:rgba(255,255,255,0.04)]",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  <MessageCircle className="h-4 w-4 text-[var(--text-tertiary)]" />
-                  <span>Importar do WhatsApp</span>
-                </span>
-                <span className="text-xs text-[var(--text-tertiary)]">Tudo</span>
-              </button>
-
-              <button
-                type="button"
-                disabled={sincronizandoWhatsapp}
-                onClick={async () => {
-                  setApenasAnuncios(true);
-                  const resultado = await sincronizarWhatsapp("?origem=anuncio");
-                  if (!resultado.ok) {
-                    addToast({
-                      type: "error",
-                      title: "Falha na sincronização",
-                      description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                    });
-                    return;
-                  }
-
-                  const tipoImportacao = "de anúncios";
-                  addToast({
-                    type: "success",
-                    title: "Sincronização concluída",
-                    description:
-                      resultado.criados && resultado.criados > 0
-                        ? `${resultado.criados} novo(s) lead(s) importado(s) ${tipoImportacao}.`
-                        : `Nenhum contato novo para importar ${tipoImportacao}.`,
-                  });
-
-                  if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                    addToast({
-                      type: "warning",
-                      title: "Instâncias ignoradas",
-                      description: resultado.instanciasIgnoradas
-                        .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                        .join(" "),
-                    });
-                  }
-
-                  setDialogSincronizacaoAberto(false);
-                }}
-                className={cn(
-                  "flex w-full items-center justify-between rounded-[var(--radius-control)] border px-4 py-3 text-left text-sm transition-colors",
-                  sincronizandoWhatsapp
-                    ? "cursor-not-allowed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-disabled)]"
-                    : "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#e9d5ff] hover:border-[color:rgba(139,92,246,0.42)] hover:bg-[color:rgba(139,92,246,0.18)]",
-                )}
-              >
-                <span className="flex items-center gap-2">
-                  <Megaphone className="h-4 w-4 text-[var(--brand)]" />
-                  <span>Apenas anúncios</span>
-                </span>
-                <span className="text-xs text-[color:#c4b5fd]">CTWA</span>
-              </button>
-            </div>
-
-            <div className="mt-4 flex items-center justify-between gap-3">
-              <p className="text-[11px] text-[var(--text-tertiary)]">
-                Atual: {apenasAnuncios ? "somente anúncios" : "todos os contatos"}
-              </p>
-              <ActionButton
-                variant="outline"
-                className="h-10 rounded-[var(--radius-control)] border-[var(--border-subtle)] px-4"
-                disabled={sincronizandoWhatsapp}
-                loading={sincronizandoWhatsapp}
-                loadingText="Sincronizando..."
-                onClick={async () => {
-                  const params = apenasAnuncios ? "?origem=anuncio" : "";
-                  const resultado = await sincronizarWhatsapp(params);
-                  if (!resultado.ok) {
-                    addToast({
-                      type: "error",
-                      title: "Falha na sincronização",
-                      description: resultado.erro ?? "Não foi possível importar novos contatos do WhatsApp.",
-                    });
-                    return;
-                  }
-
-                  const tipoImportacao = apenasAnuncios ? "de anúncios" : "do WhatsApp";
-                  addToast({
-                    type: "success",
-                    title: "Sincronização concluída",
-                    description:
-                      resultado.criados && resultado.criados > 0
-                        ? `${resultado.criados} novo(s) lead(s) importado(s) ${tipoImportacao}.`
-                        : `Nenhum contato novo para importar ${tipoImportacao}.`,
-                  });
-
-                  if (resultado.instanciasIgnoradas && resultado.instanciasIgnoradas.length > 0) {
-                    addToast({
-                      type: "warning",
-                      title: "Instâncias ignoradas",
-                      description: resultado.instanciasIgnoradas
-                        .map((instancia) => `${instancia.nome}: ${instancia.motivo}`)
-                        .join(" "),
-                    });
-                  }
-
-                  setDialogSincronizacaoAberto(false);
-                }}
-                iconeEsquerda={<RefreshCw className={cn("h-4 w-4", sincronizandoWhatsapp && "animate-spin")} />}
-              >
-                Sincronizar
-              </ActionButton>
-            </div>
           </DialogContent>
         </Dialog>
 
         <ActionButton
           variant="outline"
           className="rounded-xl border-slate-200"
-          disabled={!redistribuirLeadsEmAtendimento || redistribuindoEmAtendimento}
-          loading={redistribuindoEmAtendimento}
+          disabled={!redistribuirNegociosEmAtendimento || redistribuindoNegociosEmAtendimento}
+          loading={redistribuindoNegociosEmAtendimento}
           loadingText="Redistribuindo..."
           onClick={async () => {
-            if (!redistribuirLeadsEmAtendimento) {
+            if (!redistribuirNegociosEmAtendimento) {
               addToast({
                 type: "warning",
                 title: "Funcionalidade indisponível",
@@ -1126,13 +847,13 @@ export function KanbanHeader({
               return;
             }
 
-            const resultado = await redistribuirLeadsEmAtendimento();
+            const resultado = await redistribuirNegociosEmAtendimento();
             
             if (!resultado.ok) {
               addToast({
                 type: "error",
                 title: "Falha na redistribuição",
-                description: resultado.erro ?? "Não foi possível redistribuir os leads.",
+                description: resultado.erro ?? "Não foi possível redistribuir os negócios.",
               });
               return;
             }
@@ -1140,11 +861,11 @@ export function KanbanHeader({
             addToast({
               type: "success",
               title: "Redistribuição concluída",
-              description: `${resultado.reatribuidos} lead(s) reatribuído(s). ${resultado.ignoradosSemDestino} ignorado(s) por falta de destino.`,
+              description: `${resultado.reatribuidos} negócio(s) reatribuído(s). ${resultado.ignoradosSemDestino} ignorado(s) por falta de destino.`,
             });
           }}
-          title="Reatribuir leads sem atendimento recente para outros colaboradores"
-          iconeEsquerda={<RefreshCw className={cn("h-4 w-4", redistribuindoEmAtendimento && "animate-spin")} />}
+          title="Reatribuir negócios sem atendimento recente para outros colaboradores"
+          iconeEsquerda={<RefreshCw className={cn("h-4 w-4", redistribuindoNegociosEmAtendimento && "animate-spin")} />}
         >
           Redistribuir
         </ActionButton>

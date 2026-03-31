@@ -46,14 +46,24 @@ const prismaCalCom = prisma as typeof prisma & {
   };
 };
 
+type LeadResumoPayload = {
+  id: string;
+  criado_em: Date;
+  atualizado_em: Date;
+  valor_oportunidade: number;
+  EstagioFunil: {
+    tipo: string;
+  };
+};
+
 function leadTemPendencias(
-  lead: { atualizado_em: Date; estagio: { tipo: string } }
+  lead: { atualizado_em: Date; EstagioFunil: { tipo: string } }
 ): boolean {
   const hoje = new Date();
   const dataLimiteEstagioParado = new Date(hoje);
   dataLimiteEstagioParado.setDate(dataLimiteEstagioParado.getDate() - DIAS_ESTAGIO_PARADO);
 
-  const isGanhoOuPerdido = lead.estagio.tipo === "GANHO" || lead.estagio.tipo === "PERDIDO";
+  const isGanhoOuPerdido = lead.EstagioFunil.tipo === "GANHO" || lead.EstagioFunil.tipo === "PERDIDO";
   const isEstagioParado = lead.atualizado_em < dataLimiteEstagioParado;
 
   return !isGanhoOuPerdido && isEstagioParado;
@@ -69,8 +79,8 @@ function buscarLeads(sessao: { id_empresa: string; id_usuario: string; perfil: s
 
   return prisma.lead.findMany({
     where: whereLeads,
-    include: { estagio: true },
-  });
+    include: { EstagioFunil: true },
+  }) as unknown as Promise<LeadResumoPayload[]>;
 }
 
 function buscarCalCom(sessao: { id_empresa: string }) {
@@ -123,21 +133,21 @@ function ChartSkeleton() {
 
 // === Async Server Components with own data fetching ===
 
-async function ResumoKpiGrid({ leadsPromise }: { leadsPromise: Promise<any[]> }) {
+async function ResumoKpiGrid({ leadsPromise }: { leadsPromise: Promise<LeadResumoPayload[]> }) {
   const leads = await leadsPromise;
 
   const gainsWithAllPendenciesResolved = leads.filter((lead) => {
-    if (lead.estagio.tipo !== "GANHO") return false;
+    if (lead.EstagioFunil.tipo !== "GANHO") return false;
     return !leadTemPendencias(lead);
   });
 
   const lostsWithAllPendenciesResolved = leads.filter((lead) => {
-    if (lead.estagio.tipo !== "PERDIDO") return false;
+    if (lead.EstagioFunil.tipo !== "PERDIDO") return false;
     return !leadTemPendencias(lead);
   });
 
   const totalAberto = leads
-    .filter((lead) => lead.estagio.tipo === "ABERTO")
+    .filter((lead) => lead.EstagioFunil.tipo === "ABERTO")
     .reduce((acc, lead) => acc + lead.valor_oportunidade, 0);
 
   const ganhos = gainsWithAllPendenciesResolved;
@@ -203,11 +213,11 @@ async function ResumoKpiGrid({ leadsPromise }: { leadsPromise: Promise<any[]> })
   );
 }
 
-async function ResumoChart({ leadsPromise }: { leadsPromise: Promise<any[]> }) {
+async function ResumoChart({ leadsPromise }: { leadsPromise: Promise<LeadResumoPayload[]> }) {
   const leads = await leadsPromise;
 
   const ganhos = leads.filter((lead) => {
-    if (lead.estagio.tipo !== "GANHO") return false;
+    if (lead.EstagioFunil.tipo !== "GANHO") return false;
     return !leadTemPendencias(lead);
   });
 

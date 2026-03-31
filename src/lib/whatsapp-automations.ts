@@ -25,6 +25,10 @@ export type EventoLeadStageChanged = {
     nome: string | null;
   };
   disparadoEm?: Date;
+  negocio?: {
+    id: string;
+    titulo?: string | null;
+  };
 };
 
 export type ResultadoAutomacoesLeadStageChanged = {
@@ -63,10 +67,10 @@ export async function executarAutomacoesLeadStageChanged(
       gatilho: "STAGE_CHANGE",
     },
     include: {
-      acoes: {
+      AutomacaoAcao: {
         orderBy: { ordem: "asc" },
         include: {
-          instancia_whatsapp: {
+          WhatsappInstancia: {
             select: {
               id: true,
               instance_name: true,
@@ -84,7 +88,7 @@ export async function executarAutomacoesLeadStageChanged(
   resultado.automacoesCorrespondentes = automacoesCorrespondentes.length;
 
   for (const automacao of automacoesCorrespondentes) {
-    for (const acao of automacao.acoes) {
+    for (const acao of automacao.AutomacaoAcao) {
       const referenciaUid = gerarReferenciaEventoAcao(
         evento.leadEstagioLogId,
         automacao.id,
@@ -94,6 +98,7 @@ export async function executarAutomacoesLeadStageChanged(
       const preparo = await prepararAgendamento({
         idAutomacao: automacao.id,
         idLead: evento.lead.id,
+        idNegocio: evento.negocio?.id,
         referenciaUid,
         tipoOrigem: "WHATSAPP",
         contextoJson: construirContextoEvento(evento, automacao.id, automacao.nome, acao.id, acao.ordem, acao.tipo),
@@ -133,12 +138,14 @@ export async function executarAutomacoesLeadStageChanged(
 export async function cancelarAgendamentosPorLead(params: {
   idEmpresa: string;
   idLead: string;
+  idNegocio?: string;
   idEstagioAtual: string;
   motivo?: string;
 }): Promise<number> {
   return cancelarAgendamentosIncompativeisDoLead({
     idEmpresa: params.idEmpresa,
     idLead: params.idLead,
+    idNegocio: params.idNegocio,
     idEstagioAtual: params.idEstagioAtual,
     motivo: params.motivo ?? "Lead saiu do estagio alvo da automacao.",
   });
@@ -191,6 +198,7 @@ function construirContextoEvento(
     evento: {
       tipo: "STAGE_CHANGE",
       lead_estagio_log_id: evento.leadEstagioLogId,
+      negocio_id: evento.negocio?.id ?? null,
       disparado_em: disparadoEm.toISOString(),
     },
     automacao: {

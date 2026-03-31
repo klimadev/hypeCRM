@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 type PerdaDialogProps = {
-  movimentoPendente: { id_lead: string; id_estagio: string } | null;
+  movimentoPendente: { id_negocio: string; id_estagio: string } | null;
   motivoPerda: string;
   setMotivoPerda: (motivo: string) => void;
   onConfirmarPerda: (evento: FormEvent<HTMLFormElement>) => Promise<void>;

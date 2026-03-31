@@ -16,9 +16,11 @@
     "pm2:delete": "pm2 delete hypecrm-prod >/dev/null 2>&1 || true",
     "pm2:save": "pm2 save",
     "screenshot:pricing": "node scripts/pricing-screenshots.js",
-    "screenshot:pricing:mobile": "node scripts/pricing-screenshots.js --mobile"
+    "screenshot:pricing:mobile": "node scripts/pricing-screenshots.js --mobile",
+    "migrate:lead-negocio:backfill": "tsx prisma/scripts/backfill-leads-para-negocios.ts"
   },
   "dependencies": {
+    "@floating-ui/react": "^0.27.19",
     "@hello-pangea/dnd": "^18.0.1",
     "@prisma/client": "^5.22.0",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -51,6 +53,7 @@
     "eslint-config-next": "16.1.6",
     "playwright": "^1.58.2",
     "tailwindcss": "^4",
+    "tsx": "^4.20.3",
     "typescript": "^5",
     "vitest": "^3.2.4"
   },

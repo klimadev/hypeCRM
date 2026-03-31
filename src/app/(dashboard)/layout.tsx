@@ -31,9 +31,9 @@ export default async function LayoutDashboard({
   return (
     <ProvidersWrapper sessao={sessao}>
       <TrialBlocker />
-      <div className="min-h-screen lg:flex">
+      <div className="min-h-screen lg:flex lg:items-stretch bg-[var(--canvas)]">
         <SidebarPrincipal sessao={sessao} dadosUsuario={dadosUsuario} />
-        <main className="flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-3 pt-4 lg:pb-8 lg:p-8">
+        <main className="min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-3 pt-4 lg:pb-8 lg:p-8 lg:pl-[5.5rem] overflow-x-hidden">
           <div className="mb-4">
             <TrialBanner />
           </div>

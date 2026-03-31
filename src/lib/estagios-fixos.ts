@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export const ESTAGIOS_FIXOS_PADRAO = [
@@ -10,10 +11,36 @@ export const ESTAGIOS_FIXOS_PADRAO = [
   { nome: "Perdido", tipo: "PERDIDO", ordem: 7 },
 ] as const;
 
+export async function garantirFunilPadraoEmpresa(idEmpresa: string) {
+  const funilExistente = await prisma.funil.findFirst({
+    where: { id_empresa: idEmpresa, padrao: true },
+    orderBy: [{ ordem: "asc" }, { criado_em: "asc" }],
+  });
+
+  if (funilExistente) {
+    return funilExistente;
+  }
+
+  return prisma.funil.create({
+    data: {
+      id: randomUUID(),
+      id_empresa: idEmpresa,
+      nome: "Funil principal",
+      slug: "funil-principal",
+      descricao: "Funil padrao criado automaticamente",
+      padrao: true,
+      ativo: true,
+      ordem: 0,
+    },
+  });
+}
+
 export async function garantirEstagiosFixosEmpresa(idEmpresa: string) {
+  const funilPadrao = await garantirFunilPadraoEmpresa(idEmpresa);
+
   await prisma.$transaction(async (tx) => {
     const existentes = await tx.estagioFunil.findMany({
-      where: { id_empresa: idEmpresa },
+      where: { id_empresa: idEmpresa, id_funil: funilPadrao.id },
       orderBy: { ordem: "asc" },
     });
 
@@ -46,7 +73,9 @@ export async function garantirEstagiosFixosEmpresa(idEmpresa: string) {
 
       await tx.estagioFunil.create({
         data: {
+          id: randomUUID(),
           id_empresa: idEmpresa,
+          id_funil: funilPadrao.id,
           nome: estagioFixo.nome,
           tipo: estagioFixo.tipo,
           ordem: estagioFixo.ordem,
@@ -56,15 +85,16 @@ export async function garantirEstagiosFixosEmpresa(idEmpresa: string) {
   });
 
   return prisma.estagioFunil.findMany({
-    where: { id_empresa: idEmpresa },
+    where: { id_empresa: idEmpresa, id_funil: funilPadrao.id },
     orderBy: { ordem: "asc" },
   });
 }
 
 export async function obterEstagioIndefinido(idEmpresa: string) {
   await garantirEstagiosFixosEmpresa(idEmpresa);
+  const funilPadrao = await garantirFunilPadraoEmpresa(idEmpresa);
   const estagio = await prisma.estagioFunil.findFirst({
-    where: { id_empresa: idEmpresa, nome: "Indefinido", ordem: 1 },
+    where: { id_empresa: idEmpresa, id_funil: funilPadrao.id, nome: "Indefinido", ordem: 1 },
   });
 
   if (!estagio) {

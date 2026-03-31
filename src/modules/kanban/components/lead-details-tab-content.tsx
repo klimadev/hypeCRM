@@ -1,107 +1,120 @@
 "use client";
 
-import { AlertCircle, Phone, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { AlertCircle, Link2, Phone } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { aplicaMascaraMoedaBr, aplicaMascaraTelefoneBr, converteMoedaBrParaNumero } from "@/lib/utils";
+import { aplicaMascaraMoedaBr, converteMoedaBrParaNumero } from "@/lib/utils";
 import type { Estagio, Funcionario, Lead, PendenciaDinamica } from "../types";
 import { ActionButton } from "./action-button";
-import { validarTelefoneLead } from "../utils/validacoes";
 
-type LeadDetailsTabContentProps = {
-  leadSelecionado: Lead;
+type NegocioDetailsTabContentProps = {
+  negocioSelecionado: Lead;
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
   estagios: Estagio[];
   funcionarios: Funcionario[];
-  pendenciasLead: PendenciaDinamica[];
+  pendenciasNegocio: PendenciaDinamica[];
   salvando: boolean;
-  erroDetalhesLead: string | null;
-  setErroDetalhesLead: (erro: string | null) => void;
-  onMudarLead: (leadAtualizado: Lead) => void;
+  erroDetalhesNegocio: string | null;
+  setErroDetalhesNegocio: (erro: string | null) => void;
+  onMudarNegocio: (negocioAtualizado: Lead) => void;
   onSalvar: () => Promise<void>;
-  onExcluir: () => void;
   temAlteracoes: boolean;
   setTemAlteracoes: (value: boolean) => void;
 };
 
-export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
+export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
   const {
-    leadSelecionado,
+    negocioSelecionado,
     perfil,
     estagios,
     funcionarios,
     salvando,
-    erroDetalhesLead,
-    onMudarLead,
+    erroDetalhesNegocio,
+    onMudarNegocio,
     onSalvar,
-    onExcluir,
     temAlteracoes,
   } = props;
 
   void estagios;
-  const mensagemTelefoneInvalido = validarTelefoneLead(leadSelecionado.telefone);
+  const contatoPrincipal = negocioSelecionado.lead_principal ?? null;
+  const contatosVinculados = negocioSelecionado.leads_vinculados ?? [];
 
-  const statusLead = { 
+  const statusNegocio = { 
     rotulo: "Em andamento", 
-    descricao: "Siga preenchendo os dados e conduzindo o lead no funil.", 
+    descricao: "Siga preenchendo os dados e conduzindo o negócio no funil.", 
     classe: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]" 
   };
 
   return (
     <div className="space-y-4 p-4">
-      <div className={`rounded-[var(--radius-card)] border p-4 ${statusLead.classe}`}>
-        <p className="text-sm font-semibold">Status atual: {statusLead.rotulo}</p>
-        <p className="mt-1 text-xs">{statusLead.descricao}</p>
+      <div className={`rounded-[var(--radius-card)] border p-4 ${statusNegocio.classe}`}>
+        <p className="text-sm font-semibold">Status atual: {statusNegocio.rotulo}</p>
+        <p className="mt-1 text-xs">{statusNegocio.descricao}</p>
+      </div>
+
+      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+        <p className="mb-2 text-sm font-semibold text-[var(--text-primary)]">Contato principal</p>
+        {contatoPrincipal ? (
+          <div className="space-y-1 text-sm text-[var(--text-secondary)]">
+            <p className="font-medium text-[var(--text-primary)]">{contatoPrincipal.nome}</p>
+            <p>{contatoPrincipal.telefone}</p>
+            {contatoPrincipal.origem ? <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{contatoPrincipal.origem}</p> : null}
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+            <Link2 className="mt-0.5 h-4 w-4 text-[var(--text-tertiary)]" />
+            <span>Este negócio ainda não tem um contato principal vinculado.</span>
+          </div>
+        )}
+
+        {contatosVinculados.length > 0 ? (
+          <div className="mt-3 space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Contatos vinculados</p>
+            <div className="flex flex-wrap gap-2">
+              {contatosVinculados.map((contato) => (
+                <span
+                  key={contato.id}
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-1 text-xs text-[var(--text-secondary)]"
+                >
+                  <Phone className="h-3 w-3" />
+                  {contato.nome}
+                </span>
+              ))}
+            </div>
+            <p className="text-xs text-[var(--text-tertiary)]">Para adicionar ou remover leads, use a aba Vínculos.</p>
+          </div>
+        ) : null}
       </div>
 
       <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <p className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Dados editáveis</p>
-        
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-secondary)]">
-            <Phone className="h-4 w-4 text-emerald-600" />
-            Telefone
-          </label>
-          <Input
-            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
-            value={leadSelecionado.telefone}
-            onChange={(e) => onMudarLead({ ...leadSelecionado, telefone: aplicaMascaraTelefoneBr(e.target.value) })}
-          />
-          {mensagemTelefoneInvalido ? (
-            <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-3 py-2 text-xs text-[color:#fde68a]">
-              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-              <span>{mensagemTelefoneInvalido}</span>
-            </div>
-          ) : null}
-        </div>
 
         <div className="mt-3 space-y-2">
-          <label className="text-sm font-medium text-[var(--text-secondary)]">Valor da Oportunidade</label>
+          <label className="text-sm font-medium text-[var(--text-secondary)]">Valor estimado</label>
           <Input
             className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
             inputMode="numeric"
-            value={aplicaMascaraMoedaBr(String(Math.round(leadSelecionado.valor_oportunidade * 100)))}
-            onChange={(e) => onMudarLead({ ...leadSelecionado, valor_oportunidade: converteMoedaBrParaNumero(e.target.value) })}
+            value={aplicaMascaraMoedaBr(String(Math.round(negocioSelecionado.valor_oportunidade * 100)))}
+            onChange={(e) => onMudarNegocio({ ...negocioSelecionado, valor_oportunidade: converteMoedaBrParaNumero(e.target.value) })}
           />
         </div>
 
         <div className="mt-3 space-y-2">
-          <label className="text-sm font-medium text-[var(--text-secondary)]">Observações</label>
+          <label className="text-sm font-medium text-[var(--text-secondary)]">Observações comerciais</label>
           <Textarea
             className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
-            value={leadSelecionado.observacoes ?? ""}
-            onChange={(e) => onMudarLead({ ...leadSelecionado, observacoes: e.target.value })}
+            value={negocioSelecionado.observacoes ?? ""}
+            onChange={(e) => onMudarNegocio({ ...negocioSelecionado, observacoes: e.target.value })}
           />
         </div>
 
         {perfil !== "COLABORADOR" ? (
           <div className="mt-3 space-y-2">
-            <label className="text-sm font-medium text-[var(--text-secondary)]">Responsavel</label>
-            <Select value={leadSelecionado.id_funcionario} onValueChange={(id_funcionario) => onMudarLead({ ...leadSelecionado, id_funcionario })}>
+            <label className="text-sm font-medium text-[var(--text-secondary)]">Responsável comercial</label>
+            <Select value={negocioSelecionado.id_funcionario} onValueChange={(id_funcionario) => onMudarNegocio({ ...negocioSelecionado, id_funcionario })}>
               <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]">
-                <SelectValue placeholder="Selecione o responsavel" />
+                <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
               <SelectContent>
                 {funcionarios.map((funcionario) => (
@@ -114,27 +127,21 @@ export function LeadDetailsTabContent(props: LeadDetailsTabContentProps) {
           </div>
         ) : null}
 
-        {erroDetalhesLead ? (
+        {erroDetalhesNegocio ? (
           <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
             <span className="inline-flex items-center gap-1">
               <AlertCircle className="h-4 w-4" />
-              {erroDetalhesLead}
+              {erroDetalhesNegocio}
             </span>
           </p>
         ) : null}
 
         {temAlteracoes ? (
-          <ActionButton className="w-full rounded-xl bg-emerald-600 text-sm font-medium hover:bg-emerald-700" onClick={() => void onSalvar()} disabled={salvando} loading={salvando} loadingText="Salvando alteracoes...">
-            Salvar Alteracoes
+          <ActionButton className="w-full rounded-xl bg-emerald-600 text-sm font-medium hover:bg-emerald-700" onClick={() => void onSalvar()} disabled={salvando} loading={salvando} loadingText="Salvando alterações...">
+            Salvar alterações
           </ActionButton>
         ) : null}
 
-        <div className="border-t pt-4 mt-4">
-          <Button variant="destructive" className="w-full rounded-[var(--radius-control)] text-sm font-medium" onClick={onExcluir} title="Abrir confirmacao de exclusao">
-            <Trash2 className="mr-2 h-4 w-4" />
-            Excluir Lead
-          </Button>
-        </div>
       </div>
     </div>
   );

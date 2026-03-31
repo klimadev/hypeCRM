@@ -14,10 +14,10 @@ type UseKanbanDadosParams = {
 
 export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
   const [estagios, setEstagios] = useState<Estagio[]>([]);
-  const [leads, setLeads] = useState<Lead[]>([]);
+  const [negocios, setNegocios] = useState<Lead[]>([]);
   const [funcionarios, setFuncionarios] = useState<Funcionario[]>([]);
   const [pdvs, setPdvs] = useState<Pdv[]>([]);
-  const leadsRef = useRef<Lead[]>([]);
+  const negociosRef = useRef<Lead[]>([]);
   const bootstrapSeqRef = useRef(0);
 
   const {
@@ -41,7 +41,7 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
     if (!resposta.ok) return;
 
     setEstagios(resposta.dados.estagios);
-    setLeads(resposta.dados.leads);
+    setNegocios(resposta.dados.negocios);
     setFuncionarios(resposta.dados.funcionarios);
     setPdvs(resposta.dados.pdvs);
   }, []);
@@ -51,7 +51,7 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
   }, [bootstrap]);
 
   const { registrarMovimentoLocal } = useKanbanRealtime({
-    leadsRef,
+    negociosRef,
     onSync: async ({ silencioso }) => {
       if (silencioso && bootstrapRef.current) {
         await bootstrapRef.current();
@@ -61,8 +61,8 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
   });
 
   useEffect(() => {
-    leadsRef.current = leads;
-  }, [leads]);
+    negociosRef.current = negocios;
+  }, [negocios]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -76,30 +76,30 @@ export function useKanbanDados({ addToast }: UseKanbanDadosParams = {}) {
     const pendencias: PendenciaCalculada[] = [];
     const mapaEstagios = Object.fromEntries(estagios.map((estagio) => [estagio.id, estagio]));
 
-    for (const lead of leads) {
-      const estagio = mapaEstagios[lead.id_estagio];
+    for (const negocio of negocios) {
+      const estagio = mapaEstagios[negocio.id_estagio];
       if (!estagio) continue;
-      pendencias.push(...calcularPendenciasLead(lead, estagio));
+      pendencias.push(...calcularPendenciasLead(negocio, estagio));
     }
 
     return pendencias;
-  }, [leads, estagios]);
+  }, [negocios, estagios]);
 
   const sincronizarPendencias = useCallback(() => {
     atualizarComDadosLocais(todasPendenciasLocais as PendenciaInfo[]);
   }, [atualizarComDadosLocais, todasPendenciasLocais]);
 
   useEffect(() => {
-    if (leads.length > 0 || estagios.length > 0) {
+    if (negocios.length > 0 || estagios.length > 0) {
       sincronizarPendencias();
     }
-  }, [leads, estagios, sincronizarPendencias]);
+  }, [negocios, estagios, sincronizarPendencias]);
 
   return {
     estagios,
     setEstagios,
-    leads,
-    setLeads,
+    negocios,
+    setNegocios,
     funcionarios,
     setFuncionarios,
     pdvs,

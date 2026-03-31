@@ -1,64 +1,74 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
-import { atualizarLeadKanban } from "@/lib/api/kanban";
-import type { Lead, StatusSalvamentoDetalhesLead } from "../types";
+import { atualizarNegocioKanban } from "@/lib/api/kanban";
+import { listarLeadsApi, type ApiLeadContato } from "@/lib/api/leads";
+import {
+  atualizarVinculosNegocio as atualizarVinculosNegocioApi,
+  converterNegocioResumoParaCard,
+  removerNegocio as removerNegocioApi,
+} from "@/lib/api/negocios";
+import type { Lead, StatusSalvamentoDetalhesNegocio } from "../types";
 import { useToast } from "@/components/ui/toast";
 import { useAutoSave } from "./use-auto-save";
 
-type UseKanbanDetalhesLeadParams = {
-  leadSelecionado: Lead | null;
-  setLeadSelecionado: Dispatch<SetStateAction<Lead | null>>;
-  setLeads: Dispatch<SetStateAction<Lead[]>>;
+type UseKanbanDetalhesNegocioParams = {
+  negocioSelecionado: Lead | null;
+  setNegocioSelecionado: Dispatch<SetStateAction<Lead | null>>;
+  setNegocios: Dispatch<SetStateAction<Lead[]>>;
 };
 
-export function useKanbanDetalhesLead({
-  leadSelecionado,
-  setLeadSelecionado,
-  setLeads,
-}: UseKanbanDetalhesLeadParams) {
+export function useKanbanDetalhesNegocio({
+  negocioSelecionado,
+  setNegocioSelecionado,
+  setNegocios,
+}: UseKanbanDetalhesNegocioParams) {
   const { addToast } = useToast();
-  const [erroDetalhesLead, setErroDetalhesLead] = useState<string | null>(null);
+  const [erroDetalhesNegocio, setErroDetalhesNegocio] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
   const [salvo, setSalvo] = useState(false);
   const [salvandoAutomaticamente, setSalvandoAutomaticamente] = useState(false);
   const [ultimaAtualizacaoSalvaEm, setUltimaAtualizacaoSalvaEm] = useState<Date | null>(null);
-  const salvarAutomaticamenteRef = useRef<(leadAtualizado: Lead) => Promise<void>>(async () => {});
+  const [leadsDisponiveis, setLeadsDisponiveis] = useState<ApiLeadContato[]>([]);
+  const [carregandoLeadsDisponiveis, setCarregandoLeadsDisponiveis] = useState(false);
+  const [salvandoVinculos, setSalvandoVinculos] = useState(false);
+  const [removendoNegocio, setRemovendoNegocio] = useState(false);
+  const [erroVinculos, setErroVinculos] = useState<string | null>(null);
+  const salvarAutomaticamenteRef = useRef<(negocioAtualizado: Lead) => Promise<void>>(async () => {});
 
   const { autoSavePendente, agendarAutoSave, cancelarAutoSave } = useAutoSave<Lead>({
     delayMs: 1800,
-    enabled: Boolean(leadSelecionado),
-    onSave: async (leadAtualizado) => {
-      await salvarAutomaticamenteRef.current(leadAtualizado);
+    enabled: Boolean(negocioSelecionado),
+    onSave: async (negocioAtualizado) => {
+      await salvarAutomaticamenteRef.current(negocioAtualizado);
     },
   });
 
-  const salvarDetalhesLead = useCallback(
-    async (lead: Lead) => {
+  const salvarDetalhesNegocio = useCallback(
+    async (negocio: Lead) => {
       cancelarAutoSave();
       setSalvando(true);
       setSalvandoAutomaticamente(false);
       setSalvo(false);
-      setErroDetalhesLead(null);
+      setErroDetalhesNegocio(null);
 
       try {
-        const resposta = await atualizarLeadKanban(lead.id, {
-          observacoes: lead.observacoes,
-          telefone: lead.telefone,
-          valor_oportunidade: Number(lead.valor_oportunidade),
-          id_funcionario: lead.id_funcionario,
+        const resposta = await atualizarNegocioKanban(negocio.id, {
+          observacoes_comerciais: negocio.observacoes,
+          valor_estimado: Number(negocio.valor_oportunidade),
+          id_funcionario: negocio.id_funcionario,
         });
 
         if (!resposta.ok) {
-          setErroDetalhesLead(resposta.erro);
+          setErroDetalhesNegocio(resposta.erro);
           setSalvando(false);
           setSalvandoAutomaticamente(false);
           return;
         }
 
-        if (resposta.dados.lead) {
-          const leadAtualizado = resposta.dados.lead;
-          setLeads((atual) => atual.map((item) => (item.id === leadAtualizado.id ? leadAtualizado : item)));
-          setLeadSelecionado((atual) => (atual && atual.id === leadAtualizado.id ? leadAtualizado : atual));
+        if (resposta.dados.negocio) {
+          const negocioAtualizado = resposta.dados.negocio;
+          setNegocios((atual) => atual.map((item) => (item.id === negocioAtualizado.id ? negocioAtualizado : item)));
+          setNegocioSelecionado((atual) => (atual && atual.id === negocioAtualizado.id ? negocioAtualizado : atual));
         }
 
         setSalvando(false);
@@ -68,67 +78,176 @@ export function useKanbanDetalhesLead({
 
         addToast({
           type: "success",
-          title: "Lead atualizado",
-          description: "As alteracoes do lead foram salvas com sucesso.",
+          title: "Negócio atualizado",
+          description: "As alterações do negócio foram salvas com sucesso.",
         });
 
         setTimeout(() => setSalvo(false), 2000);
       } catch {
-        setErroDetalhesLead("Erro ao salvar lead.");
+        setErroDetalhesNegocio("Erro ao salvar negócio.");
         setSalvando(false);
         setSalvandoAutomaticamente(false);
       }
     },
-    [addToast, cancelarAutoSave, setLeads, setLeadSelecionado],
+    [addToast, cancelarAutoSave, setNegocios, setNegocioSelecionado],
+  );
+
+  const carregarLeadsDisponiveis = useCallback(async () => {
+    setCarregandoLeadsDisponiveis(true);
+    setErroVinculos(null);
+    try {
+      const resultado = await listarLeadsApi();
+      if (!resultado.ok) {
+        setLeadsDisponiveis([]);
+        setErroVinculos(resultado.erro);
+        return;
+      }
+
+      setLeadsDisponiveis(resultado.dados.leads ?? []);
+    } catch {
+      setLeadsDisponiveis([]);
+      setErroVinculos("Erro ao carregar leads disponiveis.");
+    } finally {
+      setCarregandoLeadsDisponiveis(false);
+    }
+  }, []);
+
+  const atualizarVinculosNegocio = useCallback(
+    async (leadIds: string[]) => {
+      if (!negocioSelecionado) return;
+
+      setSalvandoVinculos(true);
+      setErroVinculos(null);
+
+      try {
+        const resposta = await atualizarVinculosNegocioApi(negocioSelecionado.id, leadIds);
+
+        if (!resposta.ok) {
+          setErroVinculos(resposta.erro);
+          return;
+        }
+
+        if (resposta.dados.negocio) {
+          const negocioAtualizado = converterNegocioResumoParaCard(resposta.dados.negocio);
+          setNegocios((atual) => atual.map((item) => (item.id === negocioAtualizado.id ? negocioAtualizado : item)));
+          setNegocioSelecionado((atual) => (atual && atual.id === negocioAtualizado.id ? negocioAtualizado : atual));
+        }
+
+        addToast({
+          type: "success",
+          title: "Vínculos atualizados",
+          description: "Os leads do negócio foram atualizados com sucesso.",
+        });
+      } catch {
+        setErroVinculos("Erro ao atualizar vínculos do negócio.");
+      } finally {
+        setSalvandoVinculos(false);
+      }
+    },
+    [addToast, negocioSelecionado, setNegocios, setNegocioSelecionado],
+  );
+
+  const removerNegocio = useCallback(
+    async ({ removerLeadsVinculados }: { removerLeadsVinculados: boolean }) => {
+      if (!negocioSelecionado || removendoNegocio) {
+        return false;
+      }
+
+      setRemovendoNegocio(true);
+      setErroDetalhesNegocio(null);
+      setErroVinculos(null);
+      cancelarAutoSave();
+
+      try {
+        const resposta = await removerNegocioApi(negocioSelecionado.id, {
+          remover_leads_vinculados: removerLeadsVinculados,
+        });
+
+        if (!resposta.ok) {
+          setErroDetalhesNegocio(resposta.erro);
+          return false;
+        }
+
+        setNegocios((atual) => atual.filter((item) => item.id !== negocioSelecionado.id));
+        setNegocioSelecionado(null);
+
+        addToast({
+          type: "success",
+          title: "Negócio removido",
+          description: removerLeadsVinculados
+            ? "O negócio e seus leads vinculados foram removidos."
+            : "O negócio foi removido e os leads vinculados foram desvinculados.",
+        });
+
+        return true;
+      } catch {
+        setErroDetalhesNegocio("Erro ao remover negócio.");
+        return false;
+      } finally {
+        setRemovendoNegocio(false);
+      }
+    },
+    [addToast, cancelarAutoSave, negocioSelecionado, removendoNegocio, setNegocios, setNegocioSelecionado],
   );
 
   useEffect(() => {
-    salvarAutomaticamenteRef.current = async (leadAtualizado) => {
-      await salvarDetalhesLead(leadAtualizado);
+    salvarAutomaticamenteRef.current = async (negocioAtualizado) => {
+      await salvarDetalhesNegocio(negocioAtualizado);
     };
-  }, [salvarDetalhesLead]);
+  }, [salvarDetalhesNegocio]);
 
-  const aoMudarLead = useCallback(
-    (leadAtualizado: Lead) => {
-      setLeadSelecionado(leadAtualizado);
+  const aoMudarNegocio = useCallback(
+    (negocioAtualizado: Lead) => {
+      setNegocioSelecionado(negocioAtualizado);
 
-      if (erroDetalhesLead) {
-        setErroDetalhesLead(null);
+      if (erroDetalhesNegocio) {
+        setErroDetalhesNegocio(null);
       }
 
       setSalvo(false);
-      agendarAutoSave(leadAtualizado);
+      agendarAutoSave(negocioAtualizado);
     },
-    [agendarAutoSave, erroDetalhesLead, setLeadSelecionado],
+    [agendarAutoSave, erroDetalhesNegocio, setNegocioSelecionado],
   );
 
   useEffect(() => {
-    if (leadSelecionado) {
+    if (negocioSelecionado) {
+      void carregarLeadsDisponiveis();
       return;
     }
 
+    setLeadsDisponiveis([]);
+    setErroVinculos(null);
     cancelarAutoSave();
-  }, [cancelarAutoSave, leadSelecionado]);
+  }, [carregarLeadsDisponiveis, cancelarAutoSave, negocioSelecionado]);
 
-  const statusSalvamentoDetalhes = useMemo<StatusSalvamentoDetalhesLead>(() => {
-    if (erroDetalhesLead) return "erro";
+  const statusSalvamentoDetalhes = useMemo<StatusSalvamentoDetalhesNegocio>(() => {
+    if (erroDetalhesNegocio) return "erro";
     if (salvandoAutomaticamente) return "salvando_automaticamente";
     if (salvando) return "salvando_manual";
     if (salvo) return "salvo";
     if (autoSavePendente) return "pendente";
     return "ocioso";
-  }, [autoSavePendente, erroDetalhesLead, salvando, salvandoAutomaticamente, salvo]);
+  }, [autoSavePendente, erroDetalhesNegocio, salvando, salvandoAutomaticamente, salvo]);
 
   return {
-    erroDetalhesLead,
-    setErroDetalhesLead,
+    erroDetalhesNegocio,
+    setErroDetalhesNegocio,
     salvando,
     salvo,
     salvandoAutomaticamente,
     salvamentoAutomaticoPendente: autoSavePendente,
     ultimaAtualizacaoSalvaEm,
     statusSalvamentoDetalhes,
-    salvarDetalhesLead,
-    aoMudarLead,
+    salvarDetalhesNegocio,
+    aoMudarNegocio,
+    leadsDisponiveis,
+    carregandoLeadsDisponiveis,
+    salvandoVinculos,
+    removendoNegocio,
+    erroVinculos,
+    setErroVinculos,
+    atualizarVinculosNegocio,
+    removerNegocio,
   };
 }

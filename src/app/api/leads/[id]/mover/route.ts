@@ -1,10 +1,45 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/permissoes";
 import { esquemaMoverLead } from "@/lib/validacoes";
 import { badRequest, forbidden, notFound } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
 import { executarAutomacoesLeadStageChanged } from "@/lib/whatsapp-automations";
+
+type LeadMovimentacaoPayload = {
+  id: string;
+  id_empresa: string;
+  id_funcionario: string;
+  id_estagio: string;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  Funcionario: {
+    id_pdv: string;
+  };
+  EstagioFunil: {
+    id: string;
+    nome: string;
+    tipo: string;
+  };
+  Empresa: {
+    nome: string;
+  } | null;
+};
+
+type LeadAtualizadoPayload = {
+  id: string;
+  nome: string;
+  telefone: string;
+  email: string | null;
+  EstagioFunil: {
+    id: string;
+    nome: string;
+    tipo: string;
+    ordem: bigint;
+  };
+};
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -38,25 +73,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         : {}),
     },
     include: {
-      empresa: {
+      Empresa: {
         select: {
           nome: true,
         },
       },
-      estagio: {
+      EstagioFunil: {
         select: {
           id: true,
           nome: true,
           tipo: true,
         },
       },
-      funcionario: {
+      Funcionario: {
         select: {
           id_pdv: true,
         },
       },
     },
-  });
+  }) as LeadMovimentacaoPayload | null;
 
   if (!lead) {
     return notFound("Lead nao encontrado.");
@@ -64,7 +99,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // Validação de PDV para GERENTE
   if (auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv) {
-    if (lead.funcionario.id_pdv !== auth.sessao.id_pdv) {
+    if (lead.Funcionario.id_pdv !== auth.sessao.id_pdv) {
       return forbidden("Voce só pode mover leads do seu PDV.");
     }
   }
@@ -87,7 +122,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const estagioEfetivo = estagioDestino;
 
   // Same-stage no-op guard: skip automation scheduling if lead is already in destination stage
-  if (lead.estagio.id === estagioEfetivo.id) {
+  if (lead.EstagioFunil.id === estagioEfetivo.id) {
     return NextResponse.json({ 
       lead, 
       mensagem: "Lead ja esta neste estagio.",
@@ -102,13 +137,14 @@ export async function PATCH(request: NextRequest, { params }: Params) {
         id_estagio: estagioEfetivo.id,
         motivo_perda: estagioEfetivo.tipo === "PERDIDO" ? dadosValidados.motivo_perda?.trim() : null,
       },
-      include: { estagio: true },
-    });
+      include: { EstagioFunil: true },
+    }) as LeadAtualizadoPayload;
 
     const log = await tx.leadEstagioLog.create({
       data: {
+        id: randomUUID(),
         id_lead: lead.id,
-        id_estagio_anterior: lead.estagio.id,
+        id_estagio_anterior: lead.EstagioFunil.id,
         id_estagio_novo: estagioEfetivo.id,
         empresa_id: auth.sessao.id_empresa,
       },
@@ -133,15 +169,19 @@ export async function PATCH(request: NextRequest, { params }: Params) {
           email: leadAtualizado.email,
         },
         estagioAnterior: {
-          id: lead.estagio.id,
-          nome: lead.estagio.nome,
+          id: lead.EstagioFunil.id,
+          nome: lead.EstagioFunil.nome,
         },
         estagioAtual: {
           id: estagioEfetivo.id,
           nome: estagioEfetivo.nome,
         },
         empresa: {
-          nome: lead.empresa?.nome ?? null,
+          nome: lead.Empresa?.nome ?? null,
+        },
+        negocio: {
+          id: lead.id,
+          titulo: null,
         },
         disparadoEm: logMovimentacao.criado_em,
       });
@@ -151,12 +191,12 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   })();
 
   return NextResponse.json({
-    lead: {
-      ...leadAtualizado,
-      estagio: {
-        ...leadAtualizado.estagio,
-        ordem: Number(leadAtualizado.estagio.ordem),
+      lead: {
+        ...leadAtualizado,
+        estagio: {
+          ...leadAtualizado.EstagioFunil,
+          ordem: Number(leadAtualizado.EstagioFunil.ordem),
+        },
       },
-    },
   });
 }

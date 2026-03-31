@@ -6,7 +6,7 @@ import { traduzirTipoMensagem, normalizarTimestampParaIso } from "@/lib/whatsapp
 import type { ChatConnectionStatus, ChatMessageStatus, WhatsappChatBlockedState, WhatsappChatMessage } from "@/modules/whatsapp/types";
 
 type UseWhatsappChatParams = {
-  leadId?: string;
+  contatoId?: string;
   enabled: boolean;
   markReadEnabled: boolean;
   pollMs?: number;
@@ -45,7 +45,7 @@ function mergeMessages(base: WhatsappChatMessage[], incoming: WhatsappChatMessag
   return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
 }
 
-export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 30000 }: UseWhatsappChatParams) {
+export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 30000 }: UseWhatsappChatParams) {
   const [messages, setMessages] = useState<WhatsappChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ChatConnectionStatus>("unknown");
   const [unreadCount, setUnreadCount] = useState(0);
@@ -78,7 +78,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
   }, []);
 
   const fetchMessages = useCallback(async () => {
-    if (!enabled || !leadId) return;
+    if (!enabled || !contatoId) return;
     requestSeqRef.current += 1;
     const currentSeq = requestSeqRef.current;
 
@@ -92,7 +92,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
     }
 
     try {
-      const resultado = await listarMensagensWhatsapp(leadId, signal);
+      const resultado = await listarMensagensWhatsapp(contatoId, signal);
       if (!resultado.ok) {
         if (resultado.codigo === "PDV_SEM_INSTANCIA") {
           setBlockedState({
@@ -129,7 +129,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
         }, delay);
       }
     }
-  }, [enabled, leadId, pollMs]);
+  }, [enabled, contatoId, pollMs]);
 
   const reload = useCallback(async () => {
     stopPolling();
@@ -138,7 +138,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
 
   const sendMessage = useCallback(
     async (text: string, retryId?: string) => {
-      if (!leadId || !enabled) return;
+      if (!contatoId || !enabled) return;
 
       const normalizedText = text.trim();
       if (!normalizedText) return;
@@ -148,7 +148,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
       const optimisticMessage: WhatsappChatMessage = {
         id: tempId,
         messageId: tempId,
-        leadId,
+        leadId: contatoId,
         remoteJid: "",
         remoteJidAlt: null,
         fromMe: true,
@@ -175,7 +175,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
 
       try {
         const resultado = await enviarMensagemWhatsapp({
-          leadId,
+          leadId: contatoId,
           text: normalizedText,
           clientTempId: tempId,
         });
@@ -218,7 +218,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
         setSending(false);
       }
     },
-    [leadId, enabled],
+    [contatoId, enabled],
   );
 
   const retryMessage = useCallback(
@@ -229,10 +229,10 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
   );
 
   const markRead = useCallback(async () => {
-    if (!leadId || !markReadEnabled || markReadInFlightRef.current) return;
+    if (!contatoId || !markReadEnabled || markReadInFlightRef.current) return;
     markReadInFlightRef.current = true;
     try {
-      const resultado = await marcarMensagensComoLidas(leadId);
+      const resultado = await marcarMensagensComoLidas(contatoId);
       if (resultado.ok && mountedRef.current) {
         setUnreadCount(resultado.dados.unreadCount);
         setMessages((prev) =>
@@ -249,7 +249,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
     } finally {
       markReadInFlightRef.current = false;
     }
-  }, [leadId, markReadEnabled]);
+  }, [contatoId, markReadEnabled]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -266,7 +266,7 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
     setBlockedState(null);
     backoffMsRef.current = pollMs;
 
-    if (!enabled || !leadId) {
+    if (!enabled || !contatoId) {
       stopPolling();
       return;
     }
@@ -275,14 +275,14 @@ export function useWhatsappChat({ leadId, enabled, markReadEnabled, pollMs = 300
     return () => {
       stopPolling();
     };
-  }, [enabled, leadId, pollMs, fetchMessages, stopPolling]);
+  }, [enabled, contatoId, pollMs, fetchMessages, stopPolling]);
 
   useEffect(() => {
     if (!markReadEnabled || unreadCount <= 0) return;
     void markRead();
   }, [markReadEnabled, unreadCount, markRead]);
 
-  const canSend = useMemo(() => enabled && Boolean(leadId) && connectionStatus === "online", [connectionStatus, enabled, leadId]);
+  const canSend = useMemo(() => enabled && Boolean(contatoId) && connectionStatus === "online", [connectionStatus, enabled, contatoId]);
 
   return {
     messages,

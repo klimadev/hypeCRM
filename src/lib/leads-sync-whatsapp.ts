@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { buscarTodasMensagensDaInstancia, extrairNomeDoLeadDoMapa, extrairDadosAdDoMapa } from "@/lib/whatsapp-chat";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
@@ -71,7 +72,7 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
           id_empresa: sessao.id_empresa,
           OR: [
             { id_criador: sessao.id_usuario },
-            ...(sessao.id_pdv ? [{ pdvs: { some: { id: sessao.id_pdv } } }] : []),
+            ...(sessao.id_pdv ? [{ Pdv: { some: { id: sessao.id_pdv } } }] : []),
           ],
         }
     : { id_empresa: idEmpresa };
@@ -82,7 +83,7 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
       id: true,
       nome: true,
       instance_name: true,
-      pdvs:
+      Pdv:
         sessao?.perfil === "GERENTE" && sessao.id_pdv
           ? {
               where: { id: sessao.id_pdv, id_empresa: sessao.id_empresa },
@@ -113,19 +114,19 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
   const instanciasIgnoradas: InstanciaIgnorada[] = [];
 
   for (const instancia of instancias) {
-    if (instancia.pdvs.length !== 1) {
+    if (instancia.Pdv.length !== 1) {
       instanciasIgnoradas.push({
         id: instancia.id,
         nome: instancia.nome,
         motivo:
-          instancia.pdvs.length === 0
+          instancia.Pdv.length === 0
             ? "Instancia sem PDV configurado."
-            : `Instancia vinculada a ${instancia.pdvs.length} PDVs. Sincronizacao permite apenas 1 PDV por instancia para garantir distribuicao correta dos leads.`,
+            : `Instancia vinculada a ${instancia.Pdv.length} PDVs. Sincronizacao permite apenas 1 PDV por instancia para garantir distribuicao correta dos leads.`,
       });
       continue;
     }
 
-    pdvsElegiveisPorInstancia.set(instancia.id, instancia.pdvs[0]);
+    pdvsElegiveisPorInstancia.set(instancia.id, instancia.Pdv[0]);
   }
 
   const idsPdvsElegiveis = Array.from(new Set(Array.from(pdvsElegiveisPorInstancia.values()).map((pdv) => pdv.id)));
@@ -285,6 +286,7 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
 
       await prisma.lead.create({
         data: {
+          id: randomUUID(),
           id_empresa: idEmpresa,
           id_estagio: estagioIndefinido.id,
           id_funcionario: colaboradorResponsavel.id,

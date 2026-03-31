@@ -1,10 +1,59 @@
 import { NextRequest } from "next/server";
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ok } from "@/lib/api/http";
 import { validateQuery } from "@/lib/api/route-validation";
 import { withPerfis } from "@/lib/api/route-guards";
 import { calcularResumoParcelas, calcularStatusParcela, inicioDoDia } from "@/lib/financeiro/parcelas";
 import { esquemaListarRecebimentos } from "@/lib/validacoes";
+import type { StatusParcela } from "@/lib/api/parcelas";
+
+type RecebimentoListaItem = {
+  id: string;
+  numero_parcela: number;
+  quantidade_total: number;
+  valor: number;
+  status: StatusParcela;
+  data_vencimento: string;
+  data_pagamento: string | null;
+  lead: {
+    id: string;
+    nome: string;
+    telefone: string;
+    valor_oportunidade: number;
+    estagio: string;
+  };
+  pdv: {
+    id: string;
+    nome: string;
+  } | null;
+  responsavel: {
+    id: string;
+    nome: string;
+  };
+  dias_em_atraso: number;
+};
+
+type ParcelaRaw = {
+  id: string;
+  numero_parcela: number;
+  quantidade_total: number;
+  valor: number;
+  data_vencimento: Date;
+  data_pagamento: Date | null;
+  status: string;
+  negocio_id: string;
+  negocio_valor_estimado: number;
+  lead_id: string | null;
+  lead_nome: string | null;
+  lead_telefone: string | null;
+  estagio_nome: string;
+  responsavel_id: string;
+  responsavel_nome: string;
+  responsavel_id_pdv: string | null;
+  pdv_id: string | null;
+  pdv_nome: string | null;
+};
 
 type AbaRecebimentos = "todos" | "recebidos" | "a_vencer" | "atrasados";
 
@@ -73,6 +122,51 @@ function paginar<T>(lista: T[], pagina: number, limite: number) {
   return lista.slice(inicio, inicio + limite);
 }
 
+function montarCondicaoPadrao(idEmpresa: string) {
+  return Prisma.sql`p.id_empresa = ${idEmpresa}`;
+}
+
+function mapearParcelas(rows: ParcelaRaw[]): RecebimentoListaItem[] {
+  return rows.map((parcela) => {
+    const statusCalculado = calcularStatusParcela({
+      status: parcela.status === "PAGO" ? "PAGO" : "PENDENTE",
+      data_vencimento: parcela.data_vencimento.toISOString(),
+      data_pagamento: parcela.data_pagamento?.toISOString() ?? null,
+    });
+
+    return {
+      id: parcela.id,
+      numero_parcela: parcela.numero_parcela,
+      quantidade_total: parcela.quantidade_total,
+      valor: parcela.valor,
+      status: statusCalculado,
+      data_vencimento: parcela.data_vencimento.toISOString(),
+      data_pagamento: parcela.data_pagamento?.toISOString() ?? null,
+      lead: {
+        id: parcela.lead_id ?? parcela.negocio_id,
+        nome: parcela.lead_nome ?? "Sem lead",
+        telefone: parcela.lead_telefone ?? "",
+        valor_oportunidade: parcela.negocio_valor_estimado,
+        estagio: parcela.estagio_nome,
+      },
+      pdv: parcela.pdv_id && parcela.pdv_nome
+        ? {
+            id: parcela.pdv_id,
+            nome: parcela.pdv_nome,
+          }
+        : null,
+      responsavel: {
+        id: parcela.responsavel_id,
+        nome: parcela.responsavel_nome,
+      },
+      dias_em_atraso:
+        statusCalculado === "ATRASADO"
+          ? Math.max(0, Math.floor((inicioDoDia().getTime() - inicioDoDia(parcela.data_vencimento).getTime()) / (24 * 60 * 60 * 1000)))
+          : 0,
+    };
+  });
+}
+
 export async function GET(request: NextRequest) {
   return withPerfis(request, ["EMPRESA"], async ({ sessao }) => {
     const { searchParams } = new URL(request.url);
@@ -89,104 +183,71 @@ export async function GET(request: NextRequest) {
     const hoje = inicioDoDia();
     const buscaNormalizada = normalizarBusca(filtros.busca);
 
-    const parcelas = await prisma.parcela.findMany({
-      where: {
-        id_empresa: sessao.id_empresa,
-        ...(filtros.data_inicial || filtros.data_final
-          ? {
-              OR: [
-                {
-                  data_vencimento: {
-                    ...(filtros.data_inicial ? { gte: new Date(filtros.data_inicial) } : {}),
-                    ...(filtros.data_final ? { lte: new Date(filtros.data_final) } : {}),
-                  },
-                },
-                {
-                  data_pagamento: {
-                    ...(filtros.data_inicial ? { gte: new Date(filtros.data_inicial) } : {}),
-                    ...(filtros.data_final ? { lte: new Date(filtros.data_final) } : {}),
-                  },
-                },
-              ],
-            }
-          : {}),
-        lead: {
-          ...(filtros.id_funcionario ? { id_funcionario: filtros.id_funcionario } : {}),
-          ...(filtros.id_pdv
-            ? {
-                funcionario: {
-                  id_pdv: filtros.id_pdv,
-                },
-              }
-            : {}),
-        },
-      },
-      include: {
-        lead: {
-          select: {
-            id: true,
-            nome: true,
-            telefone: true,
-            valor_oportunidade: true,
-            estagio: {
-              select: {
-                nome: true,
-              },
-            },
-            funcionario: {
-              select: {
-                id: true,
-                nome: true,
-                pdv: {
-                  select: {
-                    id: true,
-                    nome: true,
-                  },
-                },
-              },
-            },
-          },
-        },
-      },
-    });
+    const parcelasRaw = await prisma.$queryRaw<ParcelaRaw[]>(Prisma.sql`
+      SELECT
+        p.id AS id,
+        p.numero_parcela AS numero_parcela,
+        p.quantidade_total AS quantidade_total,
+        p.valor AS valor,
+        p.data_vencimento AS data_vencimento,
+        p.data_pagamento AS data_pagamento,
+        p.status AS status,
+        n.id AS negocio_id,
+        n.valor_estimado AS negocio_valor_estimado,
+        l.id AS lead_id,
+        l.nome AS lead_nome,
+        l.telefone AS lead_telefone,
+        e.nome AS estagio_nome,
+        f.id AS responsavel_id,
+        f.nome AS responsavel_nome,
+        f.id_pdv AS responsavel_id_pdv,
+        pdv.id AS pdv_id,
+        pdv.nome AS pdv_nome
+      FROM Parcela p
+      JOIN Negocio n ON n.id = p.id_negocio
+      LEFT JOIN Lead l ON l.id = COALESCE(
+        n.id_lead,
+        (
+          SELECT id
+          FROM Lead
+          WHERE id_negocio = n.id
+          ORDER BY criado_em ASC
+          LIMIT 1
+        )
+      )
+      JOIN Funcionario f ON f.id = n.id_funcionario
+      LEFT JOIN Pdv pdv ON pdv.id = f.id_pdv
+      JOIN EstagioFunil e ON e.id = n.id_estagio
+      WHERE ${montarCondicaoPadrao(sessao.id_empresa)}
+      ORDER BY p.data_vencimento ASC
+    `);
 
-    const listaBase = parcelas.map((parcela) => {
-      const statusCalculado = calcularStatusParcela({
-        status: parcela.status === "PAGO" ? "PAGO" : "PENDENTE",
-        data_vencimento: parcela.data_vencimento.toISOString(),
-        data_pagamento: parcela.data_pagamento?.toISOString() ?? null,
-      });
+    const listaBase = mapearParcelas(parcelasRaw).filter((item) => {
+      if (filtros.data_inicial || filtros.data_final) {
+        const dataVencimento = new Date(item.data_vencimento);
+        const dataPagamento = item.data_pagamento ? new Date(item.data_pagamento) : null;
+        const inicio = filtros.data_inicial ? new Date(filtros.data_inicial) : null;
+        const fim = filtros.data_final ? new Date(filtros.data_final) : null;
 
-      return {
-        id: parcela.id,
-        numero_parcela: parcela.numero_parcela,
-        quantidade_total: parcela.quantidade_total,
-        valor: parcela.valor,
-        status: statusCalculado,
-        data_vencimento: parcela.data_vencimento.toISOString(),
-        data_pagamento: parcela.data_pagamento?.toISOString() ?? null,
-        lead: {
-          id: parcela.lead.id,
-          nome: parcela.lead.nome,
-          telefone: parcela.lead.telefone,
-          valor_oportunidade: parcela.lead.valor_oportunidade,
-          estagio: parcela.lead.estagio.nome,
-        },
-        pdv: parcela.lead.funcionario.pdv
-          ? {
-              id: parcela.lead.funcionario.pdv.id,
-              nome: parcela.lead.funcionario.pdv.nome,
-            }
-          : null,
-        responsavel: {
-          id: parcela.lead.funcionario.id,
-          nome: parcela.lead.funcionario.nome,
-        },
-        dias_em_atraso:
-          statusCalculado === "ATRASADO"
-            ? Math.max(0, Math.floor((hoje.getTime() - inicioDoDia(parcela.data_vencimento).getTime()) / (24 * 60 * 60 * 1000)))
-            : 0,
-      };
+        const bateVencimento = (!inicio || dataVencimento >= inicio) && (!fim || dataVencimento <= fim);
+        const batePagamento = dataPagamento
+          ? (!inicio || dataPagamento >= inicio) && (!fim || dataPagamento <= fim)
+          : false;
+
+        if (!bateVencimento && !batePagamento) {
+          return false;
+        }
+      }
+
+      if (filtros.id_funcionario && item.responsavel.id !== filtros.id_funcionario) {
+        return false;
+      }
+
+      if (filtros.id_pdv && item.pdv?.id !== filtros.id_pdv) {
+        return false;
+      }
+
+      return true;
     });
 
     const listaFiltradaBusca = buscaNormalizada

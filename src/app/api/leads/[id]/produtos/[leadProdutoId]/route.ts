@@ -47,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       observacoes: dados.observacoes !== undefined ? dados.observacoes ?? null : undefined,
     },
     include: {
-      produto: {
+      Produto: {
         select: {
           id: true,
           nome: true,

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/permissoes";
 import { esquemaCriarCalComInstancia } from "@/lib/validacoes";
@@ -57,6 +58,7 @@ export async function POST(request: NextRequest) {
 
   const instancia = await prisma.calComInstancia.create({
     data: {
+      id: randomUUID(),
       id_empresa: auth.sessao.id_empresa,
       id_criador: auth.sessao.id_usuario,
       nome: validacao.data.nome,

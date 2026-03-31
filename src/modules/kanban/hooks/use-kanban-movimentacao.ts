@@ -2,12 +2,12 @@ import { useCallback, useState, useOptimistic, useTransition } from "react";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
 import type { DropResult } from "@hello-pangea/dnd";
 import type { Estagio, Lead } from "../types";
-import { moverLeadKanban } from "@/lib/api/kanban";
+import { moverNegocioKanban } from "@/lib/api/kanban";
 
 type UseKanbanMovimentacaoParams = {
-  leads: Lead[];
+  negocios: Lead[];
   estagios: Estagio[];
-  setLeads: Dispatch<SetStateAction<Lead[]>>;
+  setNegocios: Dispatch<SetStateAction<Lead[]>>;
   registrarMovimentoLocal: () => void;
   addToast: (params: {
     type: "success" | "error" | "warning";
@@ -17,23 +17,23 @@ type UseKanbanMovimentacaoParams = {
 };
 
 export function useKanbanMovimentacao({
-  leads,
+  negocios,
   estagios,
-  setLeads,
+  setNegocios,
   registrarMovimentoLocal,
   addToast,
 }: UseKanbanMovimentacaoParams) {
   const [isPending, startTransition] = useTransition();
   const [movimentoPendente, setMovimentoPendente] = useState<{
-    id_lead: string;
+    id_negocio: string;
     id_estagio: string;
   } | null>(null);
   const [motivoPerda, setMotivoPerda] = useState("");
 
   // useOptimistic replaces manual setLeads for movement
   // React automatically handles rollback on error
-  const [optimisticLeads, addOptimisticMove] = useOptimistic(
-    leads,
+  const [optimisticNegocios, addOptimisticMove] = useOptimistic(
+    negocios,
     (state, update: { id: string; id_estagio: string; motivo_perda: string | null }) =>
       state.map((item) =>
         item.id === update.id
@@ -42,14 +42,14 @@ export function useKanbanMovimentacao({
       ),
   );
 
-  const moverLead = useCallback(
-    async (idLead: string, idEstagio: string, motivo?: string) => {
-      const leadAnterior = leads.find((item) => item.id === idLead);
-      if (!leadAnterior) return false;
+  const moverNegocio = useCallback(
+    async (idNegocio: string, idEstagio: string, motivo?: string) => {
+      const negocioAnterior = negocios.find((item) => item.id === idNegocio);
+      if (!negocioAnterior) return false;
 
       // 1. Optimistic update — instant UI change
       addOptimisticMove({
-        id: idLead,
+        id: idNegocio,
         id_estagio: idEstagio,
         motivo_perda: motivo?.trim() ? motivo.trim() : null,
       });
@@ -57,7 +57,7 @@ export function useKanbanMovimentacao({
 
       // 2. Server request in transition (non-blocking)
       startTransition(async () => {
-        const resposta = await moverLeadKanban(idLead, {
+        const resposta = await moverNegocioKanban(idNegocio, {
           id_estagio: idEstagio,
           motivo_perda: motivo,
         });
@@ -72,15 +72,15 @@ export function useKanbanMovimentacao({
           return;
         }
 
-        if (resposta.dados.lead) {
-          const leadAtualizado = resposta.dados.lead;
-          setLeads((atual) => atual.map((item) => (item.id === idLead ? leadAtualizado : item)));
+        if (resposta.dados.negocio) {
+          const negocioAtualizado = resposta.dados.negocio;
+          setNegocios((atual) => atual.map((item) => (item.id === idNegocio ? negocioAtualizado : item)));
         }
 
         if (resposta.dados.mensagem) {
           addToast({
             type: "warning",
-            title: "Lead com pendência de análise",
+            title: "Negócio com pendência de análise",
             description: resposta.dados.mensagem,
           });
         }
@@ -88,30 +88,30 @@ export function useKanbanMovimentacao({
 
       return true;
     },
-    [addOptimisticMove, leads, registrarMovimentoLocal, setLeads, addToast],
+    [addOptimisticMove, negocios, registrarMovimentoLocal, setNegocios, addToast],
   );
 
   const aoDragEnd = useCallback(
     async (resultado: DropResult) => {
       if (!resultado.destination) return;
 
-      const idLead = resultado.draggableId;
+      const idNegocio = resultado.draggableId;
       const idEstagioDestino = resultado.destination.droppableId;
 
-      const lead = leads.find((item) => item.id === idLead);
-      if (!lead || lead.id_estagio === idEstagioDestino) return;
+      const negocio = negocios.find((item) => item.id === idNegocio);
+      if (!negocio || negocio.id_estagio === idEstagioDestino) return;
 
       const estagioDestino = estagios.find((item) => item.id === idEstagioDestino);
       if (!estagioDestino) return;
 
       if (estagioDestino.tipo === "PERDIDO") {
-        setMovimentoPendente({ id_lead: idLead, id_estagio: idEstagioDestino });
+        setMovimentoPendente({ id_negocio: idNegocio, id_estagio: idEstagioDestino });
         return;
       }
 
-      await moverLead(idLead, idEstagioDestino);
+      await moverNegocio(idNegocio, idEstagioDestino);
     },
-    [leads, estagios, moverLead],
+    [negocios, estagios, moverNegocio],
   );
 
   const confirmarPerda = useCallback(
@@ -119,8 +119,8 @@ export function useKanbanMovimentacao({
       evento.preventDefault();
       if (!movimentoPendente || !motivoPerda.trim()) return;
 
-      const sucesso = await moverLead(
-        movimentoPendente.id_lead,
+      const sucesso = await moverNegocio(
+        movimentoPendente.id_negocio,
         movimentoPendente.id_estagio,
         motivoPerda.trim(),
       );
@@ -129,7 +129,7 @@ export function useKanbanMovimentacao({
       setMovimentoPendente(null);
       setMotivoPerda("");
     },
-    [movimentoPendente, motivoPerda, moverLead],
+    [movimentoPendente, motivoPerda, moverNegocio],
   );
 
   return {
@@ -137,10 +137,10 @@ export function useKanbanMovimentacao({
     setMovimentoPendente,
     motivoPerda,
     setMotivoPerda,
-    moverLead,
+    moverNegocio,
     aoDragEnd,
     confirmarPerda,
-    optimisticLeads, // Return optimistic state for rendering
+    optimisticNegocios, // Return optimistic state for rendering
     isPending, // Return pending state for loading indicators
   };
 }

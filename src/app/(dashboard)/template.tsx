@@ -1,35 +1,31 @@
 /**
- * Template do dashboard - animação de entrada leve sem AnimatePresence
- * Evita afetar a sidebar e problemas de renderização
+ * Template do dashboard - entrada leve via CSS para manter o shell enxuto.
  */
 "use client";
 
-import { motion } from "framer-motion";
+import * as React from "react";
 import { usePathname } from "next/navigation";
-
-const pageVariants = {
-  initial: { opacity: 0, y: 4 },
-  animate: { opacity: 1, y: 0 },
-};
-
-const pageTransition = {
-  duration: 0.18,
-  ease: [0.2, 0.8, 0.2, 1] as const,
-};
 
 export default function DashboardTemplate({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const [estaVisivel, setEstaVisivel] = React.useState(false);
+
+  React.useEffect(() => {
+    setEstaVisivel(false);
+
+    const frame = requestAnimationFrame(() => setEstaVisivel(true));
+    return () => cancelAnimationFrame(frame);
+  }, [pathname]);
 
   return (
-    <motion.div
+    <div
       key={pathname}
-      initial="initial"
-      animate="animate"
-      variants={pageVariants}
-      transition={pageTransition}
-      className="min-h-screen"
+      className={[
+        "min-h-screen transition-[opacity,transform] duration-200 ease-[var(--ease-productive)] motion-reduce:transition-none motion-reduce:transform-none motion-reduce:opacity-100",
+        estaVisivel ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
+      ].join(" ")}
     >
       {children}
-    </motion.div>
+    </div>
   );
 }

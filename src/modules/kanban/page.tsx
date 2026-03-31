@@ -6,39 +6,41 @@ import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { KanbanHeader } from "./components/kanban-header";
 import { KanbanBoard } from "./components/kanban-board";
 import { PerdaDialog } from "./components/perda-dialog";
-import { LeadDetailsDrawer } from "./components/lead-details-drawer";
+import { NegocioDetailsDrawer } from "./components/lead-details-drawer";
 import type { Lead, Props } from "./types";
 
 export function ModuloKanban({ perfil, idUsuario }: Props) {
   const vm = useKanbanModule({ perfil, idUsuario });
   const searchParams = useSearchParams();
   const router = useRouter();
-  const { leadSelecionado, leads, setLeadSelecionado } = vm;
+  const { negocioSelecionado, negocios, setNegocioSelecionado } = vm;
 
   useEffect(() => {
-    const leadId = searchParams.get("lead");
-    if (!leadId || leads.length === 0) return;
+    const negocioId = searchParams.get("negocio") ?? searchParams.get("lead");
+    if (!negocioId || negocios.length === 0) return;
 
-    const lead = leads.find((item) => item.id === leadId);
-    if (!lead) return;
+    const negocio = negocios.find((item) => item.id === negocioId);
+    if (!negocio) return;
 
-    if (leadSelecionado?.id !== lead.id) {
-      setLeadSelecionado(lead);
+    if (negocioSelecionado?.id !== negocio.id) {
+      setNegocioSelecionado(negocio);
     }
-  }, [leadSelecionado?.id, leads, searchParams, setLeadSelecionado]);
+  }, [negocioSelecionado?.id, negocios, searchParams, setNegocioSelecionado]);
 
-  const handleLeadClick = (lead: Lead) => {
-    vm.setLeadSelecionado(lead);
+  const handleNegocioClick = (negocio: Lead) => {
+    vm.setNegocioSelecionado(negocio);
     const params = new URLSearchParams(searchParams.toString());
-    params.set("lead", lead.id);
+    params.set("negocio", negocio.id);
+    params.delete("lead");
     router.replace(`/kanban?${params.toString()}`);
   };
 
   const handleDrawerOpenChange = (aberto: boolean) => {
     if (!aberto) {
-      vm.setLeadSelecionado(null);
+      vm.setNegocioSelecionado(null);
       const params = new URLSearchParams(searchParams.toString());
       params.delete("lead");
+      params.delete("negocio");
       const query = params.toString();
       router.replace(query ? `/kanban?${query}` : "/kanban");
     }
@@ -47,25 +49,23 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
   return (
     <ModulePageShell className="rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] shadow-[var(--shadow-md)]">
       <KanbanHeader
-        dialogNovoLeadAberto={vm.dialogNovoLeadAberto}
-        setDialogNovoLeadAberto={vm.setDialogNovoLeadAberto}
-        criarLead={vm.criarLead}
+        dialogNovoNegocioAberto={vm.dialogNovoNegocioAberto}
+        setDialogNovoNegocioAberto={vm.setDialogNovoNegocioAberto}
+        criarNegocio={vm.criarNegocio}
         estagios={vm.estagios}
         funcionarios={vm.funcionarios}
         pdvs={vm.pdvs}
         perfil={perfil}
-        telefoneNovoLead={vm.telefoneNovoLead}
-        setTelefoneNovoLead={vm.setTelefoneNovoLead}
-        valorNovoLead={vm.valorNovoLead}
-        setValorNovoLead={vm.setValorNovoLead}
-        erroNovoLead={vm.erroNovoLead}
-        setErroNovoLead={vm.setErroNovoLead}
-        criandoLead={vm.criandoLead}
-        cargoNovoLead={vm.cargoNovoLead}
+        valorNovoNegocio={vm.valorNovoNegocio}
+        setValorNovoNegocio={vm.setValorNovoNegocio}
+        erroNovoNegocio={vm.erroNovoNegocio}
+        setErroNovoNegocio={vm.setErroNovoNegocio}
+        criandoNegocio={vm.criandoNegocio}
+        cargoNovoNegocio={vm.cargoNovoNegocio}
         estagioAberto={vm.estagioAberto}
-        estagioNovoLead={vm.estagioNovoLead}
-        setEstagioNovoLead={vm.setEstagioNovoLead}
-        setCargoNovoLead={vm.setCargoNovoLead}
+        estagioNovoNegocio={vm.estagioNovoNegocio}
+        setEstagioNovoNegocio={vm.setEstagioNovoNegocio}
+        setCargoNovoNegocio={vm.setCargoNovoNegocio}
         filtros={vm.filtros}
         setFiltros={vm.setFiltros}
         busca={vm.busca}
@@ -75,33 +75,27 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
         modoFocoPendencias={vm.modoFocoPendencias}
         setModoFocoPendencias={vm.setModoFocoPendencias}
         resumoPendencias={vm.resumoPendencias}
-        totalLeads={vm.totalLeads}
+        totalNegocios={vm.totalNegocios}
         pendenciasCriticas={vm.pendenciasCriticas}
         origemStats={vm.origemStats}
-        ultimaSincronizacaoWhatsapp={vm.ultimaSincronizacaoWhatsapp}
-        instanciasAtivasCount={vm.instanciasAtivasCount}
         notificacoesAtivadas={vm.notificacoesAtivadas}
         alternarNotificacoes={vm.alternarNotificacoes}
         permissaoNotificacao={vm.permissaoNotificacao}
-        sincronizandoWhatsapp={vm.sincronizandoWhatsapp}
-        sincronizarWhatsapp={vm.sincronizarWhatsapp}
-        redistribuindoEmAtendimento={vm.redistribuindoEmAtendimento}
-        redistribuirLeadsEmAtendimento={vm.redistribuirLeadsEmAtendimento}
+        redistribuindoNegociosEmAtendimento={vm.redistribuindoNegociosEmAtendimento}
+        redistribuirNegociosEmAtendimento={vm.redistribuirNegociosEmAtendimento}
       />
 
       <KanbanBoard
         estagios={vm.estagios}
-        leadsPorEstagio={vm.leadsPorEstagio}
-        leadsFiltradosPorEstagio={vm.leadsFiltradosPorEstagio}
-        pendenciasPorLead={vm.pendenciasPorLead}
-        todasPendencias={vm.todasPendencias}
+        negociosPorEstagio={vm.negociosPorEstagio}
+        negociosFiltradosPorEstagio={vm.negociosFiltradosPorEstagio}
+        pendenciasPorNegocio={vm.pendenciasPorNegocio}
         onDragEnd={vm.aoDragEnd}
-        onLeadClick={handleLeadClick}
+        onNegocioClick={handleNegocioClick}
         modoFocoPendencias={vm.modoFocoPendencias}
         stageIdAtivo={vm.stageIdAtivo}
         setStageIdAtivo={vm.setStageIdAtivo}
         funcionarios={vm.funcionarios}
-        excluirTodosIndefinidos={vm.excluirTodosIndefinidos}
         temFiltrosAtivos={
           vm.filtros.status !== "todos" ||
           vm.filtros.gravidade !== "todas" ||
@@ -120,24 +114,31 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
         onOpenChange={(aberto) => !aberto && vm.setMovimentoPendente(null)}
       />
 
-      <LeadDetailsDrawer
-        leadSelecionado={vm.leadSelecionado}
-        pendenciasLead={vm.pendenciasLead}
+      <NegocioDetailsDrawer
+        negocioSelecionado={vm.negocioSelecionado}
+        pendenciasNegocio={vm.pendenciasNegocio}
         onOpenChange={handleDrawerOpenChange}
         perfil={perfil}
         estagios={vm.estagios}
         funcionarios={vm.funcionarios}
-        onMudarLead={vm.aoMudarLead}
+        onMudarNegocio={vm.aoMudarNegocio}
         salvando={vm.salvando}
         salvo={vm.salvo}
         salvandoAutomaticamente={vm.salvandoAutomaticamente}
         salvamentoAutomaticoPendente={vm.salvamentoAutomaticoPendente}
         ultimaAtualizacaoSalvaEm={vm.ultimaAtualizacaoSalvaEm}
         statusSalvamentoDetalhes={vm.statusSalvamentoDetalhes}
-        erroDetalhesLead={vm.erroDetalhesLead}
-        setErroDetalhesLead={vm.setErroDetalhesLead}
-        onExcluirLead={vm.excluirLead}
-        onSalvarDetalhesLead={vm.salvarDetalhesLead}
+        erroDetalhesNegocio={vm.erroDetalhesNegocio}
+        setErroDetalhesNegocio={vm.setErroDetalhesNegocio}
+        onSalvarDetalhesNegocio={vm.salvarDetalhesNegocio}
+        leadsDisponiveis={vm.leadsDisponiveis}
+        carregandoLeadsDisponiveis={vm.carregandoLeadsDisponiveis}
+        salvandoVinculos={vm.salvandoVinculos}
+        removendoNegocio={vm.removendoNegocio}
+        erroVinculos={vm.erroVinculos}
+        setErroVinculos={vm.setErroVinculos}
+        onSalvarVinculos={vm.atualizarVinculosNegocio}
+        onRemoverNegocio={vm.removerNegocio}
       />
     </ModulePageShell>
   );

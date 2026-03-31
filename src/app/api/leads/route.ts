@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao, podeGerenciarRecursoNoPdv, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { esquemaCriarLead, mensagemErroValidacao } from "@/lib/validacoes";
-import { garantirEstagiosFixosEmpresa } from "@/lib/estagios-fixos";
 import { badRequest, forbidden } from "@/lib/api/http";
 import { handleRouteError } from "@/lib/api/route-errors";
-
+import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { criarLeadContato, listarLeadsContato } from "@/lib/leads";
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -13,21 +13,13 @@ export async function GET(request: NextRequest) {
     return auth.erro;
   }
 
-  await garantirEstagiosFixosEmpresa(auth.sessao.id_empresa);
-
   const whereLeads = await whereLeadsPorPerfil(auth.sessao);
 
-  const [estagios, leads, funcionarios, pdvs] = await Promise.all([
-    prisma.estagioFunil.findMany({
-      where: { id_empresa: auth.sessao.id_empresa },
-      orderBy: { ordem: "asc" },
-    }),
-    prisma.lead.findMany({
+  const [leads, funcionarios, pdvs] = await Promise.all([
+    listarLeadsContato({
+      idEmpresa: auth.sessao.id_empresa,
       where: whereLeads,
-      orderBy: { atualizado_em: "desc" },
-      include: { funcionario: { select: { id_pdv: true } } },
     }),
-    // Filter employees by PDV for GERENTE
     prisma.funcionario.findMany({
       where: auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv
         ? { id_empresa: auth.sessao.id_empresa, ativo: true, id_pdv: auth.sessao.id_pdv }
@@ -35,7 +27,6 @@ export async function GET(request: NextRequest) {
       select: { id: true, nome: true, id_pdv: true },
       orderBy: { nome: "asc" },
     }),
-    // Only return PDVs for EMPRESA profile
     auth.sessao.perfil === "EMPRESA"
       ? prisma.pdv.findMany({
           where: { id_empresa: auth.sessao.id_empresa },
@@ -45,18 +36,11 @@ export async function GET(request: NextRequest) {
       : Promise.resolve([]),
   ]);
 
-  // Add id_pdv to leads response
-  const leadsComPdv = leads.map((lead: typeof leads[number]) => ({
-    ...lead,
-    id_pdv: lead.funcionario.id_pdv,
-  }));
-
-  const estagiosSerializaveis = estagios.map((e) => ({
-    ...e,
-    ordem: Number(e.ordem),
-  }));
-
-  return NextResponse.json({ estagios: estagiosSerializaveis, leads: leadsComPdv, funcionarios, pdvs });
+  return NextResponse.json({
+    leads,
+    funcionarios,
+    pdvs,
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -65,52 +49,32 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
-  const body = (await request.json()) as {
-    nome?: string;
-    telefone?: string;
-    valor_oportunidade?: number;
-    id_estagio?: string;
-    id_funcionario?: string;
-  };
+  const body = await parseJson<unknown>(request);
+  if (!body.ok) {
+    return body.response;
+  }
 
-  const nome = body.nome?.trim();
-  const telefone = body.telefone?.trim();
-  const valor_oportunidade = Number(body.valor_oportunidade ?? 0);
-  const id_estagio = body.id_estagio;
+  const validacao = validateBody(esquemaCriarLead, body.data);
+  if (!validacao.ok) {
+    return validacao.response;
+  }
 
-  const id_funcionario =
-    auth.sessao.perfil === "COLABORADOR" ? auth.sessao.id_usuario : body.id_funcionario;
+  const dados = validacao.data;
+  const idFuncionario = auth.sessao.perfil === "COLABORADOR"
+    ? auth.sessao.id_usuario
+    : dados.id_funcionario;
 
-  const validacao = esquemaCriarLead.safeParse({
-    nome,
-    telefone,
-    valor_oportunidade,
-    id_estagio,
-    id_funcionario,
+  const funcionario = await prisma.funcionario.findFirst({
+    where: {
+      id: idFuncionario,
+      id_empresa: auth.sessao.id_empresa,
+      ativo: true,
+    },
+    select: { id: true, id_pdv: true },
   });
 
-  if (!validacao.success) {
-    return badRequest(mensagemErroValidacao(validacao.error));
-  }
-
-  const dadosValidados = validacao.data;
-
-  const [estagio, funcionario] = await Promise.all([
-    prisma.estagioFunil.findFirst({
-      where: { id: dadosValidados.id_estagio, id_empresa: auth.sessao.id_empresa },
-    }),
-    prisma.funcionario.findFirst({
-      where: { id: dadosValidados.id_funcionario, id_empresa: auth.sessao.id_empresa, ativo: true },
-    }),
-  ]);
-
-  if (!estagio || !funcionario) {
-    return badRequest("Estagio ou funcionario invalido.");
-  }
-
-  // Impedir criação direta em estágio FECHADO (GANHO)
-  if (estagio.tipo === "GANHO") {
-    return badRequest("Não é permitido criar leads diretamente no estágio Ganho.");
+  if (!funcionario) {
+    return badRequest("Funcionario invalido.");
   }
 
   if (!podeGerenciarRecursoNoPdv(auth.sessao, funcionario.id_pdv)) {
@@ -118,20 +82,25 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const lead = await prisma.lead.create({
-      data: {
-        id_empresa: auth.sessao.id_empresa,
-        id_estagio: dadosValidados.id_estagio,
-        id_funcionario: dadosValidados.id_funcionario,
-        nome: dadosValidados.nome,
-        telefone: dadosValidados.telefone,
-        valor_oportunidade: dadosValidados.valor_oportunidade,
-        probabilidade: dadosValidados.probabilidade ?? 0.5,
-        fonte: dadosValidados.fonte,
-        empresa_origem: dadosValidados.empresa_origem,
-        origem: "MANUAL",
-      },
+    const lead = await criarLeadContato({
+      idEmpresa: auth.sessao.id_empresa,
+      idFuncionario,
+      nome: dados.nome,
+      telefone: dados.telefone,
+      email: dados.email,
+      fonte: dados.fonte,
+      empresaOrigem: dados.empresa_origem,
+      observacoes: dados.observacoes,
+      origem: dados.origem,
+      anuncioTitulo: dados.anuncio_titulo,
+      anuncioDescricao: dados.anuncio_descricao,
+      anuncioUrl: dados.anuncio_url,
+      dadosExtras: dados.dados_extras,
     });
+
+    if (!lead) {
+      return badRequest("Nao foi possivel criar o lead.");
+    }
 
     return NextResponse.json({ lead });
   } catch (erro) {

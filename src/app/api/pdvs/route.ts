@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao, podeGerenciarEmpresa } from "@/lib/permissoes";
 import { esquemaCriarPdv } from "@/lib/validacoes";
@@ -18,14 +19,14 @@ export async function GET(request: NextRequest) {
       id: true,
       nome: true,
       id_whatsapp_instancia: true,
-      whatsapp_instancia: {
+      WhatsappInstancia: {
         select: {
           id: true,
           nome: true,
           status: true,
         },
       },
-      funcionarios: {
+      Funcionario: {
         where: {
           id_empresa: auth.sessao.id_empresa,
           ativo: true,
@@ -82,6 +83,7 @@ export async function POST(request: NextRequest) {
   try {
     const pdv = await prisma.pdv.create({
       data: {
+        id: randomUUID(),
         nome,
         id_empresa: auth.sessao.id_empresa,
         id_whatsapp_instancia: id_whatsapp_instancia ?? null,

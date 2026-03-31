@@ -10,6 +10,7 @@ export type StatusParcela = "PENDENTE" | "PAGO" | "ATRASADO";
 
 export type Parcela = {
   id: string;
+  id_negocio?: string | null;
   id_lead: string;
   numero_parcela: number;
   quantidade_total: number;
@@ -17,6 +18,18 @@ export type Parcela = {
   data_vencimento: string;
   data_pagamento: string | null;
   status: StatusParcela;
+};
+
+export type ParcelaComNegocio = Parcela & {
+  negocio: {
+    id: string;
+    valor_estimado: number;
+    lead: {
+      id: string;
+      nome: string;
+      telefone: string;
+    };
+  };
 };
 
 export type ParcelaComLead = Parcela & {
@@ -29,7 +42,7 @@ export type ParcelaComLead = Parcela & {
 };
 
 export type PayloadGerarParcelas = {
-  id_lead: string;
+  id_negocio: string;
   valor_parcela: number;
   quantidade_parcelas: number;
   data_primeiro_vencimento: string;
@@ -45,12 +58,12 @@ async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
   return (await resposta.json().catch(() => ({}))) as T;
 }
 
-export async function listarParcelasLead(idLead: string): Promise<ResultadoApi<{ parcelas: Parcela[] }>> {
-  const resposta = await fetch(`/api/parcelas?id_lead=${idLead}`);
-  const json = await lerJsonSeguro<{ parcelas?: Parcela[] } & ApiErro>(resposta);
+export async function listarParcelasNegocio(idNegocio: string): Promise<ResultadoApi<{ parcelas: ParcelaComNegocio[] }>> {
+  const resposta = await fetch(`/api/parcelas?id_negocio=${idNegocio}`);
+  const json = await lerJsonSeguro<{ parcelas?: ParcelaComNegocio[] } & ApiErro>(resposta);
 
   if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao buscar parcelas do lead." };
+    return { ok: false, erro: json.erro ?? "Erro ao buscar parcelas do negocio." };
   }
 
   return { ok: true, dados: { parcelas: json.parcelas ?? [] } };

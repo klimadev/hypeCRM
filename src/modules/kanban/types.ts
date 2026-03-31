@@ -3,8 +3,8 @@ import type { PendenciaGravidade, ResumoPendencias } from "./hooks/use-pendencia
 
 export type { ResumoPendencias, PendenciaGravidade };
 
-// Tipos para origem do lead (WhatsApp Ads)
-export type OrigemLead = "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
+// Tipos para origem do contato de origem do negócio (WhatsApp Ads)
+export type OrigemContato = "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
 
 export type FiltroOrigem = "todos" | "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
 
@@ -29,6 +29,7 @@ export type Pdv = {
 
 export type Lead = {
   id: string;
+  id_negocio?: string | null;
   id_estagio: string;
   id_funcionario: string;
   nome: string;
@@ -39,7 +40,7 @@ export type Lead = {
   empresa_origem?: string | null;
   observacoes: string | null;
   motivo_perda: string | null;
-  origem?: OrigemLead;
+  origem?: OrigemContato;
   atualizado_em: string;
   id_pdv?: string | null;
   dados_extras?: string | null;
@@ -47,6 +48,21 @@ export type Lead = {
   anuncio_titulo?: string | null;
   anuncio_descricao?: string | null;
   anuncio_url?: string | null;
+  lead_principal?: {
+    id: string;
+    nome: string;
+    telefone: string;
+    email?: string | null;
+    origem?: OrigemContato;
+    id_negocio?: string | null;
+    atualizado_em?: string;
+  } | null;
+  leads_vinculados?: Array<{
+    id: string;
+    nome: string;
+    telefone: string;
+    id_negocio?: string | null;
+  }>;
 };
 
 export type Funcionario = {
@@ -62,7 +78,7 @@ export type PendenciaDinamica = {
   resolvida: boolean;
 };
 
-export type PendenciaLeadInfo = {
+export type PendenciaNegocioInfo = {
   total: number;
   naoResolvidas: number;
   tipos: TipoPendencia[];
@@ -88,7 +104,7 @@ export type Props = {
   idUsuario: string;
 };
 
-export type StatusSalvamentoDetalhesLead =
+export type StatusSalvamentoDetalhesNegocio =
   | "ocioso"
   | "pendente"
   | "salvando_manual"
@@ -98,51 +114,59 @@ export type StatusSalvamentoDetalhesLead =
 
 export type UseKanbanModuleReturn = {
   estagios: Estagio[];
-  leads: Lead[];
+  negocios: Lead[];
   funcionarios: Funcionario[];
   pdvs: Pdv[];
-  leadsPorEstagio: Record<string, Lead[]>;
-  leadsFiltradosPorEstagio: Record<string, Lead[]>;
-  pendenciasPorLead: Record<string, PendenciaLeadInfo>;
-  todasPendencias: PendenciaDinamica[];
+  negociosPorEstagio: Record<string, Lead[]>;
+  negociosFiltradosPorEstagio: Record<string, Lead[]>;
+  pendenciasPorNegocio: Record<string, PendenciaNegocioInfo>;
   resumoPendencias: ResumoPendencias | null;
-  leadSelecionado: Lead | null;
-  pendenciasLead: PendenciaDinamica[];
-  dialogNovoLeadAberto: boolean;
-  setDialogNovoLeadAberto: (aberto: boolean) => void;
-  movimentoPendente: { id_lead: string; id_estagio: string } | null;
-  setMovimentoPendente: (movimento: { id_lead: string; id_estagio: string } | null) => void;
+  negocioSelecionado: Lead | null;
+  pendenciasNegocio: PendenciaDinamica[];
+  dialogNovoNegocioAberto: boolean;
+  setDialogNovoNegocioAberto: (aberto: boolean) => void;
+  movimentoPendente: { id_negocio: string; id_estagio: string } | null;
+  setMovimentoPendente: (movimento: { id_negocio: string; id_estagio: string } | null) => void;
   motivoPerda: string;
   setMotivoPerda: (motivo: string) => void;
-  telefoneNovoLead: string;
-  setTelefoneNovoLead: (telefone: string) => void;
-  valorNovoLead: string;
-  setValorNovoLead: (valor: string) => void;
-  erroNovoLead: string | null;
-  setErroNovoLead: (erro: string | null) => void;
-  criandoLead: boolean;
-  cargoNovoLead: { id_funcionario: string } | null;
+  valorNovoNegocio: string;
+  setValorNovoNegocio: (valor: string) => void;
+  erroNovoNegocio: string | null;
+  setErroNovoNegocio: (erro: string | null) => void;
+  criandoNegocio: boolean;
+  cargoNovoNegocio: { id_funcionario: string } | null;
   salvando: boolean;
   salvo: boolean;
   salvandoAutomaticamente: boolean;
   salvamentoAutomaticoPendente: boolean;
   ultimaAtualizacaoSalvaEm: Date | null;
-  statusSalvamentoDetalhes: StatusSalvamentoDetalhesLead;
-  erroDetalhesLead: string | null;
-  setErroDetalhesLead: (erro: string | null) => void;
-  salvarDetalhesLead: (lead: Lead) => Promise<void>;
-  setLeadSelecionado: (lead: Lead | null) => void;
-  criarLead: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
-  sincronizandoWhatsapp: boolean;
-  redistribuindoEmAtendimento: boolean;
-  sincronizarWhatsapp: (params?: string) => Promise<{
-    ok: boolean;
-    erro?: string;
-    criados?: number;
-    timestampSync?: Date;
-    instanciasIgnoradas?: Array<{ id: string; nome: string; motivo: string }>;
+  statusSalvamentoDetalhes: StatusSalvamentoDetalhesNegocio;
+  erroDetalhesNegocio: string | null;
+  setErroDetalhesNegocio: (erro: string | null) => void;
+  salvarDetalhesNegocio: (negocio: Lead) => Promise<void>;
+  setNegocioSelecionado: (negocio: Lead | null) => void;
+  leadsDisponiveis: Array<{
+    id: string;
+    id_negocio?: string | null;
+    id_estagio: string;
+    id_funcionario: string;
+    nome: string;
+    telefone: string;
+    valor_oportunidade: number;
+    atualizado_em: string;
+    origem?: string | null;
+    id_pdv?: string | null;
   }>;
-  redistribuirLeadsEmAtendimento: () => Promise<
+  carregandoLeadsDisponiveis: boolean;
+  salvandoVinculos: boolean;
+  erroVinculos: string | null;
+  setErroVinculos: (erro: string | null) => void;
+  atualizarVinculosNegocio: (leadIds: string[]) => Promise<void>;
+  removendoNegocio: boolean;
+  removerNegocio: (opcoes: { removerLeadsVinculados: boolean }) => Promise<boolean>;
+  criarNegocio: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
+  redistribuindoNegociosEmAtendimento: boolean;
+  redistribuirNegociosEmAtendimento: () => Promise<
     | { ok: false; erro: string }
     | {
       ok: true;
@@ -154,13 +178,11 @@ export type UseKanbanModuleReturn = {
   >;
   confirmarPerda: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
   aoDragEnd: (resultado: import("@hello-pangea/dnd").DropResult) => Promise<void>;
-  aoMudarLead: (leadAtualizado: Lead) => void;
-  excluirLead: (id: string) => Promise<void>;
-  excluirTodosIndefinidos: () => Promise<void>;
+  aoMudarNegocio: (negocioAtualizado: Lead) => void;
   estagioAberto: string;
-  setCargoNovoLead: (cargo: { id_funcionario: string } | null) => void;
-  setEstagioNovoLead: (estagio: string) => void;
-  estagioNovoLead: string;
+  setCargoNovoNegocio: (cargo: { id_funcionario: string } | null) => void;
+  setEstagioNovoNegocio: (estagio: string) => void;
+  estagioNovoNegocio: string;
   filtros: KanbanFilters;
   setFiltros: (filtros: KanbanFilters) => void;
   busca: string;
@@ -172,11 +194,9 @@ export type UseKanbanModuleReturn = {
   stageIdAtivo: string;
   setStageIdAtivo: (stageId: string) => void;
   recarregarPendencias: () => void;
-  totalLeads: number;
+  totalNegocios: number;
   pendenciasCriticas: number;
   origemStats: OrigemStats;
-  ultimaSincronizacaoWhatsapp: Date | null;
-  instanciasAtivasCount: number;
   notificacoesAtivadas: boolean;
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";

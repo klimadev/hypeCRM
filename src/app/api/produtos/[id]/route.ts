@@ -20,7 +20,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const produto = await prisma.produto.findFirst({
     where: { id, id_empresa: auth.sessao.id_empresa },
     include: {
-      leads_produto: {
+      LeadProduto: {
         select: { id: true, id_lead: true, criado_em: true },
         orderBy: { criado_em: "desc" },
         take: 10,

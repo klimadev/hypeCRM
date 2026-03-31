@@ -1,12 +1,12 @@
 "use client";
 
 import { AlertCircle, Loader2 } from "lucide-react";
-import { useLeadParcelas } from "../hooks/use-lead-parcelas";
+import { useNegocioParcelas } from "../hooks/use-lead-parcelas";
 import { InstallmentCard } from "./parcelas/installment-card";
 import { InstallmentGeneratorForm } from "./parcelas/installment-generator-form";
 
-type LeadParcelasTabProps = {
-  leadId: string;
+type NegocioParcelasTabProps = {
+  negocioId: string;
 };
 
 function ParcelasResumo({ parcelas }: { parcelas: { valor: number; status: string }[] }) {
@@ -53,8 +53,8 @@ function ParcelasResumo({ parcelas }: { parcelas: { valor: number; status: strin
   );
 }
 
-export function LeadParcelasTab({ leadId }: LeadParcelasTabProps) {
-  const vm = useLeadParcelas({ leadId });
+export function NegocioParcelasTab({ negocioId }: NegocioParcelasTabProps) {
+  const vm = useNegocioParcelas({ negocioId });
 
   if (vm.loading) {
     return (

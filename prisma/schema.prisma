@@ -7,87 +7,8 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Empresa {
-  id                String         @id @default(uuid())
-  nome              String
-  email             String         @unique
-  senha_hash        String
-  criado_em         DateTime       @default(now())
-  atualizado_em     DateTime       @default(now()) @updatedAt
-  status_assinatura String         @default("TRIAL")
-  trial_inicio      DateTime       @default(now())
-  trial_fim         DateTime?
-  assinatura_inicio DateTime?
-  assinatura_fim    DateTime?
-  plano             String         @default("trial")
-  estagios          EstagioFunil[]
-  funcionarios      Funcionario[]
-  leads             Lead[]
-  metas             Meta[]
-  metasProgresso    MetaProgresso[]
-  produtos          Produto[]
-  leads_produto     LeadProduto[]
-  pdvs              Pdv[]
-  parcelas          Parcela[]
-  automacoes        Automacao[]
-  registros_ip      RegistroIP[]
-}
-
-model Pdv {
-  id                    String             @id @default(uuid())
-  id_empresa            String
-  id_whatsapp_instancia String?
-  nome                  String
-  criado_em             DateTime           @default(now())
-  atualizado_em         DateTime           @default(now()) @updatedAt
-  funcionarios          Funcionario[]
-  metas                 Meta[]
-  empresa               Empresa            @relation(fields: [id_empresa], references: [id])
-  whatsapp_instancia    WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: SetNull)
-
-  @@index([id_empresa])
-  @@index([id_empresa, id_whatsapp_instancia])
-}
-
-model Funcionario {
-  id            String    @id @default(uuid())
-  id_empresa    String
-  id_pdv        String
-  nome          String
-  email         String    @unique
-  senha_hash    String
-  cargo         String
-  ativo         Boolean   @default(true)
-  criado_em     DateTime  @default(now())
-  atualizado_em DateTime  @default(now()) @updatedAt
-  inativado_em  DateTime?
-  metas         Meta[]
-  pdv           Pdv       @relation(fields: [id_pdv], references: [id])
-  empresa       Empresa   @relation(fields: [id_empresa], references: [id])
-  leads         Lead[]
-
-  @@index([id_empresa])
-  @@index([id_pdv])
-}
-
-model ReatribuicaoFuncionario {
-  id                     String   @id @default(uuid())
-  id_empresa             String
-  id_funcionario_origem  String
-  id_funcionario_destino String
-  quantidade_leads       Int
-  observacao             String?
-  criado_por_tipo        String
-  criado_por_id          String
-  criado_em              DateTime @default(now())
-
-  @@index([id_empresa])
-  @@index([id_funcionario_origem])
-  @@index([id_funcionario_destino])
-}
-
 model AuditoriaEquipe {
-  id                  String   @id @default(uuid())
+  id                  String   @id
   id_empresa          String
   id_funcionario_alvo String
   acao                String
@@ -99,84 +20,285 @@ model AuditoriaEquipe {
   autor_id            String
   criado_em           DateTime @default(now())
 
-  @@index([id_empresa])
-  @@index([id_funcionario_alvo])
   @@index([acao])
+  @@index([id_funcionario_alvo])
+  @@index([id_empresa])
+}
+
+model Automacao {
+  id                   String                 @id
+  id_empresa           String
+  id_criador           String?
+  nome                 String
+  fonte                String
+  gatilho              String
+  config_json          String                 @default("{}")
+  ativo                Boolean                @default(true)
+  ultimo_sync_em       DateTime               @default(now())
+  criado_em            DateTime               @default(now())
+  atualizado_em        DateTime               @default(now())
+  Empresa              Empresa                @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  AutomacaoAcao        AutomacaoAcao[]
+  AutomacaoAgendamento AutomacaoAgendamento[]
+
+  @@index([id_empresa])
+  @@index([fonte, gatilho])
+  @@index([id_empresa, ativo])
+}
+
+model AutomacaoAcao {
+  id                    String             @id
+  id_automacao          String
+  tipo                  String
+  ordem                 Int
+  delay_minutos         Int                @default(0)
+  id_instancia_whatsapp String?
+  telefone_destino      String?
+  id_lead_destino       String?
+  mensagem              String
+  WhatsappInstancia     WhatsappInstancia? @relation(fields: [id_instancia_whatsapp], references: [id])
+  Automacao             Automacao          @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+
+  @@unique([id_automacao, ordem])
+  @@index([id_instancia_whatsapp])
+  @@index([id_automacao])
+}
+
+model AutomacaoAgendamento {
+  id             String    @id
+  id_automacao   String
+  id_lead        String?
+  id_negocio     String?
+  referencia_uid String    @unique
+  tipo_origem    String
+  contexto_json  String    @default("{}")
+  agendado_para  DateTime
+  status         String    @default("PENDENTE")
+  tentativas     Int       @default(0)
+  erro           String?
+  enviado_em     DateTime?
+  criado_em      DateTime  @default(now())
+  atualizado_em  DateTime  @default(now())
+  Lead           Lead?     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  Negocio        Negocio?  @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
+  Automacao      Automacao @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+
+  @@index([id_lead])
+  @@index([id_negocio])
+  @@index([id_automacao])
+  @@index([status, agendado_para])
+}
+
+model CalComInstancia {
+  id            String   @id
+  id_empresa    String
+  id_criador    String
+  nome          String
+  api_key       String
+  status        String   @default("pending")
+  profile_name  String?
+  profile_email String?
+  criado_em     DateTime @default(now())
+  atualizado_em DateTime @default(now())
+
+  @@index([id_empresa, status])
+  @@index([id_empresa])
+}
+
+model Empresa {
+  id                String           @id
+  nome              String
+  email             String           @unique
+  senha_hash        String
+  criado_em         DateTime         @default(now())
+  atualizado_em     DateTime         @default(now())
+  status_assinatura String           @default("TRIAL")
+  trial_inicio      DateTime         @default(now())
+  trial_fim         DateTime?
+  assinatura_inicio DateTime?
+  assinatura_fim    DateTime?
+  plano             String           @default("trial")
+  Automacao         Automacao[]
+  EstagioFunil      EstagioFunil[]
+  Funcionario       Funcionario[]
+  Funil             Funil[]
+  Lead              Lead[]
+  LeadProduto       LeadProduto[]
+  Meta              Meta[]
+  MetaProgresso     MetaProgresso[]
+  Negocio           Negocio[]
+  NegocioProduto    NegocioProduto[]
+  Parcela           Parcela[]
+  Pdv               Pdv[]
+  Produto           Produto[]
+  RegistroIP        RegistroIP[]
+}
+
+model Funil {
+  id              String              @id
+  id_empresa      String
+  nome            String
+  slug            String
+  descricao       String?
+  ativo           Boolean             @default(true)
+  padrao          Boolean             @default(false)
+  ordem           Int                 @default(0)
+  criado_em       DateTime            @default(now())
+  atualizado_em   DateTime            @default(now())
+  Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
+  EstagioFunil    EstagioFunil[]
+  Negocio         Negocio[]
+  logs_anteriores NegocioEstagioLog[] @relation("NegocioLogFunilAnterior")
+  logs_novos      NegocioEstagioLog[] @relation("NegocioLogFunilNovo")
+
+  @@unique([id_empresa, slug])
+  @@index([id_empresa])
+  @@index([id_empresa, padrao])
 }
 
 model EstagioFunil {
-  id            String   @id @default(uuid())
-  id_empresa    String
-  nome          String
-  ordem         BigInt
-  tipo          String
-  criado_em     DateTime @default(now())
-  atualizado_em DateTime @default(now()) @updatedAt
-  empresa       Empresa  @relation(fields: [id_empresa], references: [id])
-  leads         Lead[]
+  id              String              @id
+  id_empresa      String
+  id_funil        String
+  nome            String
+  ordem           BigInt
+  tipo            String
+  criado_em       DateTime            @default(now())
+  atualizado_em   DateTime            @default(now())
+  Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
+  Funil           Funil               @relation(fields: [id_funil], references: [id])
+  Lead            Lead[]
+  Negocio         Negocio[]
+  logs_anteriores NegocioEstagioLog[] @relation("NegocioLogEstagioAnterior")
+  logs_novos      NegocioEstagioLog[] @relation("NegocioLogEstagioNovo")
 
-  @@unique([id_empresa, ordem])
+  @@unique([id_funil, ordem])
+  @@index([id_empresa])
+  @@index([id_funil])
+}
+
+model Funcionario {
+  id            String    @id
+  id_empresa    String
+  id_pdv        String
+  nome          String
+  email         String    @unique
+  senha_hash    String
+  cargo         String
+  ativo         Boolean   @default(true)
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @default(now())
+  inativado_em  DateTime?
+  Empresa       Empresa   @relation(fields: [id_empresa], references: [id])
+  Pdv           Pdv       @relation(fields: [id_pdv], references: [id])
+  Lead          Lead[]
+  Meta          Meta[]
+  Negocio       Negocio[]
+
+  @@index([id_pdv])
   @@index([id_empresa])
 }
 
 model Lead {
-  id                      String             @id @default(uuid())
-  id_empresa              String
-  id_funcionario          String
-  id_estagio              String
-  nome                    String
-  telefone                String
-  email                   String?
-  valor_oportunidade      Float              @default(0)
-  probabilidade           Float             @default(0.5)  // 0-100%
-  fonte                   String?            // De onde veio o lead
-  empresa_origem          String?            // Para B2B
-  observacoes             String?
-  motivo_perda            String?
-  criado_em               DateTime           @default(now())
-  atualizado_em           DateTime           @default(now()) @updatedAt
-  origem                  String             @default("MANUAL")
-  // Campos para anúncios CTWA (Click to WhatsApp)
-  anuncio_titulo         String?
-  anuncio_descricao      String?
-  anuncio_url            String?
-  dados_extras           String?              // Campos customizáveis (JSON serializado)
-  estagio                 EstagioFunil       @relation(fields: [id_estagio], references: [id])
-  funcionario             Funcionario        @relation(fields: [id_funcionario], references: [id])
-  empresa                 Empresa            @relation(fields: [id_empresa], references: [id])
-  produtos                LeadProduto[]
-  pendencias              Pendencia[]
-  parcelas                Parcela[]
-  whatsapp_mensagens      WhatsappMensagem[]
-  estagio_logs            LeadEstagioLog[]
-  automacao_agendamentos  AutomacaoAgendamento[]
+  id                   String                 @id
+  id_empresa           String
+  id_funcionario       String
+  id_pdv               String?
+  id_negocio           String?
+  id_estagio           String
+  nome                 String
+  telefone             String
+  email                String?
+  valor_oportunidade   Float                  @default(0)
+  probabilidade        Float                  @default(0.5)
+  fonte                String?
+  empresa_origem       String?
+  observacoes          String?
+  motivo_perda         String?
+  criado_em            DateTime               @default(now())
+  atualizado_em        DateTime               @default(now())
+  origem               String                 @default("MANUAL")
+  anuncio_titulo       String?
+  anuncio_descricao    String?
+  anuncio_url          String?
+  dados_extras         String?
+  ativo                Boolean                @default(true)
+  AutomacaoAgendamento AutomacaoAgendamento[]
+  Empresa              Empresa                @relation(fields: [id_empresa], references: [id])
+  Funcionario          Funcionario            @relation(fields: [id_funcionario], references: [id])
+  Negocio              Negocio?               @relation("LeadOwnership", fields: [id_negocio], references: [id], onDelete: SetNull)
+  EstagioFunil         EstagioFunil           @relation(fields: [id_estagio], references: [id])
+  LeadEstagioLog       LeadEstagioLog[]
+  LeadProduto          LeadProduto[]
+  NegociosComoPrincipal Negocio[]             @relation("NegocioLeadPrincipal")
+  Parcela              Parcela[]
+  Pendencia            Pendencia[]
+  WhatsappMensagem     WhatsappMensagem[]
 
-  @@index([id_empresa])
-  @@index([id_funcionario])
-  @@index([id_estagio])
   @@index([id_empresa, email])
-}
-
-model Produto {
-  id             String       @id @default(uuid())
-  id_empresa     String
-  nome           String
-  slug           String
-  descricao      String?
-  ativo          Boolean      @default(true)
-  schema_layout  String
-  criado_em      DateTime     @default(now())
-  atualizado_em  DateTime     @default(now()) @updatedAt
-  empresa        Empresa      @relation(fields: [id_empresa], references: [id])
-  leads_produto  LeadProduto[]
-
-  @@unique([id_empresa, slug])
+  @@index([id_estagio])
+  @@index([id_funcionario])
+  @@index([id_pdv])
+  @@index([id_negocio])
   @@index([id_empresa])
   @@index([id_empresa, ativo])
 }
 
+model Negocio {
+  id                     String                 @id
+  id_empresa             String
+  id_lead                String?
+  id_funil               String
+  id_estagio             String
+  id_funcionario         String
+  id_produto_principal   String?
+  titulo                 String
+  valor_estimado         Float                  @default(0)
+  valor_fechado          Float?
+  probabilidade          Float?
+  status                 String                 @default("ABERTO")
+  data_abertura          DateTime
+  data_fechamento        DateTime?
+  motivo_perda           String?
+  observacoes_comerciais String?
+  chave_migracao         String?                @unique
+  criado_em              DateTime               @default(now())
+  atualizado_em          DateTime               @default(now())
+  Empresa                Empresa                @relation(fields: [id_empresa], references: [id])
+  Lead                   Lead?                  @relation("NegocioLeadPrincipal", fields: [id_lead], references: [id], onDelete: SetNull)
+  Leads                  Lead[]                 @relation("LeadOwnership")
+  Funil                  Funil                  @relation(fields: [id_funil], references: [id])
+  EstagioFunil           EstagioFunil           @relation(fields: [id_estagio], references: [id])
+  Funcionario            Funcionario            @relation(fields: [id_funcionario], references: [id])
+  ProdutoPrincipal       Produto?               @relation("NegocioProdutoPrincipal", fields: [id_produto_principal], references: [id], onDelete: SetNull)
+  Parcela                Parcela[]
+  NegocioProduto         NegocioProduto[]
+  NegocioEstagioLog      NegocioEstagioLog[]
+  AutomacaoAgendamento   AutomacaoAgendamento[]
+
+  @@index([id_empresa, id_lead])
+  @@index([id_empresa, id_funcionario])
+  @@index([id_empresa, id_funil, id_estagio])
+  @@index([id_empresa, status])
+  @@index([id_lead, criado_em])
+}
+
+model LeadEstagioLog {
+  id                  String   @id
+  id_lead             String
+  id_estagio_anterior String?
+  id_estagio_novo     String
+  empresa_id          String
+  criado_em           DateTime @default(now())
+  Lead                Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+
+  @@index([id_lead])
+  @@index([criado_em])
+  @@index([empresa_id, criado_em])
+}
+
 model LeadProduto {
-  id              String   @id @default(uuid())
+  id              String   @id
   id_empresa      String
   id_lead         String
   id_produto      String
@@ -185,41 +307,59 @@ model LeadProduto {
   valores_layout  String
   observacoes     String?
   criado_em       DateTime @default(now())
-  atualizado_em   DateTime @default(now()) @updatedAt
-  empresa         Empresa  @relation(fields: [id_empresa], references: [id])
-  lead            Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-  produto         Produto  @relation(fields: [id_produto], references: [id])
+  atualizado_em   DateTime @default(now())
+  Produto         Produto  @relation(fields: [id_produto], references: [id])
+  Lead            Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  Empresa         Empresa  @relation(fields: [id_empresa], references: [id])
 
-  @@index([id_empresa])
-  @@index([id_lead])
   @@index([id_produto])
+  @@index([id_lead])
+  @@index([id_empresa])
 }
 
-model Parcela {
-  id               String   @id @default(uuid())
-  id_empresa       String
-  id_lead          String
-  numero_parcela   Int
-  quantidade_total Int
-  valor            Float
-  data_vencimento  DateTime
-  data_pagamento   DateTime?
-  status           String   @default("PENDENTE")
-  criado_em        DateTime @default(now())
-  atualizado_em    DateTime @default(now()) @updatedAt
+model NegocioEstagioLog {
+  id                  String        @id
+  id_negocio          String
+  id_funil_anterior   String?
+  id_funil_novo       String
+  id_estagio_anterior String?
+  id_estagio_novo     String
+  empresa_id          String
+  origem              String        @default("KANBAN")
+  criado_em           DateTime      @default(now())
+  Negocio             Negocio       @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
+  FunilAnterior       Funil?        @relation("NegocioLogFunilAnterior", fields: [id_funil_anterior], references: [id])
+  FunilNovo           Funil         @relation("NegocioLogFunilNovo", fields: [id_funil_novo], references: [id])
+  EstagioAnterior     EstagioFunil? @relation("NegocioLogEstagioAnterior", fields: [id_estagio_anterior], references: [id])
+  EstagioNovo         EstagioFunil  @relation("NegocioLogEstagioNovo", fields: [id_estagio_novo], references: [id])
 
-  lead    Lead    @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-  empresa Empresa @relation(fields: [id_empresa], references: [id])
+  @@index([empresa_id, criado_em])
+  @@index([criado_em])
+  @@index([id_negocio])
+}
 
-  @@unique([id_lead, numero_parcela])
+model NegocioProduto {
+  id              String   @id
+  id_empresa      String
+  id_negocio      String
+  id_produto      String
+  nome_snapshot   String
+  schema_snapshot String
+  valores_layout  String
+  observacoes     String?
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @default(now())
+  Produto         Produto  @relation(fields: [id_produto], references: [id])
+  Negocio         Negocio  @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
+  Empresa         Empresa  @relation(fields: [id_empresa], references: [id])
+
+  @@index([id_produto])
+  @@index([id_negocio])
   @@index([id_empresa])
-  @@index([id_lead])
-  @@index([id_empresa, status])
-  @@index([id_empresa, data_vencimento])
 }
 
 model Meta {
-  id             String       @id @default(uuid())
+  id             String          @id
   id_empresa     String
   tipo           String
   tipo_meta      String
@@ -227,40 +367,79 @@ model Meta {
   periodo        String
   data_inicio    DateTime
   data_fim       DateTime
-  ativo          Boolean      @default(true)
-  criado_em      DateTime     @default(now())
-  atualizado_em  DateTime     @default(now()) @updatedAt
+  ativo          Boolean         @default(true)
+  criado_em      DateTime        @default(now())
+  atualizado_em  DateTime        @default(now())
   id_pdv         String?
   id_funcionario String?
+  Funcionario    Funcionario?    @relation(fields: [id_funcionario], references: [id])
+  Pdv            Pdv?            @relation(fields: [id_pdv], references: [id])
+  Empresa        Empresa         @relation(fields: [id_empresa], references: [id])
+  MetaProgresso  MetaProgresso[]
 
-  empresa     Empresa        @relation(fields: [id_empresa], references: [id])
-  pdv         Pdv?           @relation(fields: [id_pdv], references: [id])
-  funcionario Funcionario?   @relation(fields: [id_funcionario], references: [id])
-  progressos  MetaProgresso[]
-
-  @@index([id_empresa, tipo, ativo])
-  @@index([id_empresa, ativo, data_inicio, data_fim])
-  @@index([id_pdv])
   @@index([id_funcionario])
+  @@index([id_pdv])
+  @@index([id_empresa, ativo, data_inicio, data_fim])
+  @@index([id_empresa, tipo, ativo])
 }
 
 model MetaProgresso {
-  id            String   @id @default(uuid())
+  id            String   @id
   id_meta       String
   id_empresa    String
   periodo       String
   realizado     Float
-  atualizado_em DateTime @default(now()) @updatedAt
-
-  meta    Meta    @relation(fields: [id_meta], references: [id], onDelete: Cascade)
-  empresa Empresa @relation(fields: [id_empresa], references: [id])
+  atualizado_em DateTime @default(now())
+  Empresa       Empresa  @relation(fields: [id_empresa], references: [id])
+  Meta          Meta     @relation(fields: [id_meta], references: [id], onDelete: Cascade)
 
   @@unique([id_meta, periodo])
   @@index([id_empresa, periodo])
 }
 
+model Parcela {
+  id               String    @id
+  id_empresa       String
+  id_lead          String
+  id_negocio       String?
+  numero_parcela   Int
+  quantidade_total Int
+  valor            Float
+  data_vencimento  DateTime
+  data_pagamento   DateTime?
+  status           String    @default("PENDENTE")
+  criado_em        DateTime  @default(now())
+  atualizado_em    DateTime  @default(now())
+  Empresa          Empresa   @relation(fields: [id_empresa], references: [id])
+  Lead             Lead      @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  Negocio          Negocio?  @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
+
+  @@unique([id_lead, numero_parcela])
+  @@index([id_empresa, data_vencimento])
+  @@index([id_empresa, status])
+  @@index([id_lead])
+  @@index([id_negocio])
+  @@index([id_empresa])
+}
+
+model Pdv {
+  id                    String             @id
+  id_empresa            String
+  id_whatsapp_instancia String?
+  nome                  String
+  criado_em             DateTime           @default(now())
+  atualizado_em         DateTime           @default(now())
+  Funcionario           Funcionario[]
+  Meta                  Meta[]
+  WhatsappInstancia     WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id])
+  Empresa               Empresa            @relation(fields: [id_empresa], references: [id])
+
+  @@index([id_empresa, id_whatsapp_instancia])
+  @@index([id_empresa])
+}
+
 model Pendencia {
-  id            String    @id @default(uuid())
+  id            String    @id
   id_empresa    String
   id_lead       String
   tipo          String
@@ -269,167 +448,108 @@ model Pendencia {
   resolvida     Boolean   @default(false)
   resolvida_em  DateTime?
   criado_em     DateTime  @default(now())
-  atualizado_em DateTime  @default(now()) @updatedAt
-  lead          Lead      @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  atualizado_em DateTime  @default(now())
+  Lead          Lead      @relation(fields: [id_lead], references: [id], onDelete: Cascade)
 
-  @@index([id_empresa])
   @@index([id_lead])
-}
-
-model WhatsappInstancia {
-  id            String             @id @default(uuid())
-  id_empresa    String
-  id_criador    String
-  nome          String
-  instance_name String             @unique
-  status        String
-  phone         String?
-  criado_em     DateTime           @default(now())
-  atualizado_em DateTime           @default(now()) @updatedAt
-  profile_name  String?
-  profile_pic   String?
-  mensagens     WhatsappMensagem[]
-  pdvs          Pdv[]
-  automacao_acoes AutomacaoAcao[]
-
   @@index([id_empresa])
-  @@index([id_criador])
-  @@index([id_empresa, instance_name])
-  @@index([id_empresa, status])
 }
 
-model WhatsappMensagem {
-  id                    String @id @default(uuid())
-  id_empresa            String
-  id_lead               String
-  id_whatsapp_instancia String
-
-  mensagem_id    String
-  remote_jid     String
-  from_me        Boolean
-  tipo           String    @default("text")
-  conteudo       String?
-  status         String    @default("PENDING")
-  timestamp      Int
-  lida_no_crm_em DateTime?
-  erro           String?
-  payload_json   String?
-
-  criado_em     DateTime @default(now())
-  atualizado_em DateTime @default(now()) @updatedAt
-
-  lead      Lead              @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-  instancia WhatsappInstancia @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: Cascade)
-
-  @@unique([id_whatsapp_instancia, mensagem_id])
-  @@index([id_empresa, id_lead, timestamp])
-  @@index([id_empresa, id_lead, lida_no_crm_em])
-  @@index([id_empresa, remote_jid])
-}
-
-model CalComInstancia {
-  id            String    @id @default(uuid())
-  id_empresa    String
-  id_criador    String
-  nome          String
-  api_key       String
-  status        String    @default("pending")
-  profile_name  String?
-  profile_email String?
-  criado_em     DateTime  @default(now())
-  atualizado_em DateTime  @default(now()) @updatedAt
-
-  @@index([id_empresa])
-  @@index([id_empresa, status])
-}
-
-model LeadEstagioLog {
-  id                  String   @id @default(uuid())
-  id_lead             String
-  id_estagio_anterior  String?
-  id_estagio_novo     String
-  empresa_id          String
-  criado_em           DateTime @default(now())
-  lead                Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-
-  @@index([empresa_id, criado_em])
-  @@index([criado_em])
-  @@index([id_lead])
-}
-
-model Automacao {
-  id               String                @id @default(uuid())
+model Produto {
+  id               String           @id
   id_empresa       String
-  id_criador       String?
   nome             String
-  fonte            String
-  gatilho          String
-  config_json      String                @default("{}")
-  ativo            Boolean               @default(true)
-  ultimo_sync_em   DateTime              @default(now())
-  criado_em        DateTime              @default(now())
-  atualizado_em    DateTime              @default(now()) @updatedAt
-  empresa          Empresa               @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
-  acoes            AutomacaoAcao[]
-  agendamentos     AutomacaoAgendamento[]
+  slug             String
+  descricao        String?
+  ativo            Boolean          @default(true)
+  schema_layout    String
+  criado_em        DateTime         @default(now())
+  atualizado_em    DateTime         @default(now())
+  LeadProduto      LeadProduto[]
+  NegocioProduto   NegocioProduto[]
+  NegocioPrincipal Negocio[]        @relation("NegocioProdutoPrincipal")
+  Empresa          Empresa          @relation(fields: [id_empresa], references: [id])
 
+  @@unique([id_empresa, slug])
   @@index([id_empresa, ativo])
-  @@index([fonte, gatilho])
   @@index([id_empresa])
 }
 
-model AutomacaoAcao {
-  id                    String              @id @default(uuid())
-  id_automacao          String
-  tipo                  String
-  ordem                 Int
-  delay_minutos         Int                 @default(0)
-  id_instancia_whatsapp String?
-  telefone_destino      String?
-  id_lead_destino       String?
-  mensagem              String
-  automacao             Automacao           @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
-  instancia_whatsapp    WhatsappInstancia? @relation(fields: [id_instancia_whatsapp], references: [id], onDelete: SetNull)
+model ReatribuicaoFuncionario {
+  id                     String   @id
+  id_empresa             String
+  id_funcionario_origem  String
+  id_funcionario_destino String
+  quantidade_leads       Int
+  observacao             String?
+  criado_por_tipo        String
+  criado_por_id          String
+  criado_em              DateTime @default(now())
 
-  @@unique([id_automacao, ordem])
-  @@index([id_automacao])
-  @@index([id_instancia_whatsapp])
-}
-
-model AutomacaoAgendamento {
-  id              String    @id @default(uuid())
-  id_automacao    String
-  id_lead         String?
-  referencia_uid  String    @unique
-  tipo_origem     String
-  contexto_json   String    @default("{}")
-  agendado_para   DateTime
-  status          String    @default("PENDENTE")
-  tentativas      Int       @default(0)
-  erro            String?
-  enviado_em      DateTime?
-  criado_em       DateTime  @default(now())
-  atualizado_em   DateTime  @default(now()) @updatedAt
-  automacao       Automacao @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
-  lead             Lead?     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-
-  @@index([status, agendado_para])
-  @@index([id_automacao])
-  @@index([id_lead])
+  @@index([id_funcionario_destino])
+  @@index([id_funcionario_origem])
+  @@index([id_empresa])
 }
 
 model RegistroIP {
-  id            String   @id @default(uuid())
-  ip_address    String
-  email_hash    String
-  id_empresa    String
-  user_agent    String?
-  criado_em     DateTime @default(now())
-
-  empresa       Empresa  @relation(fields: [id_empresa], references: [id])
+  id         String   @id
+  ip_address String
+  email_hash String
+  id_empresa String
+  user_agent String?
+  criado_em  DateTime @default(now())
+  Empresa    Empresa  @relation(fields: [id_empresa], references: [id])
 
   @@unique([ip_address, email_hash])
-  @@index([ip_address])
-  @@index([email_hash])
   @@index([criado_em])
+  @@index([email_hash])
+  @@index([ip_address])
+}
+
+model WhatsappInstancia {
+  id               String             @id
+  id_empresa       String
+  id_criador       String
+  nome             String
+  instance_name    String             @unique
+  status           String
+  phone            String?
+  criado_em        DateTime           @default(now())
+  atualizado_em    DateTime           @default(now())
+  profile_name     String?
+  profile_pic      String?
+  AutomacaoAcao    AutomacaoAcao[]
+  Pdv              Pdv[]
+  WhatsappMensagem WhatsappMensagem[]
+
+  @@index([id_empresa, status])
+  @@index([id_empresa, instance_name])
+  @@index([id_criador])
+  @@index([id_empresa])
+}
+
+model WhatsappMensagem {
+  id                    String            @id
+  id_empresa            String
+  id_lead               String
+  id_whatsapp_instancia String
+  mensagem_id           String
+  remote_jid            String
+  from_me               Boolean
+  tipo                  String            @default("text")
+  conteudo              String?
+  status                String            @default("PENDING")
+  timestamp             Int
+  lida_no_crm_em        DateTime?
+  erro                  String?
+  payload_json          String?
+  criado_em             DateTime          @default(now())
+  atualizado_em         DateTime          @default(now())
+  WhatsappInstancia     WhatsappInstancia @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: Cascade)
+  Lead                  Lead              @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+
+  @@unique([id_whatsapp_instancia, mensagem_id])
+  @@index([id_empresa, remote_jid])
+  @@index([id_empresa, id_lead, lida_no_crm_em])
+  @@index([id_empresa, id_lead, timestamp])
 }

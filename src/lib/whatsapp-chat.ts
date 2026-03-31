@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { whereLeadsPorPerfil } from "@/lib/permissoes";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
@@ -310,9 +311,9 @@ export async function resolverInstanciaDoLead(idEmpresa: string, leadId: string)
       id_empresa: idEmpresa,
     },
     select: {
-      funcionario: {
+      Funcionario: {
         select: {
-            pdv: {
+            Pdv: {
               select: {
                 id: true,
                 nome: true,
@@ -324,7 +325,7 @@ export async function resolverInstanciaDoLead(idEmpresa: string, leadId: string)
     },
   });
 
-  const instanciaId = lead?.funcionario.pdv.id_whatsapp_instancia;
+  const instanciaId = lead?.Funcionario.Pdv.id_whatsapp_instancia;
   if (!instanciaId) return null;
 
   const instancia = await prisma.whatsappInstancia.findFirst({
@@ -337,8 +338,8 @@ export async function resolverInstanciaDoLead(idEmpresa: string, leadId: string)
 
   if (!instancia) return null;
   return {
-    pdvId: lead.funcionario.pdv.id,
-    pdvNome: lead.funcionario.pdv.nome,
+    pdvId: lead.Funcionario.Pdv.id,
+    pdvNome: lead.Funcionario.Pdv.nome,
     id: instancia.id,
     instanceName: instancia.instance_name,
   };
@@ -351,9 +352,9 @@ export async function buscarPdvDoLead(idEmpresa: string, leadId: string) {
       id_empresa: idEmpresa,
     },
     select: {
-      funcionario: {
+      Funcionario: {
         select: {
-          pdv: {
+          Pdv: {
             select: {
               id: true,
               nome: true,
@@ -631,10 +632,11 @@ export async function upsertMensagensNoBanco(
 
   const paraCriar = mensagensUnicas
     .filter((mensagem) => !existentePorMensagemId.has(mensagem.messageId))
-    .map((mensagem) => ({
-      id_empresa: params.idEmpresa,
-      id_lead: params.idLead,
-      id_whatsapp_instancia: params.idWhatsappInstancia,
+      .map((mensagem) => ({
+        id: randomUUID(),
+        id_empresa: params.idEmpresa,
+        id_lead: params.idLead,
+        id_whatsapp_instancia: params.idWhatsappInstancia,
       mensagem_id: mensagem.messageId,
       remote_jid: mensagem.remoteJid,
       from_me: mensagem.fromMe,

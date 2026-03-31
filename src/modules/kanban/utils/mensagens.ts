@@ -1,33 +1,26 @@
 export const MENSAGENS_KANBAN = {
   sucesso: {
-    acaoConcluida: "Acao concluida com sucesso.",
-    leadExcluido: "Lead excluido com sucesso.",
+    acaoConcluida: "Ação concluída com sucesso.",
   },
   erro: {
-    generico: "Nao foi possivel concluir a operacao. Tente novamente.",
-    excluirLead: "Nao foi possivel excluir o lead. Tente novamente.",
-    urlDocumentoInvalida: "Informe uma URL valida ou envie um arquivo PDF.",
+    generico: "Não foi possível concluir a operação. Tente novamente.",
+    urlDocumentoInvalida: "Informe uma URL válida ou envie um arquivo PDF.",
   },
   loading: {
     carregando: "Carregando...",
     salvando: "Salvando...",
-    excluindo: "Excluindo...",
     processando: "Processando...",
   },
   confirmacao: {
-    excluirLeadTitulo: "Excluir lead",
-    excluirLeadDescricao: "Tem certeza que deseja excluir {nomeLead}? Esta acao nao pode ser desfeita.",
     cancelar: "Cancelar",
-    excluir: "Excluir",
-    descartarAlteracoes: "Voce tem alteracoes nao salvas. Deseja descartar as alteracoes?",
+    descartarAlteracoes: "Você tem alterações não salvas. Deseja descartá-las?",
   },
   atalhos: {
     fechar: "Fechar",
     confirmar: "Confirmar",
   },
   placeholders: {
-    nomeLead: "este lead",
-    busca: "Buscar lead",
+    busca: "Buscar negócio",
     urlDocumento: "https://exemplo.com/documento.pdf",
   },
 } as const;

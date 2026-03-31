@@ -1,236 +1,175 @@
 import { useCallback, useState } from "react";
 import type { Dispatch, FormEvent, SetStateAction } from "react";
-import type { Lead, Props, Estagio } from "../types";
+import type { Lead, Props } from "../types";
 import { obterMensagemErroKanban, MENSAGENS_FALLBACK_KANBAN } from "../utils/erro";
-import { validarNovoLead } from "../utils/validacoes";
 import { useToast } from "@/components/ui/toast";
+import { converteMoedaBrParaNumero } from "@/lib/utils";
 import {
-  criarLeadKanban,
-  excluirLeadKanban,
-  redistribuirLeadsEmAtendimentoKanban,
-  sincronizarWhatsappKanban,
+  criarNegocioKanban,
+  redistribuirNegociosEmAtendimentoKanban,
 } from "@/lib/api/kanban";
 
 type UseKanbanOperacoesParams = {
   perfil: Props["perfil"];
   idUsuario: string;
-  telefoneNovoLead: string;
-  valorNovoLead: string;
-  cargoNovoLead: { id_funcionario: string } | null;
-  setLeads: Dispatch<SetStateAction<Lead[]>>;
-  setLeadSelecionado: (lead: Lead | null) => void;
-  setDialogNovoLeadAberto: (aberto: boolean) => void;
-  setCargoNovoLead: (cargo: { id_funcionario: string } | null) => void;
-  setEstagioNovoLead: (estagio: string) => void;
-  setTelefoneNovoLead: (telefone: string) => void;
-  setValorNovoLead: (valor: string) => void;
+  valorNovoNegocio: string;
+  cargoNovoNegocio: { id_funcionario: string } | null;
+  setNegocios: Dispatch<SetStateAction<Lead[]>>;
+  setDialogNovoNegocioAberto: (aberto: boolean) => void;
+  setCargoNovoNegocio: (cargo: { id_funcionario: string } | null) => void;
+  setEstagioNovoNegocio: (estagio: string) => void;
+  setValorNovoNegocio: (valor: string) => void;
   bootstrap: () => Promise<void>;
-  setErroDetalhesLead: (erro: string | null) => void;
-  aoSincronizarWhatsapp?: (data: Date) => void;
 };
-
-type ResultadoSincronizacaoWhatsapp =
-  | { ok: false; erro: string }
-    | {
-        ok: true;
-        criados: number;
-        instanciasIgnoradas: Array<{ id: string; nome: string; motivo: string }>;
-        timestampSync: Date;
-      };
 
 export function useKanbanOperacoes({
   perfil,
   idUsuario,
-  telefoneNovoLead,
-  valorNovoLead,
-  cargoNovoLead,
-  setLeads,
-  setLeadSelecionado,
-  setDialogNovoLeadAberto,
-  setCargoNovoLead,
-  setEstagioNovoLead,
-  setTelefoneNovoLead,
-  setValorNovoLead,
+  valorNovoNegocio,
+  cargoNovoNegocio,
+  setNegocios,
+  setDialogNovoNegocioAberto,
+  setCargoNovoNegocio,
+  setEstagioNovoNegocio,
+  setValorNovoNegocio,
   bootstrap,
-  setErroDetalhesLead,
-  aoSincronizarWhatsapp,
 }: UseKanbanOperacoesParams) {
   const { addToast } = useToast();
-  const [erroNovoLead, setErroNovoLead] = useState<string | null>(null);
-  const [criandoLead, setCriandoLead] = useState(false);
-  const [sincronizandoWhatsapp, setSincronizandoWhatsapp] = useState(false);
-  const [redistribuindoEmAtendimento, setRedistribuindoEmAtendimento] = useState(false);
+  const [erroNovoNegocio, setErroNovoNegocio] = useState<string | null>(null);
+  const [criandoNegocio, setCriandoNegocio] = useState(false);
+  const [redistribuindoNegociosEmAtendimento, setRedistribuindoNegociosEmAtendimento] = useState(false);
 
-  const criarLead = useCallback(
+  const criarNegocio = useCallback(
     async (evento: FormEvent<HTMLFormElement>) => {
       evento.preventDefault();
 
-      if (criandoLead) {
+      if (criandoNegocio) {
         return;
       }
 
-      setErroNovoLead(null);
+      setErroNovoNegocio(null);
       const dados = new FormData(evento.currentTarget);
       const idFuncionario =
         perfil === "COLABORADOR"
           ? idUsuario
-          : cargoNovoLead?.id_funcionario ?? String(dados.get("id_funcionario") ?? "");
+          : cargoNovoNegocio?.id_funcionario ?? String(dados.get("id_funcionario") ?? "");
 
-      const validacao = validarNovoLead({
-        nome: String(dados.get("nome") ?? ""),
-        telefone: telefoneNovoLead,
-        valor: valorNovoLead,
-        idEstagio: String(dados.get("id_estagio") ?? ""),
-        idFuncionario,
-        perfil,
-      });
+      const titulo = String(dados.get("titulo") ?? "").trim();
+      const idEstagio = String(dados.get("id_estagio") ?? "").trim();
+      const contatoIdsJson = String(dados.get("lead_ids_json") ?? "[]");
 
-      if (!validacao.ok) {
-        setErroNovoLead(validacao.erro);
+      let contatoIds: string[] = [];
+      try {
+        const parsed = JSON.parse(contatoIdsJson) as unknown;
+        if (Array.isArray(parsed)) {
+          contatoIds = parsed.filter((contatoId): contatoId is string => typeof contatoId === "string").map((contatoId) => contatoId.trim()).filter(Boolean);
+        }
+      } catch {
+        contatoIds = [];
+      }
+
+      const valorOportunidade = converteMoedaBrParaNumero(valorNovoNegocio);
+
+      if (titulo.length < 3) {
+        setErroNovoNegocio("Informe um título para o negócio.");
         return;
       }
 
-      const { nome, telefone, valorOportunidade, idEstagio } = validacao.dados;
-      const id_funcionario = perfil === "COLABORADOR" ? idUsuario : validacao.dados.idFuncionario;
+      if (!Number.isFinite(valorOportunidade) || valorOportunidade <= 0) {
+        setErroNovoNegocio("Informe um valor maior que zero.");
+        return;
+      }
+
+      if (!idEstagio) {
+        setErroNovoNegocio("Selecione um estágio para o negócio.");
+        return;
+      }
+
+      if (perfil !== "COLABORADOR" && !idFuncionario) {
+        setErroNovoNegocio("Selecione um funcionário responsável.");
+        return;
+      }
 
       const idTemporario = `temp-${Date.now()}`;
-      const leadTemporario: Lead = {
+      const negocioTemporario: Lead = {
         id: idTemporario,
         id_estagio: idEstagio,
-        id_funcionario,
-        nome,
-        telefone,
+        id_funcionario: idFuncionario,
+        nome: titulo,
+        telefone: "",
         valor_oportunidade: valorOportunidade,
         observacoes: null,
         motivo_perda: null,
         atualizado_em: new Date().toISOString(),
+        id_negocio: idTemporario,
       };
 
-      setCriandoLead(true);
-      setLeads((atual) => [leadTemporario, ...atual]);
+      setCriandoNegocio(true);
+      setNegocios((atual) => [negocioTemporario, ...atual]);
 
       try {
-        const resposta = await criarLeadKanban({
-          nome,
-          telefone,
-          valor_oportunidade: valorOportunidade,
+        const resposta = await criarNegocioKanban({
+          titulo,
+          valor_estimado: valorOportunidade,
           id_estagio: idEstagio,
-          id_funcionario,
+          id_funcionario: idFuncionario,
+          lead_ids: contatoIds,
         });
 
         if (!resposta.ok) {
-          setErroNovoLead(resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.criarLead);
-          setLeads((atual) => atual.filter((item) => item.id !== idTemporario));
+          setErroNovoNegocio(resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.criarNegocio);
+          setNegocios((atual) => atual.filter((item) => item.id !== idTemporario));
           return;
         }
 
-        if (resposta.dados.lead) {
-          const leadCriado = resposta.dados.lead;
-          setLeads((atual) => atual.map((item) => (item.id === idTemporario ? leadCriado : item)));
+        if (resposta.dados.negocio) {
+          const negocioCriado = resposta.dados.negocio;
+          setNegocios((atual) => atual.map((item) => (item.id === idTemporario ? negocioCriado : item)));
         } else {
-          setLeads((atual) => atual.filter((item) => item.id !== idTemporario));
+          setNegocios((atual) => atual.filter((item) => item.id !== idTemporario));
         }
 
         addToast({
           type: "success",
-          title: "Lead criado",
-          description: `${nome} foi adicionado ao Kanban.`,
+          title: "Negócio criado",
+          description: `${titulo} foi adicionado ao Kanban.`,
         });
 
         evento.currentTarget?.reset();
-        setEstagioNovoLead("");
-        setCargoNovoLead(null);
-        setTelefoneNovoLead("");
-        setValorNovoLead("");
-        setDialogNovoLeadAberto(false);
+        setEstagioNovoNegocio("");
+        setCargoNovoNegocio(null);
+        setValorNovoNegocio("");
+        setDialogNovoNegocioAberto(false);
       } catch (erro) {
-        setErroNovoLead(obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.criarLead));
-        setLeads((atual) => atual.filter((item) => item.id !== idTemporario));
+        setErroNovoNegocio(obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.criarNegocio));
+        setNegocios((atual) => atual.filter((item) => item.id !== idTemporario));
       } finally {
-        setCriandoLead(false);
+        setCriandoNegocio(false);
       }
     },
     [
-      criandoLead,
+      criandoNegocio,
       perfil,
       idUsuario,
-      cargoNovoLead,
-      telefoneNovoLead,
-      valorNovoLead,
-      setLeads,
-      setEstagioNovoLead,
-      setCargoNovoLead,
-      setTelefoneNovoLead,
-      setValorNovoLead,
-      setDialogNovoLeadAberto,
+      cargoNovoNegocio,
+      valorNovoNegocio,
+      setNegocios,
+      setEstagioNovoNegocio,
+      setCargoNovoNegocio,
+      setValorNovoNegocio,
+      setDialogNovoNegocioAberto,
       addToast,
     ],
   );
 
-  const sincronizarWhatsapp = useCallback(async (params?: string): Promise<ResultadoSincronizacaoWhatsapp> => {
-    if (sincronizandoWhatsapp) {
-      return { ok: false, erro: "Sincronizacao ja em andamento." };
-    }
-
-    setSincronizandoWhatsapp(true);
-    try {
-      const resposta = await sincronizarWhatsappKanban(params?.replace(/^\?/, ""));
-      if (!resposta.ok) {
-        return { ok: false, erro: resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.sincronizarWhatsapp };
-      }
-
-      const timestampSync = new Date(resposta.dados.timestamp_sync);
-      aoSincronizarWhatsapp?.(timestampSync);
-      await bootstrap();
-
-      return {
-        ok: true,
-        criados: resposta.dados.criados,
-        instanciasIgnoradas: resposta.dados.instancias_ignoradas,
-        timestampSync,
-      };
-    } catch (erro) {
-      return { ok: false, erro: obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.sincronizarWhatsapp) };
-    } finally {
-      setSincronizandoWhatsapp(false);
-    }
-  }, [aoSincronizarWhatsapp, bootstrap, sincronizandoWhatsapp]);
-
-  const excluirLead = useCallback(
-    async (id: string) => {
-      try {
-        const resposta = await excluirLeadKanban(id);
-        if (resposta.ok) {
-          setLeads((atual) => atual.filter((item) => item.id !== id));
-          setLeadSelecionado(null);
-          addToast({
-            type: "success",
-            title: "Lead excluido",
-            description: "O lead foi removido com sucesso.",
-          });
-          return;
-        }
-
-        const mensagemErro = resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.excluirLead;
-        setErroDetalhesLead(mensagemErro);
-        throw new Error(mensagemErro);
-      } catch (erro) {
-        const mensagemErro = obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.excluirLead);
-        setErroDetalhesLead(mensagemErro);
-        throw new Error(mensagemErro);
-      }
-    },
-    [addToast, setLeads, setLeadSelecionado, setErroDetalhesLead],
-  );
-
-  const redistribuirLeadsEmAtendimento = useCallback(async () => {
-    if (redistribuindoEmAtendimento) {
+  const redistribuirNegociosEmAtendimento = useCallback(async () => {
+    if (redistribuindoNegociosEmAtendimento) {
       return { ok: false as const, erro: "Redistribuicao ja em andamento." };
     }
 
-    setRedistribuindoEmAtendimento(true);
+    setRedistribuindoNegociosEmAtendimento(true);
     try {
-      const resposta = await redistribuirLeadsEmAtendimentoKanban({});
+      const resposta = await redistribuirNegociosEmAtendimentoKanban({});
       if (!resposta.ok) {
         return { ok: false as const, erro: resposta.erro ?? MENSAGENS_FALLBACK_KANBAN.redistribuirEmAtendimento };
       }
@@ -244,53 +183,16 @@ export function useKanbanOperacoes({
     } catch (erro) {
       return { ok: false as const, erro: obterMensagemErroKanban(erro, MENSAGENS_FALLBACK_KANBAN.redistribuirEmAtendimento) };
     } finally {
-      setRedistribuindoEmAtendimento(false);
+      setRedistribuindoNegociosEmAtendimento(false);
     }
-  }, [bootstrap, redistribuindoEmAtendimento]);
-
-  const excluirTodosIndefinidos = useCallback(
-    async (leads: Lead[], estagios: Estagio[]) => {
-      const estagioIndefinido = estagios.find((e) => e.nome === "Indefinido");
-      if (!estagioIndefinido) return;
-
-      const leadsIndefinidos = leads.filter((l) => l.id_estagio === estagioIndefinido.id);
-      if (leadsIndefinidos.length === 0) return;
-
-      const resultados = await Promise.allSettled(
-        leadsIndefinidos.map((lead) => excluirLeadKanban(lead.id))
-      );
-
-      const erros = resultados.filter((r) => r.status === "rejected" || r.value?.ok === false);
-      
-      setLeads((atual) => atual.filter((l) => l.id_estagio !== estagioIndefinido.id));
-      
-      if (erros.length === 0) {
-        addToast({
-          type: "success",
-          title: "Leads apagados",
-          description: `${leadsIndefinidos.length} leads indefinidos foram removidos.`,
-        });
-      } else {
-        addToast({
-          type: "warning",
-          title: "Leads parcialmente removidos",
-          description: `${leadsIndefinidos.length - erros.length} removidos, ${erros.length} falharam.`,
-        });
-      }
-    },
-    [addToast, setLeads],
-  );
+  }, [bootstrap, redistribuindoNegociosEmAtendimento]);
 
   return {
-    erroNovoLead,
-    setErroNovoLead,
-    criandoLead,
-    sincronizandoWhatsapp,
-    redistribuindoEmAtendimento,
-    criarLead,
-    sincronizarWhatsapp,
-    redistribuirLeadsEmAtendimento,
-    excluirLead,
-    excluirTodosIndefinidos,
+    erroNovoNegocio,
+    setErroNovoNegocio,
+    criandoNegocio,
+    redistribuindoNegociosEmAtendimento,
+    criarNegocio,
+    redistribuirNegociosEmAtendimento,
   };
 }

@@ -1,7 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useState, memo } from "react";
-import { Check, CheckCheck, Clock3, RotateCcw, Trash2, Volume2, Image, Play, Pause, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Check, CheckCheck, Clock3, RotateCcw, Trash2, Volume2, Image as ImageIcon, Play, Pause, Loader2 } from "lucide-react";
+import NextImage from "next/image";
 import { buscarMediaWhatsapp, type MediaContent } from "@/lib/api/whatsapp";
 import type { WhatsappChatMessage } from "@/modules/whatsapp/types";
 
@@ -89,8 +90,8 @@ function ImageMessage({ leadId, messageId }: { leadId: string; messageId: string
         disabled={retries >= maxRetries}
         className="flex h-32 w-48 items-center justify-center rounded-lg bg-[var(--surface)] transition-colors hover:bg-[var(--surface-elevated)] disabled:opacity-50"
       >
-        <div className="flex flex-col items-center gap-1 text-[var(--text-tertiary)]">
-          <Image className="h-5 w-5" />
+          <div className="flex flex-col items-center gap-1 text-[var(--text-tertiary)]">
+           <ImageIcon className="h-5 w-5" />
           <span className="text-xs">
             {retries >= maxRetries ? "Erro ao carregar" : "Tentar novamente"}
           </span>
@@ -100,11 +101,13 @@ function ImageMessage({ leadId, messageId }: { leadId: string; messageId: string
   }
 
   return (
-    <img
+    <NextImage
       src={`data:${media.mimetype};base64,${media.base64}`}
       alt="Imagem"
+      width={480}
+      height={320}
+      unoptimized
       className="max-h-64 max-w-full rounded-lg object-contain"
-      loading="lazy"
     />
   );
 }
@@ -178,7 +181,7 @@ function AudioMessage({ leadId, messageId }: { leadId: string; messageId: string
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
 
-  const playbackRates = [1, 1.5, 2];
+  const playbackRates = useMemo(() => [1, 1.5, 2], []);
 
   const handleTimeUpdate = useCallback(() => {
     if (audioEl) {
@@ -219,8 +222,6 @@ function AudioMessage({ leadId, messageId }: { leadId: string; messageId: string
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
-
-  const progressPercent = duration > 0 ? (currentTime / duration) * 100 : 0;
 
   if (loading) {
     return (
@@ -351,8 +352,6 @@ function AudioMessage({ leadId, messageId }: { leadId: string; messageId: string
 export function WhatsappMessageBubble({ message, onRetry }: Props) {
   const outgoing = message.fromMe;
   const isDeleted = message.status === "DELETED";
-  const isMedia = message.hasMedia || ["imageMessage", "videoMessage", "audioMessage"].includes(message.kind);
-
   return (
     <div className={`flex w-full ${outgoing ? "justify-end" : "justify-start"}`}>
       <div

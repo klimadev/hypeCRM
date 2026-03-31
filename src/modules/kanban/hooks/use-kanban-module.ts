@@ -1,21 +1,20 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { obterWhatsappStats } from "@/lib/api/whatsapp";
+import { useMemo, useState } from "react";
 import type { Lead, UseKanbanModuleReturn, Props } from "../types";
 import { useToast } from "@/components/ui/toast";
 import { useKanbanDerivacoes } from "./use-kanban-derivacoes";
 import { useKanbanMovimentacao } from "./use-kanban-movimentacao";
 import { useKanbanDados } from "./use-kanban-dados";
 import { useKanbanOperacoes } from "./use-kanban-operacoes";
-import { useKanbanDetalhesLead } from "./use-kanban-detalhes-lead";
+import { useKanbanDetalhesNegocio } from "./use-kanban-detalhes-lead";
 
 export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleReturn {
   const { addToast } = useToast();
   const {
     estagios,
-    leads,
-    setLeads,
+    negocios,
+    setNegocios,
     funcionarios,
     pdvs,
     bootstrap,
@@ -27,35 +26,13 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     permissaoNotificacao,
   } = useKanbanDados({ addToast });
 
-  const [leadSelecionado, setLeadSelecionado] = useState<Lead | null>(null);
-  const [dialogNovoLeadAberto, setDialogNovoLeadAberto] = useState(false);
+  const [negocioSelecionado, setNegocioSelecionado] = useState<Lead | null>(null);
+  const [dialogNovoNegocioAberto, setDialogNovoNegocioAberto] = useState(false);
   const [stageIdAtivo, setStageIdAtivo] = useState("");
 
-  const [cargoNovoLead, setCargoNovoLead] = useState<{ id_funcionario: string } | null>(null);
-  const [estagioNovoLead, setEstagioNovoLead] = useState("");
-  const [telefoneNovoLead, setTelefoneNovoLead] = useState("");
-  const [valorNovoLead, setValorNovoLead] = useState("");
-  const [ultimaSincronizacaoWhatsapp, setUltimaSincronizacaoWhatsapp] = useState<Date | null>(null);
-  const [instanciasAtivasCount, setInstanciasAtivasCount] = useState(0);
-
-  useEffect(() => {
-    let ativo = true;
-
-    async function carregarStatsWhatsapp() {
-      const resultado = await obterWhatsappStats();
-      if (!ativo || !resultado.ok) {
-        return;
-      }
-
-      setInstanciasAtivasCount(resultado.dados.ativas);
-    }
-
-    void carregarStatsWhatsapp();
-
-    return () => {
-      ativo = false;
-    };
-  }, []);
+  const [cargoNovoNegocio, setCargoNovoNegocio] = useState<{ id_funcionario: string } | null>(null);
+  const [estagioNovoNegocio, setEstagioNovoNegocio] = useState("");
+  const [valorNovoNegocio, setValorNovoNegocio] = useState("");
 
   const {
     filtros,
@@ -66,37 +43,37 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     setBusca,
     ordenacao,
     setOrdenacao,
-    pendenciasPorLead,
-    pendenciasLead,
-    leadsPorEstagio,
-    leadsFiltradosPorEstagio,
+    pendenciasPorNegocio,
+    pendenciasNegocio,
+    negociosPorEstagio,
+    negociosFiltradosPorEstagio,
     estagioAberto,
     origemStats,
   } = useKanbanDerivacoes({
     estagios,
-    leads,
-    leadSelecionado,
+    negocios,
+    negocioSelecionado,
   });
 
   const stageIdAtivoEfetivo = useMemo(() => {
     if (estagios.length === 0) return "";
 
     const stageSelecionadoExiste = estagios.some((estagio) => estagio.id === stageIdAtivo);
-    const stageSelecionadoTemLeads = stageSelecionadoExiste
-      ? (leadsFiltradosPorEstagio[stageIdAtivo] ?? []).length > 0
+    const stageSelecionadoTemNegocios = stageSelecionadoExiste
+      ? (negociosFiltradosPorEstagio[stageIdAtivo] ?? []).length > 0
       : false;
 
-    if (stageSelecionadoExiste && stageSelecionadoTemLeads) {
+    if (stageSelecionadoExiste && stageSelecionadoTemNegocios) {
       return stageIdAtivo;
     }
 
-    const primeiroStageComLeads = estagios.find((estagio) => (leadsFiltradosPorEstagio[estagio.id] ?? []).length > 0);
-    if (primeiroStageComLeads) {
-      return primeiroStageComLeads.id;
+    const primeiroStageComNegocios = estagios.find((estagio) => (negociosFiltradosPorEstagio[estagio.id] ?? []).length > 0);
+    if (primeiroStageComNegocios) {
+      return primeiroStageComNegocios.id;
     }
 
     return stageSelecionadoExiste ? stageIdAtivo : estagios[0].id;
-  }, [estagios, leadsFiltradosPorEstagio, stageIdAtivo]);
+  }, [estagios, negociosFiltradosPorEstagio, stageIdAtivo]);
 
   const {
     movimentoPendente,
@@ -106,109 +83,109 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     aoDragEnd,
     confirmarPerda,
   } = useKanbanMovimentacao({
-    leads,
+    negocios,
     estagios,
-    setLeads,
+    setNegocios,
     registrarMovimentoLocal,
     addToast,
   });
 
   const {
-    erroDetalhesLead,
-    setErroDetalhesLead,
+    erroDetalhesNegocio,
+    setErroDetalhesNegocio,
     salvando,
     salvo,
     salvandoAutomaticamente,
     salvamentoAutomaticoPendente,
     ultimaAtualizacaoSalvaEm,
     statusSalvamentoDetalhes,
-    salvarDetalhesLead,
-    aoMudarLead,
-  } = useKanbanDetalhesLead({
-    leadSelecionado,
-    setLeadSelecionado,
-    setLeads,
+    salvarDetalhesNegocio,
+    aoMudarNegocio,
+    leadsDisponiveis,
+    carregandoLeadsDisponiveis,
+    salvandoVinculos,
+    removendoNegocio,
+    erroVinculos,
+    setErroVinculos,
+    atualizarVinculosNegocio,
+    removerNegocio,
+  } = useKanbanDetalhesNegocio({
+    negocioSelecionado,
+    setNegocioSelecionado,
+    setNegocios,
   });
 
   const {
-    erroNovoLead,
-    setErroNovoLead,
-    criandoLead,
-    sincronizandoWhatsapp,
-    redistribuindoEmAtendimento,
-    criarLead,
-    sincronizarWhatsapp,
-    redistribuirLeadsEmAtendimento,
-    excluirLead,
-    excluirTodosIndefinidos,
+    erroNovoNegocio,
+    setErroNovoNegocio,
+    criandoNegocio,
+    redistribuindoNegociosEmAtendimento,
+    criarNegocio,
+    redistribuirNegociosEmAtendimento,
   } = useKanbanOperacoes({
     perfil,
     idUsuario,
-    telefoneNovoLead,
-    valorNovoLead,
-    cargoNovoLead,
-    setLeads,
-    setLeadSelecionado,
-    setDialogNovoLeadAberto,
-    setCargoNovoLead,
-    setEstagioNovoLead,
-    setTelefoneNovoLead,
-    setValorNovoLead,
+    valorNovoNegocio,
+    cargoNovoNegocio,
+    setNegocios,
+    setDialogNovoNegocioAberto,
+    setCargoNovoNegocio,
+    setEstagioNovoNegocio,
+    setValorNovoNegocio,
     bootstrap,
-    setErroDetalhesLead,
-    aoSincronizarWhatsapp: setUltimaSincronizacaoWhatsapp,
   });
 
   return {
     estagios,
-    leads,
+    negocios,
     funcionarios,
     pdvs,
-    leadsPorEstagio,
-    leadsFiltradosPorEstagio,
-    pendenciasPorLead,
-    todasPendencias: [],
+    negociosPorEstagio,
+    negociosFiltradosPorEstagio,
+    pendenciasPorNegocio,
     resumoPendencias,
-    leadSelecionado,
-    pendenciasLead,
-    dialogNovoLeadAberto,
-    setDialogNovoLeadAberto,
+    negocioSelecionado,
+    pendenciasNegocio,
+    dialogNovoNegocioAberto,
+    setDialogNovoNegocioAberto,
     movimentoPendente,
     setMovimentoPendente,
     motivoPerda,
     setMotivoPerda,
-    telefoneNovoLead,
-    setTelefoneNovoLead,
-    valorNovoLead,
-    setValorNovoLead,
-    erroNovoLead,
-    setErroNovoLead,
-    criandoLead,
+    valorNovoNegocio,
+    setValorNovoNegocio,
+    erroNovoNegocio,
+    setErroNovoNegocio,
+    criandoNegocio,
     salvando,
     salvo,
     salvandoAutomaticamente,
     salvamentoAutomaticoPendente,
     ultimaAtualizacaoSalvaEm,
     statusSalvamentoDetalhes,
-    erroDetalhesLead,
-    setErroDetalhesLead,
-    salvarDetalhesLead,
-    setLeadSelecionado,
-    criarLead,
-    sincronizandoWhatsapp,
-    redistribuindoEmAtendimento,
-    sincronizarWhatsapp,
-    redistribuirLeadsEmAtendimento,
+    erroDetalhesNegocio,
+    setErroDetalhesNegocio,
+    salvarDetalhesNegocio,
+    setNegocioSelecionado,
+    leadsDisponiveis,
+    carregandoLeadsDisponiveis,
+    salvandoVinculos,
+    removendoNegocio,
+    erroVinculos,
+    setErroVinculos,
+    atualizarVinculosNegocio,
+    removerNegocio,
+    criarNegocio,
+    redistribuindoNegociosEmAtendimento,
+    redistribuirNegociosEmAtendimento,
     confirmarPerda,
     aoDragEnd,
-    aoMudarLead,
-    excluirLead,
-    excluirTodosIndefinidos: () => excluirTodosIndefinidos(leads, estagios),
+    aoMudarNegocio,
     estagioAberto,
-    cargoNovoLead,
-    setCargoNovoLead,
-    setEstagioNovoLead,
-    estagioNovoLead,
+    cargoNovoNegocio,
+    setCargoNovoNegocio,
+    setEstagioNovoNegocio,
+    estagioNovoNegocio,
     filtros,
     setFiltros,
     busca,
@@ -220,11 +197,9 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     stageIdAtivo: stageIdAtivoEfetivo,
     setStageIdAtivo,
     recarregarPendencias,
-    totalLeads: leads.length,
+    totalNegocios: negocios.length,
     pendenciasCriticas: resumoPendencias?.porGravidade.critica ?? 0,
     origemStats,
-    ultimaSincronizacaoWhatsapp,
-    instanciasAtivasCount,
     notificacoesAtivadas,
     alternarNotificacoes,
     permissaoNotificacao,

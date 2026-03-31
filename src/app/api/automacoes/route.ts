@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withPerfis } from "@/lib/api/route-guards";
@@ -15,12 +16,12 @@ export async function GET(request: NextRequest) {
         id_empresa: sessao.id_empresa,
       },
       include: {
-        acoes: {
+        AutomacaoAcao: {
           orderBy: { ordem: "asc" },
         },
         _count: {
           select: {
-            agendamentos: {
+            AutomacaoAgendamento: {
               where: {
                 tipo_origem: "WHATSAPP",
               },
@@ -98,6 +99,7 @@ export async function POST(request: NextRequest) {
 
     const automacao = await prisma.automacao.create({
       data: {
+        id: randomUUID(),
         id_empresa: sessao.id_empresa,
         id_criador: sessao.id_usuario,
         nome: dados.nome,
@@ -107,8 +109,9 @@ export async function POST(request: NextRequest) {
         config_json: serializarConfigAutomacao({
           id_estagio_destino: dados.id_estagio_destino,
         }),
-        acoes: {
+        AutomacaoAcao: {
           create: dados.acoes.map((acao, index) => ({
+            id: randomUUID(),
             tipo: acao.tipo,
             ordem: acao.ordem ?? index,
             delay_minutos: acao.delay_minutos ?? 0,
@@ -120,7 +123,7 @@ export async function POST(request: NextRequest) {
         },
       },
       include: {
-        acoes: { orderBy: { ordem: "asc" } },
+        AutomacaoAcao: { orderBy: { ordem: "asc" } },
       },
     });
 

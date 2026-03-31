@@ -100,8 +100,13 @@ export async function obterDadosUsuarioLogado(
     // GERENTE e COLABORADOR: id_usuario refere-se ao ID do funcionário
     const funcionario = await prisma.funcionario.findUnique({
       where: { id: sessao.id_usuario },
-      include: { empresa: true },
-    });
+      include: { Empresa: true },
+    }) as unknown as {
+      id: string;
+      nome: string;
+      email: string;
+      Empresa: { nome: string };
+    } | null;
 
     if (!funcionario) {
       return null;
@@ -117,7 +122,7 @@ export async function obterDadosUsuarioLogado(
       nome: funcionario.nome,
       email: funcionario.email,
       cargo: cargoExibido,
-      nomeEmpresa: funcionario.empresa.nome,
+      nomeEmpresa: funcionario.Empresa.nome,
     };
   } catch {
     return null;

@@ -1,22 +1,35 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { upsertMensagensNoBanco, buscarMensagensEvolution, mapearStatusMensagem, escolherStatusMaisForte } from "./whatsapp-chat";
 
+type MensagemNormalizadaTeste = Parameters<typeof upsertMensagensNoBanco>[1]["mensagens"][number];
+
+function criarMensagemNormalizadaTeste(
+  overrides: Partial<MensagemNormalizadaTeste> = {},
+): MensagemNormalizadaTeste {
+  return {
+    messageId: "msg-1",
+    remoteJid: "5511999999999@s.whatsapp.net",
+    remoteJidAlt: null,
+    fromMe: false,
+    kind: "text",
+    tipoLabel: "Texto",
+    text: "Olá",
+    status: "DELIVERED",
+    timestamp: 1700000000,
+    timestampIso: "2023-11-14T00:00:00.000Z",
+    dadosAd: null,
+    error: null,
+    payloadJson: "{}",
+    ...overrides,
+  };
+}
+
 vi.mock("@/lib/prisma", () => ({
   prisma: {
     whatsappMensagem: {
       findMany: vi.fn(),
       createMany: vi.fn(),
       update: vi.fn(),
-    },
-  },
-}));
-
-vi.mock("@/lib/prisma", () => ({
-  prisma: {
-    whatsappMensagem: {
-      findMany: vi.fn().mockResolvedValue([]),
-      createMany: vi.fn().mockResolvedValue({ count: 0 }),
-      update: vi.fn().mockResolvedValue({ id: "msg-1" }),
     },
   },
 }));
@@ -48,17 +61,7 @@ describe("upsertMensagensNoBanco", () => {
       idLead: "lead-1",
       idWhatsappInstancia: "inst-1",
       mensagens: [
-        {
-          messageId: "msg-1",
-          remoteJid: "5511999999999@s.whatsapp.net",
-          fromMe: false,
-          kind: "text" as const,
-          text: "Olá",
-          status: "DELIVERED" as const,
-          timestamp: 1700000000,
-          error: null,
-          payloadJson: "{}",
-        },
+        criarMensagemNormalizadaTeste(),
       ],
     });
 
@@ -85,17 +88,7 @@ describe("upsertMensagensNoBanco", () => {
       idLead: "lead-1",
       idWhatsappInstancia: "inst-1",
       mensagens: [
-        {
-          messageId: "msg-1",
-          remoteJid: "5511999999999@s.whatsapp.net",
-          fromMe: false,
-          kind: "text" as const,
-          text: "Olá",
-          status: "DELIVERED" as const,
-          timestamp: 1700000000,
-          error: null,
-          payloadJson: "{}",
-        },
+        criarMensagemNormalizadaTeste(),
       ],
     });
 
@@ -122,17 +115,7 @@ describe("upsertMensagensNoBanco", () => {
       idLead: "lead-1",
       idWhatsappInstancia: "inst-1",
       mensagens: [
-        {
-          messageId: "msg-1",
-          remoteJid: "5511999999999@s.whatsapp.net",
-          fromMe: false,
-          kind: "text" as const,
-          text: "Olá",
-          status: "DELIVERED" as const,
-          timestamp: 1700000000,
-          error: null,
-          payloadJson: "{}",
-        },
+        criarMensagemNormalizadaTeste(),
       ],
     });
 
@@ -149,28 +132,8 @@ describe("upsertMensagensNoBanco", () => {
       idLead: "lead-1",
       idWhatsappInstancia: "inst-1",
       mensagens: [
-        {
-          messageId: "msg-1",
-          remoteJid: "5511999999999@s.whatsapp.net",
-          fromMe: false,
-          kind: "text" as const,
-          text: "Olá antiga",
-          status: "SENT" as const,
-          timestamp: 1700000000,
-          error: null,
-          payloadJson: "{}",
-        },
-        {
-          messageId: "msg-1",
-          remoteJid: "5511999999999@s.whatsapp.net",
-          fromMe: false,
-          kind: "text" as const,
-          text: "Olá nova",
-          status: "DELIVERED" as const,
-          timestamp: 1700000100,
-          error: null,
-          payloadJson: "{}",
-        },
+        criarMensagemNormalizadaTeste({ text: "Olá antiga", status: "SENT", timestamp: 1700000000 }),
+        criarMensagemNormalizadaTeste({ text: "Olá nova", status: "DELIVERED", timestamp: 1700000100 }),
       ],
     });
 

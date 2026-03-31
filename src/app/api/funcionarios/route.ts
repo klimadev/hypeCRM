@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import {
@@ -70,7 +71,7 @@ export async function GET(request: NextRequest) {
             { nome: { contains: busca } },
             { email: { contains: busca } },
             { cargo: { contains: busca } },
-            { pdv: { nome: { contains: busca } } },
+            { Pdv: { is: { nome: { contains: busca } } } },
           ],
         }
       : {}),
@@ -81,12 +82,12 @@ export async function GET(request: NextRequest) {
     ...(filtros.status !== "TODOS" ? { ativo: filtros.status === "ATIVO" } : {}),
   };
 
-  const orderByMap = {
+  const orderByMap: Record<string, unknown> = {
     nome: { nome: filtros.direcao },
     email: { email: filtros.direcao },
     cargo: { cargo: filtros.direcao },
     status: { ativo: filtros.direcao === "asc" ? "desc" : "asc" }, // Inverte: ativos primeiro (desc) ou inativos primeiro (asc)
-    pdv: { pdv: { nome: filtros.direcao } },
+    pdv: { Pdv: { nome: filtros.direcao } },
     criado_em: { criado_em: filtros.direcao },
   } as const;
 
@@ -97,13 +98,19 @@ export async function GET(request: NextRequest) {
     prisma.funcionario.count({ where }),
     prisma.funcionario.findMany({
       where,
-      orderBy,
+      orderBy: orderBy as never,
       skip,
       take: filtros.por_pagina,
       include: {
-        pdv: { select: { id: true, nome: true } },
+        Pdv: { select: { id: true, nome: true } },
       },
-    }),
+    }) as unknown as Array<{
+      id: string;
+      id_pdv: string;
+      ativo: boolean;
+      cargo: string;
+      Pdv: { id: string; nome: string };
+    }>,
     prisma.funcionario.count({ where: { ...whereBase, ativo: true } }),
     prisma.funcionario.count({ where: { ...whereBase, ativo: false } }),
     prisma.funcionario.count({ where: { ...whereBase, cargo: "GERENTE" } }),
@@ -212,6 +219,7 @@ export async function POST(request: NextRequest) {
   try {
     const funcionario = await prisma.funcionario.create({
       data: {
+        id: randomUUID(),
         id_empresa: auth.sessao.id_empresa,
         id_pdv,
         nome,
@@ -220,9 +228,15 @@ export async function POST(request: NextRequest) {
         cargo,
       },
       include: {
-        pdv: { select: { id: true, nome: true } },
+        Pdv: { select: { id: true, nome: true } },
       },
-    });
+    }) as unknown as {
+      id: string;
+      id_pdv: string;
+      ativo: boolean;
+      cargo: string;
+      Pdv: { id: string; nome: string };
+    };
 
     return NextResponse.json({
       funcionario,
@@ -231,7 +245,7 @@ export async function POST(request: NextRequest) {
         id_pdv: funcionario.id_pdv,
         ativo: funcionario.ativo,
         cargo: funcionario.cargo,
-        pdv: funcionario.pdv,
+        pdv: funcionario.Pdv,
       },
     });
   } catch (erro: unknown) {
@@ -386,6 +400,7 @@ export async function PATCH(request: NextRequest) {
 
         await prisma.auditoriaEquipe.create({
           data: {
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: atual.id,
             acao: "ATIVAR_FUNCIONARIO",
@@ -408,6 +423,7 @@ export async function PATCH(request: NextRequest) {
 
         await prisma.auditoriaEquipe.create({
           data: {
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: atual.id,
             acao: "ATUALIZAR_CARGO_FUNCIONARIO",
@@ -436,6 +452,7 @@ export async function PATCH(request: NextRequest) {
 
         await prisma.auditoriaEquipe.create({
           data: {
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: atual.id,
             acao: "ATUALIZAR_PDV_FUNCIONARIO",
@@ -469,6 +486,7 @@ export async function PATCH(request: NextRequest) {
 
           await tx.reatribuicaoFuncionario.create({
             data: {
+              id: randomUUID(),
               id_empresa: auth.sessao.id_empresa,
               id_funcionario_origem: atual.id,
               id_funcionario_destino: destinoInativacao.id,
@@ -482,6 +500,7 @@ export async function PATCH(request: NextRequest) {
           await tx.auditoriaEquipe.createMany({
             data: [
               {
+                id: randomUUID(),
                 id_empresa: auth.sessao.id_empresa,
                 id_funcionario_alvo: atual.id,
                 acao: "INATIVAR_FUNCIONARIO",
@@ -492,6 +511,7 @@ export async function PATCH(request: NextRequest) {
                 autor_id: auth.sessao.id_usuario,
               },
               {
+                id: randomUUID(),
                 id_empresa: auth.sessao.id_empresa,
                 id_funcionario_alvo: atual.id,
                 acao: "REATRIBUIR_LEADS_FUNCIONARIO",

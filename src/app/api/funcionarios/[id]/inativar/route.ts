@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import {
   exigirSessao,
@@ -119,6 +120,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
       await tx.reatribuicaoFuncionario.create({
         data: {
+          id: randomUUID(),
           id_empresa: auth.sessao.id_empresa,
           id_funcionario_origem: id,
           id_funcionario_destino,
@@ -132,6 +134,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       await tx.auditoriaEquipe.createMany({
         data: [
           {
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: id,
             acao: "DELETAR_FUNCIONARIO",
@@ -142,6 +145,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
             autor_id: auth.sessao.id_usuario,
           },
           {
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: id,
             acao: "REATRIBUIR_LEADS_FUNCIONARIO",

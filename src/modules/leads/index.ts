@@ -1,0 +1,1 @@
+export { ModuloLeads } from "./page";

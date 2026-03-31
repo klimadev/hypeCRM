@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { exigirSessao, respostaSemPermissao, whereLeadsPorPerfil } from "@/lib/permissoes";
+import { exigirSessao, respostaSemPermissao, whereNegociosPorPerfil } from "@/lib/permissoes";
 import { esquemaPagarParcela } from "@/lib/validacoes";
 import { badRequest, notFound } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { obterNegocioPorId } from "@/lib/negocios";
 
 type Params = {
   params: Promise<{ id: string }>;
@@ -32,10 +33,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const parcela = await prisma.parcela.findFirst({
     where: { id, id_empresa: auth.sessao.id_empresa },
-    include: {
-      lead: {
-        select: { id: true },
-      },
+    select: {
+      id: true,
+      id_negocio: true,
+      status: true,
     },
   });
 
@@ -43,13 +44,18 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return notFound("Parcela nao encontrada.");
   }
 
-  const wherePermitido = await whereLeadsPorPerfil(auth.sessao);
-  const leadPermitido = await prisma.lead.findFirst({
-    where: { id: parcela.lead.id, ...wherePermitido },
-    select: { id: true },
+  if (!parcela.id_negocio) {
+    return notFound("Parcela nao vinculada a negocio.");
+  }
+
+  const wherePermitido = await whereNegociosPorPerfil(auth.sessao);
+  const negocioPermitido = await obterNegocioPorId({
+    idEmpresa: auth.sessao.id_empresa,
+    idNegocio: parcela.id_negocio,
+    whereExtra: wherePermitido,
   });
 
-  if (!leadPermitido) {
+  if (!negocioPermitido) {
     return notFound("Parcela nao encontrada.");
   }
 

@@ -1,3 +1,4 @@
+import { randomUUID } from "crypto";
 import { NextRequest } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { withPerfis } from "@/lib/api/route-guards";
@@ -23,7 +24,7 @@ export async function GET(
         id_empresa: sessao.id_empresa,
       },
       include: {
-        acoes: { orderBy: { ordem: "asc" } },
+        AutomacaoAcao: { orderBy: { ordem: "asc" } },
       },
     });
 
@@ -52,7 +53,7 @@ export async function PUT(
         id_empresa: sessao.id_empresa,
       },
       include: {
-        acoes: true,
+        AutomacaoAcao: true,
       },
     });
 
@@ -98,6 +99,7 @@ export async function PUT(
 
         await tx.automacaoAcao.createMany({
           data: dados.acoes.map((acao, index) => ({
+            id: randomUUID(),
             id_automacao: id,
             tipo: acao.tipo,
             ordem: acao.ordem ?? index,
@@ -114,7 +116,7 @@ export async function PUT(
         where: { id },
         data: updateData,
         include: {
-          acoes: { orderBy: { ordem: "asc" } },
+          AutomacaoAcao: { orderBy: { ordem: "asc" } },
         },
       });
     });

@@ -1,7 +1,31 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { STATUS_AGENDAMENTO } from "@/lib/validacoes";
 import { processarJob } from "./dispatch-whatsapp";
 import { automacaoArquivada } from "./config";
+import type { JobComRelacoes } from "./agendamentos";
+
+const jobPendenteArgs = Prisma.validator<Prisma.AutomacaoAgendamentoDefaultArgs>()({
+  include: {
+    Automacao: {
+      include: {
+        AutomacaoAcao: {
+          orderBy: { ordem: "asc" },
+          include: {
+            WhatsappInstancia: {
+              select: {
+                id: true,
+                instance_name: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    Lead: true,
+    Negocio: true,
+  },
+});
 
 export interface DispatchStats {
   sync_whatsapp: { automacoes_processadas: number; jobs_criados: number; jobs_cancelados: number };
@@ -28,7 +52,7 @@ export async function processarDispatch(
   await recuperarJobsStale(options.id_empresa, options.automacao_id);
 
   const jobsPendentes = await buscarJobsPendentes(options.id_empresa, options.automacao_id);
-  const jobsElegiveis = jobsPendentes.filter((job) => !automacaoArquivada(job.automacao.config_json));
+  const jobsElegiveis = jobsPendentes.filter((job) => !automacaoArquivada(job.Automacao.config_json));
   stats.processados.total = jobsElegiveis.length;
 
   for (const job of jobsElegiveis) {
@@ -45,50 +69,43 @@ export async function processarDispatch(
 async function recuperarJobsStale(idEmpresa: string, automacaoId?: string): Promise<void> {
   const staleTimeout = new Date(Date.now() - 15 * 60 * 1000);
 
-  await prisma.automacaoAgendamento.updateMany({
-    where: {
-      status: STATUS_AGENDAMENTO.PROCESSANDO,
-      atualizado_em: { lt: staleTimeout },
-      automacao: {
+  const whereStale: Prisma.AutomacaoAgendamentoWhereInput = {
+    status: STATUS_AGENDAMENTO.PROCESSANDO,
+    atualizado_em: { lt: staleTimeout },
+    Automacao: {
+      is: {
         id_empresa: idEmpresa,
         ativo: true,
         ...(automacaoId ? { id: automacaoId } : {}),
       },
     },
+  };
+
+  await prisma.automacaoAgendamento.updateMany({
+    where: whereStale,
     data: { status: STATUS_AGENDAMENTO.PENDENTE },
   });
 }
 
 async function buscarJobsPendentes(idEmpresa: string, automacaoId?: string) {
-  return prisma.automacaoAgendamento.findMany({
-    where: {
-      status: STATUS_AGENDAMENTO.PENDENTE,
-      agendado_para: { lte: new Date() },
-      automacao: {
+  const wherePendentes: Prisma.AutomacaoAgendamentoWhereInput = {
+    status: STATUS_AGENDAMENTO.PENDENTE,
+    agendado_para: { lte: new Date() },
+    Automacao: {
+      is: {
         id_empresa: idEmpresa,
         ativo: true,
         ...(automacaoId ? { id: automacaoId } : {}),
       },
     },
-    include: {
-      automacao: {
-        include: {
-          acoes: {
-            orderBy: { ordem: "asc" },
-            include: {
-              instancia_whatsapp: {
-                select: {
-                  id: true,
-                  instance_name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      lead: true,
-    },
+  };
+
+  const jobs = await prisma.automacaoAgendamento.findMany({
+    where: wherePendentes,
+    include: jobPendenteArgs.include,
     take: 100,
     orderBy: { agendado_para: "asc" },
   });
+
+  return jobs as JobComRelacoes[];
 }

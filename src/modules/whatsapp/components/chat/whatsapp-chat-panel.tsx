@@ -10,7 +10,7 @@ import { WhatsappMessageList } from "./whatsapp-message-list";
 import { WhatsappMessageInput } from "./whatsapp-message-input";
 
 type Props = {
-  leadNome: string;
+  nomeContato: string;
   messages: WhatsappChatMessage[];
   connectionStatus: ChatConnectionStatus;
   loading: boolean;
@@ -23,7 +23,7 @@ type Props = {
 };
 
 export function WhatsappChatPanel({
-  leadNome,
+  nomeContato,
   messages,
   connectionStatus,
   loading,
@@ -47,10 +47,10 @@ export function WhatsappChatPanel({
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-semibold text-[var(--text-primary)] shadow-[var(--shadow-sm)]">
-            {leadNome.charAt(0).toUpperCase()}
+            {nomeContato.charAt(0).toUpperCase()}
           </div>
           <div>
-            <p className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">{leadNome}</p>
+            <p className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">{nomeContato}</p>
             <p className="text-xs text-[var(--text-secondary)]">Conversa ativa</p>
           </div>
         </div>

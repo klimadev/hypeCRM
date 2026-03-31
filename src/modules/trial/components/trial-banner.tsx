@@ -1,7 +1,6 @@
 "use client";
 
 import { AlertCircle, AlertTriangle, CheckCircle2, Clock, Sparkles } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useTrialStatus } from "../hooks/use-trial-status";
 

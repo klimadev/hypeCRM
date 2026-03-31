@@ -32,18 +32,22 @@ export async function detectarPendenciasDinamicas(
     select: {
       id: true,
       atualizado_em: true,
-      estagio: {
+      EstagioFunil: {
         select: {
           tipo: true,
           nome: true,
         },
       },
     },
-  });
+  }) as unknown as Array<{
+    id: string;
+    atualizado_em: Date;
+      EstagioFunil: { tipo: string; nome: string };
+  }>;
 
   const pendencias: PendenciaDinamica[] = [];
   for (const lead of leads) {
-    const p = calcularPendenciasLead(lead, lead.estagio);
+    const p = calcularPendenciasLead(lead, lead.EstagioFunil);
     pendencias.push(...p);
   }
 
@@ -56,18 +60,22 @@ export async function detectarPendenciasDinamicasLead(idLead: string): Promise<P
     select: {
       id: true,
       atualizado_em: true,
-      estagio: {
+      EstagioFunil: {
         select: {
           tipo: true,
           nome: true,
         },
       },
     },
-  });
+  }) as unknown as {
+    id: string;
+    atualizado_em: Date;
+    EstagioFunil: { tipo: string; nome: string };
+  } | null;
 
   if (!lead) return [];
 
-  return calcularPendenciasLead(lead, lead.estagio);
+  return calcularPendenciasLead(lead, lead.EstagioFunil);
 }
 
 export async function getLeadsComPendencias(

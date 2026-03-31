@@ -10,28 +10,31 @@ type ResultadoApi<T> =
 
 export type ListagemKanban = {
   estagios: Estagio[];
-  leads: Lead[];
+  negocios: Lead[];
   funcionarios: Funcionario[];
   pdvs: Array<{ id: string; nome: string }>;
 };
 
-export type PayloadCriarLead = {
-  nome: string;
-  telefone: string;
-  valor_oportunidade: number;
+export type PayloadCriarNegocio = {
+  titulo: string;
+  valor_estimado: number;
   id_estagio: string;
   id_funcionario: string;
+  lead_ids?: string[];
+  id_funil?: string;
+  probabilidade?: number;
+  observacoes_comerciais?: string | null;
+  motivo_perda?: string | null;
 };
 
-export type PayloadMoverLeadKanban = {
+export type PayloadMoverNegocioKanban = {
   id_estagio: string;
   motivo_perda?: string;
 };
 
-export type PayloadAtualizarLeadKanban = {
-  observacoes: Lead["observacoes"];
-  telefone: Lead["telefone"];
-  valor_oportunidade: number;
+export type PayloadAtualizarNegocioKanban = {
+  observacoes_comerciais: Lead["observacoes"];
+  valor_estimado: number;
   id_funcionario: Lead["id_funcionario"];
 };
 
@@ -46,9 +49,99 @@ async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
   return (await resposta.json().catch(() => ({}))) as T;
 }
 
+type ApiLeadPrincipal = {
+  id: string;
+  nome: string;
+  telefone: string;
+  email?: string | null;
+  origem?: Lead["origem"];
+  id_negocio?: string | null;
+  atualizado_em?: string | Date;
+  fonte?: string | null;
+  empresa_origem?: string | null;
+  observacoes?: string | null;
+  motivo_perda?: string | null;
+  id_pdv?: string | null;
+  dados_extras?: string | null;
+  anuncio_titulo?: string | null;
+  anuncio_descricao?: string | null;
+  anuncio_url?: string | null;
+};
+
+type ApiNegocioKanban = {
+  id: string;
+  id_estagio: string;
+  id_funcionario: string;
+  id_pdv?: string | null;
+  titulo: string;
+  valor_estimado: number;
+  valor_fechado?: number | null;
+  probabilidade?: number | null;
+  motivo_perda?: string | null;
+  observacoes_comerciais?: string | null;
+  atualizado_em: string;
+  lead_principal?: ApiLeadPrincipal | null;
+  leads?: ApiLeadPrincipal[];
+};
+
+type ApiNegocioListagemResponse = {
+  negocios?: ApiNegocioKanban[];
+  estagios?: Estagio[];
+  funcionarios?: Funcionario[];
+  pdvs?: Array<{ id: string; nome: string }>;
+  erro?: string;
+};
+
+function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
+  const leadPrincipal = negocio.lead_principal ?? null;
+  const leadsVinculados = negocio.leads ?? [];
+  const leadPrincipalEfetivo = leadPrincipal ?? leadsVinculados[0] ?? null;
+
+  return {
+    id: negocio.id,
+    id_negocio: negocio.id,
+    id_estagio: negocio.id_estagio,
+    id_funcionario: negocio.id_funcionario,
+    nome: negocio.titulo,
+    telefone: leadPrincipalEfetivo?.telefone ?? "",
+    valor_oportunidade: negocio.valor_estimado,
+    probabilidade: negocio.probabilidade ?? undefined,
+    fonte: leadPrincipalEfetivo?.fonte ?? null,
+    empresa_origem: leadPrincipalEfetivo?.empresa_origem ?? null,
+    observacoes: negocio.observacoes_comerciais ?? null,
+    motivo_perda: negocio.motivo_perda ?? null,
+    origem: leadPrincipalEfetivo?.origem,
+    atualizado_em: negocio.atualizado_em,
+    id_pdv: leadPrincipalEfetivo?.id_pdv ?? negocio.id_pdv ?? null,
+    dados_extras: leadPrincipalEfetivo?.dados_extras ?? null,
+    anuncio_titulo: leadPrincipalEfetivo?.anuncio_titulo ?? null,
+    anuncio_descricao: leadPrincipalEfetivo?.anuncio_descricao ?? null,
+    anuncio_url: leadPrincipalEfetivo?.anuncio_url ?? null,
+    lead_principal: leadPrincipalEfetivo
+      ? {
+          id: leadPrincipalEfetivo.id,
+          nome: leadPrincipalEfetivo.nome,
+          telefone: leadPrincipalEfetivo.telefone,
+          email: leadPrincipalEfetivo.email ?? null,
+          origem: leadPrincipalEfetivo.origem,
+          id_negocio: leadPrincipalEfetivo.id_negocio ?? negocio.id,
+          atualizado_em: typeof leadPrincipalEfetivo.atualizado_em === "string"
+            ? leadPrincipalEfetivo.atualizado_em
+            : leadPrincipalEfetivo.atualizado_em?.toISOString(),
+        }
+      : null,
+    leads_vinculados: leadsVinculados.map((lead) => ({
+      id: lead.id,
+      nome: lead.nome,
+      telefone: lead.telefone,
+      id_negocio: lead.id_negocio ?? negocio.id,
+    })),
+  };
+}
+
 export async function listarKanban(): Promise<ResultadoApi<ListagemKanban>> {
-  const resposta = await fetch("/api/leads");
-  const json = await lerJsonSeguro<Partial<ListagemKanban> & ApiErro>(resposta);
+  const resposta = await fetch("/api/negocios");
+  const json = await lerJsonSeguro<ApiNegocioListagemResponse>(resposta);
 
   if (!resposta.ok) {
     return { ok: false, erro: json.erro ?? "Erro ao carregar dados do Kanban." };
@@ -58,114 +151,78 @@ export async function listarKanban(): Promise<ResultadoApi<ListagemKanban>> {
     ok: true,
     dados: {
       estagios: json.estagios ?? [],
-      leads: json.leads ?? [],
+      negocios: (json.negocios ?? []).map(mapearNegocioParaCard),
       funcionarios: json.funcionarios ?? [],
       pdvs: json.pdvs ?? [],
     },
   };
 }
 
-export async function criarLeadKanban(payload: PayloadCriarLead): Promise<ResultadoApi<{ lead?: Lead }>> {
-  const resposta = await fetch("/api/leads", {
+export async function criarNegocioKanban(payload: PayloadCriarNegocio): Promise<ResultadoApi<{ negocio?: Lead }>> {
+  const resposta = await fetch("/api/negocios", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      titulo: payload.titulo,
+      valor_estimado: payload.valor_estimado,
+      id_estagio: payload.id_estagio,
+      id_funcionario: payload.id_funcionario,
+      lead_ids: payload.lead_ids ?? [],
+      id_funil: payload.id_funil,
+      probabilidade: payload.probabilidade,
+      observacoes_comerciais: payload.observacoes_comerciais,
+      motivo_perda: payload.motivo_perda,
+    }),
   });
 
-  const json = await lerJsonSeguro<{ lead?: Lead } & ApiErro>(resposta);
+  const json = await lerJsonSeguro<{ negocio?: Lead } & ApiErro>(resposta);
   if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao criar lead." };
+    return { ok: false, erro: json.erro ?? "Erro ao criar negócio." };
   }
 
-  return { ok: true, dados: { lead: json.lead } };
+  return { ok: true, dados: { negocio: json.negocio ? mapearNegocioParaCard(json.negocio as unknown as ApiNegocioKanban) : undefined } };
 }
 
-export async function sincronizarWhatsappKanban(params?: string): Promise<
-  ResultadoApi<{
-    criados: number;
-    instancias_ignoradas: Array<{ id: string; nome: string; motivo: string }>;
-    timestamp_sync: string;
-  }>
-> {
-  const url = params ? `/api/leads/sync-whatsapp?${params}` : "/api/leads/sync-whatsapp";
-
-  const resposta = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-  });
-
-  const json = await lerJsonSeguro<{
-    criados?: number;
-    instancias_ignoradas?: Array<{ id: string; nome: string; motivo: string }>;
-    timestamp_sync?: string;
-  } & ApiErro>(resposta);
-  if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao sincronizar contatos do WhatsApp." };
-  }
-
-  return {
-    ok: true,
-    dados: {
-      criados: json.criados ?? 0,
-      instancias_ignoradas: json.instancias_ignoradas ?? [],
-      timestamp_sync: json.timestamp_sync ?? new Date().toISOString(),
-    },
-  };
-}
-
-export async function excluirLeadKanban(idLead: string): Promise<ResultadoApi<null>> {
-  const resposta = await fetch(`/api/leads/${idLead}`, {
-    method: "DELETE",
-  });
-
-  const json = await lerJsonSeguro<ApiErro>(resposta);
-  if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao excluir lead." };
-  }
-
-  return { ok: true, dados: null };
-}
-
-export async function moverLeadKanban(
-  idLead: string,
-  payload: PayloadMoverLeadKanban,
-): Promise<ResultadoApi<{ lead?: Lead; mensagem?: string }>> {
-  const resposta = await fetch(`/api/leads/${idLead}/mover`, {
+export async function moverNegocioKanban(
+  idNegocio: string,
+  payload: PayloadMoverNegocioKanban,
+): Promise<ResultadoApi<{ negocio?: Lead; mensagem?: string }>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}/mover`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  const json = await lerJsonSeguro<{ lead?: Lead; mensagem?: string } & ApiErro>(resposta);
+  const json = await lerJsonSeguro<{ negocio?: Lead; mensagem?: string } & ApiErro>(resposta);
   if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Nao foi possivel mover o lead." };
+    return { ok: false, erro: json.erro ?? "Nao foi possivel mover o negócio." };
   }
 
   return {
     ok: true,
     dados: {
-      lead: json.lead,
+      negocio: json.negocio ? mapearNegocioParaCard(json.negocio as unknown as ApiNegocioKanban) : undefined,
       mensagem: json.mensagem,
     },
   };
 }
 
-export async function atualizarLeadKanban(
-  idLead: string,
-  payload: PayloadAtualizarLeadKanban,
-): Promise<ResultadoApi<{ lead?: Lead }>> {
-  const resposta = await fetch(`/api/leads/${idLead}`, {
+export async function atualizarNegocioKanban(
+  idNegocio: string,
+  payload: PayloadAtualizarNegocioKanban,
+): Promise<ResultadoApi<{ negocio?: Lead }>> {
+  const resposta = await fetch(`/api/negocios/${idNegocio}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
   });
 
-  const json = await lerJsonSeguro<{ lead?: Lead } & ApiErro>(resposta);
+  const json = await lerJsonSeguro<{ negocio?: Lead } & ApiErro>(resposta);
   if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao salvar lead." };
+    return { ok: false, erro: json.erro ?? "Erro ao salvar negócio." };
   }
 
-  return { ok: true, dados: { lead: json.lead } };
+  return { ok: true, dados: { negocio: json.negocio ? mapearNegocioParaCard(json.negocio as unknown as ApiNegocioKanban) : undefined } };
 }
 
 export async function uploadDocumentoKanban(arquivo: File): Promise<ResultadoApi<{ url: string }>> {
@@ -187,14 +244,6 @@ export async function uploadDocumentoKanban(arquivo: File): Promise<ResultadoApi
   }
 
   return { ok: true, dados: { url: json.url } };
-}
-
-export async function aprovarLeadKanban(_idLead: string): Promise<ResultadoApi<{ lead?: Lead }>> {
-  void _idLead;
-  return {
-    ok: false,
-    erro: "Sistema de aprovação descontinuado. Mova o lead para 'Fechado' usando a função de mover.",
-  };
 }
 
 type PendenciaInfoApi = {
@@ -228,7 +277,7 @@ export async function listarPendenciasGlobaisKanban(): Promise<ResultadoApi<{ pe
   }
 }
 
-export async function redistribuirLeadsEmAtendimentoKanban(
+export async function redistribuirNegociosEmAtendimentoKanban(
   payload: PayloadRedistribuirEmAtendimentoKanban = {},
 ): Promise<
   ResultadoApi<{

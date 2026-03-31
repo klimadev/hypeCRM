@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import {
   exigirSessao,
@@ -108,6 +109,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       if (auditorias.length > 0) {
         await tx.auditoriaEquipe.createMany({
           data: auditorias.map((item) => ({
+            id: randomUUID(),
             id_empresa: auth.sessao.id_empresa,
             id_funcionario_alvo: id,
             acao: "ATUALIZAR_DADOS_FUNCIONARIO",

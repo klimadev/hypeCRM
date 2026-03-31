@@ -12,7 +12,7 @@ type SyncResultado = {
 };
 
 type UseKanbanRealtimeParams = {
-  leadsRef: React.MutableRefObject<Lead[]>;
+  negociosRef: React.MutableRefObject<Lead[]>;
   onSync: (params: { silencioso?: boolean }) => Promise<void>;
   addToast?: (params: {
     type: "success" | "error" | "warning";
@@ -22,13 +22,13 @@ type UseKanbanRealtimeParams = {
 };
 
 function contarMovimentacoesRemotas(anteriores: Lead[], atuais: Lead[]): number {
-  const mapaAnterior = new Map(anteriores.map((lead) => [lead.id, lead]));
+  const mapaAnterior = new Map(anteriores.map((negocio) => [negocio.id, negocio]));
   let total = 0;
 
-  for (const leadAtual of atuais) {
-    const leadAnterior = mapaAnterior.get(leadAtual.id);
-    if (!leadAnterior) continue;
-    if (leadAnterior.id_estagio !== leadAtual.id_estagio) {
+  for (const negocioAtual of atuais) {
+    const negocioAnterior = mapaAnterior.get(negocioAtual.id);
+    if (!negocioAnterior) continue;
+    if (negocioAnterior.id_estagio !== negocioAtual.id_estagio) {
       total += 1;
     }
   }
@@ -38,18 +38,18 @@ function contarMovimentacoesRemotas(anteriores: Lead[], atuais: Lead[]): number 
 
 async function buscarVersao(): Promise<string | null> {
   try {
-    const resposta = await fetch("/api/leads/sync", {
+    const resposta = await fetch("/api/negocios", {
       credentials: "include",
     });
     if (!resposta.ok) return null;
-    const json = await resposta.json() as SyncResultado;
+    const json = await resposta.json() as SyncResultado & { versao?: string | null };
     return json.versao;
   } catch {
     return null;
   }
 }
 
-export function useKanbanRealtime({ leadsRef, onSync, addToast }: UseKanbanRealtimeParams) {
+export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRealtimeParams) {
   const versaoRef = useRef<string | null>(null);
   const movimentoLocalAteRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -91,12 +91,12 @@ export function useKanbanRealtime({ leadsRef, onSync, addToast }: UseKanbanRealt
       // Buscar dados completos para contar movimentações e mostrar toast
       const resposta = await listarKanban();
       if (resposta.ok) {
-        const totalMovimentacoes = contarMovimentacoesRemotas(leadsRef.current, resposta.dados.leads);
+        const totalMovimentacoes = contarMovimentacoesRemotas(negociosRef.current, resposta.dados.negocios);
 
         if (totalMovimentacoes > 0) {
           addToast?.({
             type: "warning",
-            title: `Outro usuario moveu ${totalMovimentacoes} ${totalMovimentacoes === 1 ? "lead" : "leads"}`,
+            title: `Outro usuario moveu ${totalMovimentacoes} ${totalMovimentacoes === 1 ? "negócio" : "negócios"}`,
             description: "O Kanban foi sincronizado automaticamente.",
           });
         }
@@ -104,7 +104,7 @@ export function useKanbanRealtime({ leadsRef, onSync, addToast }: UseKanbanRealt
 
       await onSync({ silencioso: true });
     }
-  }, [onSync, addToast, leadsRef]);
+  }, [onSync, addToast, negociosRef]);
 
   // Iniciar polling ao montar
   useEffect(() => {

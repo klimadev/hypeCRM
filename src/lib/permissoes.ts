@@ -272,3 +272,27 @@ export async function whereLeadsPorPerfil(sessao: SessaoToken) {
   // EMPRESA: sees all company leads
   return { id_empresa: sessao.id_empresa };
 }
+
+export async function whereNegociosPorPerfil(sessao: SessaoToken) {
+  if (sessao.perfil === "COLABORADOR") {
+    return {
+      id_empresa: sessao.id_empresa,
+      id_funcionario: sessao.id_usuario,
+    };
+  }
+
+  if (sessao.perfil === "GERENTE" && sessao.id_pdv) {
+    const funcionariosDoPdv = await prisma.funcionario.findMany({
+      where: { id_pdv: sessao.id_pdv },
+      select: { id: true },
+    });
+    const idsFuncionarios = funcionariosDoPdv.map((f) => f.id);
+
+    return {
+      id_empresa: sessao.id_empresa,
+      id_funcionario: { in: idsFuncionarios },
+    };
+  }
+
+  return { id_empresa: sessao.id_empresa };
+}

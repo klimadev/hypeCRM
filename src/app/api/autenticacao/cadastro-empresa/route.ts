@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import { createHash } from "crypto";
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { criarTokenSessao, definirCookieSessao } from "@/lib/autenticacao";
@@ -97,6 +98,7 @@ export async function POST(request: Request) {
     const empresa = await prisma.$transaction(async (tx) => {
       const novaEmpresa = await tx.empresa.create({
         data: {
+          id: randomUUID(),
           nome,
           email,
           senha_hash,
@@ -107,9 +109,24 @@ export async function POST(request: Request) {
         },
       });
 
+      const funilPadrao = await tx.funil.create({
+        data: {
+          id: randomUUID(),
+          id_empresa: novaEmpresa.id,
+          nome: "Funil principal",
+          slug: "funil-principal",
+          descricao: "Funil padrao criado automaticamente",
+          padrao: true,
+          ativo: true,
+          ordem: 0,
+        },
+      });
+
       await tx.estagioFunil.createMany({
         data: ESTAGIOS_FIXOS_PADRAO.map((estagio) => ({
+          id: randomUUID(),
           id_empresa: novaEmpresa.id,
+          id_funil: funilPadrao.id,
           nome: estagio.nome,
           tipo: estagio.tipo,
           ordem: estagio.ordem,
@@ -118,6 +135,7 @@ export async function POST(request: Request) {
 
       await tx.registroIP.create({
         data: {
+          id: randomUUID(),
           ip_address: ipAddress,
           email_hash: emailHash,
           id_empresa: novaEmpresa.id,

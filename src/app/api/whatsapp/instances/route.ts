@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { ensureSqliteOptimizations, prisma } from "@/lib/prisma";
 import { exigirSessao, podeVerEquipe, respostaSemPermissao } from "@/lib/permissoes";
 import { criarInstancia } from "@/lib/evolution-api";
@@ -141,6 +142,7 @@ export async function POST(request: NextRequest) {
         () =>
           prisma.whatsappInstancia.create({
             data: {
+              id: randomUUID(),
               id_empresa: auth.sessao.id_empresa,
               id_criador: auth.sessao.id_usuario,
               nome,

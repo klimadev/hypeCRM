@@ -16,7 +16,7 @@ export type PendenciaGravidade = "critica" | "alerta" | "info";
 
 export type ResumoPendencias = {
   total: number;
-  totalLeads: number;
+  totalNegocios: number;
   porTipo: Record<TipoPendencia, number>;
   porGravidade: Record<PendenciaGravidade, number>;
 };
@@ -148,7 +148,7 @@ function detectarNovasPendenciasNaoNotificadas(
 
 type PendenciasContextValue = {
   pendencias: PendenciaInfo[];
-  pendenciasPorLead: Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }>;
+  pendenciasPorNegocio: Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }>;
   resumo: ResumoPendencias;
   carregando: boolean;
   recarregar: () => void;
@@ -343,13 +343,13 @@ export function usePendenciasProvider() {
 
     return {
       total: pendencias.filter((p) => !p.resolvida).length,
-      totalLeads: leadsSet.size,
+      totalNegocios: leadsSet.size,
       porTipo,
       porGravidade,
     };
   }, [pendencias]);
 
-  const pendenciasPorLead = useMemo(() => {
+  const pendenciasPorNegocio = useMemo(() => {
     const mapa: Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }> = {};
 
     for (const p of pendencias) {
@@ -372,7 +372,7 @@ export function usePendenciasProvider() {
 
   return {
     pendencias,
-    pendenciasPorLead,
+    pendenciasPorNegocio,
     resumo,
     carregando,
     recarregar,
@@ -389,8 +389,8 @@ export function usePendenciasProvider() {
 
 const defaultValue = {
   pendencias: [],
-  pendenciasPorLead: {} as Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }>,
-  resumo: { total: 0, totalLeads: 0, porTipo: {} as Record<TipoPendencia, number>, porGravidade: { critica: 0, alerta: 0, info: 0 } },
+  pendenciasPorNegocio: {} as Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }>,
+  resumo: { total: 0, totalNegocios: 0, porTipo: {} as Record<TipoPendencia, number>, porGravidade: { critica: 0, alerta: 0, info: 0 } },
   carregando: true,
   recarregar: () => {},
   forcarAtualizacao: () => {},

@@ -4,22 +4,22 @@ import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/toast";
 import {
   gerarParcelas,
-  listarParcelasLead,
+  listarParcelasNegocio,
   pagarParcela as apiPagarParcela,
   type Parcela,
 } from "@/lib/api/parcelas";
 import { computarStatusParcelas } from "@/lib/financeiro/parcelas";
 import { aplicaMascaraMoedaBr, converteMoedaBrParaNumero } from "@/lib/utils";
 
-type UseLeadParcelasParams = {
-  leadId?: string;
+type UseNegocioParcelasParams = {
+  negocioId?: string;
 };
 
 function hojeIso() {
   return new Date().toISOString().slice(0, 10);
 }
 
-export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
+export function useNegocioParcelas({ negocioId }: UseNegocioParcelasParams) {
   const { addToast } = useToast();
   const [parcelas, setParcelas] = useState<Parcela[]>([]);
   const [loading, setLoading] = useState(false);
@@ -33,14 +33,14 @@ export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
   const [pagando, setPagando] = useState<string | null>(null);
 
   const carregarParcelas = useCallback(async () => {
-    if (!leadId) {
+    if (!negocioId) {
       setParcelas([]);
       return;
     }
     setLoading(true);
     setError(null);
 
-    const resultado = await listarParcelasLead(leadId);
+    const resultado = await listarParcelasNegocio(negocioId);
     if (!resultado.ok) {
       setError(resultado.erro);
       setLoading(false);
@@ -49,7 +49,7 @@ export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
 
     setParcelas(computarStatusParcelas(resultado.dados.parcelas));
     setLoading(false);
-  }, [leadId]);
+  }, [negocioId]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -64,7 +64,7 @@ export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
   }, []);
 
   const gerarPlano = useCallback(async () => {
-    if (!leadId) return;
+    if (!negocioId) return;
     setGerando(true);
     setError(null);
 
@@ -72,8 +72,8 @@ export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
     const quantidade = Number(quantidadeParcelas);
     const valorPorParcela = valorTotalNumero / quantidade;
 
-    const resultado = await gerarParcelas({
-      id_lead: leadId,
+      const resultado = await gerarParcelas({
+      id_negocio: negocioId,
       valor_parcela: valorPorParcela,
       quantidade_parcelas: quantidade,
       data_primeiro_vencimento: dataPrimeiroVencimento,
@@ -95,7 +95,7 @@ export function useLeadParcelas({ leadId }: UseLeadParcelasParams) {
     setValorTotal("");
     setQuantidadeParcelas("");
     await carregarParcelas();
-  }, [addToast, carregarParcelas, dataPrimeiroVencimento, leadId, quantidadeParcelas, valorTotal]);
+  }, [addToast, carregarParcelas, dataPrimeiroVencimento, negocioId, quantidadeParcelas, valorTotal]);
 
   const pagarParcela = useCallback(
     async (idParcela: string, dataPagamento?: string) => {

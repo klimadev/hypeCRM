@@ -1,13 +1,11 @@
 "use client";
 
 import { ReactNode } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-import { springs } from "@/lib/animations/springs";
 
 const optimisticSyncVariants = cva(
-  "rounded-[var(--radius-control)] border border-dashed p-2 opacity-80 shadow-[var(--shadow-sm)]",
+  "rounded-[var(--radius-control)] border border-dashed p-2 opacity-80 shadow-[var(--shadow-sm)] transition-[background-color,border-color,box-shadow,opacity,transform] duration-150 ease-[var(--ease-productive)] motion-reduce:transition-none",
   {
   variants: {
     variant: {
@@ -49,29 +47,9 @@ export function OptimisticSync({
   variant,
 }: OptimisticSyncProps) {
   return (
-    <AnimatePresence mode="wait">
-      {active ? (
-        <motion.div
-          key="optimistic"
-          className={cn(optimisticSyncVariants({ variant }), className)}
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1, transition: springs.snappy }}
-          exit={{ opacity: 0, scale: 0.98, transition: springs.stiff }}
-        >
-          {children}
-          <p className={optimisticSyncLabelVariants({ variant })}>
-            {label}
-          </p>
-        </motion.div>
-      ) : (
-        <motion.div
-          key="confirmed"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1, transition: springs.smooth }}
-        >
-          {children}
-        </motion.div>
-      )}
-    </AnimatePresence>
+    <div className={cn(optimisticSyncVariants({ variant }), className)} aria-busy={active}>
+      {children}
+      {active ? <p className={optimisticSyncLabelVariants({ variant })}>{label}</p> : null}
+    </div>
   );
 }

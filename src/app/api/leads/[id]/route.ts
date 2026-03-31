@@ -1,14 +1,51 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { exigirSessao } from "@/lib/permissoes";
-import { esquemaAtualizarLead } from "@/lib/validacoes";
+import { exigirSessao, podeGerenciarRecursoNoPdv, whereLeadsPorPerfil } from "@/lib/permissoes";
+import { esquemaAtualizarLead, esquemaRemoverLead } from "@/lib/validacoes";
 import { badRequest, forbidden, notFound } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
-
+import {
+  atualizarLeadContato,
+  desativarLeadContato,
+  listarNegociosDoLead,
+  obterLeadContatoPorId,
+} from "@/lib/leads";
+import { desativarNegocio, listarNegociosPrincipaisDoLead } from "@/lib/negocios";
 
 type Params = {
   params: Promise<{ id: string }>;
 };
+
+export async function GET(request: NextRequest, { params }: Params) {
+  const auth = await exigirSessao(request);
+  if (auth.erro) {
+    return auth.erro;
+  }
+
+  const { id } = await params;
+  const whereLeads = await whereLeadsPorPerfil(auth.sessao);
+  const lead = await obterLeadContatoPorId({
+    idEmpresa: auth.sessao.id_empresa,
+    idLead: id,
+    where: whereLeads,
+  });
+
+  if (!lead) {
+    return notFound("Lead nao encontrado.");
+  }
+
+  const negocios = await listarNegociosDoLead({
+    idEmpresa: auth.sessao.id_empresa,
+    idLead: lead.id,
+  });
+
+  return NextResponse.json({
+    lead: {
+      ...lead,
+      negocio: negocios[0] ?? null,
+    },
+  });
+}
 
 export async function PATCH(request: NextRequest, { params }: Params) {
   const auth = await exigirSessao(request);
@@ -21,42 +58,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (!body.ok) {
     return body.response;
   }
+
   const validacao = validateBody(esquemaAtualizarLead, body.data);
   if (!validacao.ok) {
     return validacao.response;
   }
 
   const dadosValidados = validacao.data;
-
-  const lead = await prisma.lead.findFirst({
-    where: {
-      id,
-      id_empresa: auth.sessao.id_empresa,
-      ...(auth.sessao.perfil === "COLABORADOR"
-        ? { id_funcionario: auth.sessao.id_usuario }
-        : auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv
-          ? {} // GERENTE pode ver todos do PDV, validado abaixo
-          : {}),
-    },
-    include: { funcionario: { select: { id_pdv: true } } },
+  const whereLeads = await whereLeadsPorPerfil(auth.sessao);
+  const lead = await obterLeadContatoPorId({
+    idEmpresa: auth.sessao.id_empresa,
+    idLead: id,
+    where: whereLeads,
   });
 
   if (!lead) {
     return notFound("Lead nao encontrado.");
   }
 
-  // Validação de PDV para GERENTE
-  if (auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv) {
-    if (lead.funcionario.id_pdv !== auth.sessao.id_pdv) {
-      return NextResponse.json(
-        { erro: "Voce só pode editar leads do seu PDV." },
-        { status: 403 }
-      );
-    }
-  }
-
   let idFuncionarioDestino = dadosValidados.id_funcionario;
-
   if (auth.sessao.perfil === "COLABORADOR") {
     idFuncionarioDestino = auth.sessao.id_usuario;
   }
@@ -75,23 +95,33 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       return badRequest("Funcionario invalido.");
     }
 
-    if (auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv && funcionarioDestino.id_pdv !== auth.sessao.id_pdv) {
-      return forbidden("Voce só pode transferir para funcionarios do seu PDV.");
+    if (!podeGerenciarRecursoNoPdv(auth.sessao, funcionarioDestino.id_pdv)) {
+      return forbidden("Voce nao pode transferir este lead para este colaborador.");
     }
   }
 
-  const atualizado = await prisma.lead.update({
-    where: { id: lead.id },
-    data: {
-      observacoes: dadosValidados.observacoes,
+  try {
+    const atualizado = await atualizarLeadContato({
+      idEmpresa: auth.sessao.id_empresa,
+      idLead: lead.id,
+      nome: dadosValidados.nome,
       telefone: dadosValidados.telefone,
-      valor_oportunidade: dadosValidados.valor_oportunidade,
-      motivo_perda: dadosValidados.motivo_perda,
-      id_funcionario: idFuncionarioDestino,
-    },
-  });
+      email: dadosValidados.email,
+      fonte: dadosValidados.fonte,
+      empresaOrigem: dadosValidados.empresa_origem,
+      observacoes: dadosValidados.observacoes,
+      idFuncionario: idFuncionarioDestino,
+      ativo: dadosValidados.ativo,
+    });
 
-  return NextResponse.json({ lead: atualizado });
+    if (!atualizado) {
+      return notFound("Lead nao encontrado.");
+    }
+
+    return NextResponse.json({ lead: atualizado });
+  } catch (erro) {
+    return badRequest(erro instanceof Error ? erro.message : "Erro ao atualizar lead.");
+  }
 }
 
 export async function DELETE(request: NextRequest, { params }: Params) {
@@ -100,35 +130,82 @@ export async function DELETE(request: NextRequest, { params }: Params) {
     return auth.erro;
   }
 
-  const { id } = await params;
+  const body = await parseJson<unknown>(request);
+  if (!body.ok) {
+    return body.response;
+  }
 
-  const lead = await prisma.lead.findFirst({
-    where: {
-      id,
-      id_empresa: auth.sessao.id_empresa,
-      ...(auth.sessao.perfil === "COLABORADOR"
-        ? { id_funcionario: auth.sessao.id_usuario }
-        : auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv
-          ? {} // GERENTE pode ver todos do PDV, validado abaixo
-          : {}),
-    },
-    include: { funcionario: { select: { id_pdv: true } } },
+  const validacao = validateBody(esquemaRemoverLead, body.data);
+  if (!validacao.ok) {
+    return validacao.response;
+  }
+
+  const { id } = await params;
+  const whereLeads = await whereLeadsPorPerfil(auth.sessao);
+  const lead = await obterLeadContatoPorId({
+    idEmpresa: auth.sessao.id_empresa,
+    idLead: id,
+    where: whereLeads,
+    somenteAtivos: false,
   });
 
   if (!lead) {
     return notFound("Lead nao encontrado.");
   }
 
-  // Validação de PDV para GERENTE
-  if (auth.sessao.perfil === "GERENTE" && auth.sessao.id_pdv) {
-    if (lead.funcionario.id_pdv !== auth.sessao.id_pdv) {
-      return forbidden("Voce só pode excluir leads do seu PDV.");
-    }
-  }
+  const resultado = await prisma.$transaction(async (tx) => {
+    const leadRemovido = await desativarLeadContato({
+      idEmpresa: auth.sessao.id_empresa,
+      idLead: lead.id,
+      client: tx,
+    });
 
-  await prisma.lead.delete({
-    where: { id: lead.id },
+    if (!leadRemovido) {
+      return null;
+    }
+
+    let negociosRemovidos = 0;
+    if (validacao.data.remover_negocios_vinculados) {
+      const idsNegocios = new Set<string>();
+      if (lead.id_negocio) {
+        idsNegocios.add(lead.id_negocio);
+      }
+
+      const negociosPrincipais = await listarNegociosPrincipaisDoLead({
+        idEmpresa: auth.sessao.id_empresa,
+        idLead: lead.id,
+        client: tx,
+      });
+
+      for (const negocio of negociosPrincipais) {
+        idsNegocios.add(negocio.id);
+      }
+
+      for (const idNegocio of idsNegocios) {
+        const negocioRemovido = await desativarNegocio({
+          idEmpresa: auth.sessao.id_empresa,
+          idNegocio,
+          client: tx,
+          removerLeadsVinculados: false,
+        });
+
+        if (negocioRemovido) {
+          negociosRemovidos++;
+        }
+      }
+    }
+
+    return {
+      negociosRemovidos,
+    };
   });
 
-  return NextResponse.json({ sucesso: true });
+  if (!resultado) {
+    return notFound("Lead nao encontrado.");
+  }
+
+  return NextResponse.json({
+    sucesso: true,
+    negocios_removidos: resultado.negociosRemovidos,
+  });
 }

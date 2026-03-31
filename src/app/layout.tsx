@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter } from "next/font/google";
 import { Providers } from "./providers";
 import { Suspense } from "react";
 import "./globals.css";
-
-const inter = Inter({
-  display: "swap",
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const geistMono = Geist_Mono({
-  display: "swap",
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
-});
 
 export const metadata: Metadata = {
   title: "HYPE CRM",
@@ -28,7 +15,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR" className="bg-background text-foreground">
-      <body className={`${inter.variable} ${geistMono.variable} antialiased`}>
+      <body className="antialiased">
         <Suspense fallback={null}>
           <Providers>{children}</Providers>
         </Suspense>

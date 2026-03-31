@@ -23,11 +23,11 @@ export async function GET(request: NextRequest) {
         nome: true,
         telefone: true,
         valor_oportunidade: true,
-        funcionario: {
+        Funcionario: {
           select: {
             id: true,
             nome: true,
-            pdv: {
+            Pdv: {
               select: {
                 id: true,
                 nome: true,
@@ -36,7 +36,17 @@ export async function GET(request: NextRequest) {
           },
         },
       },
-    });
+    }) as unknown as Array<{
+      id: string;
+      nome: string;
+      telefone: string;
+      valor_oportunidade: number;
+      Funcionario: {
+        id: string;
+        nome: string;
+        Pdv: { id: string; nome: string } | null;
+      };
+    }>;
 
     const leadMap = new Map(leadsComDados.map((lead) => [lead.id, lead]));
 

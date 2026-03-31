@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const instancia = await resolverInstanciaDoLead(sessao.id_empresa, lead.id);
     if (!instancia) {
       const leadComPdv = await buscarPdvDoLead(sessao.id_empresa, lead.id);
-      const pdv = leadComPdv?.funcionario?.pdv;
+      const pdv = leadComPdv?.Funcionario?.Pdv;
       const podeConfigurar = sessao.perfil === "EMPRESA" || (sessao.perfil === "GERENTE" && sessao.id_pdv === pdv?.id);
 
       return NextResponse.json(

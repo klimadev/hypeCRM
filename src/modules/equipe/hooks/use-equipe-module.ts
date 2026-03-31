@@ -244,7 +244,7 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
         setCarregandoCadastro(false);
       }
     },
-    [carregarFuncionarios, carregarPdvs, addToast],
+    [carregarFuncionarios, carregarPdvs, addToast, setFuncionarios],
   );
 
   return {

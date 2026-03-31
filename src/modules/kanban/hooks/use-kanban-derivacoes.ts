@@ -6,14 +6,14 @@ import type {
   Lead,
   OrdenacaoKanban,
   OrigemStats,
-  PendenciaLeadInfo,
+  PendenciaNegocioInfo,
 } from "../types";
 import { getGravidadePendencia } from "./use-pendencias-globais";
 
-function leadPassaFiltros(
-  pendenciaInfo: PendenciaLeadInfo | undefined,
+function negocioPassaFiltros(
+  pendenciaInfo: PendenciaNegocioInfo | undefined,
   filtros: KanbanFilters,
-  lead: Lead,
+  negocio: Lead,
 ): boolean {
   if (filtros.status === "com_pendencia" && !pendenciaInfo) return false;
   if (filtros.status === "sem_pendencia" && pendenciaInfo) return false;
@@ -28,9 +28,9 @@ function leadPassaFiltros(
 
   // Filtro por origem (WhatsApp, Anúncio CTWA, Manual)
   if (filtros.origem !== "todos") {
-    if (filtros.origem === "ANUNCIO_CTWA" && lead.origem !== "ANUNCIO_CTWA") return false;
-    if (filtros.origem === "SINCRONIZACAO_WHATSAPP" && lead.origem !== "SINCRONIZACAO_WHATSAPP") return false;
-    if (filtros.origem === "MANUAL" && lead.origem !== "MANUAL") return false;
+    if (filtros.origem === "ANUNCIO_CTWA" && negocio.origem !== "ANUNCIO_CTWA") return false;
+    if (filtros.origem === "SINCRONIZACAO_WHATSAPP" && negocio.origem !== "SINCRONIZACAO_WHATSAPP") return false;
+    if (filtros.origem === "MANUAL" && negocio.origem !== "MANUAL") return false;
   }
 
   return true;
@@ -38,14 +38,14 @@ function leadPassaFiltros(
 
 type UseKanbanDerivacoesParams = {
   estagios: Estagio[];
-  leads: Lead[];
-  leadSelecionado: Lead | null;
+  negocios: Lead[];
+  negocioSelecionado: Lead | null;
 };
 
 export function useKanbanDerivacoes({
   estagios,
-  leads,
-  leadSelecionado,
+  negocios,
+  negocioSelecionado,
 }: UseKanbanDerivacoesParams) {
   const [filtros, setFiltros] = useState<KanbanFilters>({
     status: "todos",
@@ -58,15 +58,15 @@ export function useKanbanDerivacoes({
   const [busca, setBusca] = useState("");
   const [ordenacao, setOrdenacao] = useState<OrdenacaoKanban>("recente");
 
-  const pendenciasPorLead = useMemo((): Record<string, PendenciaLeadInfo> => {
-    const mapa: Record<string, PendenciaLeadInfo> = {};
+  const pendenciasPorNegocio = useMemo((): Record<string, PendenciaNegocioInfo> => {
+    const mapa: Record<string, PendenciaNegocioInfo> = {};
     const mapaEstagios = Object.fromEntries(estagios.map((estagio) => [estagio.id, estagio]));
 
-    for (const lead of leads) {
-      const estagio = mapaEstagios[lead.id_estagio];
+    for (const negocio of negocios) {
+      const estagio = mapaEstagios[negocio.id_estagio];
       if (!estagio) continue;
 
-      const pendencias = calcularPendenciasLead(lead, estagio);
+      const pendencias = calcularPendenciasLead(negocio, estagio);
       if (pendencias.length === 0) continue;
 
       const tipos = pendencias.map((pendencia) => pendencia.tipo);
@@ -80,7 +80,7 @@ export function useKanbanDerivacoes({
         }
       }
 
-      mapa[lead.id] = {
+      mapa[negocio.id] = {
         total: pendencias.length,
         naoResolvidas: pendencias.filter((pendencia) => !pendencia.resolvida).length,
         tipos,
@@ -89,31 +89,31 @@ export function useKanbanDerivacoes({
     }
 
     return mapa;
-  }, [estagios, leads]);
+  }, [estagios, negocios]);
 
-  const pendenciasLead = useMemo(() => {
-    if (!leadSelecionado) return [];
-    const estagio = estagios.find((item) => item.id === leadSelecionado.id_estagio);
+  const pendenciasNegocio = useMemo(() => {
+    if (!negocioSelecionado) return [];
+    const estagio = estagios.find((item) => item.id === negocioSelecionado.id_estagio);
     if (!estagio) return [];
-    return calcularPendenciasLead(leadSelecionado, estagio);
-  }, [leadSelecionado, estagios]);
+    return calcularPendenciasLead(negocioSelecionado, estagio);
+  }, [negocioSelecionado, estagios]);
 
-  const leadsPorEstagio = useMemo(() => {
+  const negociosPorEstagio = useMemo(() => {
     const mapa: Record<string, Lead[]> = {};
     for (const estagio of estagios) {
       mapa[estagio.id] = [];
     }
 
-    for (const lead of leads) {
-      if (mapa[lead.id_estagio]) {
-        mapa[lead.id_estagio].push(lead);
+    for (const negocio of negocios) {
+      if (mapa[negocio.id_estagio]) {
+        mapa[negocio.id_estagio].push(negocio);
       }
     }
 
     return mapa;
-  }, [estagios, leads]);
+  }, [estagios, negocios]);
 
-  const leadsFiltradosPorEstagio = useMemo(() => {
+  const negociosFiltradosPorEstagio = useMemo(() => {
     const filtrosAtivos = modoFocoPendencias
       ? { status: "com_pendencia" as const, gravidade: "todas" as const, tipo: "todos" as const, pdv: filtros.pdv, origem: filtros.origem }
       : filtros;
@@ -123,23 +123,23 @@ export function useKanbanDerivacoes({
       mapa[estagio.id] = [];
     }
 
-    for (const lead of leads) {
-      if (!mapa[lead.id_estagio]) continue;
+    for (const negocio of negocios) {
+      if (!mapa[negocio.id_estagio]) continue;
 
       // Filter by PDV
-      if (filtrosAtivos.pdv && lead.id_pdv !== filtrosAtivos.pdv) continue;
+      if (filtrosAtivos.pdv && negocio.id_pdv !== filtrosAtivos.pdv) continue;
 
-      const pendenciaInfo = pendenciasPorLead[lead.id];
-      if (!leadPassaFiltros(pendenciaInfo, filtrosAtivos, lead)) continue;
+      const pendenciaInfo = pendenciasPorNegocio[negocio.id];
+      if (!negocioPassaFiltros(pendenciaInfo, filtrosAtivos, negocio)) continue;
 
       if (busca) {
         const buscaLower = busca.toLowerCase();
-        const matchesNome = lead.nome.toLowerCase().includes(buscaLower);
-        const matchesTelefone = lead.telefone.includes(busca);
+        const matchesNome = negocio.nome.toLowerCase().includes(buscaLower);
+        const matchesTelefone = negocio.telefone.includes(busca);
         if (!matchesNome && !matchesTelefone) continue;
       }
 
-      mapa[lead.id_estagio].push(lead);
+      mapa[negocio.id_estagio].push(negocio);
     }
 
     for (const estagioId of Object.keys(mapa)) {
@@ -162,7 +162,7 @@ export function useKanbanDerivacoes({
     }
 
     return mapa;
-  }, [estagios, leads, pendenciasPorLead, filtros, modoFocoPendencias, busca, ordenacao]);
+  }, [estagios, negocios, pendenciasPorNegocio, filtros, modoFocoPendencias, busca, ordenacao]);
 
   const estagioAberto = useMemo(
     () => estagios.find((estagio) => estagio.tipo === "ABERTO")?.id ?? estagios[0]?.id ?? "",
@@ -171,24 +171,24 @@ export function useKanbanDerivacoes({
 
   const origemStats = useMemo((): OrigemStats => {
     const stats: OrigemStats = {
-      total: leads.length,
+      total: negocios.length,
       anuncios: 0,
       whatsapp: 0,
       manual: 0,
     };
 
-    for (const lead of leads) {
-      if (lead.origem === "ANUNCIO_CTWA") {
+    for (const negocio of negocios) {
+      if (negocio.origem === "ANUNCIO_CTWA") {
         stats.anuncios++;
-      } else if (lead.origem === "SINCRONIZACAO_WHATSAPP") {
+      } else if (negocio.origem === "SINCRONIZACAO_WHATSAPP") {
         stats.whatsapp++;
-      } else if (lead.origem === "MANUAL") {
+      } else if (negocio.origem === "MANUAL") {
         stats.manual++;
       }
     }
 
     return stats;
-  }, [leads]);
+  }, [negocios]);
 
   return {
     filtros,
@@ -199,10 +199,10 @@ export function useKanbanDerivacoes({
     setBusca,
     ordenacao,
     setOrdenacao,
-    pendenciasPorLead,
-    pendenciasLead,
-    leadsPorEstagio,
-    leadsFiltradosPorEstagio,
+    pendenciasPorNegocio,
+    pendenciasNegocio,
+    negociosPorEstagio,
+    negociosFiltradosPorEstagio,
     estagioAberto,
     origemStats,
   };

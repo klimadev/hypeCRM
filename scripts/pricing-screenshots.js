@@ -10,12 +10,6 @@
  * Saída: site/screenshots/pricing-*.png
  */
 
-const { chromium } = require('playwright');
-const fs = require('fs');
-const path = require('path');
-
-const OUTPUT_DIR = path.join(__dirname, '..', 'site', 'screenshots');
-
 // Argumentos
 const args = process.argv.slice(2);
 const isMobile = args.includes('--mobile');
@@ -34,6 +28,13 @@ const ok = (msg) => console.log(`  ✓ ${msg}`);
 const err = (msg) => console.error(`  ✗ ${msg}`);
 
 async function main() {
+  const [{ chromium }, fs, path] = await Promise.all([
+    import('playwright'),
+    import('node:fs'),
+    import('node:path'),
+  ]);
+  const OUTPUT_DIR = path.join(__dirname, '..', 'site', 'screenshots');
+
   console.log(`\n📸 Pricing Screenshots${isMobile ? ' (MOBILE)' : ''}`);
   log(`URL: ${TARGET_URL}`);
   log(`Viewport: ${VIEWPORT.width}x${VIEWPORT.height}\n`);

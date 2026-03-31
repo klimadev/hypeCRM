@@ -9,25 +9,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/toast";
 import {
-  anexarProdutoLead,
+  anexarProdutoNegocio,
   listarProdutos,
-  listarProdutosLead,
+  listarProdutosNegocio,
   parseSchemaLayout,
   parseValoresLayout,
-  removerProdutoLead,
-  type LeadProduto,
+  removerProdutoNegocio,
+  type NegocioProduto,
   type Produto,
 } from "@/lib/api/produtos";
 import { RenderizadorCamposProduto } from "@/modules/produtos/components/renderizador-campos-produto";
 
-type LeadProdutosTabProps = {
-  leadId: string;
+type NegocioProdutosTabProps = {
+  negocioId: string;
 };
 
-export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
+export function NegocioProdutosTab({ negocioId }: NegocioProdutosTabProps) {
   const { addToast } = useToast();
   const [produtosBase, setProdutosBase] = useState<Produto[]>([]);
-  const [produtosLead, setProdutosLead] = useState<LeadProduto[]>([]);
+  const [produtosNegocio, setProdutosNegocio] = useState<NegocioProduto[]>([]);
   const [loading, setLoading] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [dialogAberto, setDialogAberto] = useState(false);
@@ -42,7 +42,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
     const carregar = async () => {
       setLoading(true);
       setErro(null);
-      const [resultadoProdutos, resultadoLead] = await Promise.all([listarProdutos(), listarProdutosLead(leadId)]);
+      const [resultadoProdutos, resultadoNegocio] = await Promise.all([listarProdutos(), listarProdutosNegocio(negocioId)]);
 
       if (!ativo) return;
 
@@ -52,14 +52,14 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
         return;
       }
 
-      if (!resultadoLead.ok) {
-        setErro(resultadoLead.erro);
+      if (!resultadoNegocio.ok) {
+        setErro(resultadoNegocio.erro);
         setLoading(false);
         return;
       }
 
       setProdutosBase(resultadoProdutos.dados.produtos.filter((produto) => produto.ativo));
-      setProdutosLead(resultadoLead.dados.produtos);
+      setProdutosNegocio(resultadoNegocio.dados.produtos);
       setLoading(false);
     };
 
@@ -67,7 +67,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
     return () => {
       ativo = false;
     };
-  }, [leadId]);
+  }, [negocioId]);
 
   const produtoSelecionado = useMemo(
     () => produtosBase.find((produto) => produto.id === produtoSelecionadoId) ?? null,
@@ -86,7 +86,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
   const salvar = async () => {
     if (!produtoSelecionado) return;
     setSalvando(true);
-    const resultado = await anexarProdutoLead(leadId, {
+    const resultado = await anexarProdutoNegocio(negocioId, {
       id_produto: produtoSelecionado.id,
       valores_layout: valores,
       observacoes: observacoes.trim() || null,
@@ -98,26 +98,26 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
       return;
     }
 
-    setProdutosLead((atual) => [resultado.dados.produto, ...atual]);
+    setProdutosNegocio((atual) => [resultado.dados.produto, ...atual]);
     setDialogAberto(false);
     setSalvando(false);
     addToast({
       type: "success",
       title: "Produto anexado",
-      description: `${resultado.dados.produto.nome_snapshot} foi vinculado ao lead.`,
+      description: `${resultado.dados.produto.nome_snapshot} foi vinculado ao negócio.`,
     });
   };
 
-  const remover = async (leadProdutoId: string) => {
-    setRemovendoId(leadProdutoId);
-    const resultado = await removerProdutoLead(leadId, leadProdutoId);
+  const remover = async (negocioProdutoId: string) => {
+    setRemovendoId(negocioProdutoId);
+    const resultado = await removerProdutoNegocio(negocioId, negocioProdutoId);
     if (!resultado.ok) {
       setErro(resultado.erro);
       setRemovendoId(null);
       return;
     }
 
-    setProdutosLead((atual) => atual.filter((item) => item.id !== leadProdutoId));
+    setProdutosNegocio((atual) => atual.filter((item) => item.id !== negocioProdutoId));
     setRemovendoId(null);
   };
 
@@ -133,8 +133,8 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <div>
-          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Produtos vinculados</h3>
-          <p className="text-xs text-[var(--text-secondary)]">Anexe templates internos com valores proprios desta negociacao.</p>
+          <h3 className="text-sm font-semibold text-[var(--text-primary)]">Produtos vinculados ao negócio</h3>
+          <p className="text-xs text-[var(--text-secondary)]">Anexe templates internos com valores próprios desta negociação.</p>
         </div>
         <Button type="button" onClick={abrirDialog} className="bg-emerald-600 text-white hover:bg-emerald-700">
           <PackagePlus className="mr-2 h-4 w-4" />
@@ -142,12 +142,12 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
         </Button>
       </div>
 
-      {produtosLead.length === 0 ? (
+      {produtosNegocio.length === 0 ? (
         <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4 text-sm text-[var(--text-secondary)]">
-          Nenhum produto anexado a este lead.
+          Nenhum produto anexado a este negócio.
         </div>
       ) : (
-        produtosLead.map((item) => {
+        produtosNegocio.map((item) => {
           const schema = parseSchemaLayout(item.schema_snapshot);
           const valoresItem = parseValoresLayout(item.valores_layout);
           return (
@@ -182,8 +182,8 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
       <Dialog open={dialogAberto} onOpenChange={setDialogAberto}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
           <DialogHeader>
-            <DialogTitle>Anexar produto ao lead</DialogTitle>
-            <DialogDescription>Selecione um produto base e preencha os valores desta negociacao.</DialogDescription>
+            <DialogTitle>Anexar produto ao negócio</DialogTitle>
+            <DialogDescription>Selecione um produto base e preencha os valores desta negociação.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -212,7 +212,7 @@ export function LeadProdutosTab({ leadId }: LeadProdutosTabProps) {
             ) : null}
 
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-[var(--text-secondary)]">Observacoes</label>
+              <label className="text-xs font-medium text-[var(--text-secondary)]">Observações</label>
               <Textarea value={observacoes} onChange={(event) => setObservacoes(event.target.value)} />
             </div>
           </div>

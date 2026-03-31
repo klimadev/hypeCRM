@@ -55,9 +55,9 @@ export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, 
               {resumo.porGravidade.alerta} alerta{resumo.porGravidade.alerta !== 1 ? "s" : ""}
             </span>
           )}
-          {resumo.totalLeads > 0 && (
+          {resumo.totalNegocios > 0 && (
               <span className="text-[var(--text-secondary)]">
-              {resumo.totalLeads} lead{resumo.totalLeads !== 1 ? "s" : ""} impactado{resumo.totalLeads !== 1 ? "s" : ""}
+              {resumo.totalNegocios} negócio{resumo.totalNegocios !== 1 ? "s" : ""} impactado{resumo.totalNegocios !== 1 ? "s" : ""}
             </span>
           )}
         </div>

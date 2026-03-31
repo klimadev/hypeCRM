@@ -36,7 +36,7 @@ interface JobResult {
 }
 
 export async function processarJob(job: JobComRelacoes): Promise<JobResult> {
-  if (!job.automacao.ativo) {
+  if (!job.Automacao.ativo) {
     await prisma.automacaoAgendamento.update({
       where: { id: job.id },
       data: {
@@ -67,7 +67,7 @@ export async function processarJob(job: JobComRelacoes): Promise<JobResult> {
     }
 
     for (const acao of acoes) {
-      const mensagem = renderizarTemplate(acao.mensagem, contexto, job.lead);
+      const mensagem = renderizarTemplate(acao.mensagem, contexto, job.Lead);
       const telefone = await resolverTelefoneDestino(acao, job, contexto);
 
       if (!telefone) {
@@ -75,16 +75,16 @@ export async function processarJob(job: JobComRelacoes): Promise<JobResult> {
         return { status: "FALHA" };
       }
 
-      if (!acao.instancia_whatsapp?.instance_name) {
+      if (!acao.WhatsappInstancia?.instance_name) {
         await marcarFalha(job.id, "SEM_INSTANCIA_WHATSAPP");
         return { status: "FALHA" };
       }
 
-      await enviarMensagemTexto({
-        instanceName: acao.instancia_whatsapp.instance_name,
-        telefone,
-        mensagem,
-      });
+        await enviarMensagemTexto({
+          instanceName: acao.WhatsappInstancia.instance_name,
+          telefone,
+          mensagem,
+        });
     }
 
     await prisma.automacaoAgendamento.update({
@@ -150,14 +150,14 @@ function resolverAcoesDoJob(job: JobComRelacoes, contexto: ContextoJob) {
   const acaoId = contexto.acao?.id;
 
   if (!acaoId) {
-    return job.automacao.acoes;
+    return job.Automacao.AutomacaoAcao;
   }
 
-  return job.automacao.acoes.filter((acao) => acao.id === acaoId);
+  return job.Automacao.AutomacaoAcao.filter((acao) => acao.id === acaoId);
 }
 
 async function resolverTelefoneDestino(
-  acao: JobComRelacoes["automacao"]["acoes"][number],
+  acao: JobComRelacoes["Automacao"]["AutomacaoAcao"][number],
   job: JobComRelacoes,
   contexto: ContextoJob,
 ): Promise<string | null> {
@@ -174,13 +174,13 @@ async function resolverTelefoneDestino(
     return leadDestino?.telefone ?? null;
   }
 
-  return contexto.lead?.telefone ?? job.lead?.telefone ?? null;
+  return contexto.lead?.telefone ?? job.Lead?.telefone ?? null;
 }
 
 function renderizarTemplate(
   template: string,
   contexto: ContextoJob,
-  lead: JobComRelacoes["lead"]
+  lead: JobComRelacoes["Lead"]
 ): string {
   let resultado = template;
 

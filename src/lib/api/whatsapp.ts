@@ -326,7 +326,9 @@ export async function buscarMediaWhatsapp(
       // Armazena no cache
       setCachedMedia(leadId, messageId, json.media);
       
-      timeoutId && clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
       return { ok: true, dados: { media: json.media } };
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
@@ -340,7 +342,9 @@ export async function buscarMediaWhatsapp(
         await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
       }
     } finally {
-      timeoutId && clearTimeout(timeoutId);
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
     }
   }
 

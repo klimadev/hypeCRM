@@ -1,24 +1,52 @@
-import { type Automacao, type AutomacaoAcao, type AutomacaoAgendamento, type Lead, type WhatsappInstancia } from "@prisma/client";
+import { randomUUID } from "crypto";
+import { Prisma } from "@prisma/client";
 import { STATUS_AGENDAMENTO } from "@/lib/validacoes";
 import { prisma } from "@/lib/prisma";
 import { automacaoCorrespondeAoEstagio, parseConfigAutomacao } from "./config";
 
-type AutomacaoAcaoComInstancia = AutomacaoAcao & {
-  instancia_whatsapp: Pick<WhatsappInstancia, "id" | "instance_name"> | null;
-};
+const jobComRelacoesArgs = Prisma.validator<Prisma.AutomacaoAgendamentoDefaultArgs>()({
+  include: {
+    Automacao: {
+      include: {
+        AutomacaoAcao: {
+          orderBy: { ordem: "asc" },
+          include: {
+            WhatsappInstancia: {
+              select: {
+                id: true,
+                instance_name: true,
+              },
+            },
+          },
+        },
+      },
+    },
+    Lead: true,
+    Negocio: true,
+  },
+});
 
-type AutomacaoComAcoes = Automacao & {
-  acoes: AutomacaoAcaoComInstancia[];
-};
+const jobResumoArgs = Prisma.validator<Prisma.AutomacaoAgendamentoDefaultArgs>()({
+  include: {
+    Automacao: {
+      select: {
+        id: true,
+        id_empresa: true,
+        gatilho: true,
+        config_json: true,
+      },
+    },
+  },
+});
 
-export type JobComRelacoes = AutomacaoAgendamento & {
-  automacao: AutomacaoComAcoes;
-  lead: Lead | null;
-};
+export type JobComRelacoes = Prisma.AutomacaoAgendamentoGetPayload<typeof jobComRelacoesArgs>;
+
+type JobAutomacaoResumo = Prisma.AutomacaoAgendamentoGetPayload<typeof jobResumoArgs>;
 
 interface CriarAgendamentoParams {
   idAutomacao: string;
-  idLead: string;
+  idLead?: string;
+  idNegocio?: string;
   referenciaUid: string;
   tipoOrigem: "WHATSAPP";
   contextoJson: Record<string, unknown>;
@@ -37,6 +65,7 @@ export async function prepararAgendamento(
   const {
     idAutomacao,
     idLead,
+    idNegocio,
     referenciaUid,
     tipoOrigem,
     contextoJson,
@@ -67,8 +96,10 @@ export async function prepararAgendamento(
   }
 
   const agendamentoData = {
+    id: randomUUID(),
     id_automacao: idAutomacao,
-    id_lead: idLead,
+    id_lead: idLead ?? null,
+    id_negocio: idNegocio ?? null,
     referencia_uid: referenciaUid,
     tipo_origem: tipoOrigem,
     contexto_json: JSON.stringify(contextoJson),
@@ -125,27 +156,12 @@ export async function atualizarAgendamento(
 }
 
 export async function buscarJobComRelacoes(id: string): Promise<JobComRelacoes | null> {
-  return prisma.automacaoAgendamento.findUnique({
+  const job = await prisma.automacaoAgendamento.findUnique({
     where: { id },
-    include: {
-      automacao: {
-        include: {
-          acoes: {
-            orderBy: { ordem: "asc" },
-            include: {
-              instancia_whatsapp: {
-                select: {
-                  id: true,
-                  instance_name: true,
-                },
-              },
-            },
-          },
-        },
-      },
-      lead: true,
-    },
+    include: jobComRelacoesArgs.include,
   });
+
+  return job;
 }
 
 export async function cancelarAgendamentosDaAutomacao(
@@ -170,35 +186,28 @@ export async function cancelarAgendamentosDaAutomacao(
 
 export async function cancelarAgendamentosIncompativeisDoLead(params: {
   idEmpresa: string;
-  idLead: string;
+  idLead?: string;
+  idNegocio?: string;
   idEstagioAtual: string;
   motivo: string;
 }): Promise<number> {
-  const jobs = await prisma.automacaoAgendamento.findMany({
+  const jobs: JobAutomacaoResumo[] = await prisma.automacaoAgendamento.findMany({
     where: {
-      id_lead: params.idLead,
+      ...(params.idLead ? { id_lead: params.idLead } : {}),
+      ...(params.idNegocio ? { id_negocio: params.idNegocio } : {}),
       status: {
         in: [STATUS_AGENDAMENTO.PENDENTE, STATUS_AGENDAMENTO.PROCESSANDO],
       },
     },
-    include: {
-      automacao: {
-        select: {
-          id: true,
-          id_empresa: true,
-          gatilho: true,
-          config_json: true,
-        },
-      },
-    },
+    include: jobResumoArgs.include,
   });
 
   const idsParaCancelar = jobs
-    .filter((job) => job.automacao.id_empresa === params.idEmpresa)
-    .filter((job) => job.automacao.gatilho === "STAGE_CHANGE")
+    .filter((job) => job.Automacao.id_empresa === params.idEmpresa)
+    .filter((job) => job.Automacao.gatilho === "STAGE_CHANGE")
     .filter((job) => {
-      const config = parseConfigAutomacao(job.automacao.config_json);
-      return Boolean(config.id_estagio_destino) && !automacaoCorrespondeAoEstagio(job.automacao.config_json, params.idEstagioAtual);
+      const config = parseConfigAutomacao(job.Automacao.config_json);
+      return Boolean(config.id_estagio_destino) && !automacaoCorrespondeAoEstagio(job.Automacao.config_json, params.idEstagioAtual);
     })
     .map((job) => job.id);
 

@@ -73,13 +73,15 @@ export async function POST(request: NextRequest) {
       id_empresa: auth.sessao.id_empresa,
       id_estagio: estagioEmAtendimento.id,
       atualizado_em: { lte: corteInatividade },
-      funcionario: {
-        ativo: true,
-        ...(idPdvEfetivo ? { id_pdv: idPdvEfetivo } : {}),
+      Funcionario: {
+        is: {
+          ativo: true,
+          ...(idPdvEfetivo ? { id_pdv: idPdvEfetivo } : {}),
+        },
       },
     },
     include: {
-      funcionario: {
+      Funcionario: {
         select: {
           id: true,
           id_pdv: true,
@@ -88,14 +90,20 @@ export async function POST(request: NextRequest) {
     },
     orderBy: { atualizado_em: "asc" },
     take: limite,
-  });
+  }) as unknown as Array<{
+    id: string;
+    id_funcionario: string;
+    Funcionario: {
+      id_pdv: string;
+    };
+  }>;
 
   const detalhes: Array<{ leadId: string; deFuncionarioId: string; paraFuncionarioId: string }> = [];
   let reatribuidos = 0;
   let ignoradosSemDestino = 0;
 
   for (const lead of leadsEmAtendimento) {
-    const poolDoPdv = colaboradoresPorPdv.get(lead.funcionario.id_pdv) ?? [];
+    const poolDoPdv = colaboradoresPorPdv.get(lead.Funcionario.id_pdv) ?? [];
     const destinos = poolDoPdv.filter((idFuncionario) => idFuncionario !== lead.id_funcionario);
 
     if (!destinos.length) {

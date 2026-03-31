@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/permissoes";
 import { esquemaCriarProduto } from "@/lib/validacoes";
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
 
   const produto = await prisma.produto.create({
     data: {
+      id: randomUUID(),
       id_empresa: auth.sessao.id_empresa,
       nome: dados.nome,
       slug,
