@@ -19,6 +19,7 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z',
       env: {
         NODE_ENV: 'production',
+        UNDICI_SOCKET_FAMILY: 'ipv4',
       },
     },
   ],

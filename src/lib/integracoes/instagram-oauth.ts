@@ -1,4 +1,6 @@
 import { randomUUID } from "crypto";
+import { lookup } from "dns";
+import { Agent as HttpsAgent, request as httpsRequest } from "https";
 import { SignJWT, jwtVerify } from "jose";
 import type { NextResponse } from "next/server";
 import type { SessaoToken } from "@/lib/tipos";
@@ -29,12 +31,14 @@ type TokenLongaDuracaoInstagram = {
 };
 
 type PerfilInstagram = {
-  user_id: string;
+  id: string;
   username: string;
   name?: string;
   account_type?: string;
   profile_picture_url?: string;
 };
+
+const agenteHttps = new HttpsAgent({ keepAlive: true });
 
 function obterSegredoJwt() {
   return new TextEncoder().encode(process.env.JWT_SECRET ?? "segredo-dev-trocar-em-producao");
@@ -113,15 +117,73 @@ async function lerJsonOuErro<T>(resposta: Response, mensagemPadrao: string): Pro
   const json = await resposta.json().catch(() => null);
 
   if (!resposta.ok || !json) {
+    const corpoBruto = json ? JSON.stringify(json) : "(corpo nao JSON)";
     const mensagem = typeof json === "object" && json !== null && "error_message" in json
       ? String(json.error_message)
       : typeof json === "object" && json !== null && "error" in json
         ? String(json.error)
-        : mensagemPadrao;
-    throw new Error(mensagem);
+        : typeof json === "object" && json !== null && "message" in json
+          ? String(json.message)
+          : mensagemPadrao;
+    throw new Error(`${mensagem} (HTTP ${resposta.status}) — ${corpoBruto.slice(0, 300)}`);
   }
 
   return json as T;
+}
+
+function resolverIp(host: string): Promise<string> {
+  return new Promise((resolve, reject) => {
+    lookup(host, { family: 4 }, (err, address) => {
+      if (err) reject(err);
+      else resolve(address);
+    });
+  });
+}
+
+async function fetchComDns(url: URL, options?: { method?: string; body?: string; headers?: Record<string, string> }): Promise<Response> {
+  const ip = await resolverIp(url.hostname);
+
+  return new Promise((resolve, reject) => {
+    const timeoutMs = 15000;
+
+    const req = httpsRequest({
+      host: ip,
+      port: 443,
+      path: url.pathname + url.search,
+      method: options?.method ?? "GET",
+      headers: {
+        Host: url.hostname,
+        ...options?.headers,
+        ...(options?.body ? {
+          "Content-Type": "application/x-www-form-urlencoded",
+          "Content-Length": Buffer.byteLength(options.body).toString(),
+        } : {}),
+      },
+      agent: agenteHttps,
+    }, (res) => {
+      const chunks: Buffer[] = [];
+      res.on("data", (chunk: Buffer) => chunks.push(chunk));
+      res.on("end", () => {
+        const body = Buffer.concat(chunks);
+        resolve(new Response(body, {
+          status: res.statusCode ?? 500,
+          headers: res.headers as Record<string, string>,
+        }));
+      });
+    });
+
+    req.on("error", reject);
+    req.setTimeout(timeoutMs, () => {
+      req.destroy();
+      reject(new Error(`Timeout (${timeoutMs}ms) ao conectar em ${url.hostname} via ${ip}`));
+    });
+
+    if (options?.body) {
+      req.write(options.body);
+    }
+
+    req.end();
+  });
 }
 
 export async function trocarCodePorTokenInstagram(code: string) {
@@ -137,11 +199,21 @@ export async function trocarCodePorTokenInstagram(code: string) {
     grant_type: "authorization_code",
     code,
     redirect_uri: redirectUri,
+  }).toString();
+
+  console.info("[Instagram OAuth] Trocando code por token curto:", {
+    client_id: clientId,
+    redirect_uri: redirectUri,
+    code_length: code.length,
   });
 
-  const resposta = await fetch("https://api.instagram.com/oauth/access_token", {
-    method: "POST",
-    body,
+  const url = new URL("https://api.instagram.com/oauth/access_token");
+  const resposta = await fetchComDns(url, { method: "POST", body });
+
+  console.info("[Instagram OAuth] Resposta troca code:", {
+    status: resposta.status,
+    statusText: resposta.statusText,
+    ok: resposta.ok,
   });
 
   return lerJsonOuErro<TokenCurtaDuracaoInstagram>(resposta, "Nao foi possivel trocar o code do Instagram.");
@@ -159,16 +231,34 @@ export async function trocarPorTokenLongaDuracaoInstagram(accessToken: string) {
   url.searchParams.set("client_secret", clientSecret);
   url.searchParams.set("access_token", accessToken);
 
-  const resposta = await fetch(url.toString(), { cache: "no-store" });
+  console.info("[Instagram OAuth] Trocando token curto por longo...");
+
+  const resposta = await fetchComDns(url);
+
+  console.info("[Instagram OAuth] Resposta troca token longo:", {
+    status: resposta.status,
+    statusText: resposta.statusText,
+    ok: resposta.ok,
+  });
+
   return lerJsonOuErro<TokenLongaDuracaoInstagram>(resposta, "Nao foi possivel gerar o token de longa duracao do Instagram.");
 }
 
 export async function obterPerfilInstagram(accessToken: string) {
   const url = new URL("https://graph.instagram.com/v24.0/me");
-  url.searchParams.set("fields", "user_id,username,name,account_type,profile_picture_url");
+  url.searchParams.set("fields", "id,username,name,account_type,profile_picture_url");
   url.searchParams.set("access_token", accessToken);
 
-  const resposta = await fetch(url.toString(), { cache: "no-store" });
+  console.info("[Instagram OAuth] Busando perfil do Instagram...");
+
+  const resposta = await fetchComDns(url);
+
+  console.info("[Instagram OAuth] Resposta perfil:", {
+    status: resposta.status,
+    statusText: resposta.statusText,
+    ok: resposta.ok,
+  });
+
   return lerJsonOuErro<PerfilInstagram>(resposta, "Nao foi possivel carregar o perfil conectado do Instagram.");
 }
 

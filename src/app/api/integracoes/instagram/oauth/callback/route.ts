@@ -7,6 +7,7 @@ import {
   ESCOPOS_INSTAGRAM,
   limparCookieEstadoOAuthInstagram,
   NOME_COOKIE_INSTAGRAM_OAUTH_STATE,
+  obterConfiguracaoInstagramOAuth,
   obterPerfilInstagram,
   trocarCodePorTokenInstagram,
   trocarPorTokenLongaDuracaoInstagram,
@@ -120,15 +121,65 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const tokenCurto = await trocarCodePorTokenInstagram(validacao.data.code!);
-    const tokenLongo = await trocarPorTokenLongaDuracaoInstagram(tokenCurto.access_token);
-    const perfil = await obterPerfilInstagram(tokenLongo.access_token);
+    let tokenCurto: { access_token: string };
+    try {
+      tokenCurto = await trocarCodePorTokenInstagram(validacao.data.code!);
+    } catch (erroTroca) {
+      const msg = erroTroca instanceof Error ? erroTroca.message : "Erro desconhecido";
+      console.error("[Instagram OAuth] Falha ao trocar code por token:", msg);
+      return responderFalhaOAuthInstagram({
+        titulo: "Falha ao trocar code por token",
+        descricao: "Nao foi possivel obter o token de acesso curto com o Instagram.",
+        detalhes: [
+          { label: "Erro", valor: msg },
+          { label: "Etapa", valor: "1 de 3 - Troca do authorization code" },
+          { label: "Endpoint", valor: "POST https://api.instagram.com/oauth/access_token" },
+          { label: "Client ID", valor: obterConfiguracaoInstagramOAuth().clientId },
+          { label: "Redirect URI", valor: obterConfiguracaoInstagramOAuth().redirectUri },
+        ],
+      });
+    }
+
+    let tokenLongo: { access_token: string; token_type?: string; expires_in?: number };
+    try {
+      tokenLongo = await trocarPorTokenLongaDuracaoInstagram(tokenCurto.access_token);
+    } catch (erroLongo) {
+      const msg = erroLongo instanceof Error ? erroLongo.message : "Erro desconhecido";
+      console.error("[Instagram OAuth] Falha ao obter token longo:", msg);
+      return responderFalhaOAuthInstagram({
+        titulo: "Falha ao obter token de longa duracao",
+        descricao: "O token curto foi obtido, mas a conversao para token longo falhou.",
+        detalhes: [
+          { label: "Erro", valor: msg },
+          { label: "Etapa", valor: "2 de 3 - Troca por token longo (60 dias)" },
+          { label: "Endpoint", valor: "GET https://graph.instagram.com/access_token" },
+        ],
+      });
+    }
+
+    let perfil: { id: string; username: string; name?: string; account_type?: string; profile_picture_url?: string };
+    try {
+      perfil = await obterPerfilInstagram(tokenLongo.access_token);
+    } catch (erroPerfil) {
+      const msg = erroPerfil instanceof Error ? erroPerfil.message : "Erro desconhecido";
+      console.error("[Instagram OAuth] Falha ao obter perfil:", msg);
+      return responderFalhaOAuthInstagram({
+        titulo: "Falha ao carregar perfil do Instagram",
+        descricao: "O token foi obtido, mas nao foi possivel ler os dados do perfil.",
+        detalhes: [
+          { label: "Erro", valor: msg },
+          { label: "Etapa", valor: "3 de 3 - Leitura do perfil" },
+          { label: "Endpoint", valor: "GET https://graph.instagram.com/v24.0/me" },
+          { label: "Token (inicio)", valor: tokenLongo.access_token.slice(0, 20) + "..." },
+        ],
+      });
+    }
 
     const conta = await prisma.instagramConta.upsert({
       where: {
         id_empresa_instagram_user_id: {
           id_empresa: sessao.id_empresa,
-          instagram_user_id: perfil.user_id,
+          instagram_user_id: perfil.id,
         },
       },
       create: {
@@ -136,7 +187,7 @@ export async function GET(request: NextRequest) {
         id_empresa: sessao.id_empresa,
         id_criador: sessao.id_usuario,
         nome: perfil.name ?? perfil.username,
-        instagram_user_id: perfil.user_id,
+        instagram_user_id: perfil.id,
         username: perfil.username,
         account_type: perfil.account_type ?? null,
         profile_picture_url: perfil.profile_picture_url ?? null,
@@ -174,10 +225,16 @@ export async function GET(request: NextRequest) {
     limparCookieEstadoOAuthInstagram(resposta);
     return resposta;
   } catch (erro) {
+    const msg = erro instanceof Error ? erro.message : "Erro desconhecido";
+    const stack = erro instanceof Error ? (erro.stack ?? "").split("\n").slice(0, 3).join(" | ") : "";
+    console.error("[Instagram OAuth] Erro inesperado no callback:", msg, stack);
     return responderFalhaOAuthInstagram({
       titulo: "Falha ao conectar Instagram",
-      descricao: erro instanceof Error ? erro.message : "Nao foi possivel concluir a conexao agora.",
-      detalhes: [{ label: "Status", valor: "Nenhuma conta foi salva com esse retorno" }],
+      descricao: msg,
+      detalhes: [
+        { label: "Status", valor: "Erro inesperado no fluxo de conexao" },
+        { label: "Detalhe", valor: stack || msg },
+      ],
     });
   }
 }

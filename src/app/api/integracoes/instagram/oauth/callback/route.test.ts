@@ -13,8 +13,19 @@ vi.mock("@/lib/prisma", () => ({
   },
 }));
 
+vi.mock("@/lib/integracoes/instagram-oauth", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/lib/integracoes/instagram-oauth")>();
+  return {
+    ...actual,
+    trocarCodePorTokenInstagram: vi.fn(),
+    trocarPorTokenLongaDuracaoInstagram: vi.fn(),
+    obterPerfilInstagram: vi.fn(),
+  };
+});
+
 import { GET } from "@/app/api/integracoes/instagram/oauth/callback/route";
 import { obterSessaoNaRequest } from "@/lib/autenticacao";
+import { obterPerfilInstagram, trocarCodePorTokenInstagram, trocarPorTokenLongaDuracaoInstagram } from "@/lib/integracoes/instagram-oauth";
 import { prisma } from "@/lib/prisma";
 
 async function criarStateOAuth() {
@@ -46,6 +57,25 @@ describe("GET /api/integracoes/instagram/oauth/callback", () => {
       perfil: "EMPRESA",
     });
 
+    vi.mocked(trocarCodePorTokenInstagram).mockResolvedValue({
+      access_token: "short-lived-token",
+      user_id: 17841400000000000,
+    });
+
+    vi.mocked(trocarPorTokenLongaDuracaoInstagram).mockResolvedValue({
+      access_token: "long-lived-token",
+      token_type: "bearer",
+      expires_in: 5183944,
+    });
+
+    vi.mocked(obterPerfilInstagram).mockResolvedValue({
+      id: "17841400000000000",
+      username: "corretora.hype",
+      name: "Corretora Hype",
+      account_type: "BUSINESS",
+      profile_picture_url: "https://cdn.hypecrm.com.br/instagram.png",
+    });
+
     vi.mocked(prisma.instagramConta.upsert).mockResolvedValue({
       id: "ig-1",
       nome: "Corretora Hype",
@@ -61,50 +91,6 @@ describe("GET /api/integracoes/instagram/oauth/callback", () => {
 
   it("troca o code, salva a conta conectada e limpa o state cookie", async () => {
     const state = await criarStateOAuth();
-
-    vi.stubGlobal("fetch", vi.fn(async (input: string | URL | Request) => {
-      const url = typeof input === "string"
-        ? input
-        : input instanceof URL
-          ? input.toString()
-          : input.url;
-
-      if (url === "https://api.instagram.com/oauth/access_token") {
-        return new Response(JSON.stringify({
-          access_token: "short-lived-token",
-          user_id: 17841400000000000,
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      if (url.startsWith("https://graph.instagram.com/access_token")) {
-        return new Response(JSON.stringify({
-          access_token: "long-lived-token",
-          token_type: "bearer",
-          expires_in: 5183944,
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      if (url.startsWith("https://graph.instagram.com/v24.0/me")) {
-        return new Response(JSON.stringify({
-          user_id: "17841400000000000",
-          username: "corretora.hype",
-          name: "Corretora Hype",
-          account_type: "BUSINESS",
-          profile_picture_url: "https://cdn.hypecrm.com.br/instagram.png",
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        });
-      }
-
-      return new Response("not-found", { status: 404 });
-    }));
 
     const resposta = await GET(new Request(`https://app.hypecrm.com.br/api/integracoes/instagram/oauth/callback?code=oauth-code-1&state=${encodeURIComponent(state)}`, {
       headers: {
