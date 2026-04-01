@@ -114,19 +114,23 @@ async function sincronizarEmpresa(idEmpresa: string, sessao?: SessaoToken, orige
   const instanciasIgnoradas: InstanciaIgnorada[] = [];
 
   for (const instancia of instancias) {
-    if (instancia.Pdv.length !== 1) {
+    const pdvsInstancia = (instancia as { Pdv?: Array<{ id: string; nome: string }>; pdvs?: Array<{ id: string; nome: string }> }).Pdv
+      ?? (instancia as { pdvs?: Array<{ id: string; nome: string }> }).pdvs
+      ?? [];
+
+    if (pdvsInstancia.length !== 1) {
       instanciasIgnoradas.push({
         id: instancia.id,
         nome: instancia.nome,
         motivo:
-          instancia.Pdv.length === 0
+          pdvsInstancia.length === 0
             ? "Instancia sem PDV configurado."
-            : `Instancia vinculada a ${instancia.Pdv.length} PDVs. Sincronizacao permite apenas 1 PDV por instancia para garantir distribuicao correta dos leads.`,
+            : `Instancia vinculada a ${pdvsInstancia.length} PDVs. Sincronizacao permite apenas 1 PDV por instancia para garantir distribuicao correta dos leads.`,
       });
       continue;
     }
 
-    pdvsElegiveisPorInstancia.set(instancia.id, instancia.Pdv[0]);
+    pdvsElegiveisPorInstancia.set(instancia.id, pdvsInstancia[0]);
   }
 
   const idsPdvsElegiveis = Array.from(new Set(Array.from(pdvsElegiveisPorInstancia.values()).map((pdv) => pdv.id)));

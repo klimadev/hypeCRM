@@ -23,16 +23,16 @@ describe("catalogo de integracoes", () => {
     ]));
   });
 
-  it("expoe o card do Instagram como em desenvolvimento", () => {
+  it("expoe o card do Instagram como integracao disponivel", () => {
     expect(listarIntegracoesDisponiveis()).toEqual(expect.arrayContaining([
       expect.objectContaining({
         slug: "instagram",
         nome: "Instagram",
         categoria: "Social",
-        statusLabel: "Em desenvolvimento",
-        acaoLabel: "Em breve",
-        href: null,
-        disponibilidade: "em_desenvolvimento",
+        statusLabel: "Disponivel agora",
+        acaoLabel: "Abrir integracao",
+        href: "/integracoes/instagram",
+        disponibilidade: "disponivel",
       }),
     ]));
   });

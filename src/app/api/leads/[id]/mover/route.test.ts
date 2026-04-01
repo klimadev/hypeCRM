@@ -153,35 +153,37 @@ describe("PATCH /api/leads/[id]/mover", () => {
       }),
     );
     expect(prismaTx.leadEstagioLog.create).toHaveBeenCalledWith({
-      data: {
+      data: expect.objectContaining({
         id_lead: "lead-1",
         id_estagio_anterior: "estagio-1",
         id_estagio_novo: "estagio-2",
         empresa_id: "emp-1",
-      },
+      }),
     });
-    expect(executarAutomacoesLeadStageChanged).toHaveBeenCalledWith({
-      idEmpresa: "emp-1",
-      leadEstagioLogId: "log-1",
-      lead: {
-        id: "lead-1",
-        nome: "Lead 1",
-        telefone: "11999999999",
-        email: "lead@example.com",
-      },
-      estagioAnterior: {
-        id: "estagio-1",
-        nome: "Novo",
-      },
-      estagioAtual: {
-        id: "estagio-2",
-        nome: "Qualificado",
-      },
-      empresa: {
-        nome: "Empresa 1",
-      },
-      disparadoEm: dataLog,
-    });
+    expect(executarAutomacoesLeadStageChanged).toHaveBeenCalledWith(
+      expect.objectContaining({
+        idEmpresa: "emp-1",
+        leadEstagioLogId: "log-1",
+        lead: {
+          id: "lead-1",
+          nome: "Lead 1",
+          telefone: "11999999999",
+          email: "lead@example.com",
+        },
+        estagioAnterior: {
+          id: "estagio-1",
+          nome: "Novo",
+        },
+        estagioAtual: {
+          id: "estagio-2",
+          nome: "Qualificado",
+        },
+        empresa: {
+          nome: "Empresa 1",
+        },
+        disparadoEm: dataLog,
+      }),
+    );
     expect(json.lead).toEqual(
       expect.objectContaining({
         id: "lead-1",

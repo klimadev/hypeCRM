@@ -8,8 +8,10 @@ vi.mock("@/lib/estagios-fixos", () => ({
   obterEstagioIndefinido: vi.fn(),
 }));
 
-vi.mock("@/lib/evolution-api", () => ({
-  buscarContatos: vi.fn(),
+vi.mock("@/lib/whatsapp-chat", () => ({
+  buscarTodasMensagensDaInstancia: vi.fn(),
+  extrairNomeDoLeadDoMapa: vi.fn((mapa: Map<string, { pushName?: string | null }>, remoteJid: string) => mapa.get(remoteJid)?.pushName ?? null),
+  extrairDadosAdDoMapa: vi.fn(() => null),
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -29,9 +31,23 @@ vi.mock("@/lib/prisma", () => ({
 
 import { POST } from "@/app/api/leads/sync-whatsapp/route";
 import { obterEstagioIndefinido } from "@/lib/estagios-fixos";
-import { buscarContatos } from "@/lib/evolution-api";
 import { exigirSessao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
+import { buscarTodasMensagensDaInstancia } from "@/lib/whatsapp-chat";
+
+function criarMapaMensagens(...contatos: Array<{ id: string; nome: string }>) {
+  return new Map(
+    contatos.map((contato) => [
+      contato.id,
+      {
+        pushName: contato.nome,
+        dadosAd: null,
+        timestamp: Date.now(),
+        remoteJidAlt: contato.id,
+      },
+    ]),
+  );
+}
 
 describe("POST /api/leads/sync-whatsapp", () => {
   beforeEach(() => {
@@ -67,12 +83,14 @@ describe("POST /api/leads/sync-whatsapp", () => {
       { id: "colab-2", id_pdv: "pdv-1", nome: "Bruno" },
     ] as never);
 
-    vi.mocked(buscarContatos).mockResolvedValue([
-      { id: "5511999990001@s.whatsapp.net", nome: "Lead 1" },
-      { id: "5511999990002@s.whatsapp.net", nome: "Lead 2" },
-      { id: "5511999990003@s.whatsapp.net", nome: "Lead 3" },
-      { id: "5511999990004@s.whatsapp.net", nome: "Lead 4" },
-    ] as never);
+    vi.mocked(buscarTodasMensagensDaInstancia).mockResolvedValue(
+      criarMapaMensagens(
+        { id: "5511999990001@s.whatsapp.net", nome: "Lead 1" },
+        { id: "5511999990002@s.whatsapp.net", nome: "Lead 2" },
+        { id: "5511999990003@s.whatsapp.net", nome: "Lead 3" },
+        { id: "5511999990004@s.whatsapp.net", nome: "Lead 4" },
+      ) as never,
+    );
 
     const resposta = await POST(new Request("http://localhost/api/leads/sync-whatsapp", { method: "POST" }) as never);
     const json = await resposta.json();
@@ -159,12 +177,14 @@ describe("POST /api/leads/sync-whatsapp", () => {
 
     vi.mocked(prisma.lead.findMany).mockResolvedValue([{ telefone: "5511999990001" }] as never);
 
-    vi.mocked(buscarContatos).mockResolvedValue([
-      { id: "5511999990001@s.whatsapp.net", nome: "Ja Existente" },
-      { id: "5511999990002@s.whatsapp.net", nome: "Novo 1" },
-      { id: "5511999990002@s.whatsapp.net", nome: "Novo 1 Repetido" },
-      { id: "5511999990003@s.whatsapp.net", nome: "Novo 2" },
-    ] as never);
+    vi.mocked(buscarTodasMensagensDaInstancia).mockResolvedValue(
+      criarMapaMensagens(
+        { id: "5511999990001@s.whatsapp.net", nome: "Ja Existente" },
+        { id: "5511999990002@s.whatsapp.net", nome: "Novo 1 Repetido" },
+        { id: "5511999990002", nome: "Novo 1 Repetido novamente" },
+        { id: "5511999990003@s.whatsapp.net", nome: "Novo 2" },
+      ) as never,
+    );
 
     const resposta = await POST(new Request("http://localhost/api/leads/sync-whatsapp", { method: "POST" }) as never);
     const json = await resposta.json();
@@ -203,15 +223,19 @@ describe("POST /api/leads/sync-whatsapp", () => {
       { id: "colab-b2", id_pdv: "pdv-b", nome: "Diego" },
     ] as never);
 
-    vi.mocked(buscarContatos)
-      .mockResolvedValueOnce([
-        { id: "5511888880001@s.whatsapp.net", nome: "Lead A1" },
-        { id: "5511888880002@s.whatsapp.net", nome: "Lead A2" },
-      ] as never)
-      .mockResolvedValueOnce([
-        { id: "5511777770001@s.whatsapp.net", nome: "Lead B1" },
-        { id: "5511777770002@s.whatsapp.net", nome: "Lead B2" },
-      ] as never);
+    vi.mocked(buscarTodasMensagensDaInstancia)
+      .mockResolvedValueOnce(
+        criarMapaMensagens(
+          { id: "5511888880001@s.whatsapp.net", nome: "Lead A1" },
+          { id: "5511888880002@s.whatsapp.net", nome: "Lead A2" },
+        ) as never,
+      )
+      .mockResolvedValueOnce(
+        criarMapaMensagens(
+          { id: "5511777770001@s.whatsapp.net", nome: "Lead B1" },
+          { id: "5511777770002@s.whatsapp.net", nome: "Lead B2" },
+        ) as never,
+      );
 
     const resposta = await POST(new Request("http://localhost/api/leads/sync-whatsapp", { method: "POST" }) as never);
     const json = await resposta.json();

@@ -1,7 +1,8 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import type { Lead, UseKanbanModuleReturn, Props } from "../types";
+import { formataMoeda } from "@/lib/utils";
+import type { KpiKanban, Lead, UseKanbanModuleReturn, Props } from "../types";
 import { useToast } from "@/components/ui/toast";
 import { useKanbanDerivacoes } from "./use-kanban-derivacoes";
 import { useKanbanMovimentacao } from "./use-kanban-movimentacao";
@@ -49,11 +50,44 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     negociosFiltradosPorEstagio,
     estagioAberto,
     origemStats,
+    totalPipeline,
+    negociosParados,
   } = useKanbanDerivacoes({
     estagios,
     negocios,
     negocioSelecionado,
   });
+
+  const kpis = useMemo<KpiKanban[]>(() => [
+    {
+      id: "ativos",
+      label: "Pipeline visível",
+      valor: `${negocios.length}`,
+      descricao: "negócios em acompanhamento",
+      destaque: "brand",
+    },
+    {
+      id: "valor",
+      label: "Valor em jogo",
+      valor: formataMoeda(totalPipeline),
+      descricao: "soma dos cards visíveis",
+      destaque: "success",
+    },
+    {
+      id: "parados",
+      label: "Precisam de ação",
+      valor: `${negociosParados}`,
+      descricao: "parados há mais de 3 dias",
+      destaque: "warning",
+    },
+    {
+      id: "criticos",
+      label: "Urgências",
+      valor: `${resumoPendencias?.porGravidade.critica ?? 0}`,
+      descricao: "pendências críticas agora",
+      destaque: "info",
+    },
+  ], [negocios.length, negociosParados, resumoPendencias?.porGravidade.critica, totalPipeline]);
 
   const stageIdAtivoEfetivo = useMemo(() => {
     if (estagios.length === 0) return "";
@@ -200,6 +234,9 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     totalNegocios: negocios.length,
     pendenciasCriticas: resumoPendencias?.porGravidade.critica ?? 0,
     origemStats,
+    totalPipeline,
+    negociosParados,
+    kpis,
     notificacoesAtivadas,
     alternarNotificacoes,
     permissaoNotificacao,

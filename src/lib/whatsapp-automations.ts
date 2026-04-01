@@ -88,7 +88,13 @@ export async function executarAutomacoesLeadStageChanged(
   resultado.automacoesCorrespondentes = automacoesCorrespondentes.length;
 
   for (const automacao of automacoesCorrespondentes) {
-    for (const acao of automacao.AutomacaoAcao) {
+    const acoesAutomacao = (
+      (automacao as { AutomacaoAcao?: Array<{ id: string; ordem: number; tipo: string; delay_minutos: number }> }).AutomacaoAcao ??
+      (automacao as { acoes?: Array<{ id: string; ordem: number; tipo: string; delay_minutos: number }> }).acoes ??
+      []
+    );
+
+    for (const acao of acoesAutomacao) {
       const referenciaUid = gerarReferenciaEventoAcao(
         evento.leadEstagioLogId,
         automacao.id,

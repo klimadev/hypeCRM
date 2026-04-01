@@ -3,6 +3,12 @@
 import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { LABELS_PENDENCIA, type TipoPendencia } from "@/lib/pendencias";
 import { listarPendenciasGlobaisKanban } from "@/lib/api/kanban";
+import {
+  criarPendenciasPorNegocio,
+  criarResumoPendencias,
+  detectarNovasPendenciasNaoNotificadas,
+  getGravidadePendencia,
+} from "./use-pendencias-globais.utils";
 
 export type PendenciaInfo = {
   id: string;
@@ -20,25 +26,6 @@ export type ResumoPendencias = {
   porTipo: Record<TipoPendencia, number>;
   porGravidade: Record<PendenciaGravidade, number>;
 };
-
-export function getGravidadePendencia(tipo: TipoPendencia): PendenciaGravidade {
-  switch (tipo) {
-    case "DOCUMENTO_APROVACAO_PENDENTE":
-      return "critica";
-    case "APROVACAO_GERENCIA_PENDENTE":
-      return "alerta";
-    case "ESTAGIO_PARADO":
-      return "alerta";
-    case "SEM_RESPOSTA":
-    case "CARTA_CREDITO_PENDENTE":
-    case "DOCUMENTOS_PENDENTES":
-    case "QUEDA_RESERVA":
-    case "ALTO_VALOR":
-      return "info";
-    default:
-      return "info";
-  }
-}
 
 const STORAGE_KEYS = {
   NOTIFICACOES_ATIVADAS: "notificacoes_pendencias_ativadas",
@@ -133,17 +120,6 @@ function isPrimeiraCarga(): boolean {
 function setPrimeiraCarga(valor: boolean): void {
   if (typeof window === "undefined") return;
   localStorage.setItem(STORAGE_KEYS.PRIMEIRA_CARGA, String(valor));
-}
-
-function detectarNovasPendenciasNaoNotificadas(
-  anteriores: PendenciaInfo[],
-  atuais: PendenciaInfo[],
-  jaNotificadas: Set<string>
-): PendenciaInfo[] {
-  const idsAnteriores = new Set(anteriores.filter(p => !p.resolvida).map(p => p.id));
-  return atuais.filter(
-    p => !p.resolvida && !idsAnteriores.has(p.id) && !jaNotificadas.has(p.id)
-  );
 }
 
 type PendenciasContextValue = {
@@ -315,60 +291,8 @@ export function usePendenciasProvider() {
     return () => clearInterval(intervalo);
   }, [buscarPendencias]);
 
-  const resumo = useMemo<ResumoPendencias>(() => {
-    const leadsSet = new Set<string>();
-    const porTipo: Record<TipoPendencia, number> = {
-      SEM_RESPOSTA: 0,
-      CARTA_CREDITO_PENDENTE: 0,
-      DOCUMENTOS_PENDENTES: 0,
-      QUEDA_RESERVA: 0,
-      ALTO_VALOR: 0,
-      DOCUMENTO_APROVACAO_PENDENTE: 0,
-      APROVACAO_GERENCIA_PENDENTE: 0,
-      ESTAGIO_PARADO: 0,
-    };
-    const porGravidade: Record<PendenciaGravidade, number> = {
-      critica: 0,
-      alerta: 0,
-      info: 0,
-    };
-
-    for (const p of pendencias) {
-      if (!p.resolvida) {
-        leadsSet.add(p.id_lead);
-        porTipo[p.tipo]++;
-        porGravidade[getGravidadePendencia(p.tipo)]++;
-      }
-    }
-
-    return {
-      total: pendencias.filter((p) => !p.resolvida).length,
-      totalNegocios: leadsSet.size,
-      porTipo,
-      porGravidade,
-    };
-  }, [pendencias]);
-
-  const pendenciasPorNegocio = useMemo(() => {
-    const mapa: Record<string, { total: number; naoResolvidas: number; tipos: TipoPendencia[]; gravidadeMaxima: PendenciaGravidade }> = {};
-
-    for (const p of pendencias) {
-      if (p.resolvida) continue;
-      if (!mapa[p.id_lead]) {
-        mapa[p.id_lead] = { total: 0, naoResolvidas: 0, tipos: [], gravidadeMaxima: "info" };
-      }
-      mapa[p.id_lead].total++;
-      mapa[p.id_lead].naoResolvidas++;
-      mapa[p.id_lead].tipos.push(p.tipo);
-      const gravidade = getGravidadePendencia(p.tipo);
-      const ordem = { info: 0, alerta: 1, critica: 2 };
-      if (ordem[gravidade] > ordem[mapa[p.id_lead].gravidadeMaxima]) {
-        mapa[p.id_lead].gravidadeMaxima = gravidade;
-      }
-    }
-
-    return mapa;
-  }, [pendencias]);
+  const resumo = useMemo<ResumoPendencias>(() => criarResumoPendencias(pendencias), [pendencias]);
+  const pendenciasPorNegocio = useMemo(() => criarPendenciasPorNegocio(pendencias), [pendencias]);
 
   return {
     pendencias,

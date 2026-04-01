@@ -8,7 +8,7 @@ import type {
   OrigemStats,
   PendenciaNegocioInfo,
 } from "../types";
-import { getGravidadePendencia } from "./use-pendencias-globais";
+import { getGravidadePendencia } from "./use-pendencias-globais.utils";
 
 function negocioPassaFiltros(
   pendenciaInfo: PendenciaNegocioInfo | undefined,
@@ -190,6 +190,15 @@ export function useKanbanDerivacoes({
     return stats;
   }, [negocios]);
 
+  const totalPipeline = useMemo(
+    () => Object.values(negociosFiltradosPorEstagio).flat().reduce((total, negocio) => total + negocio.valor_oportunidade, 0),
+    [negociosFiltradosPorEstagio],
+  );
+
+  const negociosParados = useMemo(() => {
+    return Object.values(pendenciasPorNegocio).filter((pendencia) => pendencia.tipos.includes("ESTAGIO_PARADO")).length;
+  }, [pendenciasPorNegocio]);
+
   return {
     filtros,
     setFiltros,
@@ -205,5 +214,7 @@ export function useKanbanDerivacoes({
     negociosFiltradosPorEstagio,
     estagioAberto,
     origemStats,
+    totalPipeline,
+    negociosParados,
   };
 }

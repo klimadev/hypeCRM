@@ -76,7 +76,10 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
         setModoFocoPendencias={vm.setModoFocoPendencias}
         resumoPendencias={vm.resumoPendencias}
         totalNegocios={vm.totalNegocios}
+        totalPipeline={vm.totalPipeline}
+        negociosParados={vm.negociosParados}
         pendenciasCriticas={vm.pendenciasCriticas}
+        kpis={vm.kpis}
         origemStats={vm.origemStats}
         notificacoesAtivadas={vm.notificacoesAtivadas}
         alternarNotificacoes={vm.alternarNotificacoes}

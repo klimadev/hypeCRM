@@ -1,8 +1,9 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3434";
+const BASE_URL = process.env.TEST_BASE_URL;
+const describeIntegracao = BASE_URL ? describe : describe.skip;
 
-describe("integração - WhatsApp Chat", () => {
+describeIntegracao("integração - WhatsApp Chat", () => {
   let cookie: string;
   let leadId: string;
   let empresaId: string;
@@ -167,7 +168,7 @@ describe("integração - WhatsApp Chat", () => {
   });
 });
 
-describe("integração - Sessão e Autenticação", () => {
+describeIntegracao("integração - Sessão e Autenticação", () => {
   it("login com credenciais inválidas retorna erro", async () => {
     const response = await fetch(`${BASE_URL}/api/autenticacao/login`, {
       method: "POST",

@@ -15,6 +15,14 @@ export type OrigemStats = {
   manual: number;
 };
 
+export type KpiKanban = {
+  id: string;
+  label: string;
+  valor: string;
+  descricao: string;
+  destaque?: "brand" | "success" | "warning" | "info";
+};
+
 export type Estagio = {
   id: string;
   nome: string;
@@ -197,6 +205,9 @@ export type UseKanbanModuleReturn = {
   totalNegocios: number;
   pendenciasCriticas: number;
   origemStats: OrigemStats;
+  totalPipeline: number;
+  negociosParados: number;
+  kpis: KpiKanban[];
   notificacoesAtivadas: boolean;
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";

@@ -1,33 +1,19 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Check, CheckCheck, Clock3, RotateCcw, Trash2, Volume2, Image as ImageIcon, Play, Pause, Loader2 } from "lucide-react";
+import { RotateCcw, Image as ImageIcon, Play, Pause, Loader2, Volume2 } from "lucide-react";
 import NextImage from "next/image";
 import { buscarMediaWhatsapp, type MediaContent } from "@/lib/api/whatsapp";
 import type { WhatsappChatMessage } from "@/modules/whatsapp/types";
+import {
+  formatTimeWhatsappMessageBubble,
+  ReceiptIconWhatsappMessageBubble,
+} from "./whatsapp-message-bubble-meta";
 
 type Props = {
   message: WhatsappChatMessage;
   onRetry?: (message: WhatsappChatMessage) => void;
 };
-
-function formatTime(timestamp: number) {
-  return new Date(timestamp * 1000).toLocaleTimeString("pt-BR", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-}
-
-function ReceiptIcon({ message }: { message: WhatsappChatMessage }) {
-  if (!message.fromMe) return null;
-  if (message.status === "PENDING") return <Clock3 className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "SENT") return <Check className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "DELIVERED") return <CheckCheck className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "READ") return <CheckCheck className="h-3 w-3 text-[var(--brand)]" />;
-  if (message.status === "PLAYED") return <Volume2 className="h-3 w-3 text-[var(--info-alt)]" />;
-  if (message.status === "DELETED") return <Trash2 className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  return null;
-}
 
 /**
  * Componente para renderizar mensagem de imagem
@@ -397,10 +383,10 @@ export function WhatsappMessageBubble({ message, onRetry }: Props) {
             </button>
           ) : (
             <>
-              <span>{formatTime(message.timestamp)}</span>
-              <ReceiptIcon message={message} />
-            </>
-          )}
+               <span>{formatTimeWhatsappMessageBubble(message.timestamp)}</span>
+               <ReceiptIconWhatsappMessageBubble message={message} />
+             </>
+           )}
         </div>
       </div>
     </div>

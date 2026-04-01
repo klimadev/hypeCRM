@@ -18,6 +18,53 @@ import {
 } from "@/lib/validacoes";
 import { badRequest, notFound } from "@/lib/api/http";
 import { parseJson, validateBody, validateQuery } from "@/lib/api/route-validation";
+import { processarAcaoLoteFuncionarios } from "./route.batch";
+import type {
+  DestinoInativacaoFuncionario,
+  FiltrosFuncionariosRoute,
+  FuncionarioAcaoLoteItem,
+  FuncionarioListagemItem,
+  PayloadAcaoLoteFuncionarios,
+  PayloadCriacaoFuncionarioBruto,
+  SessaoFuncionariosRoute,
+} from "./route.types";
+import {
+  criarOrderByFuncionarios,
+  criarWhereBaseFuncionarios,
+  criarWhereFuncionarios,
+  deveBloquearFiltroPdvGerente,
+  obterIdPdvRestritoPorSessao,
+  validarPayloadCriacaoFuncionario,
+  validarPrecondicoesAcaoLoteFuncionario,
+} from "./route.utils";
+
+function responderGerenteForaDoPdv() {
+  return NextResponse.json(
+    { erro: "Gerentes podem adicionar apenas colaboradores no proprio PDV." },
+    { status: 403 },
+  );
+}
+
+function responderMovimentacaoPdvNegada() {
+  return NextResponse.json(
+    { erro: "Gerentes nao podem mover colaboradores para outro PDV." },
+    { status: 403 },
+  );
+}
+
+function responderAlteracaoCargoNegada() {
+  return NextResponse.json(
+    { erro: "Gerentes podem definir apenas o cargo COLABORADOR." },
+    { status: 403 },
+  );
+}
+
+function responderDestinoInativacaoNegado() {
+  return NextResponse.json(
+    { erro: "Destino de inativacao precisa estar no mesmo PDV do gerente." },
+    { status: 403 },
+  );
+}
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -45,53 +92,30 @@ export async function GET(request: NextRequest) {
     return validacaoQuery.response;
   }
 
-  const filtros = validacaoQuery.data;
+  const filtros = validacaoQuery.data as FiltrosFuncionariosRoute;
   const busca = normalizarBuscaFuncionarios(filtros.busca);
 
-  const idPdvSessao = auth.sessao.perfil === "GERENTE" ? auth.sessao.id_pdv : null;
+  const sessao = auth.sessao as SessaoFuncionariosRoute;
+  const idPdvSessao = obterIdPdvRestritoPorSessao(sessao);
   if (auth.sessao.perfil === "GERENTE") {
     if (!idPdvSessao) {
       return respostaSemPermissao();
     }
 
-    if (filtros.id_pdv && filtros.id_pdv !== idPdvSessao) {
+    if (deveBloquearFiltroPdvGerente(idPdvSessao, filtros.id_pdv)) {
       return respostaSemPermissao();
     }
   }
 
-  const whereBase = {
-    id_empresa: auth.sessao.id_empresa,
-    ...(filtros.cargo !== "TODOS" ? { cargo: filtros.cargo } : {}),
-    // Se for GERENTE, força filtro pelo PDV da sessão (a menos que explicitamente busque por outro PDV e seja EMPRESA)
-    ...(idPdvSessao ? { id_pdv: idPdvSessao } : {}),
-    ...(filtros.id_pdv && auth.sessao.perfil === "EMPRESA" ? { id_pdv: filtros.id_pdv } : {}),
-    ...(busca
-      ? {
-          OR: [
-            { nome: { contains: busca } },
-            { email: { contains: busca } },
-            { cargo: { contains: busca } },
-            { Pdv: { is: { nome: { contains: busca } } } },
-          ],
-        }
-      : {}),
-  };
-
-  const where = {
-    ...whereBase,
-    ...(filtros.status !== "TODOS" ? { ativo: filtros.status === "ATIVO" } : {}),
-  };
-
-  const orderByMap: Record<string, unknown> = {
-    nome: { nome: filtros.direcao },
-    email: { email: filtros.direcao },
-    cargo: { cargo: filtros.direcao },
-    status: { ativo: filtros.direcao === "asc" ? "desc" : "asc" }, // Inverte: ativos primeiro (desc) ou inativos primeiro (asc)
-    pdv: { Pdv: { nome: filtros.direcao } },
-    criado_em: { criado_em: filtros.direcao },
-  } as const;
-
-  const orderBy = orderByMap[filtros.ordenar_por];
+  const whereBase = criarWhereBaseFuncionarios({
+    idEmpresa: auth.sessao.id_empresa,
+    cargo: filtros.cargo,
+    busca,
+    idPdvSessao,
+    idPdvFiltroEmpresa: auth.sessao.perfil === "EMPRESA" ? filtros.id_pdv ?? null : null,
+  });
+  const where = criarWhereFuncionarios(whereBase, filtros.status);
+  const orderBy = criarOrderByFuncionarios(filtros.ordenar_por, filtros.direcao);
   const skip = (filtros.pagina - 1) * filtros.por_pagina;
 
   const [total, funcionarios, ativos, inativos, gerentes, colaboradores] = await Promise.all([
@@ -101,16 +125,10 @@ export async function GET(request: NextRequest) {
       orderBy: orderBy as never,
       skip,
       take: filtros.por_pagina,
-      include: {
-        Pdv: { select: { id: true, nome: true } },
-      },
-    }) as unknown as Array<{
-      id: string;
-      id_pdv: string;
-      ativo: boolean;
-      cargo: string;
-      Pdv: { id: string; nome: string };
-    }>,
+        include: {
+          Pdv: { select: { id: true, nome: true } },
+        },
+    }) as unknown as FuncionarioListagemItem[],
     prisma.funcionario.count({ where: { ...whereBase, ativo: true } }),
     prisma.funcionario.count({ where: { ...whereBase, ativo: false } }),
     prisma.funcionario.count({ where: { ...whereBase, cargo: "GERENTE" } }),
@@ -156,39 +174,23 @@ export async function POST(request: NextRequest) {
     return respostaSemPermissao();
   }
 
-  const bodyResult = await parseJson<{
-    nome?: string;
-    email?: string;
-    senha?: string;
-    cargo?: string;
-    id_pdv?: string;
-  }>(request);
+  const bodyResult = await parseJson<PayloadCriacaoFuncionarioBruto>(request);
   if (!bodyResult.ok) {
     return bodyResult.response;
   }
-  const body = bodyResult.data;
-
-  const nome = body.nome?.trim();
-  const email = body.email?.trim().toLowerCase();
-  const senha = body.senha;
-  const cargo = body.cargo;
-  let id_pdv = body.id_pdv;
-
-  if (!nome || !email || !senha || !cargo || !id_pdv) {
-    return badRequest("Preencha todos os campos.");
+  const payloadCriacao = validarPayloadCriacaoFuncionario(bodyResult.data);
+  if (!payloadCriacao.ok) {
+    return badRequest(payloadCriacao.erro);
   }
+  const { nome, email, senha, cargo } = payloadCriacao.data;
+  let { id_pdv } = payloadCriacao.data;
 
-  // GERENTE só pode criar COLABORADOR no próprio PDV
   if (auth.sessao.perfil === "GERENTE") {
     if (!auth.sessao.id_pdv || !podeAdicionarColaboradorNoPdv(auth.sessao, cargo, id_pdv)) {
-      return NextResponse.json(
-        { erro: "Gerentes podem adicionar apenas colaboradores no proprio PDV." },
-        { status: 403 },
-      );
+      return responderGerenteForaDoPdv();
     }
   }
 
-  // Se não tem restrição de PDV, usa o enviado; senão força o PDV do gerente
   if (permissao.idPdvPermitido) {
     id_pdv = permissao.idPdvPermitido;
   }
@@ -230,13 +232,7 @@ export async function POST(request: NextRequest) {
       include: {
         Pdv: { select: { id: true, nome: true } },
       },
-    }) as unknown as {
-      id: string;
-      id_pdv: string;
-      ativo: boolean;
-      cargo: string;
-      Pdv: { id: string; nome: string };
-    };
+    }) as unknown as FuncionarioListagemItem;
 
     return NextResponse.json({
       funcionario,
@@ -277,19 +273,11 @@ export async function PATCH(request: NextRequest) {
     return validacao.response;
   }
 
-  const payload = validacao.data;
+  const payload = validacao.data as PayloadAcaoLoteFuncionarios;
   const ids = [...new Set(payload.ids)];
-
-  if (payload.acao === "ALTERAR_CARGO" && !payload.cargo) {
-    return badRequest("Cargo obrigatorio para esta acao.");
-  }
-
-  if (payload.acao === "ALTERAR_PDV" && !payload.id_pdv) {
-    return badRequest("PDV obrigatorio para esta acao.");
-  }
-
-  if (payload.acao === "INATIVAR" && !payload.id_funcionario_destino) {
-    return badRequest("Destino obrigatorio para inativacao em lote.");
+  const precondicoes = validarPrecondicoesAcaoLoteFuncionario(payload);
+  if (!precondicoes.ok) {
+    return badRequest(precondicoes.erro);
   }
 
   if (payload.id_pdv) {
@@ -312,7 +300,7 @@ export async function PATCH(request: NextRequest) {
         },
         select: { id: true, nome: true, id_pdv: true, cargo: true },
       })
-    : null;
+    : null as DestinoInativacaoFuncionario | null;
 
   if (payload.acao === "INATIVAR" && !destinoInativacao) {
     return badRequest("Destino invalido para reatribuicao.");
@@ -330,7 +318,7 @@ export async function PATCH(request: NextRequest) {
       id_pdv: true,
       ativo: true,
     },
-  });
+  }) as FuncionarioAcaoLoteItem[];
 
   if (auth.sessao.perfil === "GERENTE") {
     if (!auth.sessao.id_pdv) {
@@ -338,202 +326,25 @@ export async function PATCH(request: NextRequest) {
     }
 
     if (payload.acao === "ALTERAR_PDV" && payload.id_pdv && payload.id_pdv !== auth.sessao.id_pdv) {
-      return NextResponse.json(
-        { erro: "Gerentes nao podem mover colaboradores para outro PDV." },
-        { status: 403 },
-      );
+      return responderMovimentacaoPdvNegada();
     }
 
     if (payload.acao === "ALTERAR_CARGO" && payload.cargo !== "COLABORADOR") {
-      return NextResponse.json(
-        { erro: "Gerentes podem definir apenas o cargo COLABORADOR." },
-        { status: 403 },
-      );
+      return responderAlteracaoCargoNegada();
     }
 
     if (payload.acao === "INATIVAR" && destinoInativacao && !podeGerenciarRecursoNoPdv(auth.sessao, destinoInativacao.id_pdv)) {
-      return NextResponse.json(
-        { erro: "Destino de inativacao precisa estar no mesmo PDV do gerente." },
-        { status: 403 },
-      );
+      return responderDestinoInativacaoNegado();
     }
   }
 
-  const funcionarioPorId = new Map(funcionarios.map((item) => [item.id, item]));
-  const resultado = {
-    processados: ids.length,
-    atualizados: 0,
-    falhas: [] as Array<{ id: string; motivo: string }>,
-  };
-
-  for (const id of ids) {
-    const atual = funcionarioPorId.get(id);
-
-    if (!atual) {
-      resultado.falhas.push({ id, motivo: "Funcionario nao encontrado." });
-      continue;
-    }
-
-    if (auth.sessao.perfil === "GERENTE") {
-      if (!podeGerenciarRecursoNoPdv(auth.sessao, atual.id_pdv)) {
-        resultado.falhas.push({ id, motivo: "Sem permissao para colaborar fora do proprio PDV." });
-        continue;
-      }
-
-      if (atual.cargo !== "COLABORADOR") {
-        resultado.falhas.push({ id, motivo: "Gerente so pode alterar colaboradores." });
-        continue;
-      }
-    }
-
-    if (payload.acao === "INATIVAR" && payload.id_funcionario_destino === id) {
-      resultado.falhas.push({ id, motivo: "Destino deve ser diferente do colaborador de origem." });
-      continue;
-    }
-
-    try {
-      if (payload.acao === "ATIVAR") {
-        await prisma.funcionario.update({
-          where: { id: atual.id },
-          data: { ativo: true, inativado_em: null },
-        });
-
-        await prisma.auditoriaEquipe.create({
-          data: {
-            id: randomUUID(),
-            id_empresa: auth.sessao.id_empresa,
-            id_funcionario_alvo: atual.id,
-            acao: "ATIVAR_FUNCIONARIO",
-            valor_anterior: atual.ativo ? "ATIVO" : "INATIVO",
-            valor_novo: "ATIVO",
-            autor_tipo: auth.sessao.perfil,
-            autor_id: auth.sessao.id_usuario,
-          },
-        });
-
-        resultado.atualizados += 1;
-        continue;
-      }
-
-      if (payload.acao === "ALTERAR_CARGO" && payload.cargo) {
-        await prisma.funcionario.update({
-          where: { id: atual.id },
-          data: { cargo: payload.cargo },
-        });
-
-        await prisma.auditoriaEquipe.create({
-          data: {
-            id: randomUUID(),
-            id_empresa: auth.sessao.id_empresa,
-            id_funcionario_alvo: atual.id,
-            acao: "ATUALIZAR_CARGO_FUNCIONARIO",
-            campo: "cargo",
-            valor_anterior: atual.cargo,
-            valor_novo: payload.cargo,
-            autor_tipo: auth.sessao.perfil,
-            autor_id: auth.sessao.id_usuario,
-          },
-        });
-
-        resultado.atualizados += 1;
-        continue;
-      }
-
-      if (payload.acao === "ALTERAR_PDV" && payload.id_pdv) {
-        if (auth.sessao.perfil === "GERENTE" && payload.id_pdv !== atual.id_pdv) {
-          resultado.falhas.push({ id, motivo: "Gerente nao pode alterar PDV de colaborador." });
-          continue;
-        }
-
-        await prisma.funcionario.update({
-          where: { id: atual.id },
-          data: { id_pdv: payload.id_pdv },
-        });
-
-        await prisma.auditoriaEquipe.create({
-          data: {
-            id: randomUUID(),
-            id_empresa: auth.sessao.id_empresa,
-            id_funcionario_alvo: atual.id,
-            acao: "ATUALIZAR_PDV_FUNCIONARIO",
-            campo: "id_pdv",
-            valor_anterior: atual.id_pdv,
-            valor_novo: payload.id_pdv,
-            autor_tipo: auth.sessao.perfil,
-            autor_id: auth.sessao.id_usuario,
-          },
-        });
-
-        resultado.atualizados += 1;
-        continue;
-      }
-
-      if (payload.acao === "INATIVAR" && payload.id_funcionario_destino && destinoInativacao) {
-        const quantidadeLeads = await prisma.lead.count({
-          where: { id_empresa: auth.sessao.id_empresa, id_funcionario: atual.id },
-        });
-
-        await prisma.$transaction(async (tx) => {
-          await tx.lead.updateMany({
-            where: { id_empresa: auth.sessao.id_empresa, id_funcionario: atual.id },
-            data: { id_funcionario: payload.id_funcionario_destino },
-          });
-
-          await tx.funcionario.update({
-            where: { id: atual.id },
-            data: { ativo: false, inativado_em: new Date() },
-          });
-
-          await tx.reatribuicaoFuncionario.create({
-            data: {
-              id: randomUUID(),
-              id_empresa: auth.sessao.id_empresa,
-              id_funcionario_origem: atual.id,
-              id_funcionario_destino: destinoInativacao.id,
-              quantidade_leads: quantidadeLeads,
-              observacao: payload.observacao,
-              criado_por_tipo: auth.sessao.perfil,
-              criado_por_id: auth.sessao.id_usuario,
-            },
-          });
-
-          await tx.auditoriaEquipe.createMany({
-            data: [
-              {
-                id: randomUUID(),
-                id_empresa: auth.sessao.id_empresa,
-                id_funcionario_alvo: atual.id,
-                acao: "INATIVAR_FUNCIONARIO",
-                valor_anterior: atual.ativo ? "ATIVO" : "INATIVO",
-                valor_novo: "INATIVO",
-                observacao: payload.observacao,
-                autor_tipo: auth.sessao.perfil,
-                autor_id: auth.sessao.id_usuario,
-              },
-              {
-                id: randomUUID(),
-                id_empresa: auth.sessao.id_empresa,
-                id_funcionario_alvo: atual.id,
-                acao: "REATRIBUIR_LEADS_FUNCIONARIO",
-                valor_anterior: atual.nome,
-                valor_novo: destinoInativacao.nome,
-                observacao: `Leads reatribuidos: ${quantidadeLeads}`,
-                autor_tipo: auth.sessao.perfil,
-                autor_id: auth.sessao.id_usuario,
-              },
-            ],
-          });
-        });
-
-        resultado.atualizados += 1;
-        continue;
-      }
-
-      resultado.falhas.push({ id, motivo: "Acao nao suportada para o item." });
-    } catch {
-      resultado.falhas.push({ id, motivo: "Erro ao processar colaborador." });
-    }
-  }
+  const resultado = await processarAcaoLoteFuncionarios({
+    sessao: auth.sessao as SessaoFuncionariosRoute,
+    ids,
+    payload,
+    funcionarios,
+    destinoInativacao,
+  });
 
   return NextResponse.json({
     ok: resultado.falhas.length === 0,
