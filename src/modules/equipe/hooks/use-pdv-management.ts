@@ -24,6 +24,7 @@ type UsePdvManagementReturn = {
   instancias: WhatsappInstancia[];
   criarPdv: (nome: string) => Promise<boolean>;
   editarPdv: (id: string, nome: string, id_whatsapp_instancia?: string | null) => Promise<boolean>;
+  trocarInstanciaPdv: (idPdv: string, idNovaInstancia: string | null) => Promise<boolean>;
   excluirPdv: (id: string) => Promise<void>;
   carregarPdvs: () => Promise<void>;
 };
@@ -42,12 +43,19 @@ export function usePdvManagement(): UsePdvManagementReturn {
   const enriquecerPdvsComAlertas = useCallback((listaPdvs: Pdv[]) => {
     return listaPdvs.map((pdv) => ({
       ...pdv,
-      alerta_configuracao: pdv.whatsapp_instancia
-        ? null
-        : {
+      whatsapp_instancia: pdv.id_whatsapp_instancia
+        ? {
+            id: pdv.id_whatsapp_instancia,
+            nome: pdv.whatsapp_instancia?.nome ?? "Instância",
+            status: pdv.whatsapp_instancia?.status,
+          }
+        : undefined,
+      alerta_configuracao: !pdv.id_whatsapp_instancia
+        ? {
             tipo: "sem_instancia" as const,
-            mensagem: "Sem instancia WhatsApp vinculada. Este PDV sera ignorado na sincronizacao automatica.",
-          },
+            mensagem: "Sem instância WhatsApp vinculada. Este PDV será ignorado na sincronização automática.",
+          }
+        : null,
     }));
   }, []);
 
@@ -71,9 +79,11 @@ export function usePdvManagement(): UsePdvManagementReturn {
       const resposta = await listarInstanciasWhatsapp();
       if (resposta.ok) {
         setInstancias(resposta.dados.instancias);
+      } else {
+        setErroGestaoPdvs("Erro ao carregar configuracoes WhatsApp. Tente novamente.");
       }
     } catch {
-      // Silencioso - falha em carregar instancias nao bloqueia o resto
+      setErroGestaoPdvs("Erro ao carregar configuracoes WhatsApp. Verifique a conexao.");
     }
   }, []);
 
@@ -180,6 +190,19 @@ export function usePdvManagement(): UsePdvManagementReturn {
     [instancias, pdvs],
   );
 
+  const trocarInstanciaPdv = useCallback(
+    async (idPdv: string, idNovaInstancia: string | null) => {
+      const pdvAtual = pdvs.find((item) => item.id === idPdv);
+      if (!pdvAtual) {
+        setErroGestaoPdvs("PDV nao encontrado.");
+        return false;
+      }
+
+      return editarPdv(idPdv, pdvAtual.nome, idNovaInstancia);
+    },
+    [pdvs, editarPdv],
+  );
+
   const excluirPdv = useCallback(
     async (id: string) => {
       const pdvAnterior = pdvs.find((item) => item.id === id);
@@ -223,6 +246,7 @@ export function usePdvManagement(): UsePdvManagementReturn {
     instancias,
     criarPdv,
     editarPdv,
+    trocarInstanciaPdv,
     excluirPdv,
     carregarPdvs,
   };

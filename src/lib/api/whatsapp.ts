@@ -9,6 +9,11 @@ import type {
   WhatsappInstancia,
   WhatsappJobItem,
 } from "@/modules/whatsapp/types";
+import type {
+  ChatContextResponse,
+  ConversasResponse,
+  ConversasStreamSnapshot,
+} from "@/modules/chat/types";
 
 type ApiErro = { erro?: string };
 
@@ -163,6 +168,42 @@ type ChatApiResponse = {
   unreadCount?: number;
 };
 
+type ChatMessagesStreamSnapshot = {
+  messages: WhatsappChatMessage[];
+  connectionStatus: ChatConnectionStatus;
+  unreadCount: number;
+};
+
+type SseCallbacks<T> = {
+  onSnapshot: (snapshot: T) => void;
+  onError?: () => void;
+};
+
+function criarAssinaturaSse<T>(url: string, callbacks: SseCallbacks<T>) {
+  if (typeof EventSource === "undefined") {
+    callbacks.onError?.();
+    return () => undefined;
+  }
+
+  const source = new EventSource(url);
+  const handleSnapshot = (event: Event) => {
+    const snapshot = JSON.parse((event as MessageEvent<string>).data) as T;
+    callbacks.onSnapshot(snapshot);
+  };
+  const handleError = () => {
+    callbacks.onError?.();
+  };
+
+  source.addEventListener("snapshot", handleSnapshot as EventListener);
+  source.addEventListener("error", handleError);
+
+  return () => {
+    source.removeEventListener("snapshot", handleSnapshot as EventListener);
+    source.removeEventListener("error", handleError);
+    source.close();
+  };
+}
+
 export async function listarMensagensWhatsapp(
   leadId: string,
   signal?: AbortSignal,
@@ -191,6 +232,110 @@ export async function listarMensagensWhatsapp(
       unreadCount: json.unreadCount ?? 0,
     },
   };
+}
+
+export function assinarMensagensWhatsapp(
+  leadId: string,
+  callbacks: SseCallbacks<ChatMessagesStreamSnapshot>,
+) {
+  const searchParams = new URLSearchParams({ leadId });
+  return criarAssinaturaSse(
+    `/api/whatsapp/chat/messages/stream?${searchParams.toString()}`,
+    callbacks,
+  );
+}
+
+export function assinarConversasWhatsapp(
+  params: {
+    busca?: string;
+    naoLidas?: boolean;
+    limite?: number;
+  },
+  callbacks: SseCallbacks<ConversasStreamSnapshot>,
+) {
+  const searchParams = new URLSearchParams();
+
+  if (params.busca?.trim()) {
+    searchParams.set("busca", params.busca.trim());
+  }
+
+  if (params.naoLidas) {
+    searchParams.set("naoLidas", "true");
+  }
+
+  if (typeof params.limite === "number") {
+    searchParams.set("limite", String(params.limite));
+  }
+
+  return criarAssinaturaSse(
+    `/api/whatsapp/chat/conversations/stream?${searchParams.toString()}`,
+    callbacks,
+  );
+}
+
+export async function listarConversasWhatsapp(
+  params: {
+    busca?: string;
+    cursor?: string | null;
+    limite?: number;
+    naoLidas?: boolean;
+  },
+  signal?: AbortSignal,
+): Promise<ResultadoApi<ConversasResponse>> {
+  const searchParams = new URLSearchParams();
+
+  if (params.busca?.trim()) {
+    searchParams.set("busca", params.busca.trim());
+  }
+
+  if (params.cursor?.trim()) {
+    searchParams.set("cursor", params.cursor.trim());
+  }
+
+  if (typeof params.limite === "number") {
+    searchParams.set("limite", String(params.limite));
+  }
+
+  if (params.naoLidas) {
+    searchParams.set("naoLidas", "true");
+  }
+
+  const resposta = await fetch(`/api/whatsapp/chat/conversations?${searchParams.toString()}`, {
+    signal,
+    cache: "no-store",
+  });
+  const json = await lerJsonSeguro<ConversasResponse & ApiErro>(resposta);
+
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao carregar conversas." };
+  }
+
+  return {
+    ok: true,
+    dados: {
+      conversas: Array.isArray(json.conversas) ? json.conversas : [],
+      cursor: typeof json.cursor === "string" ? json.cursor : null,
+      temMais: json.temMais === true,
+    },
+  };
+}
+
+export async function buscarContextoChat(
+  leadId: string,
+  signal?: AbortSignal,
+): Promise<ResultadoApi<ChatContextResponse>> {
+  const searchParams = new URLSearchParams({ leadId });
+  const resposta = await fetch(`/api/whatsapp/chat/context?${searchParams.toString()}`, {
+    signal,
+    cache: "no-store",
+  });
+  const json = await lerJsonSeguro<ChatContextResponse & ApiErro>(resposta);
+
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao carregar contexto do chat." };
+  }
+
+  return { ok: true, dados: json };
 }
 
 export async function enviarMensagemWhatsapp(payload: {

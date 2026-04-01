@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { TipoPendencia, LABELS_PENDENCIA } from "@/lib/validacoes";
+import { LABELS_PENDENCIA, type TipoPendencia } from "@/lib/pendencias";
 import { listarPendenciasGlobaisKanban } from "@/lib/api/kanban";
 
 export type PendenciaInfo = {

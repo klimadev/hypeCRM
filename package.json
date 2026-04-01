@@ -5,8 +5,10 @@
   "scripts": {
     "dev": "next dev -H 0.0.0.0 -p 3434",
     "build": "next build",
+    "build:strict": "NEXT_STRICT_BUILD=1 next build",
     "start": "next start -H 0.0.0.0 -p 3434",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "vitest run",
     "seed": "prisma db seed",
     "setup": "node scripts/setup-wizard.js",

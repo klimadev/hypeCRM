@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { TipoPendencia } from "@/lib/validacoes";
+import type { TipoPendencia } from "@/lib/pendencias";
 import { calcularPendenciasLead } from "@/lib/calculo-pendencias";
 
 export type PendenciaDinamica = {

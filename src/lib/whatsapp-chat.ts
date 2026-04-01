@@ -18,14 +18,22 @@ type LeadComAcesso = {
   nome: string;
 };
 
-type InstanciaResolvida = {
+export type LeadResolvidoPorTelefone = {
+  id: string;
+  nome: string;
+  telefone: string;
+  origem: string | null;
+  estagioNome: string | null;
+};
+
+export type InstanciaResolvida = {
   pdvId: string;
   pdvNome: string;
   id: string;
   instanceName: string;
 };
 
-type MensagemNormalizada = {
+export type MensagemNormalizada = {
   messageId: string;
   remoteJid: string;
   remoteJidAlt: string | null;
@@ -52,6 +60,8 @@ type MensagemNormalizada = {
     | "unknown";
   tipoLabel: string;
   text: string;
+  conteudo: string; // Texto extraído para exibição
+  pushName: string | null; // Nome do remetente
   status: ChatMessageStatus;
   timestamp: number;
   timestampIso: string;
@@ -270,6 +280,8 @@ export function normalizarMensagensEvolution(payload: unknown): MensagemNormaliz
         kind,
         tipoLabel,
         text,
+        conteudo: text, // Mesmo que text para compatibilidade
+        pushName: typeof raw.pushName === "string" ? raw.pushName : null,
         status: mapearStatusMensagem(extractedStatus, fromMe),
         timestamp: Number.isNaN(timestamp) ? Math.floor(Date.now() / 1000) : timestamp,
         timestampIso,
@@ -302,6 +314,70 @@ export async function buscarLeadComAcesso(sessao: SessaoToken, leadId: string): 
       nome: true,
     },
   });
+}
+
+export async function buscarLeadPorTelefoneComAcesso(
+  sessao: SessaoToken,
+  telefoneOuJid: string,
+): Promise<LeadResolvidoPorTelefone | null> {
+  const whereLeads = await whereLeadsPorPerfil(sessao);
+  const normalizado = normalizarTelefoneParaWhatsapp(telefoneOuJid);
+  const candidatos = new Set<string>();
+  const bruto = telefoneOuJid.replace(/\D/g, "");
+
+  if (bruto) candidatos.add(bruto);
+  if (normalizado.waNumber) candidatos.add(normalizado.waNumber);
+  if (candidatos.size === 0) return null;
+
+  const leads = await prisma.lead.findMany({
+    where: {
+      ...whereLeads,
+      OR: Array.from(candidatos).map((numero) => ({
+        telefone: { contains: numero },
+      })),
+    },
+    select: {
+      id: true,
+      nome: true,
+      telefone: true,
+      origem: true,
+      EstagioFunil: {
+        select: {
+          nome: true,
+        },
+      },
+    },
+    take: 10,
+  });
+
+  if (leads.length === 0) return null;
+
+  const pontuar = (telefone: string) => {
+    const digitos = telefone.replace(/\D/g, "");
+    let score = 0;
+
+    for (const candidato of candidatos) {
+      if (digitos === candidato) score = Math.max(score, 3);
+      else if (digitos.endsWith(candidato) || candidato.endsWith(digitos)) score = Math.max(score, 2);
+      else if (digitos.includes(candidato) || candidato.includes(digitos)) score = Math.max(score, 1);
+    }
+
+    return score;
+  };
+
+  const melhor = leads
+    .map((lead) => ({ lead, score: pontuar(lead.telefone) }))
+    .sort((a, b) => b.score - a.score)[0];
+
+  if (!melhor || melhor.score === 0) return null;
+
+  return {
+    id: melhor.lead.id,
+    nome: melhor.lead.nome,
+    telefone: melhor.lead.telefone,
+    origem: melhor.lead.origem,
+    estagioNome: melhor.lead.EstagioFunil?.nome ?? null,
+  };
 }
 
 export async function resolverInstanciaDoLead(idEmpresa: string, leadId: string): Promise<InstanciaResolvida | null> {
@@ -340,6 +416,90 @@ export async function resolverInstanciaDoLead(idEmpresa: string, leadId: string)
   return {
     pdvId: lead.Funcionario.Pdv.id,
     pdvNome: lead.Funcionario.Pdv.nome,
+    id: instancia.id,
+    instanceName: instancia.instance_name,
+  };
+}
+
+// Resolve instância WhatsApp para o telefone/lead da empresa
+// Prioridade: 1) Instância do PDV do lead, 2) Qualquer instância conectada
+export async function resolverInstanciaPorTelefone(
+  idEmpresa: string,
+  phoneNumber: string,
+): Promise<InstanciaResolvida | null> {
+  // Primeiro tenta resolver via lead (PDV do funcionário)
+  const normalizado = normalizarTelefoneParaWhatsapp(phoneNumber);
+  const telefoneBusca = normalizado.waNumber || phoneNumber.replace(/\D/g, "");
+  
+  if (telefoneBusca) {
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id_empresa: idEmpresa,
+        telefone: { contains: telefoneBusca },
+      },
+      select: {
+        Funcionario: {
+          select: {
+            Pdv: {
+              select: {
+                id: true,
+                nome: true,
+                id_whatsapp_instancia: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (lead?.Funcionario?.Pdv?.id_whatsapp_instancia) {
+      const instancia = await prisma.whatsappInstancia.findFirst({
+        where: {
+          id: lead.Funcionario.Pdv.id_whatsapp_instancia,
+          id_empresa: idEmpresa,
+        },
+        select: {
+          id: true,
+          instance_name: true,
+        },
+      });
+
+      if (instancia) {
+        console.log(`[resolverInstanciaPorTelefone] Encontrada instância via PDV do lead: ${instancia.instance_name}`);
+        return {
+          pdvId: lead.Funcionario.Pdv.id,
+          pdvNome: lead.Funcionario.Pdv.nome,
+          id: instancia.id,
+          instanceName: instancia.instance_name,
+        };
+      }
+    }
+  }
+
+  // Fallback: buscar qualquer instância conectada (open ou connecting)
+  const instancia = await prisma.whatsappInstancia.findFirst({
+    where: {
+      id_empresa: idEmpresa,
+      status: { in: ["open", "connecting"] },
+    },
+    select: {
+      id: true,
+      instance_name: true,
+    },
+    orderBy: {
+      criado_em: "asc",
+    },
+  });
+
+  if (!instancia) {
+    console.log(`[resolverInstanciaPorTelefone] Nenhuma instância encontrada para empresa ${idEmpresa}`);
+    return null;
+  }
+
+  console.log(`[resolverInstanciaPorTelefone] Usando instância global: ${instancia.instance_name}`);
+  return {
+    pdvId: "",
+    pdvNome: "",
     id: instancia.id,
     instanceName: instancia.instance_name,
   };
@@ -392,7 +552,9 @@ export async function buscarConnectionStatus(instanceName: string): Promise<Chat
     const instance = (json.instance ?? json) as Record<string, unknown>;
     const state = String(instance.state ?? instance.status ?? "").toLowerCase();
     if (!state) return "unknown";
-    return state === "open" ? "online" : "offline";
+    
+    // Considera "open" e "connecting" como conectados
+    return state === "open" || state === "connecting" ? "online" : "offline";
   } catch {
     return "offline";
   }

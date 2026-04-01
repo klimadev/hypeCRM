@@ -5,5 +5,14 @@ import { useCalComModule } from "@/modules/calcom/hooks/use-calcom-module";
 
 export function AgendaWidgetWrapper() {
   const { bookings, carregando, erro } = useCalComModule();
-  return <AgendaWidget bookings={bookings} carregando={carregando} erro={erro} />;
+
+  return (
+    <AgendaWidget
+      bookings={bookings}
+      carregando={carregando}
+      erro={erro}
+      hrefIntegracao="/integracoes/calcom"
+      rotuloAcao="Gerenciar Cal.com"
+    />
+  );
 }

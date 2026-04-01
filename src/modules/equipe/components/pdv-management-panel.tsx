@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Building2, CheckCircle2, Loader2, Pencil, Plus, Save, Search, Trash2, UserPlus } from "lucide-react";
+import { AlertCircle, ArrowDown, ArrowLeft, ArrowUp, ArrowUpDown, Building2, CheckCircle2, Loader2, Pencil, Plus, RefreshCw, Save, Search, Trash2, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -46,7 +46,10 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
   const [errosLocal, setErrosLocal] = useState<{ nome?: string; email?: string; senha?: string }>({});
   const [dadosEdicaoFuncionario, setDadosEdicaoFuncionario] = useState<{ nome: string; email: string; cargo: string; id_pdv: string } | null>(null);
   const [errosEdicao, setErrosEdicao] = useState<Record<string, string>>({});
-  const totalPdvsSemInstancia = useMemo(() => vm.pdvs.filter((pdv) => !pdv.whatsapp_instancia).length, [vm.pdvs]);
+  const [trocandoInstanciaPdvId, setTrocandoInstanciaPdvId] = useState<string | null>(null);
+  const [novaInstanciaId, setNovaInstanciaId] = useState("");
+  const [salvandoInstancia, setSalvandoInstancia] = useState(false);
+  const totalPdvsSemInstancia = useMemo(() => vm.pdvs.filter((pdv) => !pdv.id_whatsapp_instancia).length, [vm.pdvs]);
 
   const pdvSelecionadoNoDrawer = useMemo(() => vm.pdvs.find((pdv) => pdv.id === pdvColaboradoresId) ?? null, [vm.pdvs, pdvColaboradoresId]);
   const colaboradoresDrawer = useMemo<ColaboradorDrawer[]>(() => {
@@ -57,8 +60,8 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
       id: funcionarioResumo.id,
       nome: funcionarioResumo.nome,
       cargo: funcionarioResumo.cargo,
-      email: "-",
-      ativo: true,
+      email: funcionarioResumo.email ?? "-",
+      ativo: funcionarioResumo.ativo ?? true,
       pdv: pdvSelecionadoNoDrawer
         ? {
             id: pdvSelecionadoNoDrawer.id,
@@ -101,9 +104,9 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
 
   function iconeOrdenacaoDrawer(campo: "nome" | "email" | "cargo" | "status") {
     if (ordenacaoDrawer !== campo) {
-      return <ArrowUpDown className="h-3.5 w-3.5 text-slate-400" />;
+      return <ArrowUpDown className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />;
     }
-    return direcaoDrawer === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-slate-700" /> : <ArrowDown className="h-3.5 w-3.5 text-slate-700" />;
+    return direcaoDrawer === "asc" ? <ArrowUp className="h-3.5 w-3.5 text-[var(--text-primary)]" /> : <ArrowDown className="h-3.5 w-3.5 text-[var(--text-primary)]" />;
   }
 
   const aoCriarPdv = async (evento: FormEvent<HTMLFormElement>) => {
@@ -147,6 +150,27 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
 
     await vm.excluirPdv(vm.pdvParaExcluir.id);
     vm.setPdvParaExcluir(null);
+  };
+
+  const iniciarTrocaInstancia = (pdvId: string, instanciaAtualId?: string | null) => {
+    setTrocandoInstanciaPdvId(pdvId);
+    setNovaInstanciaId(instanciaAtualId ?? "");
+  };
+
+  const cancelarTrocaInstancia = () => {
+    setTrocandoInstanciaPdvId(null);
+    setNovaInstanciaId("");
+  };
+
+  const salvarTrocaInstancia = async () => {
+    if (!trocandoInstanciaPdvId) return;
+
+    setSalvandoInstancia(true);
+    const ok = await vm.trocarInstanciaPdv(trocandoInstanciaPdvId, novaInstanciaId || null);
+    setSalvandoInstancia(false);
+    if (ok) {
+      cancelarTrocaInstancia();
+    }
   };
 
   const abrirDrawerColaboradores = (id: string) => {
@@ -288,7 +312,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                 "group relative cursor-pointer space-y-3 overflow-hidden rounded-[var(--radius-card)] border bg-[var(--surface-elevated)] p-4 transition-all duration-200",
                 "hover:-translate-y-1 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]",
                 "active:scale-[0.99]",
-                pdv.alerta_configuracao
+                !pdv.id_whatsapp_instancia
                   ? "border-[color:rgba(245,158,11,0.28)] bg-[linear-gradient(135deg,rgba(245,158,11,0.1),rgba(255,255,255,0.02))] shadow-[0_10px_30px_-20px_rgba(245,158,11,0.45)]"
                   : "border-[var(--border-subtle)] shadow-[var(--shadow-sm)]",
               )}
@@ -374,14 +398,84 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                            <Building2 className="h-4 w-4 text-[var(--text-tertiary)]" />
                         </div>
                       </div>
-                      {pdv.whatsapp_instancia ? (
-                         <p className="mt-2 text-xs text-[var(--success)]">WhatsApp: {pdv.whatsapp_instancia.nome}</p>
-                      ) : (
-                         <div className="mt-2 flex items-start gap-2 rounded-lg border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-2.5 py-2 text-xs text-[var(--warning)]">
-                          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
-                          <span>{pdv.alerta_configuracao?.mensagem ?? "Sem instancia WhatsApp vinculada."}</span>
-                        </div>
-                      )}
+                      {pdv.id_whatsapp_instancia ? (
+                          <div className="mt-2 flex items-center gap-2">
+                            <p className="text-xs text-[var(--success)]">WhatsApp: {pdv.whatsapp_instancia?.nome ?? "Vinculada"}</p>
+                            {vm.podeGerenciarEmpresa && trocandoInstanciaPdvId !== pdv.id && (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 rounded-full bg-[color:rgba(255,255,255,0.06)] px-2 py-0.5 text-[10px] text-[var(--text-secondary)] transition-colors hover:bg-[color:rgba(255,255,255,0.1)] hover:text-[var(--text-primary)]"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  iniciarTrocaInstancia(pdv.id, pdv.id_whatsapp_instancia);
+                                }}
+                              >
+                                <RefreshCw className="h-2.5 w-2.5" />
+                                Trocar
+                              </button>
+                            )}
+                          </div>
+                       ) : (
+                          <div className="mt-2 flex items-start gap-2 rounded-lg border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.08)] px-2.5 py-2 text-xs text-[var(--warning)]">
+                           <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                           <span>Sem instância WhatsApp vinculada. Este PDV será ignorado na sincronização automática.</span>
+                           {vm.podeGerenciarEmpresa && trocandoInstanciaPdvId !== pdv.id && (
+                             <button
+                               type="button"
+                               className="ml-auto shrink-0 inline-flex items-center gap-1 rounded-full bg-[color:rgba(245,158,11,0.16)] px-2 py-0.5 text-[10px] text-[var(--warning)] transition-colors hover:bg-[color:rgba(245,158,11,0.24)]"
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 iniciarTrocaInstancia(pdv.id, null);
+                               }}
+                             >
+                               <RefreshCw className="h-2.5 w-2.5" />
+                               Vincular
+                             </button>
+                           )}
+                         </div>
+                       )}
+                       {trocandoInstanciaPdvId === pdv.id && (
+                         <div
+                           className="mt-2 flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface)] p-2"
+                           onClick={(e) => e.stopPropagation()}
+                         >
+                           <Select
+                             value={novaInstanciaId || VALOR_SEM_INSTANCIA}
+                             onValueChange={(valor) => setNovaInstanciaId(valor === VALOR_SEM_INSTANCIA ? "" : valor)}
+                           >
+                             <SelectTrigger className="h-8 flex-1 rounded-lg text-xs">
+                               <SelectValue placeholder="Instância" />
+                             </SelectTrigger>
+                             <SelectContent>
+                               <SelectItem value={VALOR_SEM_INSTANCIA}>Nenhuma</SelectItem>
+                               {vm.instancias.map((instancia) => (
+                                 <SelectItem key={instancia.id} value={instancia.id}>
+                                   {instancia.nome}
+                                 </SelectItem>
+                               ))}
+                             </SelectContent>
+                           </Select>
+                           <Button
+                             type="button"
+                             size="sm"
+                             className="h-8 rounded-lg"
+                             disabled={salvandoInstancia}
+                             onClick={() => void salvarTrocaInstancia()}
+                           >
+                             {salvandoInstancia ? <Loader2 className="h-3 w-3 animate-spin" /> : "OK"}
+                           </Button>
+                           <Button
+                             type="button"
+                             size="sm"
+                             variant="outline"
+                             className="h-8 rounded-lg"
+                             disabled={salvandoInstancia}
+                             onClick={cancelarTrocaInstancia}
+                           >
+                             <ArrowLeft className="h-3 w-3" />
+                           </Button>
+                         </div>
+                       )}
                     </button>
                   </>
                 )}
@@ -418,7 +512,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             <Button
               type="button"
               variant="destructive"
-              className="bg-rose-600 hover:bg-rose-700"
+              className="bg-[var(--danger)] hover:bg-[var(--danger)]/90"
               onClick={() => void confirmarExclusaoPdv()}
               disabled={!vm.pdvParaExcluir || vm.excluindoPdvId === vm.pdvParaExcluir.id}
             >
@@ -434,15 +528,15 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
       </Dialog>
 
       <Sheet open={drawerNovoPdvAberto} onOpenChange={setDrawerNovoPdvAberto}>
-        <SheetContent side="right" className="w-full max-w-md">
+        <SheetContent side="right" className="w-full max-w-md bg-[var(--surface-elevated)]">
           <SheetHeader>
-            <SheetTitle>Novo PDV</SheetTitle>
-            <SheetDescription>Crie um novo ponto de venda para distribuir equipe e operacao.</SheetDescription>
+            <SheetTitle className="text-[var(--text-primary)]">Novo PDV</SheetTitle>
+            <SheetDescription className="text-[var(--text-secondary)]">Crie um novo ponto de venda para distribuir equipe e operacao.</SheetDescription>
           </SheetHeader>
 
           <form onSubmit={aoCriarPdv} className="mt-6 space-y-4 px-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-700">Nome do PDV</label>
+              <label className="text-sm font-medium text-[var(--text-primary)]">Nome do PDV</label>
               <Input
                 name="nome"
                 placeholder="Ex.: Centro Comercial"
@@ -455,7 +549,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             </div>
 
             <SheetFooter className="flex-col gap-2 sm:flex-col">
-              <Button type="submit" disabled={vm.criandoPdv || !nomeNovoPdv.trim()} className="w-full rounded-xl bg-slate-900 text-white hover:bg-slate-800">
+              <Button type="submit" disabled={vm.criandoPdv || !nomeNovoPdv.trim()} className="w-full rounded-xl bg-[var(--brand)] hover:bg-[var(--brand-strong)] text-white font-medium">
                 {vm.criandoPdv ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Plus className="mr-2 h-4 w-4" />}
                 {vm.criandoPdv ? "Criando PDV..." : "Criar PDV"}
               </Button>
@@ -477,10 +571,12 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             setNovoColaboradorExpandido(false);
             setCadastroSucesso(false);
             setErrosLocal({});
+            setTrocandoInstanciaPdvId(null);
+            setNovaInstanciaId("");
           }
         }}
       >
-        <SheetContent side="right" className="w-full max-w-md overflow-y-auto">
+        <SheetContent side="right" className="w-full max-w-lg overflow-y-auto bg-[var(--surface-elevated)]">
           {editandoFuncionarioNoDrawer ? (
             <>
               <SheetHeader>
@@ -489,43 +585,43 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                     <ArrowLeft className="h-4 w-4" />
                   </Button>
                   <div>
-                    <SheetTitle>Editar colaborador</SheetTitle>
-                    <SheetDescription>Altere os dados do colaborador.</SheetDescription>
+                    <SheetTitle className="text-[var(--text-primary)]">Editar colaborador</SheetTitle>
+                    <SheetDescription className="text-[var(--text-secondary)]">Altere os dados do colaborador.</SheetDescription>
                   </div>
                 </div>
               </SheetHeader>
 
               <div className="mt-6 space-y-4 px-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Nome</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)]">Nome</label>
                   <Input
                     value={dadosEdicaoFuncionario?.nome ?? ""}
                     onChange={(e) => setDadosEdicaoFuncionario((prev) => prev ? { ...prev, nome: e.target.value } : null)}
                     placeholder="Nome completo"
-                    className={errosEdicao.nome ? "border-rose-300" : ""}
+                    className={errosEdicao.nome ? "border-[var(--danger)]" : ""}
                   />
-                  {errosEdicao.nome && <p className="text-xs text-rose-600">{errosEdicao.nome}</p>}
+                  {errosEdicao.nome && <p className="text-xs text-[var(--danger)]">{errosEdicao.nome}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">E-mail</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)]">E-mail</label>
                   <Input
                     type="email"
                     value={dadosEdicaoFuncionario?.email ?? ""}
                     onChange={(e) => setDadosEdicaoFuncionario((prev) => prev ? { ...prev, email: e.target.value } : null)}
                     placeholder="email@exemplo.com"
-                    className={errosEdicao.email ? "border-rose-300" : ""}
+                    className={errosEdicao.email ? "border-[var(--danger)]" : ""}
                   />
-                  {errosEdicao.email && <p className="text-xs text-rose-600">{errosEdicao.email}</p>}
+                  {errosEdicao.email && <p className="text-xs text-[var(--danger)]">{errosEdicao.email}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">Cargo</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)]">Cargo</label>
                   <Select
                     value={dadosEdicaoFuncionario?.cargo ?? ""}
                     onValueChange={(valor) => setDadosEdicaoFuncionario((prev) => prev ? { ...prev, cargo: valor } : null)}
                   >
-                    <SelectTrigger className={errosEdicao.cargo ? "border-rose-300" : ""}>
+                    <SelectTrigger className={errosEdicao.cargo ? "border-[var(--danger)]" : ""}>
                       <SelectValue placeholder="Selecione o cargo" />
                     </SelectTrigger>
                     <SelectContent>
@@ -534,16 +630,16 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                       <SelectItem value="ADMINISTRADOR">Administrador</SelectItem>
                     </SelectContent>
                   </Select>
-                  {errosEdicao.cargo && <p className="text-xs text-rose-600">{errosEdicao.cargo}</p>}
+                  {errosEdicao.cargo && <p className="text-xs text-[var(--danger)]">{errosEdicao.cargo}</p>}
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-slate-700">PDV</label>
+                  <label className="text-sm font-medium text-[var(--text-primary)]">PDV</label>
                   <Select
                     value={dadosEdicaoFuncionario?.id_pdv ?? ""}
                     onValueChange={(valor) => setDadosEdicaoFuncionario((prev) => prev ? { ...prev, id_pdv: valor } : null)}
                   >
-                    <SelectTrigger className={errosEdicao.id_pdv ? "border-rose-300" : ""}>
+                    <SelectTrigger className={errosEdicao.id_pdv ? "border-[var(--danger)]" : ""}>
                       <SelectValue placeholder="Selecione o PDV" />
                     </SelectTrigger>
                     <SelectContent>
@@ -554,17 +650,17 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                       ))}
                     </SelectContent>
                   </Select>
-                  {errosEdicao.id_pdv && <p className="text-xs text-rose-600">{errosEdicao.id_pdv}</p>}
+                  {errosEdicao.id_pdv && <p className="text-xs text-[var(--danger)]">{errosEdicao.id_pdv}</p>}
                 </div>
 
                 {vm.statusSalvamento.id === editandoFuncionarioNoDrawer && vm.statusSalvamento.estado === "error" && (
-                  <div className="rounded-lg bg-rose-50 p-3 text-sm text-rose-700">{vm.statusSalvamento.mensagem}</div>
+                  <div className="rounded-lg bg-[color:rgba(244,63,94,0.08)] p-3 text-sm text-[var(--danger)]">{vm.statusSalvamento.mensagem}</div>
                 )}
               </div>
 
               <SheetFooter className="mt-6 px-4">
                 <Button
-                  className="w-full"
+                  className="w-full bg-[var(--brand)] hover:bg-[var(--brand-strong)]"
                   onClick={salvarEdicaoFuncionarioDrawer}
                   disabled={vm.statusSalvamento.id === editandoFuncionarioNoDrawer && vm.statusSalvamento.estado === "saving"}
                 >
@@ -585,8 +681,8 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
               <SheetHeader className="px-0">
                 <div className="flex items-start justify-between">
                   <div>
-                    <SheetTitle>{pdvSelecionadoNoDrawer ? `Colaboradores - ${pdvSelecionadoNoDrawer.nome}` : "Colaboradores do PDV"}</SheetTitle>
-                    <SheetDescription>Gestao completa dos colaboradores deste PDV no mesmo fluxo da tabela principal.</SheetDescription>
+                    <SheetTitle className="text-[var(--text-primary)]">{pdvSelecionadoNoDrawer ? `Colaboradores - ${pdvSelecionadoNoDrawer.nome}` : "Colaboradores do PDV"}</SheetTitle>
+                    <SheetDescription className="text-[var(--text-secondary)]">Gestao completa dos colaboradores deste PDV no mesmo fluxo da tabela principal.</SheetDescription>
                   </div>
                   {pdvSelecionadoNoDrawer && vm.podeGerenciarEmpresa && (
                     <div className="flex gap-1">
@@ -594,7 +690,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                         type="button"
                         size="sm"
                         variant="outline"
-                        className="h-8 rounded-lg text-slate-600"
+                        className="h-8 rounded-lg text-[var(--text-secondary)]"
                         onClick={() => iniciarEdicaoPdv(pdvSelecionadoNoDrawer.id, pdvSelecionadoNoDrawer.nome, pdvSelecionadoNoDrawer.id_whatsapp_instancia)}
                       >
                         <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -605,7 +701,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-8 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                          className="h-8 rounded-lg text-[var(--danger)] hover:bg-[color:rgba(244,63,94,0.08)]"
                           onClick={() => vm.setPdvParaExcluir({ id: pdvSelecionadoNoDrawer.id, nome: pdvSelecionadoNoDrawer.nome })}
                         >
                           <Trash2 className="mr-1.5 h-3.5 w-3.5" />
@@ -617,27 +713,111 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                 </div>
               </SheetHeader>
               <div className="mb-4 mt-6 space-y-3">
-              {pdvSelecionadoNoDrawer?.alerta_configuracao ? (
-                <div className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-800">
+              {!pdvSelecionadoNoDrawer?.id_whatsapp_instancia ? (
+                <div className="rounded-xl border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.08)] px-3 py-3 text-sm text-[var(--warning)]">
                   <div className="flex items-start gap-2">
                     <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
                     <div>
-                      <p className="font-semibold">PDV fora da sincronizacao automatica</p>
-                      <p className="text-xs text-amber-700">{pdvSelecionadoNoDrawer.alerta_configuracao.mensagem}</p>
+                      <p className="font-semibold">PDV fora da sincronização automática</p>
+                      <p className="text-xs text-[var(--warning)]">Sem instância WhatsApp vinculada.</p>
                     </div>
                   </div>
                 </div>
               ) : null}
+              {/* Seção de instância WhatsApp */}
+              {vm.podeGerenciarEmpresa && pdvSelecionadoNoDrawer && (
+                <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className={cn(
+                        "flex h-10 w-10 items-center justify-center rounded-xl",
+                        pdvSelecionadoNoDrawer.id_whatsapp_instancia
+                          ? "bg-[color:rgba(16,185,129,0.12)]"
+                          : "bg-[color:rgba(245,158,11,0.12)]"
+                      )}>
+                        {pdvSelecionadoNoDrawer.id_whatsapp_instancia ? (
+                          <CheckCircle2 className="h-5 w-5 text-[var(--success)]" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-[var(--warning)]" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-[var(--text-primary)]">WhatsApp vinculado</p>
+                        <p className="text-xs text-[var(--text-secondary)]">
+                          {pdvSelecionadoNoDrawer.whatsapp_instancia?.nome ?? "Nenhuma instância selecionada"}
+                        </p>
+                      </div>
+                    </div>
+                    {trocandoInstanciaPdvId !== pdvSelecionadoNoDrawer.id ? (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-9 rounded-lg text-[var(--text-secondary)]"
+                        onClick={() => iniciarTrocaInstancia(pdvSelecionadoNoDrawer.id, pdvSelecionadoNoDrawer.id_whatsapp_instancia)}
+                      >
+                        <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
+                        {pdvSelecionadoNoDrawer.id_whatsapp_instancia ? "Trocar" : "Vincular"}
+                      </Button>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        className="h-9 rounded-lg"
+                        onClick={cancelarTrocaInstancia}
+                      >
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                  </div>
+                  {trocandoInstanciaPdvId === pdvSelecionadoNoDrawer.id && (
+                    <div className="mt-3 space-y-2">
+                      <Select
+                        value={novaInstanciaId || VALOR_SEM_INSTANCIA}
+                        onValueChange={(valor) => setNovaInstanciaId(valor === VALOR_SEM_INSTANCIA ? "" : valor)}
+                      >
+                        <SelectTrigger className="h-10 rounded-lg bg-[var(--surface-elevated)]">
+                          <SelectValue placeholder="Selecione a instância WhatsApp" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={VALOR_SEM_INSTANCIA}>Nenhuma</SelectItem>
+                          {vm.instancias.map((instancia) => (
+                            <SelectItem key={instancia.id} value={instancia.id}>
+                              {instancia.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        className="h-10 w-full rounded-lg bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)] font-medium"
+                        disabled={salvandoInstancia}
+                        onClick={() => void salvarTrocaInstancia()}
+                      >
+                        {salvandoInstancia ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Salvando...
+                          </>
+                        ) : (
+                          "Confirmar troca"
+                        )}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
               {/* Seção de Adicionar Novo Colaborador */}
-              <div className="rounded-xl border border-slate-200 bg-white p-4">
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
                 <div className="flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100">
-                      <UserPlus className="h-5 w-5 text-emerald-600" />
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[color:rgba(16,185,129,0.12)]">
+                      <UserPlus className="h-5 w-5 text-[var(--success)]" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-slate-800">Adicionar novo colaborador</p>
-                      <p className="text-xs text-slate-500">Cadastrar em <span className="font-medium text-emerald-600">{pdvSelecionadoNoDrawer?.nome}</span></p>
+                          <p className="text-sm font-semibold text-[var(--text-primary)]">Adicionar novo colaborador</p>
+                      <p className="text-xs text-[var(--text-secondary)]">Cadastrar em <span className="font-medium text-[var(--success)]">{pdvSelecionadoNoDrawer?.nome}</span></p>
                     </div>
                   </div>
                   <Button
@@ -646,8 +826,8 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                     className={cn(
                       "h-9 rounded-lg px-4 font-medium",
                       novoColaboradorExpandido 
-                        ? "bg-slate-100 text-slate-600 hover:bg-slate-200" 
-                        : "bg-emerald-600 text-white hover:bg-emerald-500"
+                        ? "bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:bg-[color:rgba(255,255,255,0.06)]" 
+                        : "bg-[var(--success)] text-white hover:bg-[var(--success)]/90"
                     )}
                     onClick={() => {
                       vm.setCargoSelecionado("COLABORADOR");
@@ -663,24 +843,24 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                   <form className="mt-4 space-y-3" onSubmit={handleSubmitCadastroRapido}>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-600">Nome</label>
+                        <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Nome</label>
                         <Input 
                           name="nome" 
                           placeholder="Nome completo" 
                           required 
                           className={cn(
-                            "h-10 rounded-lg bg-slate-50",
-                            errosLocal.nome ? "border-rose-300 bg-rose-50" : "border-slate-200 focus:border-emerald-400"
+                            "h-10 rounded-lg bg-[var(--surface-elevated)]",
+                            errosLocal.nome ? "border-[var(--danger)] bg-[color:rgba(244,63,94,0.08)]" : "border-[var(--border-subtle)] focus:border-[var(--border-focus)]"
                           )} 
                         />
                         {errosLocal.nome && (
-                          <p className="mt-1 text-xs text-rose-500">{errosLocal.nome}</p>
+                          <p className="mt-1 text-xs text-[var(--danger)]">{errosLocal.nome}</p>
                         )}
                       </div>
                       <div>
-                        <label className="mb-1 block text-xs font-medium text-slate-600">Cargo</label>
+                        <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Cargo</label>
                         <Select name="cargo" defaultValue="COLABORADOR">
-                          <SelectTrigger className="h-10 rounded-lg bg-slate-50 border-slate-200">
+                          <SelectTrigger className="h-10 rounded-lg bg-[var(--surface-elevated)] border-[var(--border-subtle)]">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
@@ -692,47 +872,47 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                       </div>
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">E-mail</label>
+                      <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">E-mail</label>
                       <Input 
                         name="email" 
                         type="email" 
                         placeholder="email@exemplo.com" 
                         required 
                         className={cn(
-                          "h-10 rounded-lg bg-slate-50",
-                          errosLocal.email ? "border-rose-300 bg-rose-50" : "border-slate-200 focus:border-emerald-400"
+                          "h-10 rounded-lg bg-[var(--surface-elevated)]",
+                          errosLocal.email ? "border-[var(--danger)] bg-[color:rgba(244,63,94,0.08)]" : "border-[var(--border-subtle)] focus:border-[var(--border-focus)]"
                         )} 
                       />
                       {errosLocal.email && (
-                        <p className="mt-1 text-xs text-rose-500">{errosLocal.email}</p>
+                        <p className="mt-1 text-xs text-[var(--danger)]">{errosLocal.email}</p>
                       )}
                     </div>
                     <div>
-                      <label className="mb-1 block text-xs font-medium text-slate-600">Senha temporária</label>
+                      <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Senha temporaria</label>
                       <Input 
                         name="senha" 
                         type="password" 
-                        placeholder="Mínimo 4 caracteres" 
+                        placeholder="Minimo 4 caracteres" 
                         required 
                         className={cn(
-                          "h-10 rounded-lg bg-slate-50",
-                          errosLocal.senha ? "border-rose-300 bg-rose-50" : "border-slate-200 focus:border-emerald-400"
+                          "h-10 rounded-lg bg-[var(--surface-elevated)]",
+                          errosLocal.senha ? "border-[var(--danger)] bg-[color:rgba(244,63,94,0.08)]" : "border-[var(--border-subtle)] focus:border-[var(--border-focus)]"
                         )} 
                       />
                       {errosLocal.senha && (
-                        <p className="mt-1 text-xs text-rose-500">{errosLocal.senha}</p>
+                        <p className="mt-1 text-xs text-[var(--danger)]">{errosLocal.senha}</p>
                       )}
                     </div>
                     <input type="hidden" name="id_pdv" value={pdvSelecionadoNoDrawer?.id ?? ""} />
                     {vm.erroCadastro ? (
-                      <div className="flex items-center gap-2 rounded-lg bg-rose-50 border border-rose-200 px-3 py-2">
-                        <AlertCircle className="h-4 w-4 text-rose-500" />
-                        <p className="text-sm text-rose-600">{vm.erroCadastro}</p>
+                      <div className="flex items-center gap-2 rounded-lg bg-[color:rgba(244,63,94,0.08)] border border-[color:rgba(244,63,94,0.2)] px-3 py-2">
+                        <AlertCircle className="h-4 w-4 text-[var(--danger)]" />
+                        <p className="text-sm text-[var(--danger)]">{vm.erroCadastro}</p>
                       </div>
                     ) : null}
                     <Button 
                       type="submit" 
-                      className="h-10 w-full rounded-lg bg-emerald-600 text-white hover:bg-emerald-500 font-medium" 
+                      className="h-10 w-full rounded-lg bg-[var(--success)] text-white hover:bg-[var(--success)]/90 font-medium" 
                       disabled={vm.carregandoCadastro}
                     >
                       {vm.carregandoCadastro ? (
@@ -751,24 +931,24 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                 )}
 
               {cadastroSucesso && (
-                <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50/80 px-3 py-2.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-100">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                <div className="flex items-center gap-2 rounded-xl border border-[color:rgba(16,185,129,0.2)] bg-[color:rgba(16,185,129,0.08)] px-3 py-2.5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-300">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[color:rgba(16,185,129,0.12)]">
+                    <CheckCircle2 className="h-4 w-4 text-[var(--success)]" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-emerald-700">Colaborador cadastrado!</p>
-                    <p className="text-[10px] text-emerald-600">Atualizando lista automaticamente...</p>
+                    <p className="text-xs font-semibold text-[var(--success)]">Colaborador cadastrado!</p>
+                    <p className="text-[10px] text-[var(--success)]">Atualizando lista automaticamente...</p>
                   </div>
                 </div>
               )}
 
-              <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total</p>
-                <p className="text-sm font-semibold text-slate-700">{pdvSelecionadoNoDrawer?.funcionarios?.length ?? 0} colaborador(es)</p>
+              <div className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2">
+                <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Total</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">{pdvSelecionadoNoDrawer?.funcionarios?.length ?? 0} colaborador(es)</p>
               </div>
 
               <div className="relative">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
                 <Input
                   value={buscaColaboradoresDrawer}
                   onChange={(evento) => setBuscaColaboradoresDrawer(evento.target.value)}
@@ -778,14 +958,14 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
               </div>
 
               {vm.podeExecutarAcoesLote ? (
-                <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                <div className="space-y-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Acoes em lote no PDV</p>
-                    <p className="text-xs text-slate-500">{vm.idsSelecionados.length} selecionado(s)</p>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Acoes em lote no PDV</p>
+                    <p className="text-xs text-[var(--text-secondary)]">{vm.idsSelecionados.length} selecionado(s)</p>
                   </div>
                   <div className="grid gap-2 md:grid-cols-[1fr_auto]">
                     <Select value={vm.acaoLote} onValueChange={(valor) => vm.setAcaoLote(valor as "ATIVAR" | "INATIVAR" | "ALTERAR_CARGO" | "ALTERAR_PDV")}>
-                      <SelectTrigger className="h-9 rounded-lg bg-white">
+                      <SelectTrigger className="h-9 rounded-lg bg-[var(--surface)]">
                         <SelectValue placeholder="Acao" />
                       </SelectTrigger>
                       <SelectContent>
@@ -795,13 +975,13 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                         <SelectItem value="ALTERAR_PDV">Mudar PDV</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button type="button" className="rounded-lg bg-slate-800 text-white hover:bg-slate-700" disabled={vm.executandoLote || vm.idsSelecionados.length === 0} onClick={() => void vm.executarAcaoLote()}>
+                    <Button type="button" className="rounded-lg bg-[var(--surface-elevated)] text-white hover:bg-[var(--border-strong)]" disabled={vm.executandoLote || vm.idsSelecionados.length === 0} onClick={() => void vm.executarAcaoLote()}>
                       {vm.executandoLote ? "Processando..." : "Aplicar"}
                     </Button>
                   </div>
                   {vm.acaoLote === "ALTERAR_CARGO" ? (
                     <Select value={vm.cargoLote} onValueChange={vm.setCargoLote}>
-                      <SelectTrigger className="h-9 rounded-lg bg-white">
+                      <SelectTrigger className="h-9 rounded-lg bg-[var(--surface)]">
                         <SelectValue placeholder="Novo cargo" />
                       </SelectTrigger>
                       <SelectContent>
@@ -813,7 +993,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                   ) : null}
                   {vm.acaoLote === "ALTERAR_PDV" ? (
                     <Select value={vm.pdvLote} onValueChange={vm.setPdvLote}>
-                      <SelectTrigger className="h-9 rounded-lg bg-white">
+                      <SelectTrigger className="h-9 rounded-lg bg-[var(--surface)]">
                         <SelectValue placeholder="Novo PDV" />
                       </SelectTrigger>
                       <SelectContent>
@@ -829,16 +1009,16 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
               ) : null}
             </div>
 
-            <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-2">
+              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2">
               {vm.podeExecutarAcoesLote ? (
-                <label className="mr-1 flex items-center gap-2 rounded-lg bg-white px-2 py-1 text-xs text-slate-600">
+                <label className="mr-1 flex items-center gap-2 rounded-lg bg-[var(--surface)] px-2 py-1 text-xs text-[var(--text-secondary)]">
                   <input
                     type="checkbox"
                     checked={todosSelecionadosNoDrawer}
                     onChange={(evento) => {
                       colaboradoresDrawerOrdenados.forEach((funcionario) => vm.alternarSelecao(funcionario.id, evento.target.checked));
                     }}
-                    className="h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
+                    className="h-4 w-4 rounded border-[var(--border-strong)] text-[var(--text-secondary)] focus:ring-[var(--focus-ring)]"
                   />
                   Selecionar todos
                 </label>
@@ -858,18 +1038,18 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
             </div>
 
             {colaboradoresDrawerOrdenados.length === 0 ? (
-              <div className="rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-500">Nenhum colaborador ativo neste PDV.</div>
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4 text-sm text-[var(--text-secondary)]">Nenhum colaborador ativo neste PDV.</div>
             ) : (
               <ul className="space-y-2">
                 {colaboradoresDrawerOrdenados.map((funcionario) => (
-                  <li key={funcionario.id} className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                  <li key={funcionario.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-3">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex min-w-0 flex-1 items-start gap-2">
                         <Avatar nome={funcionario.nome} tamanho="sm" />
                         <div className="min-w-0">
-                          <p className="text-sm font-medium text-slate-800">{funcionario.nome}</p>
-                          <p className="truncate text-xs text-slate-500">{funcionario.email}</p>
-                          <p className="mt-1 text-xs uppercase tracking-wide text-slate-500">{funcionario.cargo}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{funcionario.nome}</p>
+                          <p className="truncate text-xs text-[var(--text-secondary)]">{funcionario.email}</p>
+                          <p className="mt-1 text-xs uppercase tracking-wide text-[var(--text-secondary)]">{funcionario.cargo}</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
@@ -878,7 +1058,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                             type="checkbox"
                             checked={vm.idsSelecionados.includes(funcionario.id)}
                             onChange={(evento) => vm.alternarSelecao(funcionario.id, evento.target.checked)}
-                            className="mt-1 h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
+                            className="mt-1 h-4 w-4 rounded border-[var(--border-strong)] text-[var(--text-secondary)] focus:ring-[var(--focus-ring)]"
                           />
                         ) : null}
                         <StatusBadge ativo={funcionario.ativo} />
@@ -890,7 +1070,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                           type="button"
                           size="sm"
                           variant="outline"
-                          className="h-8 rounded-lg text-slate-600"
+                          className="h-8 rounded-lg text-[var(--text-secondary)]"
                           onClick={() => iniciarEdicaoFuncionarioDrawer(funcionario.id)}
                         >
                           <Pencil className="mr-1.5 h-3.5 w-3.5" />
@@ -901,7 +1081,7 @@ export function PdvManagementPanel({ vm, drawerNovoPdvAberto, setDrawerNovoPdvAb
                             type="button"
                             size="sm"
                             variant="outline"
-                            className="h-8 rounded-lg text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                            className="h-8 rounded-lg text-[var(--danger)] hover:bg-[color:rgba(244,63,94,0.08)] hover:text-[var(--danger)]"
                             onClick={() => {
                               const alvo = vm.funcionarios.find((item) => item.id === funcionario.id);
                               if (alvo) {

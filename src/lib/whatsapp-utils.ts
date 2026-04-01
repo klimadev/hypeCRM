@@ -191,6 +191,23 @@ export function formatarLabelSeparadorData(timestamp: number | null | undefined)
   return data.toLocaleString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
 }
 
+export function formatarPreviewMensagem(
+  tipo: string | null | undefined,
+  conteudo: string | null | undefined,
+): string {
+  const texto = conteudo?.trim();
+  if (texto) {
+    return texto;
+  }
+
+  const tipoNormalizado = (tipo ?? "").trim();
+  if (!tipoNormalizado || tipoNormalizado === "conversation" || tipoNormalizado === "extendedTextMessage") {
+    return "[Mensagem]";
+  }
+
+  return `[${traduzirTipoMensagem(tipoNormalizado)}]`;
+}
+
 // ============================================================================
 // EXTRAÇÃO DE NOME (pushName)
 // ============================================================================

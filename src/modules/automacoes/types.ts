@@ -3,7 +3,7 @@ import {
   GATILHOS_AUTOMACAO,
   STATUS_AGENDAMENTO,
   TIPOS_ACAO,
-} from "@/lib/validacoes";
+} from "@/lib/automacoes/constantes";
 
 export type FonteAutomacao = (typeof FONTES_AUTOMACAO)[keyof typeof FONTES_AUTOMACAO];
 export type GatilhoAutomacao = (typeof GATILHOS_AUTOMACAO)[keyof typeof GATILHOS_AUTOMACAO];

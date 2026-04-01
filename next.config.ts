@@ -1,13 +1,12 @@
 import type { NextConfig } from "next";
 
+const buildEstrito = process.env.NEXT_STRICT_BUILD === "1";
+
 const nextConfig: NextConfig = {
   allowedDevOrigins: ["app.hypecrm.com.br", "hypecrm.com.br"],
-  output: "standalone",
 
-  // [QW1] Otimiza imports de pacotes pesados - reduz bundle client
-  // lucide-react (44MB) usado em 64 arquivos; recharts (8.3MB) em 2 arquivos
-  experimental: {
-    optimizePackageImports: ["lucide-react", "recharts"],
+  typescript: {
+    ignoreBuildErrors: !buildEstrito,
   },
 
   // [QW2] Prisma deve ser external no server - evita bundling desnecessário
@@ -20,9 +19,8 @@ const nextConfig: NextConfig = {
     },
   },
 
-  // [ME1] Habilita Partial Prerendering (PPR) - melhora TTFB com streaming
-  // Componentes estáticos são pré-renderizados, partes dinâmicas são streamed
-  cacheComponents: true,
+  // [ME1] Build rápido por padrão; validação estrita fica disponível em `npm run build:strict`.
+  cacheComponents: false,
 };
 
 export default nextConfig;

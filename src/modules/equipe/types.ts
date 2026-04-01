@@ -1,3 +1,8 @@
+type ReferenciaPdv = {
+  id: string;
+  nome: string;
+};
+
 export type Pdv = {
   id: string;
   nome: string;
@@ -9,12 +14,14 @@ export type Pdv = {
   whatsapp_instancia?: {
     id: string;
     nome: string;
-    status: string;
+    status?: string;
   } | null;
   funcionarios?: Array<{
     id: string;
     nome: string;
+    email: string;
     cargo: string;
+    ativo: boolean;
   }>;
 };
 
@@ -41,7 +48,8 @@ export type Funcionario = {
   email: string;
   cargo: string;
   ativo: boolean;
-  pdv: { id: string; nome: string };
+  pdv?: ReferenciaPdv | null;
+  Pdv?: ReferenciaPdv | null;
 };
 
 export type Paginacao = {
@@ -152,6 +160,7 @@ export type UseEquipeModuleReturn = {
   pdvFocoEdicaoId: string | null;
   criarPdv: (nome: string) => Promise<boolean>;
   editarPdv: (id: string, nome: string, id_whatsapp_instancia?: string | null) => Promise<boolean>;
+  trocarInstanciaPdv: (idPdv: string, idNovaInstancia: string | null) => Promise<boolean>;
   excluirPdv: (id: string) => Promise<void>;
   instancias: WhatsappInstancia[];
   funcionariosDestinoInativacao: FuncionarioDestinoInativacao | null;

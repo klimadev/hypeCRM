@@ -4,11 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
-import { BarChart3, LayoutGrid, MessageCircle, Settings2, Target, Users, WalletCards, Zap } from "lucide-react";
+import { BarChart3, Blocks, LayoutGrid, MessageCircle, Package, Settings2, Target, Users, WalletCards, Zap } from "lucide-react";
 import { BotaoSair } from "@/components/botao-sair";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
+import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
 import { usePendenciasGlobais } from "@/modules/kanban/hooks/use-pendencias-globais";
 import { TOUR_TARGETS } from "@/modules/onboarding/lib/selectors";
 import type { DadosUsuarioLogado } from "@/lib/autenticacao";
@@ -23,7 +24,7 @@ const LABEL_PERFIL: Record<SessaoToken["perfil"], string> = { EMPRESA: "Administ
 
 function gerarIniciais(nome: string | undefined, perfil: SessaoToken["perfil"]) { const nomeTratado = nome?.trim(); if (!nomeTratado) return SIGLA_PERFIL[perfil]; const partesNome = nomeTratado.split(/\s+/).filter(Boolean); if (partesNome.length === 1) return partesNome[0].slice(0, 2).toUpperCase(); return `${partesNome[0][0] ?? ""}${partesNome[partesNome.length - 1][0] ?? ""}`.toUpperCase(); }
 
-function getItemDescricao(label: string) { const mapa: Record<string, string> = { Resumo: "Visão geral da operação", Leads: "Carteira e originação", Negócios: "Pipeline e movimentações", Recebimentos: "Fluxo financeiro e caixa", Equipe: "Gestão de pessoas e metas", Metas: "Objetivos e acompanhamento", "Minhas Metas": "Acompanhamento individual", WhatsApp: "Automação e atendimento", Automações: "Regras e gatilhos", Configurações: "Preferências da empresa" }; return mapa[label] ?? "Acesso rápido da área"; }
+function getItemDescricao(label: string) { const mapa: Record<string, string> = { Resumo: "Visão geral da operação", Leads: "Carteira e originação", Produtos: "Catálogo de produtos e serviços", Negócios: "Pipeline e movimentações", Recebimentos: "Fluxo financeiro e caixa", Equipe: "Gestão de pessoas e metas", Metas: "Objetivos e acompanhamento", "Minhas Metas": "Acompanhamento individual", Integrações: "Conexões e agenda externa", WhatsApp: "Automação e atendimento", Automações: "Regras e gatilhos", Configurações: "Preferências da empresa" }; return mapa[label] ?? "Acesso rápido da área"; }
 
 function NavItem({ item, ativo, onNavigate, resumo }: { item: ItemMenu; ativo: boolean; onNavigate: () => void; resumo?: { total: number; porGravidade: Record<string, number> } | null }) {
   const Icone = item.icon; const temFilhos = Boolean(item.children?.length);
@@ -78,21 +79,24 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
   const pathname = usePathname();
   const { resumo } = usePendenciasGlobais();
   const onNavigate = () => undefined;
+  const itemIntegracoes = obterItemIntegracoesNavegacao();
 
   const secoes: Secao[] = useMemo(() => [
     { titulo: "GERAL", itens: [{ href: "/resumo", label: "Resumo", descricao: getItemDescricao("Resumo"), icon: BarChart3, tourTarget: TOUR_TARGETS.sidebarResumo }] },
     { titulo: "OPERAÇÃO", itens: [
       { href: "/leads", label: "Leads", descricao: getItemDescricao("Leads"), icon: Users, tourTarget: TOUR_TARGETS.sidebarLeads },
+      { href: "/produtos", label: "Produtos", descricao: "Catálogo de produtos e serviços", icon: Package },
       { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid, tourTarget: TOUR_TARGETS.sidebarNegocios },
       ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards }] : []),
-      ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target, tourTarget: TOUR_TARGETS.sidebarEquipe, children: [{ href: "/equipe/metas", label: "Metas", descricao: getItemDescricao("Metas"), icon: Target }] }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
+      ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target, tourTarget: TOUR_TARGETS.sidebarEquipe }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
     ] },
     { titulo: "SISTEMA", itens: [
+      ...(podeExibirIntegracoesNaNavegacao(sessao.perfil) ? [{ href: itemIntegracoes.href, label: itemIntegracoes.label, descricao: itemIntegracoes.descricao, icon: Blocks }] : []),
       ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle, tourTarget: TOUR_TARGETS.sidebarWhatsapp }] : []),
       ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/automacoes", label: "Automações", descricao: getItemDescricao("Automações"), icon: Zap }] : []),
       ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2, tourTarget: TOUR_TARGETS.sidebarConfigs }] : []),
     ] },
-  ], [sessao.perfil]);
+  ], [itemIntegracoes.descricao, itemIntegracoes.href, itemIntegracoes.label, sessao.perfil]);
 
   const nomeExibicao = dadosUsuario?.nome?.trim() || "Sem nome";
   const cargoExibicao = dadosUsuario?.cargo?.trim() || LABEL_PERFIL[sessao.perfil];

@@ -444,6 +444,91 @@ export async function buscarConversas(instanceName: string): Promise<EvolutionCo
     .filter((item): item is EvolutionConversa => item !== null);
 }
 
+export async function buscarConversasEvolution(
+  instanceName: string,
+  termo: string,
+  page: number = 1,
+  offset: number = 30,
+): Promise<EvolutionConversa[]> {
+  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      where: {
+        key: {
+          remoteJid: termo,
+          remoteJidAlt: termo,
+          senderPn: termo,
+        },
+        pushName: termo,
+      },
+      page,
+      offset,
+    }),
+  });
+
+  if (!resposta.ok) {
+    const erro = await resposta.json().catch(() => ({}));
+    throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
+  }
+
+  const json = (await resposta.json().catch(() => ({}))) as {
+    messages?: {
+      records?: Array<{
+        key?: {
+          remoteJid?: string;
+          remoteJidAlt?: string;
+          fromMe?: boolean;
+        };
+        pushName?: string | null;
+        messageTimestamp?: number;
+      }>;
+    };
+  };
+
+  const registros = json.messages?.records ?? [];
+  const conversasAgrupadas = new Map<
+    string,
+    {
+      remoteJid: string;
+      remoteJidAlt: string | null;
+      pushName: string | null;
+      ultimaMensagemTimestamp: number;
+    }
+  >();
+
+  for (const msg of registros) {
+    const remoteJid = msg.key?.remoteJid ?? "";
+    if (!remoteJid || remoteJid.includes("@g.us") || remoteJid === "status@broadcast") {
+      continue;
+    }
+
+    const remoteJidAlt = msg.key?.remoteJidAlt ?? null;
+    const pushName = msg.pushName ?? null;
+    const messageTimestamp = msg.messageTimestamp ?? 0;
+    const chaveConversa = remoteJidAlt ?? remoteJid;
+    const existente = conversasAgrupadas.get(chaveConversa);
+
+    if (!existente || messageTimestamp > existente.ultimaMensagemTimestamp) {
+      conversasAgrupadas.set(chaveConversa, {
+        remoteJid,
+        remoteJidAlt,
+        pushName,
+        ultimaMensagemTimestamp: messageTimestamp,
+      });
+    }
+  }
+
+  return Array.from(conversasAgrupadas.values())
+    .sort((a, b) => b.ultimaMensagemTimestamp - a.ultimaMensagemTimestamp)
+    .map((conversa) => ({
+      remoteJid: conversa.remoteJid,
+      remoteJidAlt: conversa.remoteJidAlt,
+      pushName: conversa.pushName,
+      isGroup: false,
+    }));
+}
+
 export type EvolutionMensagem = {
   remoteJid: string;
   remoteJidAlt: string | null;

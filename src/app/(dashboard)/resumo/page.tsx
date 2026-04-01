@@ -1,14 +1,17 @@
 import { Suspense } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { TrendingUp, Wallet, Target, CircleDollarSign, CalendarClock } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { obterSessaoNoServidor } from "@/lib/autenticacao";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
+import { criarResumoAgendaCalCom } from "@/modules/calcom/resumo-agenda";
 import { formataMoeda } from "@/lib/utils";
-import { DIAS_ESTAGIO_PARADO } from "@/lib/validacoes";
+import { DIAS_ESTAGIO_PARADO } from "@/lib/pendencias";
 
 const GraficoVendas = dynamic(
   () => import("@/components/grafico-vendas").then((mod) => ({ default: mod.GraficoVendas })),
@@ -261,16 +264,41 @@ async function ResumoChart({ leadsPromise }: { leadsPromise: Promise<LeadResumoP
 
 async function ResumoAgenda({ calComPromise }: { calComPromise: Promise<number> }) {
   const totalInstancias = await calComPromise;
+  const resumoAgenda = criarResumoAgendaCalCom(totalInstancias);
 
-  if (totalInstancias <= 0) return null;
+  if (!resumoAgenda.temConexaoAtiva) {
+    return (
+      <div>
+        <Card className="h-full border-dashed border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]">
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
+            <div>
+              <CardTitle>{resumoAgenda.titulo}</CardTitle>
+              <p className="mt-1 text-sm text-[var(--text-secondary)]">{resumoAgenda.descricao}</p>
+            </div>
+            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.12)]">
+              <CalendarClock className="h-4.5 w-4.5 text-[var(--brand)]" />
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+              Assim que a conexao for validada, o card de agenda volta a exibir reunioes e slots ativos sem mudar a origem dos dados.
+            </p>
+            <Button asChild variant="outline" className="w-full sm:w-auto">
+              <Link href={resumoAgenda.hrefIntegracao}>{resumoAgenda.rotuloAcao}</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div>
       <Card className="h-full">
         <CardHeader className="flex flex-row items-center justify-between gap-3">
           <div>
-            <CardTitle>Agenda comercial</CardTitle>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">Compromissos e slots ativos conectados ao Cal.com.</p>
+            <CardTitle>{resumoAgenda.titulo}</CardTitle>
+            <p className="mt-1 text-sm text-[var(--text-secondary)]">{resumoAgenda.descricao}</p>
           </div>
           <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)]">
             <CalendarClock className="h-4.5 w-4.5 text-[var(--success)]" />

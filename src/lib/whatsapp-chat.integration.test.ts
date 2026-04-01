@@ -1,6 +1,6 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 
-const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3333";
+const BASE_URL = process.env.TEST_BASE_URL || "http://localhost:3434";
 
 describe("integração - WhatsApp Chat", () => {
   let cookie: string;

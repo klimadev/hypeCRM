@@ -1,4 +1,4 @@
-import { TipoPendencia } from "@/lib/validacoes";
+import type { TipoPendencia } from "@/lib/pendencias";
 import type { PendenciaGravidade, ResumoPendencias } from "./hooks/use-pendencias-globais";
 
 export type { ResumoPendencias, PendenciaGravidade };

@@ -23,6 +23,7 @@ export type FuncionarioCriadoApi = {
     nome: string;
     email: string;
     pdv?: { id: string; nome: string } | null;
+    Pdv?: { id: string; nome: string } | null;
   };
   criado?: {
     id: string;

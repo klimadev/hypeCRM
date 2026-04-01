@@ -1,3 +1,5 @@
+import type { SessaoToken } from "@/lib/tipos";
+
 export type CalComInstancia = {
   id: string;
   nome: string;
@@ -39,4 +41,18 @@ export type UseCalComModuleReturn = {
   excluirInstancia: (id: string) => Promise<{ sucesso: boolean; erro?: string }>;
   testarConexao: (id: string) => Promise<{ sucesso: boolean; erro?: string }>;
   recarregar: () => Promise<void>;
+};
+
+export type CalComResumoOperacional = {
+  totalInstancias: number;
+  instanciasAtivas: number;
+  totalBookings: number;
+  totalEventTypes: number;
+  temConexaoAtiva: boolean;
+  rotuloStatus: string;
+  mensagemOperacional: string;
+};
+
+export type ModuloCalComProps = {
+  perfil: SessaoToken["perfil"];
 };

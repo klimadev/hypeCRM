@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
-import { BarChart3, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Zap, Users, MoreHorizontal } from "lucide-react";
+import { BarChart3, Blocks, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Zap, Users, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
 import type { SessaoToken } from "@/lib/tipos";
 
 type DockItem = {
@@ -41,6 +42,7 @@ function obterItensDock(perfil: SessaoToken["perfil"]): DockItem[] {
 }
 
 const itensAgrupados: DockItem[] = [
+  { href: "/integracoes", label: "Integrações", icon: Blocks },
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
   { href: "/automacoes", label: "Automações", icon: Zap },
   { href: "/configs", label: "Ajustes", icon: Settings2 },
@@ -49,7 +51,9 @@ const itensAgrupados: DockItem[] = [
 export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
   const pathname = usePathname();
   const itens = obterItensDock(perfil);
+  const itemIntegracoes = obterItemIntegracoesNavegacao();
   const itensMais = itensAgrupados.filter((item) => {
+    if (item.href === itemIntegracoes.href) return podeExibirIntegracoesNaNavegacao(perfil);
     if (item.href === "/whatsapp" || item.href === "/automacoes") return perfil === "EMPRESA" || perfil === "GERENTE";
     if (item.href === "/configs") return perfil === "EMPRESA";
     return true;

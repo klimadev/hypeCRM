@@ -1,4 +1,4 @@
-import { DIAS_ESTAGIO_PARADO, LABELS_PENDENCIA, TipoPendencia } from "@/lib/validacoes";
+import { DIAS_ESTAGIO_PARADO, LABELS_PENDENCIA, type TipoPendencia } from "@/lib/pendencias";
 
 export type PendenciaCalculada = {
   id: string;

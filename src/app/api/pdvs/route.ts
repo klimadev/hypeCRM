@@ -13,8 +13,19 @@ export async function GET(request: NextRequest) {
     return auth.erro;
   }
 
+  const podeListarTodosPdvs = podeGerenciarEmpresa(auth.sessao);
+  const podeListarPdvGerenciado = auth.sessao.perfil === "GERENTE" && Boolean(auth.sessao.id_pdv);
+
+  if (!podeListarTodosPdvs && !podeListarPdvGerenciado) {
+    return forbidden("Sem permissao para listar PDVs.");
+  }
+
+  const wherePdvs = podeListarTodosPdvs
+    ? { id_empresa: auth.sessao.id_empresa }
+    : { id_empresa: auth.sessao.id_empresa, id: auth.sessao.id_pdv ?? undefined };
+
   const pdvs = await prisma.pdv.findMany({
-    where: { id_empresa: auth.sessao.id_empresa },
+    where: wherePdvs,
     select: {
       id: true,
       nome: true,
@@ -28,13 +39,14 @@ export async function GET(request: NextRequest) {
       },
       Funcionario: {
         where: {
-          id_empresa: auth.sessao.id_empresa,
           ativo: true,
         },
         select: {
           id: true,
           nome: true,
+          email: true,
           cargo: true,
+          ativo: true,
         },
         orderBy: { nome: "asc" },
       },
@@ -42,7 +54,13 @@ export async function GET(request: NextRequest) {
     orderBy: { nome: "asc" },
   });
 
-  return NextResponse.json({ pdvs });
+  const pdvsFormatados = pdvs.map((pdv) => ({
+    ...pdv,
+    funcionarios: pdv.Funcionario,
+    whatsapp_instancia: pdv.WhatsappInstancia,
+  }));
+
+  return NextResponse.json({ pdvs: pdvsFormatados });
 }
 
 export async function POST(request: NextRequest) {

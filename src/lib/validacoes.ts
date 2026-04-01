@@ -2,6 +2,28 @@ import { z } from "zod";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 import { parseHorarioTexto, MENSAGENS_ERRO } from "@/lib/parse-horario-texto";
 
+export {
+  DIAS_ESTAGIO_PARADO,
+  DIAS_SEM_RESPOSTA_PENDENCIA,
+  LABELS_PENDENCIA,
+  TIPOS_PENDENCIA,
+  VALOR_MINIMO_ALTO_VALOR,
+} from "@/lib/pendencias";
+export type { TipoPendencia } from "@/lib/pendencias";
+
+export {
+  FONTES_AUTOMACAO,
+  GATILHOS_AUTOMACAO,
+  STATUS_AGENDAMENTO,
+  TIPOS_ACAO,
+} from "@/lib/automacoes/constantes";
+export type {
+  FonteAutomacao,
+  GatilhoAutomacao,
+  StatusAgendamento,
+  TipoAcao,
+} from "@/lib/automacoes/constantes";
+
 // ============================================
 // Constantes de Status de Automação
 // ============================================
@@ -508,40 +530,6 @@ export const esquemaAtualizarAutomacaoWhatsapp = z.object({
   }
 });
 
-// Tipos de pendência AUTOMÁTICA - detectadas pelo sistema
-export const TIPOS_PENDENCIA = [
-  "SEM_RESPOSTA",                  // Lead sem resposta há X dias
-  "CARTA_CREDITO_PENDENTE",        // Aguardando aprovação da empresa
-  "DOCUMENTOS_PENDENTES",         // Precisa de documentos do cliente
-  "QUEDA_RESERVA",                 // Reserva expirada
-  "ALTO_VALOR",                    // Valor alto que precisa aprovação
-  "DOCUMENTO_APROVACAO_PENDENTE", // Documento de aprovação não anexado
-  "APROVACAO_GERENCIA_PENDENTE",  // Documento anexado mas aguardando analise da EMPRESA
-  "ESTAGIO_PARADO",                // Lead parado em um estágio há muito tempo
-] as const;
-
-export type TipoPendencia = (typeof TIPOS_PENDENCIA)[number];
-
-export const LABELS_PENDENCIA: Record<TipoPendencia, string> = {
-  SEM_RESPOSTA: "Sem Resposta",
-  CARTA_CREDITO_PENDENTE: "Carta de Crédito Pendente",
-  DOCUMENTOS_PENDENTES: "Documentos Pendentes",
-  QUEDA_RESERVA: "Queda de Reserva",
-  ALTO_VALOR: "Alto Valor - Aprovação Necessária",
-  DOCUMENTO_APROVACAO_PENDENTE: "Documento de Aprovação (PDF/Link) Pendente",
-  APROVACAO_GERENCIA_PENDENTE: "Pendência de Análise da EMPRESA",
-  ESTAGIO_PARADO: "Lead Parado no Estágio",
-};
-
-// Dias sem resposta para considerar como pendência
-export const DIAS_SEM_RESPOSTA_PENDENCIA = 7;
-
-// Dias sem mudança de estágio para considerar como pendência (exceto GANHO/PERDIDO)
-export const DIAS_ESTAGIO_PARADO = 14;
-
-// Valor mínimo para considerar como alto valor (R$ 500.000)
-export const VALOR_MINIMO_ALTO_VALOR = 500000;
-
 export const esquemaAtualizarPendencia = z.object({
   documento_url: z.string().url().optional().nullable(),
   resolvida: z.boolean().optional(),
@@ -591,123 +579,6 @@ export const esquemaListarRecebimentos = z.object({
 });
 
 export const CARGOS_EQUIPE = ["COLABORADOR", "GERENTE", "ADMINISTRADOR"] as const;
-export const TIPOS_META = ["GLOBAL", "PDV", "INDIVIDUAL"] as const;
-export const TIPOS_META_VALOR = ["VALOR", "VOLUME"] as const;
-export const PERIODOS_META = ["MENSAIS", "TRIMESTRAL", "ANUAL"] as const;
-
-const schemaDataMeta = z
-  .string()
-  .trim()
-  .min(1, "Data obrigatoria.")
-  .refine((valor) => !Number.isNaN(new Date(valor).getTime()), "Data invalida.");
-
-const schemaEscopoMetaOpcional = z
-  .string()
-  .trim()
-  .optional()
-  .transform((valor) => {
-    if (!valor) return undefined;
-    return valor;
-  });
-
-export const schemaCriarMeta = z
-  .object({
-    tipo: z.enum(TIPOS_META, { message: "Tipo de meta invalido." }),
-    tipo_meta: z.enum(TIPOS_META_VALOR, { message: "Indicador de meta invalido." }),
-    alvo: z.coerce.number().positive("O alvo deve ser maior que zero."),
-    periodo: z.enum(PERIODOS_META, { message: "Periodo invalido." }),
-    data_inicio: schemaDataMeta,
-    data_fim: schemaDataMeta,
-    id_pdv: schemaEscopoMetaOpcional,
-    id_funcionario: schemaEscopoMetaOpcional,
-  })
-  .superRefine((dados, ctx) => {
-    const inicio = new Date(dados.data_inicio);
-    const fim = new Date(dados.data_fim);
-
-    if (inicio.getTime() > fim.getTime()) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["data_fim"],
-        message: "A data final deve ser igual ou posterior a data inicial.",
-      });
-    }
-
-    if (dados.tipo === "GLOBAL" && (dados.id_pdv || dados.id_funcionario)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["tipo"],
-        message: "Meta global nao pode ter PDV ou colaborador vinculado.",
-      });
-    }
-
-    if (dados.tipo === "PDV" && !dados.id_pdv) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["id_pdv"],
-        message: "Selecione o PDV da meta.",
-      });
-    }
-
-    if (dados.tipo === "PDV" && dados.id_funcionario) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["id_funcionario"],
-        message: "Meta por PDV nao pode ter colaborador vinculado.",
-      });
-    }
-
-    if (dados.tipo === "INDIVIDUAL" && !dados.id_funcionario) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["id_funcionario"],
-        message: "Selecione o colaborador da meta.",
-      });
-    }
-
-    if (dados.tipo === "INDIVIDUAL" && dados.id_pdv) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["id_pdv"],
-        message: "Meta individual usa o PDV do colaborador selecionado.",
-      });
-    }
-  });
-
-export const schemaAtualizarMeta = z
-  .object({
-    tipo: z.enum(TIPOS_META, { message: "Tipo de meta invalido." }).optional(),
-    tipo_meta: z.enum(TIPOS_META_VALOR, { message: "Indicador de meta invalido." }).optional(),
-    alvo: z.coerce.number().positive("O alvo deve ser maior que zero.").optional(),
-    periodo: z.enum(PERIODOS_META, { message: "Periodo invalido." }).optional(),
-    data_inicio: schemaDataMeta.optional(),
-    data_fim: schemaDataMeta.optional(),
-    id_pdv: schemaEscopoMetaOpcional,
-    id_funcionario: schemaEscopoMetaOpcional,
-  })
-  .refine((dados) => Object.keys(dados).length > 0, {
-    message: "Informe ao menos um campo para atualizar.",
-  });
-
-export const schemaListarMetas = z.object({
-  tipo: z.enum(TIPOS_META).optional(),
-  id_pdv: z.string().trim().optional(),
-  id_funcionario: z.string().trim().optional(),
-  ativo: z.enum(["true", "false"]).optional(),
-});
-
-export const schemaRankingMetas = z.object({
-  periodo: z
-    .string()
-    .trim()
-    .regex(/^\d{4}-\d{2}$/, "Periodo invalido.")
-    .optional(),
-  id_pdv: z.string().trim().optional(),
-});
-
-export const schemaValidarTetoMeta = schemaCriarMeta.extend({
-  id_meta_atual: z.string().trim().optional(),
-});
 
 export const schemaAtualizarFuncionario = z.object({
   nome: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres."),
@@ -752,7 +623,27 @@ export function mensagemErroValidacao(erro: z.ZodError) {
 }
 
 export const esquemaWhatsappChatMessagesQuery = z.object({
-  leadId: z.string().trim().min(1, "Lead obrigatorio."),
+  phoneNumber: z.string().trim().optional(),
+  leadId: z.string().trim().optional(),
+}).refine((data) => data.phoneNumber || data.leadId, {
+  message: "Forneça phoneNumber ou leadId.",
+});
+
+export const esquemaWhatsappChatConversationsQuery = z.object({
+  busca: z.string().trim().optional(),
+  cursor: z.string().trim().min(1, "Cursor invalido.").optional(),
+  limite: z.coerce.number().int().min(1, "Limite minimo de 1. ").max(50, "Limite maximo de 50.").default(30),
+  naoLidas: z
+    .union([z.boolean(), z.enum(["true", "false"])])
+    .transform((valor) => valor === true || valor === "true")
+    .default(false),
+});
+
+export const esquemaWhatsappChatContextQuery = z.object({
+  phoneNumber: z.string().trim().min(1, "Numero de telefone obrigatorio.").optional(),
+  leadId: z.string().trim().min(1, "Lead obrigatorio.").optional(),
+}).refine((data) => data.phoneNumber || data.leadId, {
+  message: "Forneca phoneNumber ou leadId.",
 });
 
 export const esquemaWhatsappChatSendMessage = z.object({
@@ -769,42 +660,6 @@ export const esquemaWhatsappChatMedia = z.object({
   leadId: z.string().trim().min(1, "Lead obrigatorio."),
   messageId: z.string().trim().min(1, "Message ID obrigatorio."),
 });
-
-// ============================================
-// Constantes de Automações Genéricas
-// ============================================
-
-export const FONTES_AUTOMACAO = {
-  WHATSAPP: "WHATSAPP",
-} as const;
-
-export type FonteAutomacao = typeof FONTES_AUTOMACAO[keyof typeof FONTES_AUTOMACAO];
-
-export const GATILHOS_AUTOMACAO = {
-  STAGE_CHANGE: "STAGE_CHANGE",
-} as const;
-
-export type GatilhoAutomacao = typeof GATILHOS_AUTOMACAO[keyof typeof GATILHOS_AUTOMACAO];
-
-export const STATUS_AGENDAMENTO = {
-  PENDENTE: "PENDENTE",
-  PROCESSANDO: "PROCESSANDO",
-  ENVIADO: "ENVIADO",
-  FALHA: "FALHA",
-  CANCELADO: "CANCELADO",
-} as const;
-
-export type StatusAgendamento = typeof STATUS_AGENDAMENTO[keyof typeof STATUS_AGENDAMENTO];
-
-export const TIPOS_ACAO = {
-  WHATSAPP_MSG: "WHATSAPP_MSG",
-} as const;
-
-export type TipoAcao = typeof TIPOS_ACAO[keyof typeof TIPOS_ACAO];
-
-// ============================================
-// Schemas de Automações
-// ============================================
 
 export const esquemaAcaoAutomacao = z.object({
   tipo: z.enum(["WHATSAPP_MSG"], { message: "Tipo de acao invalido." }),
@@ -842,6 +697,11 @@ export const esquemaDispatchQuery = z.object({
   teste: z.enum(["true"]).optional(),
   lead_id: z.string().trim().optional(),
 });
+
+export const esquemaWebhookLoggerPayload = z.unknown().refine(
+  (valor): valor is Record<string, unknown> => typeof valor === "object" && valor !== null && !Array.isArray(valor),
+  { message: "Payload do webhook deve ser um objeto JSON." },
+);
 
 export type AcaoAutomacaoInput = z.infer<typeof esquemaAcaoAutomacao>;
 export type CriarAutomacaoInput = z.infer<typeof esquemaCriarAutomacao>;

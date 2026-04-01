@@ -65,6 +65,7 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
     instancias,
     criarPdv,
     editarPdv,
+    trocarInstanciaPdv,
     excluirPdv,
     carregarPdvs,
   } = usePdvManagement();
@@ -201,31 +202,9 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
         });
 
         if (!resultado.ok) {
-          setErroCadastro(resultado.erro);
+          setErroCadastro(resultado.erro || "Erro ao cadastrar funcionário. Tente novamente.");
           return false;
         }
-
-        const funcionarioCriado = resultado.dados.funcionario;
-        setFuncionarios((atuais) => {
-          if (atuais.some((item) => item.id === funcionarioCriado.id)) {
-            return atuais;
-          }
-
-          const pdvNome = funcionarioCriado.pdv?.nome ?? "";
-          const novoFuncionario = {
-            id: funcionarioCriado.id,
-            nome: funcionarioCriado.nome,
-            email: funcionarioCriado.email,
-            cargo: funcionarioCriado.cargo,
-            ativo: funcionarioCriado.ativo,
-            pdv: {
-              id: funcionarioCriado.id_pdv,
-              nome: pdvNome,
-            },
-          };
-
-          return [novoFuncionario, ...atuais];
-        });
 
         addToast({
           type: "success",
@@ -238,13 +217,16 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
         setCargoSelecionado("COLABORADOR");
         setPdvSelecionado("");
         setDialogNovoFuncionarioAberto(false);
-        void Promise.all([carregarFuncionarios(), carregarPdvs()]);
+        
+        atualizarParametrosUrl({ pagina: "1" }, false);
+        await carregarFuncionarios();
+        await carregarPdvs();
         return true;
       } finally {
         setCarregandoCadastro(false);
       }
     },
-    [carregarFuncionarios, carregarPdvs, addToast, setFuncionarios],
+    [addToast, atualizarParametrosUrl, carregarFuncionarios, carregarPdvs],
   );
 
   return {
@@ -307,6 +289,7 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
     pdvFocoEdicaoId,
     criarPdv,
     editarPdv,
+    trocarInstanciaPdv,
     excluirPdv,
     instancias,
     funcionariosDestinoInativacao: funcionarioDestinoInativacao,

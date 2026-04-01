@@ -10,7 +10,7 @@ function extrairDadosEdicao(funcionario: Funcionario): DadosEdicao {
     nome: funcionario.nome,
     email: funcionario.email,
     cargo: funcionario.cargo,
-    id_pdv: funcionario.pdv?.id ?? "",
+  id_pdv: funcionario.pdv?.id ?? funcionario.Pdv?.id ?? "",
   };
 }
 
@@ -46,7 +46,7 @@ function atualizarFuncionarioNaLista(item: Funcionario, dados: DadosEdicao, pdvs
     cargo: dados.cargo,
     pdv: {
       id: dados.id_pdv,
-      nome: pdvAtualizado?.nome ?? item.pdv?.nome ?? "",
+      nome: pdvAtualizado?.nome ?? item.pdv?.nome ?? item.Pdv?.nome ?? "",
     },
   };
 }

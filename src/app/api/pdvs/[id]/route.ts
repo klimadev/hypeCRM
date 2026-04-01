@@ -33,6 +33,10 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const { nome, id_whatsapp_instancia } = validacao.data;
 
+  if (auth.sessao.perfil === "GERENTE" && id_whatsapp_instancia !== undefined) {
+    return forbidden("Somente EMPRESA pode alterar o WhatsApp vinculado do PDV.");
+  }
+
   if (id_whatsapp_instancia !== undefined && id_whatsapp_instancia !== null) {
     const instancia = await prisma.whatsappInstancia.findFirst({
       where: {

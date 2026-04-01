@@ -135,55 +135,6 @@ export function podeAprovarLead(sessao: SessaoToken) {
   return isAdmin(sessao) || sessao.perfil === "GERENTE";
 }
 
-export function podeAcessarPainelMetas(sessao: SessaoToken) {
-  return isAdmin(sessao) || sessao.perfil === "GERENTE";
-}
-
-export function podeAcessarMinhasMetas(sessao: SessaoToken) {
-  return sessao.perfil === "COLABORADOR";
-}
-
-export function podeDefinirMetaGlobal(sessao: SessaoToken) {
-  return isAdmin(sessao);
-}
-
-export function podeGerenciarMetaDoPdv(sessao: SessaoToken, idPdvAlvo: string) {
-  if (isAdmin(sessao)) {
-    return true;
-  }
-
-  return sessao.perfil === "GERENTE" && Boolean(sessao.id_pdv) && sessao.id_pdv === idPdvAlvo;
-}
-
-export async function podeGerenciarMetaIndividual(sessao: SessaoToken, idFuncionarioAlvo: string) {
-  if (isAdmin(sessao)) {
-    return true;
-  }
-
-  if (sessao.perfil !== "GERENTE" || !sessao.id_pdv) {
-    return false;
-  }
-
-  const funcionario = await prisma.funcionario.findFirst({
-    where: {
-      id: idFuncionarioAlvo,
-      id_empresa: sessao.id_empresa,
-      id_pdv: sessao.id_pdv,
-    },
-    select: { id: true },
-  });
-
-  return Boolean(funcionario);
-}
-
-export function podeVerMetaDeOutros(sessao: SessaoToken) {
-  return sessao.perfil !== "COLABORADOR";
-}
-
-export function podeVerValoresAbsolutosMetas(sessao: SessaoToken) {
-  return isAdmin(sessao) || sessao.perfil === "GERENTE";
-}
-
 export function podeGerenciarRecursoNoPdv(sessao: SessaoToken, idPdvRecurso?: string | null) {
   if (sessao.perfil !== "GERENTE") {
     return true;

@@ -124,8 +124,6 @@ model Empresa {
   Funil             Funil[]
   Lead              Lead[]
   LeadProduto       LeadProduto[]
-  Meta              Meta[]
-  MetaProgresso     MetaProgresso[]
   Negocio           Negocio[]
   NegocioProduto    NegocioProduto[]
   Parcela           Parcela[]
@@ -192,7 +190,6 @@ model Funcionario {
   Empresa       Empresa   @relation(fields: [id_empresa], references: [id])
   Pdv           Pdv       @relation(fields: [id_pdv], references: [id])
   Lead          Lead[]
-  Meta          Meta[]
   Negocio       Negocio[]
 
   @@index([id_pdv])
@@ -358,45 +355,6 @@ model NegocioProduto {
   @@index([id_empresa])
 }
 
-model Meta {
-  id             String          @id
-  id_empresa     String
-  tipo           String
-  tipo_meta      String
-  alvo           Float
-  periodo        String
-  data_inicio    DateTime
-  data_fim       DateTime
-  ativo          Boolean         @default(true)
-  criado_em      DateTime        @default(now())
-  atualizado_em  DateTime        @default(now())
-  id_pdv         String?
-  id_funcionario String?
-  Funcionario    Funcionario?    @relation(fields: [id_funcionario], references: [id])
-  Pdv            Pdv?            @relation(fields: [id_pdv], references: [id])
-  Empresa        Empresa         @relation(fields: [id_empresa], references: [id])
-  MetaProgresso  MetaProgresso[]
-
-  @@index([id_funcionario])
-  @@index([id_pdv])
-  @@index([id_empresa, ativo, data_inicio, data_fim])
-  @@index([id_empresa, tipo, ativo])
-}
-
-model MetaProgresso {
-  id            String   @id
-  id_meta       String
-  id_empresa    String
-  periodo       String
-  realizado     Float
-  atualizado_em DateTime @default(now())
-  Empresa       Empresa  @relation(fields: [id_empresa], references: [id])
-  Meta          Meta     @relation(fields: [id_meta], references: [id], onDelete: Cascade)
-
-  @@unique([id_meta, periodo])
-  @@index([id_empresa, periodo])
-}
-
 model Parcela {
   id               String    @id
   id_empresa       String
@@ -430,7 +388,6 @@ model Pdv {
   criado_em             DateTime           @default(now())
   atualizado_em         DateTime           @default(now())
   Funcionario           Funcionario[]
-  Meta                  Meta[]
   WhatsappInstancia     WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id])
   Empresa               Empresa            @relation(fields: [id_empresa], references: [id])
 
@@ -535,9 +492,11 @@ model WhatsappMensagem {
   id_whatsapp_instancia String
   mensagem_id           String
   remote_jid            String
+  remote_jid_alt        String?
   from_me               Boolean
   tipo                  String            @default("text")
   conteudo              String?
+  push_name             String?
   status                String            @default("PENDING")
   timestamp             Int
   lida_no_crm_em        DateTime?

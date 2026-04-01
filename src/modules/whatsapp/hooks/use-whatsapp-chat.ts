@@ -1,51 +1,25 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { enviarMensagemWhatsapp, listarMensagensWhatsapp, marcarMensagensComoLidas } from "@/lib/api/whatsapp";
+import {
+  assinarMensagensWhatsapp,
+  enviarMensagemWhatsapp,
+  listarMensagensWhatsapp,
+  marcarMensagensComoLidas,
+} from "@/lib/api/whatsapp";
 import { traduzirTipoMensagem, normalizarTimestampParaIso } from "@/lib/whatsapp-utils";
-import type { ChatConnectionStatus, ChatMessageStatus, WhatsappChatBlockedState, WhatsappChatMessage } from "@/modules/whatsapp/types";
+import type { ChatConnectionStatus, WhatsappChatBlockedState, WhatsappChatMessage } from "@/modules/whatsapp/types";
+import { mergeWhatsappChatMessages, resolverLeadIdWhatsappChat } from "@/modules/whatsapp/chat-helpers";
 
 type UseWhatsappChatParams = {
+  leadId?: string;
   contatoId?: string;
   enabled: boolean;
   markReadEnabled: boolean;
   pollMs?: number;
 };
 
-const statusWeight: Record<ChatMessageStatus, number> = {
-  ERROR: 5,
-  READ: 4,
-  PLAYED: 4,
-  DELIVERED: 3,
-  DELETED: 3,
-  SENT: 2,
-  PENDING: 1,
-};
-
-function mergeMessages(base: WhatsappChatMessage[], incoming: WhatsappChatMessage[]) {
-  const map = new Map<string, WhatsappChatMessage>();
-  for (const message of [...base, ...incoming]) {
-    const key = message.messageId || message.id;
-    const existing = map.get(key);
-    if (!existing) {
-      map.set(key, message);
-      continue;
-    }
-
-    const stronger = statusWeight[message.status] >= statusWeight[existing.status] ? message.status : existing.status;
-    map.set(key, {
-      ...existing,
-      ...message,
-      status: stronger,
-      optimistic: existing.optimistic && message.optimistic,
-      error: message.error ?? existing.error,
-    });
-  }
-
-  return Array.from(map.values()).sort((a, b) => a.timestamp - b.timestamp);
-}
-
-export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 30000 }: UseWhatsappChatParams) {
+export function useWhatsappChat({ leadId, contatoId, enabled, markReadEnabled, pollMs = 30000 }: UseWhatsappChatParams) {
   const [messages, setMessages] = useState<WhatsappChatMessage[]>([]);
   const [connectionStatus, setConnectionStatus] = useState<ChatConnectionStatus>("unknown");
   const [unreadCount, setUnreadCount] = useState(0);
@@ -61,12 +35,19 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
   const requestSeqRef = useRef(0);
   const controllerRef = useRef<AbortController | null>(null);
   const markReadInFlightRef = useRef(false);
+  const unsubscribeRef = useRef<(() => void) | null>(null);
+  const pollingFallbackRef = useRef(false);
+
+  const resolvedLeadId = useMemo(
+    () => resolverLeadIdWhatsappChat({ leadId, contatoId }),
+    [contatoId, leadId],
+  );
 
   useEffect(() => {
     messagesRef.current = messages;
   }, [messages]);
 
-  const stopPolling = useCallback(() => {
+  const cancelarSincronizacaoPendente = useCallback(() => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
       timeoutRef.current = null;
@@ -77,8 +58,14 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
     }
   }, []);
 
+  const stopPolling = useCallback(() => {
+    cancelarSincronizacaoPendente();
+    unsubscribeRef.current?.();
+    unsubscribeRef.current = null;
+  }, [cancelarSincronizacaoPendente]);
+
   const fetchMessages = useCallback(async () => {
-    if (!enabled || !contatoId) return;
+    if (!enabled || !resolvedLeadId) return;
     requestSeqRef.current += 1;
     const currentSeq = requestSeqRef.current;
 
@@ -92,7 +79,7 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
     }
 
     try {
-      const resultado = await listarMensagensWhatsapp(contatoId, signal);
+      const resultado = await listarMensagensWhatsapp(resolvedLeadId, signal);
       if (!resultado.ok) {
         if (resultado.codigo === "PDV_SEM_INSTANCIA") {
           setBlockedState({
@@ -110,35 +97,37 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
       }
       if (!mountedRef.current || currentSeq !== requestSeqRef.current) return;
 
+      pollingFallbackRef.current = false;
       setBlockedState(null);
-      setMessages((prev) => mergeMessages(prev, resultado.dados.messages));
+      setMessages((prev) => mergeWhatsappChatMessages(prev, resultado.dados.messages));
       setConnectionStatus(resultado.dados.connectionStatus);
       setUnreadCount(resultado.dados.unreadCount);
       backoffMsRef.current = pollMs;
     } catch (err) {
       if (!mountedRef.current || signal.aborted) return;
+      pollingFallbackRef.current = true;
       setError(err instanceof Error ? err.message : "Erro ao carregar mensagens.");
       backoffMsRef.current = Math.max(pollMs, 30000);
     } finally {
       if (!mountedRef.current) return;
       setLoading(false);
-      if (enabled) {
-        const delay = document.visibilityState === "hidden" ? Math.max(backoffMsRef.current, 30000) : backoffMsRef.current;
-        timeoutRef.current = setTimeout(() => {
-          void fetchMessages();
-        }, delay);
-      }
-    }
-  }, [enabled, contatoId, pollMs]);
+      if (enabled && resolvedLeadId && pollingFallbackRef.current) {
+         const delay = document.visibilityState === "hidden" ? Math.max(backoffMsRef.current, 30000) : backoffMsRef.current;
+         timeoutRef.current = setTimeout(() => {
+           void fetchMessages();
+         }, delay);
+       }
+     }
+  }, [enabled, pollMs, resolvedLeadId]);
 
   const reload = useCallback(async () => {
-    stopPolling();
+    cancelarSincronizacaoPendente();
     await fetchMessages();
-  }, [fetchMessages, stopPolling]);
+  }, [cancelarSincronizacaoPendente, fetchMessages]);
 
   const sendMessage = useCallback(
     async (text: string, retryId?: string) => {
-      if (!contatoId || !enabled) return;
+      if (!resolvedLeadId || !enabled) return;
 
       const normalizedText = text.trim();
       if (!normalizedText) return;
@@ -148,7 +137,7 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
       const optimisticMessage: WhatsappChatMessage = {
         id: tempId,
         messageId: tempId,
-        leadId: contatoId,
+        leadId: resolvedLeadId,
         remoteJid: "",
         remoteJidAlt: null,
         fromMe: true,
@@ -170,12 +159,12 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
       setSending(true);
       setMessages((prev) => {
         const withoutRetry = retryId ? prev.filter((msg) => msg.id !== retryId) : prev;
-        return mergeMessages(withoutRetry, [optimisticMessage]);
+        return mergeWhatsappChatMessages(withoutRetry, [optimisticMessage]);
       });
 
       try {
         const resultado = await enviarMensagemWhatsapp({
-          leadId: contatoId,
+          leadId: resolvedLeadId,
           text: normalizedText,
           clientTempId: tempId,
         });
@@ -199,7 +188,7 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
           const replaced = prev.map((message) =>
             message.id === (resultado.dados.clientTempId ?? tempId) ? { ...serverMessage, optimistic: false } : message,
           );
-          return mergeMessages(replaced, [serverMessage]);
+          return mergeWhatsappChatMessages(replaced, [serverMessage]);
         });
       } catch (err) {
         setMessages((prev) =>
@@ -218,7 +207,7 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
         setSending(false);
       }
     },
-    [contatoId, enabled],
+    [enabled, resolvedLeadId],
   );
 
   const retryMessage = useCallback(
@@ -229,10 +218,10 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
   );
 
   const markRead = useCallback(async () => {
-    if (!contatoId || !markReadEnabled || markReadInFlightRef.current) return;
+    if (!resolvedLeadId || !markReadEnabled || markReadInFlightRef.current) return;
     markReadInFlightRef.current = true;
     try {
-      const resultado = await marcarMensagensComoLidas(contatoId);
+      const resultado = await marcarMensagensComoLidas(resolvedLeadId);
       if (resultado.ok && mountedRef.current) {
         setUnreadCount(resultado.dados.unreadCount);
         setMessages((prev) =>
@@ -249,7 +238,7 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
     } finally {
       markReadInFlightRef.current = false;
     }
-  }, [contatoId, markReadEnabled]);
+  }, [markReadEnabled, resolvedLeadId]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -260,29 +249,64 @@ export function useWhatsappChat({ contatoId, enabled, markReadEnabled, pollMs = 
   }, [stopPolling]);
 
   useEffect(() => {
-    setMessages([]);
-    setUnreadCount(0);
+    const mesmaConversa = Boolean(resolvedLeadId) && messagesRef.current[0]?.leadId === resolvedLeadId;
+
+    if (!mesmaConversa) {
+      setMessages([]);
+      setUnreadCount(0);
+      setConnectionStatus("unknown");
+    }
     setError(null);
     setBlockedState(null);
     backoffMsRef.current = pollMs;
+    pollingFallbackRef.current = typeof EventSource === "undefined";
 
-    if (!enabled || !contatoId) {
+    if (!enabled || !resolvedLeadId) {
       stopPolling();
       return;
     }
 
     void fetchMessages();
+    if (typeof EventSource !== "undefined") {
+      unsubscribeRef.current = assinarMensagensWhatsapp(resolvedLeadId, {
+        onSnapshot: (snapshot) => {
+          if (!mountedRef.current) return;
+          pollingFallbackRef.current = false;
+          if (timeoutRef.current) {
+            clearTimeout(timeoutRef.current);
+            timeoutRef.current = null;
+          }
+          setBlockedState(null);
+          setError(null);
+          setMessages((prev) => mergeWhatsappChatMessages(prev, snapshot.messages));
+          setConnectionStatus(snapshot.connectionStatus);
+          setUnreadCount(snapshot.unreadCount);
+        },
+        onError: () => {
+          if (!mountedRef.current) return;
+          pollingFallbackRef.current = true;
+          backoffMsRef.current = Math.max(pollMs, 30000);
+          if (!timeoutRef.current) {
+            void fetchMessages();
+          }
+        },
+      });
+    }
+
     return () => {
       stopPolling();
     };
-  }, [enabled, contatoId, pollMs, fetchMessages, stopPolling]);
+  }, [enabled, fetchMessages, pollMs, resolvedLeadId, stopPolling]);
 
   useEffect(() => {
     if (!markReadEnabled || unreadCount <= 0) return;
     void markRead();
   }, [markReadEnabled, unreadCount, markRead]);
 
-  const canSend = useMemo(() => enabled && Boolean(contatoId) && connectionStatus === "online", [connectionStatus, enabled, contatoId]);
+  const canSend = useMemo(
+    () => enabled && Boolean(resolvedLeadId) && connectionStatus === "online",
+    [connectionStatus, enabled, resolvedLeadId],
+  );
 
   return {
     messages,

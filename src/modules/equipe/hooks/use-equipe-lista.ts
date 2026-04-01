@@ -71,7 +71,10 @@ export function useEquipeLista({
         return;
       }
 
-      const lista = resposta.dados.funcionarios;
+      const lista = resposta.dados.funcionarios.map((funcionario) => ({
+        ...funcionario,
+        pdv: funcionario.pdv ?? funcionario.Pdv ?? { id: "", nome: "" },
+      }));
       setFuncionarios(lista);
       setPaginacao(resposta.dados.paginacao);
 

@@ -2,7 +2,7 @@
 
 import { AlertTriangle, FileX, Clock, Info } from "lucide-react";
 import type { PendenciaGravidade, ResumoPendencias } from "../hooks/use-pendencias-globais";
-import { TipoPendencia } from "@/lib/validacoes";
+import type { TipoPendencia } from "@/lib/pendencias";
 import { cn } from "@/lib/utils";
 
 type PendenciaBadgeProps = {

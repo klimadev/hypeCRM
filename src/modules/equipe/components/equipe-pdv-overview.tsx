@@ -13,11 +13,11 @@ export function EquipePdvOverview({ vm }: EquipePdvOverviewProps) {
   const totalAtivos = vm.pdvs.reduce((acc, pdv) => acc + (pdv.funcionarios?.length ?? 0), 0);
 
   return (
-    <section className="space-y-3 rounded-2xl border border-slate-200/60 bg-white px-4 py-4 shadow-[0_2px_8px_rgba(0,0,0,0.04)] md:px-5">
+    <section className="space-y-3 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-4 py-4 md:px-5">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Presenca por PDV</p>
-          <p className="text-sm text-slate-600">Clique em um PDV para ver os membros daquele time</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Presenca por PDV</p>
+          <p className="text-sm text-[var(--text-secondary)]">Clique em um PDV para ver os membros daquele time</p>
         </div>
         {vm.idPdvFiltro ? (
           <Button
@@ -37,16 +37,16 @@ export function EquipePdvOverview({ vm }: EquipePdvOverviewProps) {
           type="button"
           className={cn(
             "rounded-xl border p-3 text-left transition",
-            !vm.idPdvFiltro ? "border-slate-900 bg-slate-900 text-white" : "border-slate-200 bg-slate-50 hover:bg-slate-100",
+            !vm.idPdvFiltro ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--text-primary)]" : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] hover:bg-[var(--surface-elevated)]/80",
           )}
           onClick={() => vm.atualizarParametrosUrl({ id_pdv: null }, true)}
         >
           <div className="flex items-center justify-between">
-            <span className="text-xs font-semibold uppercase tracking-wide">Todos</span>
-            <Users className="h-4 w-4" />
+            <span className="text-xs font-semibold uppercase tracking-wide text-[var(--text-secondary)]">Todos</span>
+            <Users className="h-4 w-4 text-[var(--text-tertiary)]" />
           </div>
-          <p className="mt-3 text-xl font-bold">{totalAtivos}</p>
-          <p className={cn("text-xs", !vm.idPdvFiltro ? "text-slate-200" : "text-slate-500")}>colaboradores ativos</p>
+          <p className="mt-3 text-xl font-bold text-[var(--text-primary)]">{totalAtivos}</p>
+          <p className={cn("text-xs", !vm.idPdvFiltro ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)]")}>colaboradores ativos</p>
         </button>
 
         {vm.pdvs.map((pdv) => {
@@ -59,16 +59,16 @@ export function EquipePdvOverview({ vm }: EquipePdvOverviewProps) {
               type="button"
               className={cn(
                 "rounded-xl border p-3 text-left transition",
-                selecionado ? "border-emerald-300 bg-emerald-50" : "border-slate-200 hover:border-slate-300 hover:bg-slate-50",
+                selecionado ? "border-[var(--success)] bg-[color:rgba(16,185,129,0.1)]" : "border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)]/80",
               )}
               onClick={() => vm.atualizarParametrosUrl({ id_pdv: pdv.id }, true)}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="line-clamp-1 text-sm font-semibold text-slate-800">{pdv.nome}</span>
-                {selecionado ? <CheckCircle2 className="h-4 w-4 text-emerald-600" /> : <Building2 className="h-4 w-4 text-slate-400" />}
+                <span className="line-clamp-1 text-sm font-semibold text-[var(--text-primary)]">{pdv.nome}</span>
+                {selecionado ? <CheckCircle2 className="h-4 w-4 text-[var(--success)]" /> : <Building2 className="h-4 w-4 text-[var(--text-tertiary)]" />}
               </div>
-              <p className="mt-3 text-xl font-bold text-slate-900">{total}</p>
-              <p className="text-xs text-slate-500">membros ativos</p>
+              <p className="mt-3 text-xl font-bold text-[var(--text-primary)]">{total}</p>
+              <p className="text-xs text-[var(--text-tertiary)]">membros ativos</p>
             </button>
           );
         })}

@@ -1,5 +1,6 @@
 import { MessageCircleMore } from "lucide-react";
 import type { WhatsappChatMessage } from "@/modules/whatsapp/types";
+import { criarItensListaMensagensWhatsapp } from "@/modules/whatsapp/chat-helpers";
 import { WhatsappMessageBubble } from "./whatsapp-message-bubble";
 
 type Props = {
@@ -23,11 +24,21 @@ export function WhatsappMessageList({ messages, loading, onRetry }: Props) {
     );
   }
 
+  const itens = criarItensListaMensagensWhatsapp(messages);
+
   return (
     <div className="space-y-1.5">
-      {messages.map((message) => (
-        <WhatsappMessageBubble key={message.messageId || message.id} message={message} onRetry={onRetry} />
-      ))}
+      {itens.map((item) =>
+        item.type === "separator" ? (
+          <div key={item.key} className="flex items-center justify-center py-2">
+            <span className="rounded-full border border-[var(--border-subtle)] bg-[color:rgba(12,12,14,0.86)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)]">
+              {item.label}
+            </span>
+          </div>
+        ) : (
+          <WhatsappMessageBubble key={item.key} message={item.message} onRetry={onRetry} />
+        ),
+      )}
       {loading && (
         <div className="flex justify-center gap-1 py-2">
           <div className="h-2 w-2 rounded-full bg-[var(--brand)] animate-bounce" style={{ animationDelay: "0ms" }} />
