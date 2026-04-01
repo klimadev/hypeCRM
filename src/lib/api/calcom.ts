@@ -141,11 +141,11 @@ export async function testarConexaoCalCom(apiKey: string): Promise<{
   erro?: string;
 }> {
   try {
-    const res = await fetch("https://api.cal.com/v2/users/me", {
+    const res = await fetch("https://api.cal.com/v2/me", {
       headers: {
         Authorization: `Bearer ${apiKey}`,
         "Content-Type": "application/json",
-        "cal-api-version": "2024-08-13",
+        "cal-api-version": "2024-06-14",
       },
     });
 
