@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import {
+  ArrowLeft,
   ArrowUpRight,
   CalendarDays,
   CalendarRange,
@@ -11,7 +12,7 @@ import {
   Link2,
   Loader2,
   RefreshCcw,
-  ShieldCheck,
+  Sparkles,
   Trash2,
 } from "lucide-react";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
@@ -30,7 +31,7 @@ function formatarDataHora(valor: string) {
   const data = new Date(valor);
 
   if (Number.isNaN(data.getTime())) {
-    return "Sem sincronizacao recente";
+    return "Sem verificacao recente";
   }
 
   return new Intl.DateTimeFormat("pt-BR", {
@@ -41,10 +42,10 @@ function formatarDataHora(valor: string) {
 
 function obterBadgeStatus(status: CalComInstancia["status"]): { variant: "success" | "warning"; label: string } {
   if (status === "active") {
-    return { variant: "success", label: "Ativa" };
+    return { variant: "success", label: "Funcionando" };
   }
 
-  return { variant: "warning", label: "Revisar" };
+  return { variant: "warning", label: "Precisa verificar" };
 }
 
 type KpiCardProps = {
@@ -63,11 +64,11 @@ function KpiCard({ titulo, valor, descricao, icone, destaque = false }: KpiCardP
         : "border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))]"
       }
     >
-      <CardContent className="flex items-center justify-between p-5">
+      <CardContent className="flex items-center justify-between gap-4 p-4 md:p-5">
         <div className="space-y-1">
           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{titulo}</p>
-          <p className="text-2xl font-semibold tracking-tight text-[var(--text-primary)]">{valor}</p>
-          <p className="text-xs text-[var(--text-secondary)]">{descricao}</p>
+          <p className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{valor}</p>
+          <p className="text-sm text-[var(--text-secondary)]">{descricao}</p>
         </div>
         <span className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:rgba(139,92,246,0.24)] bg-[color:rgba(139,92,246,0.12)] text-[var(--brand)]">
           {icone}
@@ -111,13 +112,13 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
     const resultado = await vm.criarInstancia(nomeInstancia.trim(), apiKey.trim());
 
     if (!resultado.sucesso) {
-      setFeedbackErro(resultado.erro ?? "Nao foi possivel salvar a conexao agora.");
+      setFeedbackErro(resultado.erro ?? "Nao foi possivel conectar a conta agora.");
       return;
     }
 
     setNomeInstancia("");
     setApiKey("");
-    setFeedbackSucesso("Conexao Cal.com criada com sucesso.");
+    setFeedbackSucesso("Conta do Cal.com conectada com sucesso.");
   }
 
   async function handleTestarConexao(id: string) {
@@ -129,7 +130,7 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
       const resultado = await vm.testarConexao(id);
 
       if (!resultado.sucesso) {
-        setFeedbackErro(resultado.erro ?? "A conexao nao respondeu como esperado.");
+        setFeedbackErro(resultado.erro ?? "Nao foi possivel confirmar essa conexao agora.");
         return;
       }
 
@@ -140,7 +141,7 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
   }
 
   async function handleExcluirInstancia(id: string, nome: string) {
-    if (!podeExcluir || !window.confirm(`Excluir a conexao ${nome}?`)) {
+    if (!podeExcluir || !window.confirm(`Remover a conta ${nome}?`)) {
       return;
     }
 
@@ -152,11 +153,11 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
       const resultado = await vm.excluirInstancia(id);
 
       if (!resultado.sucesso) {
-        setFeedbackErro(resultado.erro ?? "Nao foi possivel excluir a conexao.");
+        setFeedbackErro(resultado.erro ?? "Nao foi possivel remover essa conta.");
         return;
       }
 
-      setFeedbackSucesso("Conexao removida com sucesso.");
+      setFeedbackSucesso("Conta removida com sucesso.");
     } finally {
       setInstanciaEmExclusao(null);
     }
@@ -166,9 +167,18 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
     <ModulePageShell spacing="lg">
       <ModulePageHeader
         title="Cal.com"
-        subtitle="Conecte sua operacao comercial ao calendario corporativo, valide a API key e acompanhe reunioes e tipos de evento sem sair do CRM."
+        subtitle="Conecte sua agenda do Cal.com para ver reunioes, links de agendamento e contas usadas pela operacao."
         icon={<CalendarRange className="h-5 w-5" />}
         iconTone="blue"
+        className="px-4 py-4 md:px-5 md:py-4"
+        actions={(
+          <Button asChild variant="outline" size="sm">
+            <Link href="/integracoes">
+              <ArrowLeft className="h-4 w-4" />
+              Voltar para integracoes
+            </Link>
+          </Button>
+        )}
         badges={[
           <Badge key="agenda" variant="info">Agenda</Badge>,
           <Badge key="status" variant={resumo.temConexaoAtiva ? "success" : "warning"} dot>{resumo.rotuloStatus}</Badge>,
@@ -180,23 +190,23 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
 
       <div className="grid gap-4 md:grid-cols-3">
         <KpiCard
-          titulo="Conexoes"
-          valor={`${resumo.instanciasAtivas}/${resumo.totalInstancias}`}
-          descricao={resumo.rotuloStatus}
+          titulo="Status"
+          valor={resumo.temConexaoAtiva ? "Conectado" : "Aguardando conexao"}
+          descricao={resumo.temConexaoAtiva ? "O CRM ja consegue ler a agenda dessa integracao." : "Conecte e teste uma conta para liberar a agenda no CRM."}
           icone={<Link2 className="h-5 w-5" />}
           destaque
         />
         <KpiCard
-          titulo="Tipos de evento"
-          valor={String(resumo.totalEventTypes)}
-          descricao="URLs prontas para distribuicao comercial"
+          titulo="Contas conectadas"
+          valor={String(resumo.totalInstancias)}
+          descricao={resumo.totalInstancias === 1 ? "1 conta salva neste CRM" : `${resumo.totalInstancias} contas salvas neste CRM`}
           icone={<CalendarDays className="h-5 w-5" />}
         />
         <KpiCard
-          titulo="Proximas reunioes"
+          titulo="Reunioes"
           valor={String(resumo.totalBookings)}
-          descricao="Agenda consolidada a partir das conexoes ativas"
-          icone={<ShieldCheck className="h-5 w-5" />}
+          descricao="Compromissos puxados das contas que estao ativas"
+          icone={<Sparkles className="h-5 w-5" />}
         />
       </div>
 
@@ -204,47 +214,66 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
         <div className="space-y-4">
           <Card className="border-[var(--border-subtle)] bg-[var(--surface)]">
             <CardHeader>
-              <CardTitle className="text-base">Nova conexao Cal.com</CardTitle>
+              <CardTitle className="text-base">Conectar uma conta do Cal.com</CardTitle>
               <CardDescription>{resumo.mensagemOperacional}</CardDescription>
             </CardHeader>
             <CardContent>
-              <form className="grid gap-3 md:grid-cols-[minmax(0,0.7fr)_minmax(0,1fr)_auto]" onSubmit={handleCriarInstancia}>
-                <Input
-                  placeholder="Ex: Agenda comercial"
-                  value={nomeInstancia}
-                  onChange={(event) => setNomeInstancia(event.target.value)}
-                  minLength={3}
-                  required
-                />
-                <Input
-                  placeholder="Cole sua API key do Cal.com"
-                  value={apiKey}
-                  onChange={(event) => setApiKey(event.target.value)}
-                  minLength={10}
-                  required
-                />
-                <Button className="min-w-44" disabled={!nomeInstancia.trim() || !apiKey.trim()}>
-                  <KeyRound className="mr-2 h-4 w-4" />
-                  Salvar conexao
-                </Button>
+              <form className="space-y-4" onSubmit={handleCriarInstancia}>
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label htmlFor="calcom-nome" className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                      Nome da conta
+                    </label>
+                    <Input
+                      id="calcom-nome"
+                      placeholder="Ex: Agenda comercial"
+                      value={nomeInstancia}
+                      onChange={(event) => setNomeInstancia(event.target.value)}
+                      minLength={3}
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label htmlFor="calcom-api-key" className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+                      Cole sua chave do Cal.com
+                    </label>
+                    <Input
+                      id="calcom-api-key"
+                      placeholder="Cole sua API key do Cal.com"
+                      value={apiKey}
+                      onChange={(event) => setApiKey(event.target.value)}
+                      minLength={10}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 md:flex-row md:items-center md:justify-between">
+                  <p className="text-sm text-[var(--text-secondary)]">Depois de salvar, voce pode verificar se a conta esta funcionando e usar os links de agendamento abaixo.</p>
+                  <Button className="min-w-44" disabled={!nomeInstancia.trim() || !apiKey.trim()}>
+                    <KeyRound className="mr-2 h-4 w-4" />
+                    Conectar agora
+                  </Button>
+                </div>
               </form>
             </CardContent>
           </Card>
 
           <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]">
             <CardHeader>
-              <CardTitle className="text-base">Conexoes cadastradas</CardTitle>
-              <CardDescription>Teste a chave, acompanhe o perfil sincronizado e remova acessos antigos quando necessario.</CardDescription>
+              <CardTitle className="text-base">Contas conectadas</CardTitle>
+              <CardDescription>Veja abaixo as contas ja ligadas ao CRM. Aqui voce pode verificar se estao funcionando ou remover acessos antigos.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {vm.carregando ? (
                 <div className="flex items-center gap-2 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-3 text-sm text-[var(--text-secondary)]">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Carregando conexoes Cal.com...
+                  Carregando contas conectadas...
                 </div>
               ) : vm.instancias.length === 0 ? (
                 <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-5 text-sm text-[var(--text-secondary)]">
-                  Nenhuma conexao cadastrada ainda. Adicione sua primeira API key para liberar a agenda dedicada.
+                  Nenhuma conta conectada ainda. Cole sua chave do Cal.com acima para comecar.
                 </div>
               ) : (
                 vm.instancias.map((instancia) => {
@@ -262,9 +291,9 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
                             <Badge variant={badge.variant} dot>{badge.label}</Badge>
                           </div>
                           <div className="space-y-1 text-sm text-[var(--text-secondary)]">
-                            <p>{instancia.profile_name ?? "Perfil ainda nao identificado"}</p>
-                            <p>{instancia.profile_email ?? "E-mail do perfil sera carregado apos o teste de conexao"}</p>
-                            <p className="text-xs text-[var(--text-tertiary)]">Ultima sincronizacao: {formatarDataHora(instancia.atualizado_em)}</p>
+                            <p>{instancia.profile_name ?? "Nome do perfil ainda nao identificado"}</p>
+                            <p>{instancia.profile_email ?? "O e-mail aparece depois que voce verifica a conexao"}</p>
+                            <p className="text-xs text-[var(--text-tertiary)]">Ultima verificacao: {formatarDataHora(instancia.atualizado_em)}</p>
                           </div>
                         </div>
 
@@ -280,7 +309,7 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
                             ) : (
                               <RefreshCcw className="h-4 w-4" />
                             )}
-                            Testar conexao
+                            Ver se esta funcionando
                           </Button>
 
                           {podeExcluir ? (
@@ -295,7 +324,7 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
                               ) : (
                                 <Trash2 className="h-4 w-4" />
                               )}
-                              Excluir
+                              Remover
                             </Button>
                           ) : null}
                         </div>
@@ -309,17 +338,35 @@ export function ModuloCalCom({ perfil }: ModuloCalComProps) {
         </div>
 
         <div className="space-y-4">
+          <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))]">
+            <CardHeader>
+              <CardTitle className="text-base">O que voce pode fazer aqui</CardTitle>
+              <CardDescription>Essa tela foi feita para voce resolver o essencial sem precisar conhecer o sistema.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3 text-sm text-[var(--text-secondary)]">
+              <div className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3">
+                Conectar uma nova conta do Cal.com ao CRM.
+              </div>
+              <div className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3">
+                Ver se a conta esta funcionando e puxando agenda.
+              </div>
+              <div className="rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3">
+                Abrir links de agendamento e acompanhar proximas reunioes.
+              </div>
+            </CardContent>
+          </Card>
+
           <AgendaWidget bookings={vm.bookings} carregando={vm.carregando} erro={vm.erro} />
 
           <Card className="border-[var(--border-subtle)] bg-[var(--surface)]">
             <CardHeader>
-              <CardTitle className="text-base">Tipos de evento publicados</CardTitle>
-              <CardDescription>Use estes links para acelerar distribuicao da agenda comercial entre SDRs, closers e parceiros.</CardDescription>
+              <CardTitle className="text-base">Links de agendamento</CardTitle>
+              <CardDescription>Abra os links ja publicados no Cal.com para distribuir para time, parceiros ou clientes.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
               {vm.eventTypes.length === 0 ? (
                 <div className="rounded-[var(--radius-card)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-5 text-sm text-[var(--text-secondary)]">
-                  Assim que uma conexao responder com sucesso, os tipos de evento aparecem aqui para copia e distribuicao.
+                  Assim que uma conta responder com sucesso, os links de agendamento aparecem aqui.
                 </div>
               ) : (
                 vm.eventTypes.slice(0, 6).map((eventType) => (

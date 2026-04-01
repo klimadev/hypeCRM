@@ -12,11 +12,14 @@ export function listarIntegracoesDisponiveis(): IntegracaoCatalogoItem[] {
     {
       slug: "calcom",
       nome: "Cal.com",
+      tituloCurto: "Agendamentos e reunioes",
+      resumoCurto: "Use para conectar sua agenda ao CRM.",
       descricao: "Centralize o calendario comercial, valide conexoes da equipe e acompanhe reunioes sem sair do CRM.",
       categoria: "Agenda",
       href: "/integracoes/calcom",
       statusLabel: "Disponivel agora",
       destaque: "Reaproveita a infraestrutura de agendamentos ja existente no HYPE CRM.",
+      acaoLabel: "Abrir integracao",
       recursos: [
         "Conexao por API key com validacao de perfil",
         "Painel com proximas reunioes e event types",

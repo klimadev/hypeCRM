@@ -10,6 +10,39 @@ export type WhatsappChatBlockedState = {
   actionHref?: string;
 };
 
+export type ConversaResumo = {
+  leadId: string;
+  leadNome: string;
+  leadTelefone: string;
+  leadOrigem: string | null;
+  estagioNome: string | null;
+  ultimaMensagem: {
+    conteudo: string;
+    fromMe: boolean;
+    timestamp: number;
+  } | null;
+  naoLidas: number;
+};
+
+export type ConversasResponse = {
+  conversas: ConversaResumo[];
+  cursor: string | null;
+  temMais: boolean;
+};
+
+export type ConversasStreamSnapshot = ConversasResponse;
+
+export type ChatContextResponse = {
+  leadId: string;
+  leadNome?: string | null;
+  leadTelefone?: string | null;
+  leadOrigem?: string | null;
+  estagioNome?: string | null;
+  pdv?: { id: string; nome: string } | null;
+  instancia?: { id: string; nome: string; instanceName?: string | null } | null;
+  bloqueado?: WhatsappChatBlockedState | null;
+};
+
 export type WhatsappChatMessage = {
   id: string;
   messageId: string;

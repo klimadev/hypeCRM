@@ -13,9 +13,12 @@ describe("catalogo de integracoes", () => {
       expect.objectContaining({
         slug: "calcom",
         nome: "Cal.com",
+        tituloCurto: "Agendamentos e reunioes",
+        resumoCurto: "Use para conectar sua agenda ao CRM.",
         href: "/integracoes/calcom",
         categoria: "Agenda",
         statusLabel: "Disponivel agora",
+        acaoLabel: "Abrir integracao",
       }),
     ]);
   });

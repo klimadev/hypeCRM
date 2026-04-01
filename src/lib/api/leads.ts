@@ -13,6 +13,10 @@ export type ApiLeadContato = {
   id_funcionario: string;
   nome: string;
   telefone: string;
+  email?: string | null;
+  fonte?: string | null;
+  empresa_origem?: string | null;
+  observacoes?: string | null;
   valor_oportunidade: number;
   atualizado_em: string;
   origem?: string | null;
@@ -40,6 +44,32 @@ export type PayloadRemoverLead = {
   remover_negocios_vinculados?: boolean;
 };
 
+export type PayloadCriarLead = {
+  nome: string;
+  telefone: string;
+  id_funcionario?: string;
+  email?: string | null;
+  fonte?: string | null;
+  empresa_origem?: string | null;
+  observacoes?: string | null;
+  origem?: "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
+  anuncio_titulo?: string | null;
+  anuncio_descricao?: string | null;
+  anuncio_url?: string | null;
+  dados_extras?: string | null;
+};
+
+export type PayloadAtualizarLead = {
+  nome?: string;
+  telefone?: string;
+  id_funcionario?: string;
+  email?: string | null;
+  fonte?: string | null;
+  empresa_origem?: string | null;
+  observacoes?: string | null;
+  ativo?: boolean;
+};
+
 export type ResultadoRemocaoLead = {
   sucesso: boolean;
   negocios_removidos?: number;
@@ -63,6 +93,49 @@ export async function listarLeadsApi(): Promise<ResultadoApi<ListagemLeadsApi>> 
       leads: json.leads ?? [],
       funcionarios: json.funcionarios ?? [],
       pdvs: json.pdvs ?? [],
+    },
+  };
+}
+
+export async function criarLeadContato(payload: PayloadCriarLead): Promise<ResultadoApi<{ lead: ApiLeadContato }>> {
+  const resposta = await fetch("/api/leads", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<{ lead?: ApiLeadContato } & ApiErro>(resposta);
+  if (!resposta.ok || !json.lead) {
+    return { ok: false, erro: json.erro ?? "Erro ao criar o lead." };
+  }
+
+  return {
+    ok: true,
+    dados: {
+      lead: json.lead,
+    },
+  };
+}
+
+export async function atualizarLeadContato(
+  idLead: string,
+  payload: PayloadAtualizarLead,
+): Promise<ResultadoApi<{ lead: ApiLeadContato }>> {
+  const resposta = await fetch(`/api/leads/${idLead}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<{ lead?: ApiLeadContato } & ApiErro>(resposta);
+  if (!resposta.ok || !json.lead) {
+    return { ok: false, erro: json.erro ?? "Erro ao atualizar o lead." };
+  }
+
+  return {
+    ok: true,
+    dados: {
+      lead: json.lead,
     },
   };
 }

@@ -19,17 +19,17 @@ export function criarResumoOperacionalCalCom({
 
   const rotuloStatus =
     instanciasAtivas === 0
-      ? "Nenhuma conexao ativa"
+      ? "Nenhuma conta conectada"
       : instanciasAtivas === 1
-          ? "1 conexao ativa"
-          : `${instanciasAtivas} conexoes ativas`;
+          ? "1 conta funcionando"
+          : `${instanciasAtivas} contas funcionando`;
 
   const mensagemOperacional =
     totalInstancias === 0
-      ? "Cadastre uma API key valida para liberar agenda, bookings e tipos de evento."
+      ? "Cole uma chave valida do Cal.com para liberar agenda, reunioes e links de agendamento."
       : temConexaoAtiva
-          ? "As conexoes ativas ja liberam leitura de agenda, tipos de evento e reunioes futuras."
-          : "As conexoes cadastradas precisam ser testadas novamente para voltar a sincronizar a agenda.";
+          ? "As contas que estao funcionando ja liberam leitura de agenda, reunioes futuras e links de agendamento."
+          : "As contas salvas precisam ser verificadas novamente para voltar a sincronizar a agenda.";
 
   return {
     totalInstancias,

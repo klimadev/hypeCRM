@@ -1,5 +1,8 @@
 import type {
   ChatConnectionStatus,
+  ChatContextResponse,
+  ConversasResponse,
+  ConversasStreamSnapshot,
   EstagioFunilOption,
   WhatsappAutomacao,
   WhatsappAutomacaoCreateInput,
@@ -9,11 +12,6 @@ import type {
   WhatsappInstancia,
   WhatsappJobItem,
 } from "@/modules/whatsapp/types";
-import type {
-  ChatContextResponse,
-  ConversasResponse,
-  ConversasStreamSnapshot,
-} from "@/modules/chat/types";
 
 type ApiErro = { erro?: string };
 

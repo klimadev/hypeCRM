@@ -1,13 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { buscarConversas, buscarConversasEvolution } from "@/lib/evolution-api";
 import type { SessaoToken } from "@/lib/tipos";
-import { formatarPreviewMensagem } from "@/lib/whatsapp-utils";
 import {
   buscarConnectionStatus,
   buscarLeadComAcesso,
   buscarLeadPorTelefoneComAcesso,
   buscarMensagensEvolution,
-  buscarPdvDoLead,
   mapearMensagemDbParaCanonica,
   normalizarMensagensEvolution,
   normalizarRemoteJidParaLead,
@@ -16,8 +14,7 @@ import {
   upsertMensagensNoBanco,
   type InstanciaResolvida,
 } from "@/lib/whatsapp-chat";
-import type { ConversaResumo, ConversasResponse } from "@/modules/chat/types";
-import type { ChatConnectionStatus, WhatsappChatMessage } from "@/modules/whatsapp/types";
+import type { ChatConnectionStatus, ConversaResumo, ConversasResponse, WhatsappChatMessage } from "@/modules/whatsapp/types";
 
 const encoder = new TextEncoder();
 const CHAT_SYNC_TTL_MS = 30_000;
@@ -323,9 +320,6 @@ export async function obterSnapshotMensagens(
     throw new Error(remoteJidInfo.erro);
   }
 
-  // Usa leadId vazio para filtrar por remote_jid se não houver lead associado
-  const idLeadOuVazio = leadId || undefined;
-  
   const cacheKey = `${sessao.id_empresa}:${instancia.id}:${leadId || phoneNumber}`;
   const estado = obterEstadoGlobal();
   const agora = Date.now();
@@ -523,7 +517,7 @@ export async function obterSnapshotConversas(
   );
 
   // Permite conversas sem lead associado (ainda não sincronizado no CRM)
-  const conversasFiltradas = conversasResolvidas.filter(({ conversa, lead }) => {
+  const conversasFiltradas = conversasResolvidas.filter(({ conversa }) => {
     if (!apenasNaoLidas) return true;
     return conversa.lastMessage?.key?.fromMe === false;
   });

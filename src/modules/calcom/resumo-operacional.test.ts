@@ -45,7 +45,7 @@ describe("criarResumoOperacionalCalCom", () => {
     expect(resumo.totalBookings).toBe(2);
     expect(resumo.totalEventTypes).toBe(2);
     expect(resumo.temConexaoAtiva).toBe(true);
-    expect(resumo.rotuloStatus).toBe("1 conexao ativa");
+    expect(resumo.rotuloStatus).toBe("1 conta funcionando");
   });
 
   it("indica onboarding quando nao ha conexoes criadas", () => {
@@ -58,7 +58,7 @@ describe("criarResumoOperacionalCalCom", () => {
     expect(resumo.totalInstancias).toBe(0);
     expect(resumo.instanciasAtivas).toBe(0);
     expect(resumo.temConexaoAtiva).toBe(false);
-    expect(resumo.rotuloStatus).toBe("Nenhuma conexao ativa");
-    expect(resumo.mensagemOperacional).toBe("Cadastre uma API key valida para liberar agenda, bookings e tipos de evento.");
+    expect(resumo.rotuloStatus).toBe("Nenhuma conta conectada");
+    expect(resumo.mensagemOperacional).toBe("Cole uma chave valida do Cal.com para liberar agenda, reunioes e links de agendamento.");
   });
 });

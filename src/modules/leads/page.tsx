@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
-import { AlertCircle, ArrowUpRight, Building2, Link2, Loader2, RefreshCw, Search, Trash2, Users } from "lucide-react";
+import { AlertCircle, ArrowUpRight, Building2, Link2, Loader2, Pencil, Plus, RefreshCw, Search, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { InlineStatusAlert } from "@/components/shared/inline-status-alert";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
@@ -13,8 +14,11 @@ import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { EmptyState } from "@/modules/kanban/components/empty-state";
 import { useToast } from "@/components/ui/toast";
 import { Switch } from "@/components/ui/switch";
-import { cn, formataMoeda } from "@/lib/utils";
+import { Textarea } from "@/components/ui/textarea";
+import { aplicaMascaraTelefoneBr, cn, formataMoeda } from "@/lib/utils";
 import {
+  atualizarLeadContato,
+  criarLeadContato,
   listarLeadsApi,
   removerLeadContato,
   type ApiLeadContato,
@@ -29,6 +33,33 @@ import {
 } from "@/lib/api/negocios";
 
 type ApiEstagio = NonNullable<ListagemNegociosApi["estagios"]>[number];
+
+type FormularioNovoLead = {
+  nome: string;
+  telefone: string;
+  email: string;
+  fonte: string;
+  empresaOrigem: string;
+  observacoes: string;
+  idFuncionario: string;
+};
+
+function criarFormularioNovoLead(idFuncionario = ""): FormularioNovoLead {
+  return {
+    nome: "",
+    telefone: "",
+    email: "",
+    fonte: "",
+    empresaOrigem: "",
+    observacoes: "",
+    idFuncionario,
+  };
+}
+
+function normalizarTextoOpcional(valor: string) {
+  const texto = valor.trim();
+  return texto.length > 0 ? texto : null;
+}
 
 function formatarData(dataIso: string) {
   return new Intl.DateTimeFormat("pt-BR", {
@@ -93,6 +124,11 @@ export function ModuloLeads() {
   const [removendoLead, setRemovendoLead] = useState(false);
   const [removerNegociosVinculados, setRemoverNegociosVinculados] = useState(false);
   const [erroRemocaoLead, setErroRemocaoLead] = useState<string | null>(null);
+  const [dialogNovoLeadAberto, setDialogNovoLeadAberto] = useState(false);
+  const [criandoLead, setCriandoLead] = useState(false);
+  const [erroNovoLead, setErroNovoLead] = useState<string | null>(null);
+  const [formularioNovoLead, setFormularioNovoLead] = useState<FormularioNovoLead>(() => criarFormularioNovoLead());
+  const [leadEmEdicao, setLeadEmEdicao] = useState<ApiLeadContato | null>(null);
 
   const carregarDados = async (silencioso = false) => {
     if (silencioso) {
@@ -130,6 +166,19 @@ export function ModuloLeads() {
   useEffect(() => {
     void carregarDados();
   }, []);
+
+  useEffect(() => {
+    setFormularioNovoLead((atual) => {
+      if (atual.idFuncionario || funcionarios.length === 0) {
+        return atual;
+      }
+
+      return {
+        ...atual,
+        idFuncionario: funcionarios[0]?.id ?? "",
+      };
+    });
+  }, [funcionarios]);
 
   const estagiosPorId = useMemo(() => new Map(estagios.map((item) => [item.id, item] as const)), [estagios]);
   const funcionariosPorId = useMemo(() => new Map(funcionarios.map((item) => [item.id, item] as const)), [funcionarios]);
@@ -220,6 +269,45 @@ export function ModuloLeads() {
     setErroRemocaoLead(null);
   };
 
+  const abrirNovoLead = () => {
+    setLeadEmEdicao(null);
+    setFormularioNovoLead(criarFormularioNovoLead(funcionarios[0]?.id ?? ""));
+    setErroNovoLead(null);
+    setDialogNovoLeadAberto(true);
+  };
+
+  const abrirEdicaoLead = (lead: ApiLeadContato) => {
+    setLeadEmEdicao(lead);
+    setFormularioNovoLead({
+      nome: lead.nome,
+      telefone: lead.telefone,
+      email: lead.email ?? "",
+      fonte: lead.fonte ?? "",
+      empresaOrigem: lead.empresa_origem ?? "",
+      observacoes: lead.observacoes ?? "",
+      idFuncionario: lead.id_funcionario,
+    });
+    setErroNovoLead(null);
+    setDialogNovoLeadAberto(true);
+  };
+
+  const fecharNovoLead = () => {
+    if (criandoLead) {
+      return;
+    }
+
+    setDialogNovoLeadAberto(false);
+    setErroNovoLead(null);
+    setLeadEmEdicao(null);
+  };
+
+  const atualizarFormularioNovoLead = <Campo extends keyof FormularioNovoLead>(campo: Campo, valor: FormularioNovoLead[Campo]) => {
+    setFormularioNovoLead((atual) => ({
+      ...atual,
+      [campo]: valor,
+    }));
+  };
+
   const confirmarRemocaoLead = async () => {
     if (!leadParaRemover || removendoLead) {
       return;
@@ -255,6 +343,61 @@ export function ModuloLeads() {
       setErroRemocaoLead(error instanceof Error ? error.message : "Não foi possível remover o lead.");
     } finally {
       setRemovendoLead(false);
+    }
+  };
+
+  const submitNovoLead = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (criandoLead) {
+      return;
+    }
+
+    if (funcionarios.length > 1 && !formularioNovoLead.idFuncionario) {
+      setErroNovoLead("Selecione um responsável para este lead.");
+      return;
+    }
+
+    setCriandoLead(true);
+    setErroNovoLead(null);
+
+    try {
+      const payloadBase = {
+        nome: formularioNovoLead.nome.trim(),
+        telefone: formularioNovoLead.telefone,
+        id_funcionario: formularioNovoLead.idFuncionario || undefined,
+        email: normalizarTextoOpcional(formularioNovoLead.email),
+        fonte: normalizarTextoOpcional(formularioNovoLead.fonte),
+        empresa_origem: normalizarTextoOpcional(formularioNovoLead.empresaOrigem),
+        observacoes: normalizarTextoOpcional(formularioNovoLead.observacoes),
+      };
+
+      const resultado = leadEmEdicao
+        ? await atualizarLeadContato(leadEmEdicao.id, payloadBase)
+        : await criarLeadContato({
+            ...payloadBase,
+            origem: "MANUAL",
+          });
+
+      if (!resultado.ok) {
+        setErroNovoLead(resultado.erro);
+        return;
+      }
+
+      setDialogNovoLeadAberto(false);
+      setLeadEmEdicao(null);
+      setFormularioNovoLead(criarFormularioNovoLead(funcionarios[0]?.id ?? ""));
+      await carregarDados(true);
+      addToast({
+        type: "success",
+        title: leadEmEdicao ? "Lead atualizado" : "Lead cadastrado",
+        description: leadEmEdicao
+          ? `${resultado.dados.lead.nome} foi atualizado com sucesso.`
+          : `${resultado.dados.lead.nome} entrou na fila de leads com origem manual.`,
+      });
+    } catch (error) {
+      setErroNovoLead(error instanceof Error ? error.message : `Não foi possível ${leadEmEdicao ? "atualizar" : "cadastrar"} o lead.`);
+    } finally {
+      setCriandoLead(false);
     }
   };
 
@@ -327,6 +470,14 @@ export function ModuloLeads() {
             </div>
             <Button
               type="button"
+              className="h-10 rounded-[var(--radius-control)] bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
+              onClick={abrirNovoLead}
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Novo lead
+            </Button>
+            <Button
+              type="button"
               variant="outline"
               className="h-10 rounded-[var(--radius-control)]"
               onClick={() => void carregarDados(true)}
@@ -349,7 +500,7 @@ export function ModuloLeads() {
         <EmptyState
           titulo={busca ? "Nenhum lead encontrado" : "Ainda não há leads listados"}
           descricao={busca ? "Tente outro termo ou limpe a busca." : "Os novos leads aparecerão aqui após a captura."}
-          acao={busca ? <Button variant="outline" onClick={() => setBusca("")}>Limpar busca</Button> : null}
+          acao={busca ? <Button variant="outline" onClick={() => setBusca("")}>Limpar busca</Button> : <Button onClick={abrirNovoLead} className="bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"><Plus className="mr-2 h-4 w-4" />Cadastrar lead</Button>}
         />
       ) : (
         <section className="min-w-0 overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
@@ -427,6 +578,17 @@ export function ModuloLeads() {
                                 </Link>
                               </Button>
                             ) : null}
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 rounded-[var(--radius-control)]"
+                              onClick={() => abrirEdicaoLead(lead)}
+                            >
+                              <Pencil className="mr-1 h-4 w-4" />
+                              Editar
+                            </Button>
 
                             <Button
                               type="button"
@@ -602,6 +764,156 @@ export function ModuloLeads() {
               )}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={dialogNovoLeadAberto}
+        onOpenChange={(aberto) => {
+          if (aberto) {
+            setDialogNovoLeadAberto(true);
+            return;
+          }
+
+          fecharNovoLead();
+        }}
+      >
+          <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              {leadEmEdicao ? <Pencil className="h-4 w-4 text-[var(--brand)]" /> : <Users className="h-4 w-4 text-[var(--brand)]" />}
+              <DialogTitle>{leadEmEdicao ? "Editar lead" : "Cadastrar lead manual"}</DialogTitle>
+            </div>
+            <DialogDescription>
+              {leadEmEdicao
+                ? "Atualize os dados principais do contato sem perder o histórico comercial já existente."
+                : "Adicione um contato diretamente no CRM para começar o atendimento ou vincular a um negócio depois."}
+            </DialogDescription>
+          </DialogHeader>
+
+          <form className="space-y-4" onSubmit={submitNovoLead}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Nome do lead</label>
+                <Input
+                  value={formularioNovoLead.nome}
+                  onChange={(event) => atualizarFormularioNovoLead("nome", event.target.value)}
+                  placeholder="Ex: Maria Oliveira"
+                  className="h-10"
+                  disabled={criandoLead}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Telefone</label>
+                <Input
+                  value={formularioNovoLead.telefone}
+                  onChange={(event) => atualizarFormularioNovoLead("telefone", aplicaMascaraTelefoneBr(event.target.value))}
+                  placeholder="(11) 99999-9999"
+                  className="h-10"
+                  disabled={criandoLead}
+                  inputMode="tel"
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">E-mail</label>
+                <Input
+                  value={formularioNovoLead.email}
+                  onChange={(event) => atualizarFormularioNovoLead("email", event.target.value)}
+                  placeholder="cliente@exemplo.com"
+                  className="h-10"
+                  disabled={criandoLead}
+                  type="email"
+                />
+              </div>
+
+              {funcionarios.length > 1 ? (
+                <div className="space-y-2">
+                  <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Responsável</label>
+                  <Select
+                    value={formularioNovoLead.idFuncionario}
+                    onValueChange={(valor) => atualizarFormularioNovoLead("idFuncionario", valor)}
+                    disabled={criandoLead}
+                  >
+                    <SelectTrigger className="h-10 w-full">
+                      <SelectValue placeholder="Selecione" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {funcionarios.map((funcionario) => (
+                        <SelectItem key={funcionario.id} value={funcionario.id}>
+                          {funcionario.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Fonte</label>
+                <Input
+                  value={formularioNovoLead.fonte}
+                  onChange={(event) => atualizarFormularioNovoLead("fonte", event.target.value)}
+                  placeholder="Indicação, site, evento..."
+                  className="h-10"
+                  disabled={criandoLead}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Empresa de origem</label>
+                <Input
+                  value={formularioNovoLead.empresaOrigem}
+                  onChange={(event) => atualizarFormularioNovoLead("empresaOrigem", event.target.value)}
+                  placeholder="Empresa, parceiro ou campanha de origem"
+                  className="h-10"
+                  disabled={criandoLead}
+                />
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Observações</label>
+                <Textarea
+                  value={formularioNovoLead.observacoes}
+                  onChange={(event) => atualizarFormularioNovoLead("observacoes", event.target.value)}
+                  placeholder="Contexto inicial, produto de interesse, urgência ou próximos passos"
+                  disabled={criandoLead}
+                  className="min-h-28"
+                />
+              </div>
+            </div>
+
+            {erroNovoLead ? (
+              <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
+                <span className="inline-flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  {erroNovoLead}
+                </span>
+              </div>
+            ) : null}
+
+            <DialogFooter className="gap-2 sm:gap-0">
+              <Button type="button" variant="outline" onClick={fecharNovoLead} disabled={criandoLead}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={criandoLead} className="bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
+                {criandoLead ? (
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    {leadEmEdicao ? "Salvando..." : "Cadastrando..."}
+                  </span>
+                ) : (
+                  <>
+                    {leadEmEdicao ? <Pencil className="mr-2 h-4 w-4" /> : <Plus className="mr-2 h-4 w-4" />}
+                    {leadEmEdicao ? "Salvar alterações" : "Salvar lead"}
+                  </>
+                )}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
 

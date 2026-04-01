@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exigirSessao, podeGerenciarRecursoNoPdv, whereLeadsPorPerfil } from "@/lib/permissoes";
-import { esquemaCriarLead, mensagemErroValidacao } from "@/lib/validacoes";
+import { esquemaCriarLead } from "@/lib/validacoes";
 import { badRequest, forbidden } from "@/lib/api/http";
 import { handleRouteError } from "@/lib/api/route-errors";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
