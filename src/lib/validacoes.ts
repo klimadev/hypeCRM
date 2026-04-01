@@ -258,9 +258,32 @@ export const esquemaReconectarWhatsappInstancia = z.object({
   forcarQrCode: z.boolean().optional(),
 });
 
+export const esquemaInstagramOAuthCallbackQuery = z.object({
+  code: z.string().trim().min(1).optional(),
+  state: z.string().trim().min(1).optional(),
+  error: z.string().trim().min(1).optional(),
+  error_reason: z.string().trim().min(1).optional(),
+  error_description: z.string().trim().min(1).optional(),
+}).refine((dados) => Boolean(dados.code || dados.error), {
+  message: "Informe ao menos um code ou error no callback OAuth.",
+});
+
+export const esquemaMetaSignedRequest = z.object({
+  signed_request: z.string().trim().min(1, "signed_request obrigatorio."),
+});
+
 export const esquemaCriarCalComInstancia = z.object({
   nome: z.string().trim().min(3, "Nome da instancia precisa ter pelo menos 3 caracteres."),
   api_key: z.string().trim().min(10, "Chave API invalida."),
+});
+
+export const esquemaInstagramOAuthState = z.object({
+  id_empresa: z.string().trim().min(1, "Empresa invalida."),
+  id_usuario: z.string().trim().min(1, "Usuario invalido."),
+  perfil: z.enum(["EMPRESA", "GERENTE", "COLABORADOR"]),
+  nonce: z.string().trim().min(1, "State invalido."),
+  iat: z.number().optional(),
+  exp: z.number().optional(),
 });
 
 export const esquemaAtualizarPdv = z.object({

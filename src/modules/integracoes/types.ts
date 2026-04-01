@@ -7,7 +7,8 @@ export type IntegracaoCatalogoItem = {
   resumoCurto: string;
   descricao: string;
   categoria: string;
-  href: string;
+  href: string | null;
+  disponibilidade: "disponivel" | "em_desenvolvimento";
   statusLabel: string;
   destaque: string;
   acaoLabel: string;

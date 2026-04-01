@@ -40,6 +40,12 @@ Thumbs.db
 # Runtime, local database and generated files
 *.pem
 /prisma/dev.db
+/prisma/dev.db-shm
+/prisma/dev.db-wal
+/prisma/dev.db.backup-*
+/prisma/verify-fix.db
+/prisma/verify-fix.db-*
+/prisma/prisma/
 /src/generated/prisma/
 
 # Temporary and ad-hoc exports

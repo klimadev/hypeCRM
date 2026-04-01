@@ -105,6 +105,28 @@ model CalComInstancia {
   @@index([id_empresa])
 }
 
+model InstagramConta {
+  id                  String   @id
+  id_empresa          String
+  id_criador          String
+  nome                String
+  instagram_user_id   String
+  username            String
+  account_type        String?
+  profile_picture_url String?
+  access_token        String
+  token_type          String?
+  escopos             String?
+  expires_at          DateTime?
+  status              String   @default("active")
+  criado_em           DateTime @default(now())
+  atualizado_em       DateTime @default(now())
+
+  @@unique([id_empresa, instagram_user_id])
+  @@index([id_empresa, status])
+  @@index([id_empresa])
+}
+
 model Empresa {
   id                String           @id
   nome              String

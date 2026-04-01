@@ -2,6 +2,8 @@
 
 CRM multi-tenant para vendas, com Next.js + Prisma + SQLite.
 
+O banco SQLite canonico do projeto fica em `prisma/dev.db`. Nao use arquivos paralelos como `prisma/prisma/dev.db`.
+
 ## Requisitos
 
 - Node.js 20+
@@ -18,15 +20,15 @@ pnpm install
 2. Configure `.env`:
 
 ```env
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL="file:./dev.db"
 JWT_SECRET="troque-por-um-segredo-forte"
 ```
 
-3. Gere o client do Prisma e sincronize o banco:
+3. Gere o client do Prisma e aplique as migracoes versionadas:
 
 ```bash
-pnpm prisma generate
-pnpm prisma db push
+pnpm db:generate
+pnpm db:migrate:deploy
 ```
 
 4. Popule dados de exemplo:
@@ -47,6 +49,9 @@ Credenciais criadas no seed:
 - `pnpm build`
 - `pnpm test`
 - `pnpm seed`
+- `pnpm db:generate`
+- `pnpm db:migrate:status`
+- `pnpm db:migrate:deploy`
 
 ## PM2 na VPS
 
@@ -60,6 +65,7 @@ Credenciais criadas no seed:
 ## Validacao local recomendada
 
 ```bash
+pnpm db:migrate:status
 pnpm lint
 pnpm test
 pnpm build
