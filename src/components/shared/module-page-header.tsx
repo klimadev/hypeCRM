@@ -52,7 +52,7 @@ export function ModulePageHeader({
   return (
     <header
       className={cn(
-        "relative overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] px-4 py-4 text-[var(--text-primary)] shadow-[var(--shadow-md)] md:px-6 md:py-5",
+        "relative overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.95),rgba(12,12,14,0.93))] px-3.5 py-3.5 text-[var(--text-primary)] shadow-[var(--shadow-sm)] md:px-5 md:py-4",
         className,
       )}
     >

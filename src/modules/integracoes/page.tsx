@@ -43,8 +43,8 @@ export function ModuloIntegracoes() {
         ]}
       />
 
-      <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]">
-        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:p-5">
+      <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))] shadow-[var(--shadow-sm)]">
+        <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:p-[18px]">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Como funciona</p>
             <p className="text-sm text-[var(--text-primary)]">Primeiro escolha a ferramenta. Depois voce entra na tela dela para conectar, testar e acompanhar.</p>
@@ -56,7 +56,7 @@ export function ModuloIntegracoes() {
         </CardContent>
       </Card>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {vm.integracoes.map((integracao) => {
           const estaDisponivel = integracao.disponibilidade === "disponivel";
           const ConteudoCard = (

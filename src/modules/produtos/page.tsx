@@ -18,7 +18,7 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
   const vm = useProdutosCatalogo(estadoInicial);
 
   return (
-    <ModulePageShell spacing="lg" className="overflow-hidden bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.14),_transparent_22%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_45%,_#09090b_100%)]">
+    <ModulePageShell spacing="lg" className="overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.14),_transparent_22%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_45%,_#09090b_100%)] shadow-[var(--shadow-sm)]">
       <ModulePageHeader
         title="Produtos internos"
         subtitle="Monte formularios internos claros e reutilizaveis para o time anexar no lead sem precisar aprender uma ferramenta complexa."
@@ -37,7 +37,7 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
         }
       />
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.86fr)]">
+      <div className="grid gap-3 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.86fr)]">
         <Card className="overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] shadow-[var(--shadow-md)]">
           <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">

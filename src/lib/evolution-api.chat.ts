@@ -53,15 +53,101 @@ export async function buscarConversas(instanceName: string): Promise<EvolutionCo
     throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
   }
 
-  const json = (await resposta.json().catch(() => ({}))) as Array<{
+  const raw = await resposta.json().catch(() => ({}));
+  const json = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.chats)
+      ? raw.chats
+      : Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw?.messages)
+          ? raw.messages
+          : Array.isArray(raw?.records)
+            ? raw.records
+            : [];
+
+  type ConversaRaw = {
     remoteJid?: string;
     remoteJidAlt?: string;
     pushName?: string | null;
     isGroup?: boolean;
     lastMessage?: { key?: { remoteJid?: string; remoteJidAlt?: string; fromMe?: boolean }; pushName?: string };
-  }>;
+    messageTimestamp?: number;
+  };
 
-  return json.map(mapearConversaEvolution).filter((item): item is EvolutionConversa => item !== null);
+  const mapped: (EvolutionConversa | null)[] = json.map((item: ConversaRaw) => {
+    const mapped = mapearConversaEvolution(item);
+    if (mapped && item.messageTimestamp) {
+      mapped.messageTimestamp = item.messageTimestamp;
+    }
+    return mapped;
+  });
+
+  return mapped.filter((item): item is EvolutionConversa => item !== null);
+}
+
+export type ConversasPaginadoResult = {
+  conversas: EvolutionConversa[];
+  temMais: boolean;
+};
+
+export async function buscarConversasPaginado(
+  instanceName: string,
+  pagina: number = 1,
+  limite: number = 100,
+): Promise<ConversasPaginadoResult> {
+  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      page: pagina,
+      limit: limite,
+    }),
+  });
+
+  if (!resposta.ok) {
+    const erro = await lerJsonErro(resposta);
+    throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
+  }
+
+  const raw = await resposta.json().catch(() => ({}));
+  const json = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.chats)
+      ? raw.chats
+      : Array.isArray(raw?.data)
+        ? raw.data
+        : Array.isArray(raw?.messages)
+          ? raw.messages
+          : Array.isArray(raw?.records)
+            ? raw.records
+            : [];
+
+  // Detectar se tem mais paginas
+  const totalPaginas = raw?.pages ?? raw?.totalPages ?? raw?.total_pages ?? undefined;
+  const temMais = typeof totalPaginas === "number" ? pagina < totalPaginas : json.length >= limite;
+
+  type ConversaRaw = {
+    remoteJid?: string;
+    remoteJidAlt?: string;
+    pushName?: string | null;
+    isGroup?: boolean;
+    lastMessage?: { key?: { remoteJid?: string; remoteJidAlt?: string; fromMe?: boolean }; pushName?: string };
+    messageTimestamp?: number;
+  };
+
+  const mapped: (EvolutionConversa | null)[] = json.map((item: ConversaRaw) => {
+    const mapped = mapearConversaEvolution(item);
+    if (mapped && item.messageTimestamp) {
+      mapped.messageTimestamp = item.messageTimestamp;
+    }
+    return mapped;
+  });
+
+  return {
+    conversas: mapped.filter((item): item is EvolutionConversa => item !== null),
+    temMais,
+  };
 }
 
 export async function buscarConversasEvolution(
@@ -167,4 +253,165 @@ export async function buscarMensagens(
   }
 
   return deduplicarMensagensPorContatoEvolution(todasMensagens);
+}
+
+export type EvolutionMensagemDetalhada = {
+  id?: string;
+  key?: {
+    id?: string;
+    remoteJid?: string;
+    fromMe?: boolean;
+  };
+  pushName?: string | null;
+  messageTimestamp?: number;
+  message?: {
+    conversation?: string;
+    extendedTextMessage?: { text?: string };
+    imageMessage?: { caption?: string };
+    videoMessage?: { caption?: string };
+    documentMessage?: { fileName?: string };
+    stickerMessage?: Record<string, unknown>;
+    audioMessage?: Record<string, unknown>;
+    locationMessage?: Record<string, unknown>;
+    contactMessage?: Record<string, unknown>;
+    reactionMessage?: { text?: string };
+    listMessage?: Record<string, unknown>;
+    buttonsMessage?: Record<string, unknown>;
+    templateMessage?: Record<string, unknown>;
+    liveLocationMessage?: Record<string, unknown>;
+    orderMessage?: Record<string, unknown>;
+    protocolMessage?: Record<string, unknown>;
+  };
+  messageType?: string;
+};
+
+export async function buscarMensagensPorContato(
+  instanceName: string,
+  remoteJid: string,
+  pagina: number = 1,
+  limite: number = 50,
+): Promise<{ messages: Array<{ id: string; remoteJid: string; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      where: {
+        key: { remoteJid, remoteJidAlt: remoteJid },
+      },
+      page: pagina,
+      offset: limite,
+    }),
+  });
+
+  if (!resposta.ok) {
+    const erro = await lerJsonErro(resposta);
+    throw new Error(erro.message ?? "Erro ao buscar mensagens na Evolution");
+  }
+
+  const json = (await resposta.json().catch(() => ({}))) as {
+    messages?: {
+      records?: EvolutionMensagemDetalhada[];
+      pages?: number;
+      total?: number;
+    };
+  };
+
+  const registros = json.messages?.records ?? [];
+  const totalPaginas = json.messages?.pages ?? 1;
+  const hasMore = pagina < totalPaginas;
+
+  const mensagens = registros
+    .filter((msg) => {
+      const msgRemoteJid = msg.key?.remoteJid ?? "";
+      return msgRemoteJid && !msgRemoteJid.includes("@g.us") && msgRemoteJid !== "status@broadcast";
+    })
+    .map((msg) => {
+      const remoteJid = msg.key?.remoteJid ?? "";
+      const fromMe = msg.key?.fromMe ?? false;
+      const timestamp = msg.messageTimestamp ?? 0;
+      const pushName = msg.pushName ?? null;
+      const msgType = msg.messageType ?? "";
+
+      let text = "";
+      let kind = "unknown";
+      let hasMedia = false;
+      const mediaUrl: string | null = null;
+
+      const content = msg.message;
+      if (content) {
+        if (content.conversation) {
+          text = content.conversation;
+          kind = "conversation";
+        } else if (content.extendedTextMessage?.text) {
+          text = content.extendedTextMessage.text;
+          kind = "extendedTextMessage";
+        } else if (content.imageMessage) {
+          text = content.imageMessage.caption ?? "📷 Imagem";
+          kind = "imageMessage";
+          hasMedia = true;
+        } else if (content.videoMessage) {
+          text = content.videoMessage.caption ?? "🎥 Vídeo";
+          kind = "videoMessage";
+          hasMedia = true;
+        } else if (content.audioMessage) {
+          text = "🎵 Áudio";
+          kind = "audioMessage";
+          hasMedia = true;
+        } else if (content.documentMessage) {
+          text = `📄 ${content.documentMessage.fileName ?? "Documento"}`;
+          kind = "documentMessage";
+          hasMedia = true;
+        } else if (content.stickerMessage) {
+          text = "🎭 Sticker";
+          kind = "stickerMessage";
+          hasMedia = true;
+        } else if (content.reactionMessage?.text) {
+          text = content.reactionMessage.text;
+          kind = "reactionMessage";
+        } else if (content.locationMessage) {
+          text = "📍 Localização";
+          kind = "locationMessage";
+        } else if (content.contactMessage) {
+          text = "👤 Contato";
+          kind = "contactMessage";
+        } else if (content.listMessage) {
+          text = "📋 Lista";
+          kind = "listMessage";
+        } else if (content.buttonsMessage) {
+          text = "🔘 Botões";
+          kind = "buttonsMessage";
+        } else if (content.templateMessage) {
+          text = "📄 Template";
+          kind = "templateMessage";
+        } else if (content.liveLocationMessage) {
+          text = "📍 Localização em tempo real";
+          kind = "liveLocationMessage";
+        } else if (content.orderMessage) {
+          text = "🛒 Pedido";
+          kind = "orderMessage";
+        } else if (content.protocolMessage) {
+          text = "";
+          kind = "protocolMessage";
+        }
+      }
+
+      if (!kind || kind === "unknown") {
+        kind = msgType || "unknown";
+      }
+
+      return {
+        id: msg.key?.id ?? `${remoteJid}-${timestamp}`,
+        remoteJid,
+        fromMe,
+        text,
+        kind,
+        timestamp,
+        pushName,
+        status: "DELIVERED",
+        hasMedia,
+        mediaUrl,
+      };
+    });
+
+  return { messages: mensagens, hasMore };
 }

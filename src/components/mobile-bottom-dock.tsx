@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
 import { BarChart3, Blocks, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Zap, Users, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
 import type { SessaoToken } from "@/lib/tipos";
@@ -96,10 +98,11 @@ export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
             })}
             <Sheet>
               <SheetTrigger asChild>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   className={cn(
-                    "relative flex min-h-11 min-w-11 flex-1 items-center justify-center rounded-full border border-transparent px-2.5 text-[11px] font-medium text-[var(--text-secondary)] transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] active:scale-[0.98]",
+                    "relative flex min-h-11 min-w-11 flex-1 items-center justify-center rounded-full border border-transparent px-2.5 text-[11px] font-medium text-[var(--text-secondary)] shadow-none hover:bg-transparent hover:text-[var(--text-primary)]",
                     itensMais.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`))
                       ? "border-[color:rgba(124,58,237,0.28)] bg-[color:rgba(124,58,237,0.16)] text-[var(--text-primary)]"
                       : "bg-transparent",
@@ -107,15 +110,23 @@ export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
                 >
                   <span className="relative flex flex-col items-center gap-1">
                     <MoreHorizontal className={cn("h-4 w-4", itensMais.some((item) => pathname === item.href || pathname.startsWith(`${item.href}/`)) && "text-[var(--brand)]")} />
-                    <span className="leading-none">Mais</span>
+                    <span className="leading-none">Menu</span>
                   </span>
-                </button>
+                </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-full max-w-sm rounded-l-[24px] border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
                 <SheetHeader>
-                  <SheetTitle>Acessos rápidos</SheetTitle>
+                  <SheetTitle>Menu</SheetTitle>
                 </SheetHeader>
-                <div className="mt-4 grid grid-cols-1 gap-2">
+                <div className="mt-4 grid grid-cols-1 gap-3 p-4">
+                  <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4">
+                    <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Acesso rápido</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <Badge variant="secondary">Resumo</Badge>
+                      <Badge variant="secondary">Leads</Badge>
+                      <Badge variant="secondary">Negócios</Badge>
+                    </div>
+                  </div>
                   {itensMais.map((item) => {
                     const Icone = item.icon;
                     const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`);

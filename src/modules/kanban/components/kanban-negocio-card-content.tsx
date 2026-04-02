@@ -39,96 +39,92 @@ export function KanbanNegocioCardContent({
   const diasParados = obterDiasParados(negocio.atualizado_em, agoraMs);
   const origem = obterBadgeOrigemKanban(negocio.origem);
   const nomeResponsavel = funcionarios.find((item) => item.id === negocio.id_funcionario)?.nome || "Responsável";
+  const proximoPasso = obterRotuloProximoPasso({ diasParados, estagio, pendencia: pendencias });
 
   return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="min-w-0 flex-1">
-        <div className={cn("min-w-0", compact ? "" : "space-y-0.5")}>
-          <h3 className={cn("flex items-center gap-1.5 truncate font-semibold text-[var(--text-primary)]", compact ? "text-[15px]" : "text-base")}>
-            {dragHandle ?? null}
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0 flex-1 space-y-1.5">
+        <div className="flex items-center gap-1.5 min-w-0">
+          {dragHandle && (
+            <span className="shrink-0 opacity-40 transition-opacity duration-150 hover:opacity-100">
+              {dragHandle}
+            </span>
+          )}
+          <h3 className="truncate text-[13px] font-semibold text-[var(--text-primary)] leading-tight">
             {negocio.nome}
           </h3>
-          <p className={cn("text-[var(--text-secondary)]", compact ? "text-sm" : "text-xs")}>{negocio.telefone}</p>
         </div>
 
-        <p className={cn("font-semibold text-[var(--success)]", compact ? "mt-3 text-lg" : "mt-2 text-lg")}>
+        <div className="flex items-center gap-2 text-[11px] text-[var(--text-tertiary)]">
+          {negocio.telefone && (
+            <span className="truncate">{negocio.telefone}</span>
+          )}
+          {funcionarios.length > 0 && negocio.id_funcionario && (
+            <span className="flex items-center gap-1 shrink-0">
+              <Users className="h-3 w-3" />
+              <span className="truncate max-w-[80px]">{nomeResponsavel.split(" ")[0]}</span>
+            </span>
+          )}
+        </div>
+
+        <p className="text-sm font-semibold text-[var(--success)] tabular-nums">
           {formataMoeda(negocio.valor_oportunidade)}
         </p>
 
-        <p className={cn("font-medium text-[var(--text-secondary)]", compact ? "mt-3 text-xs" : "mt-2 text-xs")}>
-          {obterRotuloProximoPasso({ diasParados, estagio, pendencia: pendencias })}
-        </p>
+        {proximoPasso && (
+          <p className="text-[11px] text-[var(--text-secondary)] leading-snug">
+            {proximoPasso}
+          </p>
+        )}
 
-        <div className={cn("flex flex-wrap", compact ? "mt-3 gap-2" : "mt-2.5 gap-1.5")}>
-          {origem ? (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {origem && (
             <span
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border font-medium",
-                compact ? "min-h-11 min-w-11 px-3 text-[11px]" : "px-2 py-0.5 text-xs",
-                origem.tone === "anuncio" && (compact
-                  ? "border-[var(--border-subtle)] text-[var(--text-secondary)]"
-                  : "border-[color:rgba(139,92,246,0.28)] bg-[color:rgba(139,92,246,0.12)] text-[color:#ddd6fe]"),
-                origem.tone === "whatsapp" && (compact
-                  ? "border-[var(--border-subtle)] text-[var(--text-secondary)]"
-                  : "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.12)] text-[color:#bbf7d0]"),
-                origem.tone === "manual" && (compact
-                  ? "border-[var(--border-subtle)] text-[var(--text-secondary)]"
-                  : "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#c8f3ff]"),
+                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
+                origem.tone === "anuncio" && "bg-[color:rgba(139,92,246,0.12)] text-[color:#c4b5fd]",
+                origem.tone === "whatsapp" && "bg-[color:rgba(16,185,129,0.12)] text-[color:#6ee7b7]",
+                origem.tone === "manual" && "bg-[color:rgba(56,189,248,0.12)] text-[color:#7dd3fc]",
               )}
             >
-              {origem.tone === "anuncio" ? <Megaphone className={cn(compact ? "h-3.5 w-3.5" : "h-3 w-3")} /> : null}
-              {origem.tone === "whatsapp" ? <MessageCircle className={cn(compact ? "h-3.5 w-3.5" : "h-3 w-3")} /> : null}
-              {origem.tone === "manual" ? <PenLine className={cn(compact ? "h-3.5 w-3.5" : "h-3 w-3")} /> : null}
+              {origem.tone === "anuncio" && <Megaphone className="h-3 w-3" />}
+              {origem.tone === "whatsapp" && <MessageCircle className="h-3 w-3" />}
+              {origem.tone === "manual" && <PenLine className="h-3 w-3" />}
               {origem.label}
             </span>
-          ) : null}
+          )}
 
-          {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" ? (
-            <span
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] font-medium text-[color:#fde68a]",
-                compact ? "min-h-11 min-w-11 px-3 text-[11px]" : "px-2 py-0.5 text-xs",
-              )}
-            >
-              <Clock className={cn(compact ? "h-3.5 w-3.5" : "h-3 w-3")} />
+          {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" && (
+            <span className="inline-flex items-center gap-1 rounded-md bg-[color:rgba(245,158,11,0.12)] px-1.5 py-0.5 text-[10px] font-medium text-[color:#fcd34d]">
+              <Clock className="h-3 w-3" />
               {obterRotuloTempoParado(diasParados)}
             </span>
-          ) : null}
+          )}
 
-          {pendencias?.naoResolvidas && pendencias.naoResolvidas > 0 && (!compact ? !estagio.nome.includes("Pré Aprovação") : true) ? (
+          {pendencias?.naoResolvidas && pendencias.naoResolvidas > 0 && (!compact ? !estagio.nome.includes("Pré Aprovação") : true) && (
             <span
               className={cn(
-                "inline-flex items-center gap-1 rounded-full border font-medium",
-                compact ? "min-h-11 min-w-11 px-3 text-[11px]" : "px-2 py-0.5 text-xs",
-                pendencias.gravidadeMaxima === "critica" && "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.12)] text-[color:#fecdd3]",
-                pendencias.gravidadeMaxima === "alerta" && "border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] text-[color:#fde68a]",
-                pendencias.gravidadeMaxima === "info" && "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.12)] text-[color:#bae6fd]",
+                "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium",
+                pendencias.gravidadeMaxima === "critica" && "bg-[color:rgba(244,63,94,0.12)] text-[color:#fda4af]",
+                pendencias.gravidadeMaxima === "alerta" && "bg-[color:rgba(245,158,11,0.12)] text-[color:#fcd34d]",
+                pendencias.gravidadeMaxima === "info" && "bg-[color:rgba(56,189,248,0.12)] text-[color:#7dd3fc]",
               )}
             >
-              <AlertTriangle className={cn(compact ? "h-3.5 w-3.5" : "h-3 w-3")} />
-              {compact ? pendencias.naoResolvidas : `${pendencias.naoResolvidas} pendência${pendencias.naoResolvidas > 1 ? "s" : ""}`}
+              <AlertTriangle className="h-3 w-3" />
+              {pendencias.naoResolvidas}
             </span>
-          ) : null}
+          )}
         </div>
 
-        <div className={cn("flex items-center gap-2 text-[var(--text-tertiary)]", compact ? "mt-3" : "mt-2.5", compact ? "" : "text-xs")}>
-          {funcionarios.length > 0 && negocio.id_funcionario ? (
-            <span className="flex items-center gap-1">
-              <Users className="h-3 w-3" />
-              {nomeResponsavel}
-            </span>
-          ) : null}
-
-          {!compact ? (
-            <span className="flex items-center gap-1">
-              {formatarTempoRelativoKanban(negocio.atualizado_em, agoraMs)}
-            </span>
-          ) : null}
-        </div>
+        {!compact && (
+          <p className="text-[10px] text-[var(--text-tertiary)]">
+            {formatarTempoRelativoKanban(negocio.atualizado_em, agoraMs)}
+          </p>
+        )}
       </div>
 
-      <div className="flex flex-col items-end gap-1.5">
-        {visualCue.circle ? <span className={visualCue.circle} /> : null}
+      <div className="flex flex-col items-end gap-1 shrink-0">
+        {visualCue.circle && <span className={visualCue.circle} />}
       </div>
     </div>
   );

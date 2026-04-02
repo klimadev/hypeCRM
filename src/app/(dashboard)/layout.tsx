@@ -3,7 +3,7 @@ import { SidebarPrincipal } from "@/components/sidebar-principal";
 import { ProvidersWrapper } from "@/components/providers-wrapper";
 import { DashboardErrorBoundary } from "@/components/dashboard-error-boundary";
 import { MobileBottomDock } from "@/components/mobile-bottom-dock";
-import { TrialBanner, TrialBlocker } from "@/modules/trial";
+import { TrialBlocker, TrialNotification } from "@/modules/trial";
 import {
   obterDadosUsuarioLogado,
   obterSessaoNoServidor,
@@ -31,12 +31,10 @@ export default async function LayoutDashboard({
   return (
     <ProvidersWrapper sessao={sessao}>
       <TrialBlocker />
-      <div className="min-h-screen lg:flex lg:items-stretch bg-[var(--canvas)]">
+      <TrialNotification />
+      <div className="min-h-[100dvh] overflow-x-hidden bg-[var(--canvas)] lg:flex lg:items-stretch">
         <SidebarPrincipal sessao={sessao} dadosUsuario={dadosUsuario} />
-        <main className="min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-3 pt-4 lg:pb-8 lg:p-8 lg:pl-[5.5rem] overflow-x-hidden">
-          <div className="mb-4">
-            <TrialBanner />
-          </div>
+        <main className="min-h-0 min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-2 pt-3 lg:flex lg:flex-col lg:pb-4 lg:p-4 xl:p-5 xl:pl-[18.25rem]">
           <DashboardErrorBoundary>
             {children}
           </DashboardErrorBoundary>

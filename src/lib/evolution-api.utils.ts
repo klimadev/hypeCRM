@@ -66,6 +66,9 @@ type EvolutionConversaEntrada = {
       fromMe?: boolean;
     };
     pushName?: string;
+    kind?: string;
+    text?: string;
+    message?: Record<string, unknown>;
   };
 };
 
@@ -98,11 +101,26 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
   const pushName = chat.pushName ?? chat.lastMessage?.pushName ?? null;
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
 
+  const lastMessage = chat.lastMessage
+    ? {
+        key: {
+          remoteJid: chat.lastMessage.key?.remoteJid ?? remoteJid,
+          remoteJidAlt: chat.lastMessage.key?.remoteJidAlt ?? undefined,
+          fromMe: chat.lastMessage.key?.fromMe ?? false,
+        },
+        pushName: chat.lastMessage.pushName ?? undefined,
+        kind: chat.lastMessage.kind,
+        text: chat.lastMessage.text,
+        message: chat.lastMessage.message,
+      }
+    : undefined;
+
   return {
     remoteJid,
     remoteJidAlt: remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : null,
     pushName: pushName ?? null,
     isGroup,
+    lastMessage,
   };
 }
 

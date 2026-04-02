@@ -184,21 +184,17 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
   });
 
   const adicionarFuncionario = useCallback(
-    async (evento: React.FormEvent<HTMLFormElement>): Promise<boolean> => {
-      evento.preventDefault();
+    async (payload: { nome: string; email: string; senha: string; cargo: string; id_pdv: string }): Promise<boolean> => {
       setErroCadastro(null);
       setCarregandoCadastro(true);
-      
-      const dados = new FormData(evento.currentTarget);
-      const nomeFuncionario = dados.get("nome") as string;
 
       try {
         const resultado = await criarFuncionario({
-          nome: dados.get("nome"),
-          email: dados.get("email"),
-          senha: dados.get("senha"),
-          cargo: dados.get("cargo"),
-          id_pdv: dados.get("id_pdv"),
+          nome: payload.nome,
+          email: payload.email,
+          senha: payload.senha,
+          cargo: payload.cargo,
+          id_pdv: payload.id_pdv,
         });
 
         if (!resultado.ok) {
@@ -209,11 +205,10 @@ export function useEquipeModule({ perfil, id_pdv }: Props): UseEquipeModuleRetur
         addToast({
           type: "success",
           title: "Colaborador cadastrado",
-          description: `${nomeFuncionario} foi adicionado à equipe.`,
+          description: `${payload.nome} foi adicionado à equipe.`,
           duration: 4000,
         });
 
-        evento.currentTarget?.reset();
         setCargoSelecionado("COLABORADOR");
         setPdvSelecionado("");
         setDialogNovoFuncionarioAberto(false);

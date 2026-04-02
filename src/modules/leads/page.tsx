@@ -43,7 +43,7 @@ export function ModuloLeads() {
       <InlineStatusAlert variant="error" message={vm.erro} />
 
       {vm.carregando ? (
-        <div className="flex min-h-[240px] items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
+        <div className="flex min-h-[240px] items-center justify-center rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
           <Users className="h-5 w-5 animate-pulse text-[var(--text-secondary)]" />
         </div>
       ) : vm.linhasTabela.length === 0 ? (

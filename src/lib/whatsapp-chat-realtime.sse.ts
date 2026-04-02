@@ -1,6 +1,8 @@
 import type { ConversasResponse } from "@/modules/whatsapp/types";
 import {
+  type ChatMessagesSnapshot,
   type MensagensSnapshot,
+  type UnifiedChatsSnapshot,
   obterEstadoGlobalRealtime,
   type StreamChannel,
   type StreamChannelParams,
@@ -80,12 +82,23 @@ async function executarPolling(channel: StreamChannel) {
             unreadCount: dados.unreadCount,
             connectionStatus: dados.connectionStatus,
           });
-        } else {
+        } else if (channel.tipo === "conversations") {
           const dados = snapshot as ConversasResponse;
           publicar(channel, "snapshot", {
             conversas: dados.conversas,
             cursor: dados.cursor,
             temMais: dados.temMais,
+          });
+        } else if (channel.tipo === "messages") {
+          const dados = snapshot as ChatMessagesSnapshot;
+          publicar(channel, "snapshot", {
+            messages: dados.messages,
+            hasMore: dados.hasMore,
+          });
+        } else {
+          const dados = snapshot as UnifiedChatsSnapshot;
+          publicar(channel, "snapshot", {
+            chats: dados.chats,
           });
         }
       }

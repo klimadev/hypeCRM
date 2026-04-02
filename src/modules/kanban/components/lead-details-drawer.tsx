@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { useWhatsappChat } from "@/modules/whatsapp/hooks/use-whatsapp-chat";
 import { MENSAGENS_KANBAN } from "../utils/mensagens";
 import type { ApiLeadContato } from "@/lib/api/leads";
 import type { Estagio, Funcionario, Lead, PendenciaDinamica, StatusSalvamentoDetalhesNegocio } from "../types";
@@ -77,13 +76,6 @@ export function NegocioDetailsDrawer(props: NegocioDetailsDrawerProps) {
   const [fecharConfirmado, setFecharConfirmado] = useState(false);
   const [dialogRemocaoAberto, setDialogRemocaoAberto] = useState(false);
   const [removerLeadsVinculados, setRemoverLeadsVinculados] = useState(false);
-
-  const whatsappChat = useWhatsappChat({
-    contatoId: negocioSelecionado?.lead_principal?.id,
-    enabled: Boolean(negocioSelecionado?.lead_principal?.id),
-    markReadEnabled: tabAtiva === "chat" && Boolean(negocioSelecionado?.lead_principal?.id),
-    pollMs: 30000,
-  });
 
   const textoUltimaAtualizacao = useMemo(() => {
     if (!ultimaAtualizacaoSalvaEm) return null;
@@ -223,7 +215,6 @@ export function NegocioDetailsDrawer(props: NegocioDetailsDrawerProps) {
             erroVinculos={erroVinculos}
             setErroVinculos={setErroVinculos}
             onSalvarVinculos={onSalvarVinculos}
-            whatsappChat={whatsappChat}
           />
         </SheetContent>
       </Sheet>

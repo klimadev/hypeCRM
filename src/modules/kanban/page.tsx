@@ -47,7 +47,7 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
   };
 
   return (
-    <ModulePageShell className="rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] shadow-[var(--shadow-md)]">
+    <ModulePageShell className="rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] shadow-[var(--shadow-sm)]">
       <KanbanHeader
         dialogNovoNegocioAberto={vm.dialogNovoNegocioAberto}
         setDialogNovoNegocioAberto={vm.setDialogNovoNegocioAberto}

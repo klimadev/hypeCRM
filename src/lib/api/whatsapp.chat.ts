@@ -238,3 +238,102 @@ export async function buscarMediaWhatsapp(
 
   return { ok: false, erro: lastError };
 }
+
+export type UnifiedChatMessage = {
+  id: string;
+  remoteJid: string;
+  fromMe: boolean;
+  text: string;
+  kind: string;
+  timestamp: number;
+  pushName: string | null;
+  status: string;
+  hasMedia: boolean;
+  mediaUrl: string | null;
+  optimistic?: boolean;
+  error?: string | null;
+};
+
+export type UnifiedMessagesSnapshot = {
+  messages: UnifiedChatMessage[];
+  hasMore: boolean;
+};
+
+export async function buscarMediaChatUnificado(params: {
+  instanceName: string;
+  messageId: string;
+}): Promise<ResultadoApi<{ media: MediaContent }>> {
+  const searchParams = new URLSearchParams({
+    instanceName: params.instanceName,
+    messageId: params.messageId,
+  });
+
+  const resposta = await fetch(`/api/chat/messages/media?${searchParams.toString()}`, { cache: "no-store" });
+  const json = await resposta.json().catch(() => ({}));
+
+  if (!resposta.ok || !json.media) {
+    return { ok: false, erro: json.erro ?? "Erro ao carregar mídia." };
+  }
+
+  return { ok: true, dados: { media: json.media } };
+}
+
+export function assinarMensagensChatUnificado(
+  params: { instanceName: string; remoteJid: string; limite?: number },
+  callbacks: SseCallbacks<UnifiedMessagesSnapshot>,
+) {
+  const searchParams = new URLSearchParams({
+    instanceName: params.instanceName,
+    remoteJid: params.remoteJid,
+  });
+  if (params.limite) searchParams.set("limite", String(params.limite));
+  return criarAssinaturaSse(`/api/chat/messages/stream?${searchParams.toString()}`, callbacks);
+}
+
+export async function buscarMensagensChatUnificado(
+  params: { instanceName: string; remoteJid: string; limite?: number },
+  signal?: AbortSignal,
+): Promise<ResultadoApi<UnifiedMessagesSnapshot>> {
+  const searchParams = new URLSearchParams({
+    instanceName: params.instanceName,
+    remoteJid: params.remoteJid,
+  });
+  if (params.limite) searchParams.set("limite", String(params.limite));
+  const resposta = await fetch(`/api/chat/messages?${searchParams.toString()}`, {
+    signal,
+    cache: "no-store",
+  });
+
+  if (!resposta.ok) {
+    const json = await resposta.json().catch(() => ({}));
+    return { ok: false, erro: json.erro ?? "Erro ao carregar mensagens." };
+  }
+
+  const json = await resposta.json();
+  return {
+    ok: true,
+    dados: {
+      messages: json.messages ?? [],
+      hasMore: json.hasMore ?? false,
+    },
+  };
+}
+
+export async function enviarMensagemChatUnificado(payload: {
+  instanceName: string;
+  remoteJid: string;
+  text: string;
+}): Promise<ResultadoApi<{ ok: true }>> {
+  const resposta = await fetch("/api/chat/messages", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const json = await resposta.json().catch(() => ({}));
+
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao enviar mensagem." };
+  }
+
+  return { ok: true, dados: { ok: true } };
+}

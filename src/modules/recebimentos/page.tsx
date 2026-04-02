@@ -28,7 +28,7 @@ export function ModuloRecebimentos() {
   const vm = useRecebimentosModule();
 
   return (
-    <ModulePageShell spacing="lg" className="bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_44%,_#09090b_100%)]">
+    <ModulePageShell spacing="lg" className="rounded-[22px] bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_44%,_#09090b_100%)] shadow-[var(--shadow-sm)]">
       <RecebimentosHeader quantidadeMonitoradas={vm.resumo?.quantidadeMonitoradas ?? 0} temFiltrosAtivos={vm.temFiltrosAtivos} />
 
       <InlineStatusAlert variant="error" message={vm.erro} />
@@ -42,7 +42,7 @@ export function ModuloRecebimentos() {
 
       <RecebimentosKpis itens={vm.kpis} carregando={vm.carregando} />
 
-      <div className="grid gap-4 xl:grid-cols-[1.45fr_0.95fr]">
+      <div className="grid gap-3 xl:grid-cols-[1.45fr_0.95fr]">
         <RecebimentosChartCard dados={vm.graficos.recebimentosPorPeriodo} />
         <RecebimentosStatusDonut dados={vm.graficos.distribuicaoStatus} />
       </div>
@@ -51,7 +51,7 @@ export function ModuloRecebimentos() {
       <RecebimentosTabs vm={vm} />
 
       {vm.carregando ? (
-        <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] p-6 shadow-[var(--shadow-sm)] animate-shimmer">
+        <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] animate-shimmer">
           <div className="h-80 rounded-xl bg-transparent" />
         </div>
       ) : vm.recebimentos.length === 0 ? (

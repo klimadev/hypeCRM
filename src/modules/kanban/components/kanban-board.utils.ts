@@ -12,32 +12,32 @@ export type BadgeOrigemKanban = {
 
 export function obterTintColunaKanban(estagio: Estagio): string {
   if (estagio.tipo === "GANHO") {
-    return "bg-[linear-gradient(180deg,rgba(16,185,129,0.08),rgba(12,12,14,0.92))]";
+    return "bg-[color:rgba(16,185,129,0.04)]";
   }
 
   if (estagio.tipo === "PERDIDO") {
-    return "bg-[linear-gradient(180deg,rgba(255,255,255,0.04),rgba(12,12,14,0.92))]";
+    return "bg-[color:rgba(255,255,255,0.02)]";
   }
 
   if (estagio.nome === "Pré Aprovação") {
-    return "bg-[linear-gradient(180deg,rgba(245,158,11,0.08),rgba(12,12,14,0.92))]";
+    return "bg-[color:rgba(245,158,11,0.04)]";
   }
 
-  return "bg-[linear-gradient(180deg,rgba(255,255,255,0.03),rgba(12,12,14,0.94))]";
+  return "";
 }
 
 export function obterSinalVisualNegocioKanban(estagio: Estagio): SinalVisualNegocioKanban {
   if (estagio.tipo === "GANHO") {
     return {
-      circle: "h-2.5 w-2.5 rounded-full bg-emerald-500",
-      border: "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.08)]",
+      circle: "h-2 w-2 rounded-full bg-emerald-500",
+      border: "border-l-2 border-l-emerald-500",
     };
   }
 
   if (estagio.tipo === "PERDIDO") {
     return {
-      circle: "h-2 w-2 rounded-full bg-slate-400",
-      border: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.04)]",
+      circle: "h-2 w-2 rounded-full bg-zinc-500",
+      border: "border-l-2 border-l-zinc-500",
     };
   }
 
@@ -75,7 +75,7 @@ export function obterBadgeOrigemKanban(origem?: OrigemContato | null): BadgeOrig
 
 export function obterClasseIndicadorEtapaKanban(estagio: Estagio) {
   if (estagio.tipo === "GANHO") return "bg-emerald-500";
-  if (estagio.tipo === "PERDIDO") return "bg-slate-500";
+  if (estagio.tipo === "PERDIDO") return "bg-zinc-500";
   if (estagio.tipo === "ABERTO" && estagio.nome === "Pré Aprovação") return "bg-amber-400";
   return "bg-blue-400";
 }

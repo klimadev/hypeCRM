@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,10 @@ type NovoFuncionarioDialogProps = {
 };
 
 export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [senha, setSenha] = useState("");
+
   // GERENTE só pode adicionar COLABORADOR no próprio PDV
   const isGerente = vm.podeAdicionarFuncionario && !vm.podeGerenciarEmpresa;
   const cargosDisponiveis = isGerente
@@ -36,12 +41,26 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
           <DialogTitle>Novo colaborador</DialogTitle>
         </DialogHeader>
 
-        <form className="space-y-3" onSubmit={vm.adicionarFuncionario}>
+        <form
+          className="space-y-3"
+          onSubmit={(evento) => {
+            evento.preventDefault();
+            void vm.adicionarFuncionario({
+              nome,
+              email,
+              senha,
+              cargo: vm.cargoSelecionado,
+              id_pdv: vm.pdvSelecionado,
+            });
+          }}
+        >
           <Input
             className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
             name="nome"
             placeholder="Nome completo"
             required
+            value={nome}
+            onChange={(evento) => setNome(evento.target.value)}
           />
           <Input
             className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
@@ -49,6 +68,8 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
             type="email"
             placeholder="E-mail"
             required
+            value={email}
+            onChange={(evento) => setEmail(evento.target.value)}
           />
           <Input
             className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
@@ -56,6 +77,8 @@ export function NovoFuncionarioDialog({ vm }: NovoFuncionarioDialogProps) {
             type="password"
             placeholder="Senha temporaria"
             required
+            value={senha}
+            onChange={(evento) => setSenha(evento.target.value)}
           />
 
           <Select

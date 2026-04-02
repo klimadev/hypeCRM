@@ -8,12 +8,7 @@ import type { Estagio, Funcionario, Lead, PendenciaNegocioInfo } from "../types"
 import { EmptyState } from "./empty-state";
 import { getClasseBordaGravidade } from "./pendencia-badge";
 import { AlcaArrasteKanban, KanbanNegocioCardContent } from "./kanban-negocio-card-content";
-import {
-  obterClasseIndicadorEtapaKanban,
-  obterSinalVisualNegocioKanban,
-  obterTintColunaKanban,
-} from "./kanban-board.utils";
-import { obterDescricaoEtapaKanban, obterResumoOperacionalColuna } from "../utils/apresentacao";
+import { obterClasseIndicadorEtapaKanban, obterSinalVisualNegocioKanban, obterTintColunaKanban } from "./kanban-board.utils";
 
 type KanbanBoardColumnProps = {
   estagio: Estagio;
@@ -43,22 +38,23 @@ export function KanbanBoardColumn({
           ref={provided.innerRef}
           {...provided.droppableProps}
           className={cn(
-            "min-w-[280px] max-w-[320px] shrink-0 rounded-[var(--radius-card)] border border-[var(--border-subtle)] p-4 shadow-[var(--shadow-sm)] transition-all duration-300 h-full flex flex-col",
+            "min-w-[280px] max-w-[320px] shrink-0 rounded-xl border p-3 transition-colors duration-150 h-full flex flex-col",
             obterTintColunaKanban(estagio),
             snapshot.isDraggingOver
-              ? "border-[color:rgba(56,189,248,0.28)] bg-[color:rgba(56,189,248,0.08)] shadow-[0_20px_40px_-28px_rgba(56,189,248,0.5)]"
-              : "hover:-translate-y-0.5 hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]",
+              ? "border-[color:rgba(139,92,246,0.3)] bg-[color:rgba(139,92,246,0.04)]"
+              : "border-[var(--border-subtle)] hover:border-[var(--border-strong)]",
           )}
         >
-          <div className="mb-3 border-b border-[var(--border-subtle)] pb-3">
+          <div className="mb-3 flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
             <div className="flex items-center gap-2">
               <span className={cn("h-2 w-2 rounded-full", obterClasseIndicadorEtapaKanban(estagio))} />
-              <p className="text-sm font-semibold text-[var(--text-primary)]">
-                {estagio.nome} <span className="font-normal text-[var(--text-tertiary)]">({negocios.length})</span>
+              <p className="text-[13px] font-semibold text-[var(--text-primary)]">
+                {estagio.nome}
               </p>
             </div>
-            <p className="mt-2 text-xs font-medium text-[var(--text-secondary)]">{obterDescricaoEtapaKanban(estagio)}</p>
-            <p className="mt-1 text-xs text-[var(--text-tertiary)]">{obterResumoOperacionalColuna({ estagio, negocios, pendenciasPorNegocio, agoraMs })}</p>
+            <span className="text-[11px] font-medium tabular-nums text-[var(--text-tertiary)]">
+              {negocios.length}
+            </span>
           </div>
 
           <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
@@ -86,17 +82,17 @@ export function KanbanBoardColumn({
                         className={cn(
                           negocio.id.startsWith("temp-")
                             ? "bg-transparent"
-                            : "cursor-pointer rounded-[var(--radius-card)] border border-[var(--border-subtle)] shadow-[var(--shadow-sm)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[var(--shadow-md)]",
+                            : "cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[color:rgba(255,255,255,0.03)] active:scale-[0.99]",
                           visualCue.border,
                           getClasseBordaGravidade(pendenciasPorNegocio[negocio.id]?.gravidadeMaxima),
-                          draggableSnapshot.isDragging && "shadow-2xl scale-[1.02] rotate-1 opacity-90",
+                          draggableSnapshot.isDragging && "shadow-lg opacity-80",
                         )}
                         onClick={() => {
                           if (negocio.id.startsWith("temp-")) return;
                           onNegocioClick(negocio);
                         }}
                       >
-                        <CardContent className="p-4">
+                        <CardContent className="px-3 py-2.5">
                           <KanbanNegocioCardContent
                             negocio={negocio}
                             estagio={estagio}

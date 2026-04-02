@@ -38,7 +38,23 @@ export async function listarInstancias(): Promise<EvolutionInstance[]> {
     }
 
     const json = await resposta.json();
-    return json.instances ?? [];
+    console.log(`[evolution-api] fetchInstances raw response type: ${typeof json}, isArray: ${Array.isArray(json)}, keys: ${typeof json === 'object' && json ? Object.keys(json).join(',') : 'N/A'}`);
+    console.log(`[evolution-api] fetchInstances raw response: ${JSON.stringify(json).substring(0, 500)}`);
+
+    const instances = Array.isArray(json)
+      ? json
+      : Array.isArray(json?.instances)
+        ? json.instances
+        : Array.isArray(json?.data)
+          ? json.data
+          : [];
+
+    return instances.map((item: Record<string, unknown>) => ({
+      instanceName: (item.instanceName ?? item.instance_name ?? item.name ?? '') as string,
+      instanceId: (item.instanceId ?? item.instance_id ?? item.id ?? '') as string,
+      status: (item.status ?? item.state ?? item.connectionStatus ?? 'unknown') as string,
+      phoneNumber: (item.phoneNumber ?? item.phone ?? item.owner ?? item.ownerJid) as string | undefined,
+    }));
   } catch (erro) {
     console.error("Erro ao listar instâncias na Evolution:", erro);
     throw erro;

@@ -49,10 +49,10 @@ export function ModuloWhatsapp() {
 
       <InlineStatusAlert variant="success" message={sucesso} icon={<CheckCircle2 className="h-5 w-5" />} className="animate-fade-in" />
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))] shadow-[var(--shadow-md)]">
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+        <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))] shadow-[var(--shadow-sm)]">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_50%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_55%)]" />
-          <CardContent className="relative flex items-center justify-between p-5">
+          <CardContent className="relative flex items-center justify-between p-[18px] md:p-5">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[rgba(16,185,129,0.22)] bg-[rgba(16,185,129,0.14)] text-[var(--success)] shadow-[0_16px_36px_-24px_rgba(16,185,129,0.7)]">
                 <Wifi className="h-6 w-6" />
@@ -67,7 +67,7 @@ export function ModuloWhatsapp() {
         </Card>
       </div>
 
-      <Card className="overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-[border-color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]">
+        <Card className="overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-[border-color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]">
         <CardHeader className="pb-3">
           <CardTitle className="text-base font-semibold text-[var(--text-primary)]">Nova conexao WhatsApp</CardTitle>
         </CardHeader>

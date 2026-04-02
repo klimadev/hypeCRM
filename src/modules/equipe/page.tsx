@@ -39,7 +39,7 @@ export function ModuloEquipe({ perfil, id_pdv }: Props) {
   }
 
   return (
-    <ModulePageShell className="space-y-6 rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] pb-28 shadow-[var(--shadow-md)] md:pb-28">
+    <ModulePageShell className="space-y-5 rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] pb-20 shadow-[var(--shadow-sm)] md:pb-20">
       <EquipeHeader 
         vm={vm} 
         onAbrirNovaLoja={() => setDrawerNovaLojaAberto(true)}
@@ -49,7 +49,7 @@ export function ModuloEquipe({ perfil, id_pdv }: Props) {
       <InlineStatusAlert variant="error" message={vm.erroLista} />
 
       {vm.podeGerenciarEmpresa && (
-        <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)] md:p-5">
+        <div className="rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3.5 shadow-[var(--shadow-sm)] md:p-4">
           <EquipeLojaGrid 
             vm={vm} 
             drawerNovaLojaAberto={drawerNovaLojaAberto} 
@@ -60,7 +60,7 @@ export function ModuloEquipe({ perfil, id_pdv }: Props) {
       )}
 
       {!vm.podeGerenciarEmpresa && vm.podeAdicionarFuncionario && vm.pdvs.length > 0 && (
-        <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)] md:p-5">
+        <div className="rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3.5 shadow-[var(--shadow-sm)] md:p-4">
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-[var(--text-primary)]">Sua Loja</p>

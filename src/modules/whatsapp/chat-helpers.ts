@@ -36,7 +36,17 @@ export function mergeWhatsappChatMessages(base: WhatsappChatMessage[], incoming:
   const map = new Map<string, WhatsappChatMessage>();
 
   for (const message of [...base, ...incoming]) {
-    const key = message.messageId || message.id;
+    const chaveTemporal = [...map.values()].find(
+      (item) =>
+        item.optimistic &&
+        !message.optimistic &&
+        item.fromMe === message.fromMe &&
+        item.remoteJid === message.remoteJid &&
+        item.text === message.text &&
+        Math.abs(item.timestamp - message.timestamp) <= 120,
+    );
+
+    const key = chaveTemporal ? chaveTemporal.messageId || chaveTemporal.id : message.messageId || message.id;
     const existing = map.get(key);
     if (!existing) {
       map.set(key, message);

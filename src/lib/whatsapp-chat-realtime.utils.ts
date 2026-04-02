@@ -15,6 +15,52 @@ export function criarMensagemPreviewConversaRealtime(isFromMe: boolean) {
   return isFromMe ? "Você: mensagem enviada" : "Nova mensagem";
 }
 
+export function criarMensagemPreviewReal(conversa: EvolutionConversa) {
+  const ultimaMensagem = conversa.lastMessage as {
+    kind?: string;
+    text?: string;
+    message?: {
+      conversation?: string;
+      extendedTextMessage?: { text?: string };
+      imageMessage?: { caption?: string };
+      videoMessage?: { caption?: string };
+      documentMessage?: { caption?: string };
+    };
+  } | null | undefined;
+
+  if (!ultimaMensagem) return null;
+
+  const texto =
+    ultimaMensagem.text ??
+    ultimaMensagem.message?.conversation ??
+    ultimaMensagem.message?.extendedTextMessage?.text ??
+    ultimaMensagem.message?.imageMessage?.caption ??
+    ultimaMensagem.message?.videoMessage?.caption ??
+    ultimaMensagem.message?.documentMessage?.caption ??
+    "";
+
+  if (texto.trim()) return texto.trim();
+
+  const fallback: Record<string, string> = {
+    imageMessage: "Foto",
+    videoMessage: "Vídeo",
+    audioMessage: "Áudio",
+    documentMessage: "Documento",
+    stickerMessage: "Sticker",
+    locationMessage: "Localização",
+    liveLocationMessage: "Localização ao vivo",
+    contactMessage: "Contato",
+    listMessage: "Lista",
+    buttonsMessage: "Botões",
+    templateMessage: "Mensagem template",
+    orderMessage: "Pedido",
+    reactionMessage: "Reação",
+    protocolMessage: "Mensagem de sistema",
+  };
+
+  return fallback[ultimaMensagem.kind ?? ""] ?? "Mensagem";
+}
+
 export function mapearConversaResumoRealtime(params: {
   conversa: EvolutionConversa;
   lead:
@@ -32,7 +78,7 @@ export function mapearConversaResumoRealtime(params: {
   const chave = conversa.remoteJidAlt ?? conversa.remoteJid;
   const telefoneSemFormato = chave.replace("@s.whatsapp.net", "").replace("@g.us", "");
   const isFromMe = conversa.lastMessage?.key?.fromMe ?? false;
-  const mensagemPreview = criarMensagemPreviewConversaRealtime(isFromMe);
+  const mensagemPreview = criarMensagemPreviewReal(conversa) ?? criarMensagemPreviewConversaRealtime(isFromMe);
 
   if (lead) {
     return {

@@ -106,7 +106,7 @@ export function AutomacoesModule() {
       />
 
       {rascunhoWizard && !wizardOpen ? (
-        <Card className="mb-6 border-[rgba(56,189,248,0.22)] bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(12,12,14,0.96)_45%,rgba(34,211,238,0.08))] shadow-[var(--shadow-md)]">
+        <Card className="mb-6 border-[rgba(56,189,248,0.22)] bg-[linear-gradient(135deg,rgba(56,189,248,0.12),rgba(12,12,14,0.96)_45%,rgba(34,211,238,0.08))] shadow-[var(--shadow-sm)]">
           <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex items-start gap-3">
               <div className="flex h-11 w-11 items-center justify-center rounded-[var(--radius-card)] border border-[rgba(56,189,248,0.24)] bg-[rgba(56,189,248,0.14)] text-[var(--info)]">

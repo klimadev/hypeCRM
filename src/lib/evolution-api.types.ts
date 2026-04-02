@@ -39,6 +39,7 @@ export type EvolutionConversa = {
   remoteJidAlt: string | null;
   pushName: string | null;
   isGroup: boolean;
+  messageTimestamp?: number;
   lastMessage?: {
     key: {
       remoteJid: string;
@@ -46,6 +47,26 @@ export type EvolutionConversa = {
       fromMe: boolean;
     };
     pushName?: string;
+    kind?: string;
+    text?: string;
+    message?: {
+      conversation?: string;
+      extendedTextMessage?: { text?: string };
+      imageMessage?: { caption?: string; fileName?: string };
+      videoMessage?: { caption?: string; fileName?: string };
+      audioMessage?: Record<string, unknown>;
+      documentMessage?: { caption?: string; fileName?: string };
+      stickerMessage?: Record<string, unknown>;
+      reactionMessage?: { text?: string };
+      locationMessage?: Record<string, unknown>;
+      contactMessage?: Record<string, unknown>;
+      listMessage?: Record<string, unknown>;
+      buttonsMessage?: Record<string, unknown>;
+      templateMessage?: Record<string, unknown>;
+      liveLocationMessage?: Record<string, unknown>;
+      orderMessage?: Record<string, unknown>;
+      protocolMessage?: Record<string, unknown>;
+    };
   };
 };
 

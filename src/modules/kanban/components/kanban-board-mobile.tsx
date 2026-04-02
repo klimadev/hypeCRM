@@ -5,8 +5,7 @@ import { cn } from "@/lib/utils";
 import type { Estagio, Funcionario, Lead, PendenciaNegocioInfo } from "../types";
 import { EmptyState } from "./empty-state";
 import { KanbanNegocioCardContent } from "./kanban-negocio-card-content";
-import { obterSinalVisualNegocioKanban, obterTintColunaKanban } from "./kanban-board.utils";
-import { obterDescricaoEtapaKanban, obterResumoOperacionalColuna } from "../utils/apresentacao";
+import { obterSinalVisualNegocioKanban, obterTintColunaKanban, obterClasseIndicadorEtapaKanban } from "./kanban-board.utils";
 
 type KanbanBoardMobileProps = {
   estagios: Estagio[];
@@ -36,19 +35,19 @@ export function KanbanBoardMobile({
   return (
     <div className="lg:hidden">
       <Tabs value={stageIdAtivo} onValueChange={setStageIdAtivo} className="flex flex-col gap-3">
-        <div className="sticky top-0 z-10 -mx-3 border-b border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.96)] px-3 pb-3 pt-2">
-          <TabsList className="flex h-auto w-full justify-start gap-2 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <div className="sticky top-0 z-10 -mx-3 border-b border-[var(--border-subtle)] bg-[var(--canvas)] px-3 pb-2 pt-2">
+          <TabsList className="flex h-auto w-full justify-start gap-1.5 overflow-x-auto rounded-none border-0 bg-transparent p-0 shadow-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {estagios.map((estagio) => {
               const negocios = negociosFiltradosPorEstagio[estagio.id] ?? [];
               return (
                 <TabsTrigger
                   key={estagio.id}
                   value={estagio.id}
-                  className="min-h-11 shrink-0 rounded-full border px-4 text-sm font-medium text-[var(--text-secondary)] data-[state=active]:border-[color:rgba(124,58,237,0.32)] data-[state=active]:bg-[color:rgba(124,58,237,0.16)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-[0_14px_30px_-22px_rgba(124,58,237,0.75)]"
+                  className="min-h-9 shrink-0 rounded-full border border-[var(--border-subtle)] px-3 text-[12px] font-medium text-[var(--text-secondary)] transition-colors duration-150 data-[state=active]:border-[color:rgba(139,92,246,0.4)] data-[state=active]:bg-[color:rgba(139,92,246,0.12)] data-[state=active]:text-[var(--text-primary)]"
                 >
-                  <span className="flex items-center gap-2">
+                  <span className="flex items-center gap-1.5">
                     {estagio.nome}
-                    <span className="font-semibold text-[var(--text-tertiary)] data-[state=active]:text-[color:#ddd6fe]">{negocios.length}</span>
+                    <span className="tabular-nums text-[var(--text-tertiary)]">{negocios.length}</span>
                   </span>
                 </TabsTrigger>
               );
@@ -65,19 +64,19 @@ export function KanbanBoardMobile({
               {ativo ? (
                 <div
                   className={cn(
-                    "animate-fade-in rounded-[var(--radius-card)] border border-[var(--border-subtle)] p-3 shadow-[var(--shadow-sm)]",
+                    "animate-fade-in rounded-xl border border-[var(--border-subtle)] p-3",
                     obterTintColunaKanban(estagio),
                   )}
                 >
                   <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-[var(--text-primary)]">{estagio.nome}</p>
-                      <p className="text-[11px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{obterDescricaoEtapaKanban(estagio)}</p>
-                      <p className="mt-1 text-xs text-[var(--text-secondary)]">{obterResumoOperacionalColuna({ estagio, negocios, pendenciasPorNegocio, agoraMs })}</p>
+                    <div className="flex items-center gap-2">
+                      <span className={cn("h-2 w-2 rounded-full", obterClasseIndicadorEtapaKanban(estagio))} />
+                      <p className="text-[13px] font-semibold text-[var(--text-primary)]">{estagio.nome}</p>
                     </div>
+                    <span className="text-[11px] tabular-nums text-[var(--text-tertiary)]">{negocios.length}</span>
                   </div>
 
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {negocios.length === 0 ? (
                       <EmptyState
                         titulo={modoFocoPendencias ? "Sem pendências" : "Nenhum negócio"}
@@ -91,7 +90,7 @@ export function KanbanBoardMobile({
                           key={negocio.id}
                           type="button"
                           className={cn(
-                            "min-h-11 w-full rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 text-left shadow-[var(--shadow-sm)] active:scale-[0.99]",
+                            "min-h-9 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-left transition-colors duration-150 active:scale-[0.99]",
                             obterSinalVisualNegocioKanban(estagio).border,
                           )}
                           onClick={() => onNegocioClick(negocio)}

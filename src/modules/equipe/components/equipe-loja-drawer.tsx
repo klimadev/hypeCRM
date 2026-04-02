@@ -136,10 +136,13 @@ export function EquipeLojaDrawer({ vm, loja, aberto, onFechar }: EquipeLojaDrawe
       return;
     }
 
-    vm.setCargoSelecionado(cargoNovo);
-    vm.setPdvSelecionado(lojaAtual?.id ?? "");
-
-    const sucesso = await vm.adicionarFuncionario(evento);
+    const sucesso = await vm.adicionarFuncionario({
+      nome,
+      email,
+      senha,
+      cargo: cargoNovo,
+      id_pdv: lojaAtual?.id ?? "",
+    });
     if (sucesso) {
       setCadastroSucesso(true);
       setMostrarFormularioNovo(false);

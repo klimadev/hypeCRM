@@ -184,6 +184,12 @@ export const esquemaWhatsappChatMessagesQuery = z.object({
   message: "Forneça phoneNumber ou leadId.",
 });
 
+export const esquemaChatUnificadoMessagesQuery = z.object({
+  instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
+  remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
+  limite: z.coerce.number().int().min(1, "Limite minimo de 1.").max(200, "Limite maximo de 200.").default(50),
+});
+
 export const esquemaWhatsappChatConversationsQuery = z.object({
   busca: z.string().trim().optional(),
   cursor: z.string().trim().min(1, "Cursor invalido.").optional(),
@@ -204,12 +210,23 @@ export const esquemaWhatsappChatSendMessage = z.object({
   clientTempId: z.string().trim().min(1, "ID temporario obrigatorio."),
 });
 
+export const esquemaChatUnificadoSendMessage = z.object({
+  instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
+  remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
+  text: z.string().trim().min(1, "Mensagem obrigatoria.").max(4096, "Mensagem muito longa."),
+});
+
 export const esquemaWhatsappChatMarkRead = z.object({
   leadId: z.string().trim().min(1, "Lead obrigatorio."),
 });
 
 export const esquemaWhatsappChatMedia = z.object({
   leadId: z.string().trim().min(1, "Lead obrigatorio."),
+  messageId: z.string().trim().min(1, "Message ID obrigatorio."),
+});
+
+export const esquemaChatUnificadoMedia = z.object({
+  instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
   messageId: z.string().trim().min(1, "Message ID obrigatorio."),
 });
 
