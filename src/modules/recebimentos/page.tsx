@@ -28,7 +28,7 @@ export function ModuloRecebimentos() {
   const vm = useRecebimentosModule();
 
   return (
-    <ModulePageShell spacing="lg" className="rounded-[22px] bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.12),_transparent_24%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_44%,_#09090b_100%)] shadow-[var(--shadow-sm)]">
+    <ModulePageShell spacing="lg">
       <RecebimentosHeader quantidadeMonitoradas={vm.resumo?.quantidadeMonitoradas ?? 0} temFiltrosAtivos={vm.temFiltrosAtivos} />
 
       <InlineStatusAlert variant="error" message={vm.erro} />

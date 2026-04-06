@@ -2,12 +2,21 @@ import { prisma } from "@/lib/prisma";
 import { whereLeadsPorPerfil } from "@/lib/permissoes";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 import { listarInstancias } from "@/lib/evolution-api.instances";
-import { buscarConversasPaginado } from "@/lib/evolution-api.chat";
+import { buscarConversasPaginado, buscarConversasEvolution } from "@/lib/evolution-api.chat";
 import type { SessaoToken } from "@/lib/tipos";
 import type { ChatUnificado } from "@/modules/chat/types";
+import { listarConversasInstagram, listarPreviewsMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
+
+function logChat(evento: string, detalhes?: Record<string, unknown>) {
+  if (detalhes) {
+    console.info(`[Chat] ${evento}`, detalhes);
+    return;
+  }
+  console.info(`[Chat] ${evento}`);
+}
 
 type LeadInfo = {
   id: string;
@@ -45,6 +54,7 @@ type DebugInfo = {
   errors: string[];
   leadsCount: number;
   leadsMapSize: number;
+  instagramThreads: number;
 };
 
 export type ResultadoUnificacao = {
@@ -60,6 +70,7 @@ type UnificarChatsParams = {
   sessao: SessaoToken;
   pagina?: number;
   limite?: number;
+  busca?: string;
 };
 
 function extrairTelefoneDeRemoteJid(remoteJid: string): string {
@@ -171,6 +182,7 @@ export async function unificarChatsComLeads({
   sessao,
   pagina = 1,
   limite = 50,
+  busca,
 }: UnificarChatsParams): Promise<ResultadoUnificacao> {
   const debug: DebugInfo = {
     url: EVOLUTION_API_URL,
@@ -183,6 +195,7 @@ export async function unificarChatsComLeads({
     errors: [],
     leadsCount: 0,
     leadsMapSize: 0,
+    instagramThreads: 0,
   };
 
   const where = await whereLeadsPorPerfil(sessao);
@@ -274,47 +287,27 @@ export async function unificarChatsComLeads({
   );
   debug.validInstances = instanciasValidas.map((i) => i.instanceName);
 
-  // Coletar TODAS as conversas de todas as instâncias (para paginação correta)
+  // Coletar conversas - com busca (Evolution) ou sem busca (todas as conversas)
   // Usar Set de telefone para deduplicar — mesmo telefone em múltiplas instâncias
-  // ou como @lid + @s.whatsapp.net aparece uma vez
   const mapaPorTelefone = new Map<string, ChatUnificado>();
 
-  for (const inst of instanciasValidas) {
-    try {
-      const raw = await fetchFindChatsRaw(inst.instanceName);
-      debug.rawFindChatsSample[inst.instanceName] = raw;
+  // Se há termo de busca, usar busca direta no Evolution (sem paginar tudo)
+  if (busca && busca.trim().length > 0) {
+    logChat("Executando busca no Evolution", { termo: busca });
 
-      // Paginação interna: buscar todas as conversas da instância em lotes
-      let paginaAtual = 1;
-      const limitePagina = 100;
-      let temMais = true;
+    for (const inst of instanciasValidas) {
+      try {
+        const conversasEncontradas = await buscarConversasEvolution(inst.instanceName, busca.trim(), 1, 50);
 
-      while (temMais) {
-        const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
-        const conversas = resultado.conversas;
-        temMais = resultado.temMais;
-        paginaAtual++;
-
-        for (const conv of conversas) {
+        for (const conv of conversasEncontradas) {
           if (conv.isGroup) continue;
-
-          // Regra: se é @lid e remoteJidAlt não é @s.whatsapp.net, ignorar
           if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
 
-          // Selecionar JID correto para extrair telefone
           const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
           const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
 
-          // Deduplicação por telefone: se já existe, manter o que tem remoteJidAlt válido
           const existente = mapaPorTelefone.get(telefone);
-          if (existente) {
-            // Preferir versão com remoteJidAlt (@s.whatsapp.net) sobre @lid
-            if (conv.remoteJidAlt?.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
-              // Substituir pela versão mais limpa
-            } else {
-              continue; // Manter existente
-            }
-          }
+          if (existente) continue;
 
           const leadMatch = mapaLeads.get(telefone) ?? null;
 
@@ -324,27 +317,182 @@ export async function unificarChatsComLeads({
             telefone,
             pushName: conv.pushName ?? null,
             isGroup: false,
+            canal: "whatsapp",
             unreadCount: 0,
             ultimaMensagem: conv.lastMessage
               ? {
                   conteudo: extrairConteudoMensagem(conv.lastMessage),
                   fromMe: conv.lastMessage.key?.fromMe ?? false,
                   timestamp: extrairTimestamp(conv),
-            }
+                }
               : null,
             leadMatch,
             semMatch: !leadMatch,
           });
         }
+      } catch (error) {
+        const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
+        debug.errors.push(msg);
+        console.error(msg);
       }
+    }
+  } else {
+    // Modo normal: buscar todas as conversas para listagem (sem busca)
+    for (const inst of instanciasValidas) {
+      try {
+        const raw = await fetchFindChatsRaw(inst.instanceName);
+        debug.rawFindChatsSample[inst.instanceName] = raw;
 
-      debug.chatsPerInstance[inst.instanceName] = mapaPorTelefone.size;
-    } catch (error) {
-      const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
-      debug.errors.push(msg);
-      console.error(msg);
+        // Paginação interna: buscar todas as conversas da instância em lotes
+        let paginaAtual = 1;
+        const limitePagina = 100;
+        let temMais = true;
+
+        while (temMais) {
+          const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
+          const conversas = resultado.conversas;
+          temMais = resultado.temMais;
+          paginaAtual++;
+
+          for (const conv of conversas) {
+            if (conv.isGroup) continue;
+
+            // Regra: se é @lid e remoteJidAlt não é @s.whatsapp.net, ignorar
+            if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+
+            // Selecionar JID correto para extrair telefone
+            const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+            const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+
+            // Deduplicação por telefone: se já existe, manter o que tem remoteJidAlt válido
+            const existente = mapaPorTelefone.get(telefone);
+            if (existente) {
+              // Preferir versão com remoteJidAlt (@s.whatsapp.net) sobre @lid
+              if (conv.remoteJidAlt?.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
+                // Substituir pela versão mais limpa
+              } else {
+                continue; // Manter existente
+              }
+            }
+
+            const leadMatch = mapaLeads.get(telefone) ?? null;
+
+            mapaPorTelefone.set(telefone, {
+              instanceName: inst.instanceName,
+              remoteJid: conv.remoteJid,
+              telefone,
+              pushName: conv.pushName ?? null,
+              isGroup: false,
+              canal: "whatsapp",
+              unreadCount: 0,
+              ultimaMensagem: conv.lastMessage
+                ? {
+                    conteudo: extrairConteudoMensagem(conv.lastMessage),
+                    fromMe: conv.lastMessage.key?.fromMe ?? false,
+                    timestamp: extrairTimestamp(conv),
+                  }
+                : null,
+              leadMatch,
+              semMatch: !leadMatch,
+            });
+          }
+        }
+
+        debug.chatsPerInstance[inst.instanceName] = mapaPorTelefone.size;
+      } catch (error) {
+        const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
+        debug.errors.push(msg);
+        console.error(msg);
+      }
     }
   }
+
+  let instagramThreads: Awaited<ReturnType<typeof listarConversasInstagram>> = [];
+
+  try {
+    logChat("Buscando conversas do Instagram...", { idEmpresa: sessao.id_empresa });
+    instagramThreads = await listarConversasInstagram(sessao.id_empresa);
+    logChat("Conversas do Instagram encontradas", { total: instagramThreads.length });
+  } catch (error) {
+    const mensagem = `Erro ao buscar conversas do Instagram: ${error instanceof Error ? error.message : String(error)}`;
+    debug.errors.push(mensagem);
+    console.error(mensagem, {
+      idEmpresa: sessao.id_empresa,
+    });
+  }
+
+  if (instagramThreads.length > 0) {
+    logChat("Buscando previews das conversas do Instagram...", { total: instagramThreads.length });
+  }
+
+  const previewsInstagram = await listarPreviewsMensagensInstagramPorEmpresa(
+    sessao.id_empresa,
+    instagramThreads.map((thread) => thread.id),
+  );
+
+  if (previewsInstagram.size > 0) {
+    logChat("Previews do Instagram carregados do banco", { total: previewsInstagram.size });
+  }
+
+  for (const thread of instagramThreads) {
+    const previewPersistido = previewsInstagram.get(thread.id);
+    const participantUsername = thread.participant_username ?? thread.participant_id ?? thread.id;
+    const telefoneIg = participantUsername.replace(/\D/g, "");
+
+    const leadMatch = telefoneIg.length >= 8 ? mapaLeads.get(telefoneIg) ?? null : null;
+
+    const chave = `instagram:${thread.id}`;
+
+    let previewTexto: string | null = null;
+    let fromMe = false;
+    let kind: string | null = null;
+    let hasMedia = false;
+    let mediaUrl: string | null = null;
+
+    if (previewPersistido?.conteudo) {
+      previewTexto = previewPersistido.conteudo;
+      fromMe = previewPersistido.fromMe;
+      kind = previewPersistido.kind;
+      hasMedia = previewPersistido.hasMedia;
+      mediaUrl = previewPersistido.mediaUrl;
+    } else if (thread.last_message_text) {
+      previewTexto = thread.last_message_text;
+    } else if (thread.message_count > 0) {
+      previewTexto = `${thread.message_count} mensagem(ns)`;
+    }
+
+    if (previewTexto) {
+      logChat("Preview da conversa Instagram atualizado", {
+        threadId: thread.id,
+        preview: previewTexto.slice(0, 50),
+        fromDb: !!previewPersistido?.conteudo,
+      });
+    }
+
+    mapaPorTelefone.set(chave, {
+      instanceName: "instagram",
+      remoteJid: thread.id,
+      telefone: telefoneIg || thread.participant_username || thread.participant_id || thread.id,
+      pushName: thread.participant_name ?? thread.participant_username ?? null,
+      isGroup: false,
+      canal: "instagram",
+      unreadCount: thread.unread_count,
+      ultimaMensagem: previewTexto
+        ? {
+            conteudo: previewTexto,
+            fromMe,
+            timestamp: previewPersistido?.timestamp ?? Math.floor(new Date(thread.updated_at).getTime() / 1000),
+            kind,
+            hasMedia,
+            mediaUrl,
+          }
+        : null,
+      leadMatch,
+      semMatch: !leadMatch,
+    });
+  }
+
+  debug.instagramThreads = instagramThreads.length;
 
   // Ordenar por timestamp DESC
   const todasOrdenadas = Array.from(mapaPorTelefone.values()).sort((a, b) => {

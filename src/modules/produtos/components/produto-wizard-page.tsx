@@ -192,7 +192,7 @@ export function ModuloProdutoWizard({ produtoInicial }: ProdutoWizardPageProps) 
   }
 
   return (
-    <ModulePageShell spacing="lg" className="bg-[linear-gradient(180deg,_#09090b_0%,_#0c0c0e_42%,_#09090b_100%)]">
+    <ModulePageShell spacing="lg">
       <ModulePageHeader
         title={vm.produtoEmEdicao ? "Editar Produto" : "Criar Produto"}
         icon={<LayoutTemplate className="h-6 w-6" />}

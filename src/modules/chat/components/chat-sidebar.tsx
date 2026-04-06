@@ -23,6 +23,8 @@ type ChatSidebarProps = {
   erro: string | null;
   filtroFila: "todas" | "sem_dono" | "sem_negocio";
   setFiltroFila: (filtro: "todas" | "sem_dono" | "sem_negocio") => void;
+  filtroCanal: "todos" | "whatsapp" | "instagram";
+  setFiltroCanal: (filtro: "todos" | "whatsapp" | "instagram") => void;
   temMais: boolean;
   carregarMais: () => void;
   total: number;
@@ -46,6 +48,8 @@ export function ChatSidebar({
   erro,
   filtroFila,
   setFiltroFila,
+  filtroCanal,
+  setFiltroCanal,
   temMais,
   carregarMais,
   total,
@@ -89,6 +93,12 @@ export function ChatSidebar({
           <FilterPill label={`Sem dono (${totalSemDono})`} active={filtroFila === "sem_dono"} tone="secondary" onClick={() => setFiltroFila("sem_dono")} />
           <FilterPill label={`Sem negócio (${totalSemNegocio})`} active={filtroFila === "sem_negocio"} tone="info" onClick={() => setFiltroFila("sem_negocio")} />
           <FilterPill label="Limpar fila" active={filtroFila === "todas"} onClick={() => setFiltroFila("todas")} />
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <FilterPill label="Todos" active={filtroCanal === "todos"} onClick={() => setFiltroCanal("todos")} />
+          <FilterPill label="Instagram" active={filtroCanal === "instagram"} tone="secondary" onClick={() => setFiltroCanal("instagram")} />
+          <FilterPill label="WhatsApp" active={filtroCanal === "whatsapp"} tone="success" onClick={() => setFiltroCanal("whatsapp")} />
         </div>
 
         <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-[11px] text-[var(--text-secondary)]">

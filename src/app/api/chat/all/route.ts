@@ -13,15 +13,33 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const pagina = parseInt(searchParams.get("pagina") ?? "1", 10);
     const limite = parseInt(searchParams.get("limite") ?? "50", 10);
+    const busca = searchParams.get("busca") ?? undefined;
+
+    console.info("[Chat] Listando conversas...", {
+      empresaId: auth.sessao.id_empresa,
+      pagina,
+      limite,
+      temBusca: !!busca,
+    });
 
     const resultado = await unificarChatsComLeads({
       sessao: auth.sessao,
       pagina,
       limite,
+      busca,
     });
+
+    const semUltimaMensagem = resultado.chats.filter((chat) => !chat.ultimaMensagem).length;
+    console.info("[Chat] Conversas carregadas", {
+      pagina,
+      retornadas: resultado.chats.length,
+      total: resultado.total,
+      semUltimaMensagem,
+    });
+
     return NextResponse.json(resultado);
   } catch (error) {
-    console.error("Erro ao unificar chats:", error);
+    console.error("[Chat] Erro ao listar conversas", error);
     return serverError("Erro ao carregar chats.");
   }
 }

@@ -30,7 +30,7 @@ function mesclarChats(base: ChatUnificado[], novos: ChatUnificado[], substituirB
   return ordenarChatsPorTimestamp(Array.from(mapa.values()));
 }
 
-export function useChatData() {
+export function useChatData(busca?: string) {
   const [chats, setChats] = useState<ChatUnificado[]>([]);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -41,10 +41,16 @@ export function useChatData() {
   const [temMais, setTemMais] = useState(false);
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
-  const fetchPagina = useCallback(async (pag: number) => {
+  const fetchPagina = useCallback(async (pag: number, termoBusca?: string) => {
     try {
       setCarregando(true);
-      const res = await fetch(`/api/chat/all?pagina=${pag}&limite=${LIMITE_PAGINA}`);
+      const params = new URLSearchParams();
+      params.set("pagina", String(pag));
+      params.set("limite", String(LIMITE_PAGINA));
+      if (termoBusca && termoBusca.trim()) {
+        params.set("busca", termoBusca.trim());
+      }
+      const res = await fetch(`/api/chat/all?${params.toString()}`);
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.erro ?? "Erro ao carregar chats");
@@ -66,20 +72,26 @@ export function useChatData() {
 
   const carregarMais = useCallback(() => {
     if (!temMais || carregando) return;
-    fetchPagina(pagina + 1);
-  }, [temMais, carregando, pagina, fetchPagina]);
+    fetchPagina(pagina + 1, busca);
+  }, [temMais, carregando, pagina, fetchPagina, busca]);
 
-  const recarregar = useCallback(() => fetchPagina(1), [fetchPagina]);
+  const recarregar = useCallback(() => fetchPagina(1, busca), [fetchPagina, busca]);
 
   useEffect(() => {
-    fetchPagina(1);
+    // Quando há busca, substituir base (não mesclar) para evitar resultados duplicados
+    const substituirBase = !!busca && busca.trim().length > 0;
+    fetchPagina(1, busca).then(() => {
+      if (substituirBase) {
+        setChats((atual) => mesclarChats([], atual, true));
+      }
+    });
 
     const unsubscribe = criarAssinaturaSse<{ chats: ChatUnificado[]; total: number; temMais: boolean }>(
       "/api/chat/stream",
       {
         onSnapshot: (snapshot) => {
           const chatsRecebidos = snapshot.chats ?? [];
-          setChats((atual) => mesclarChats(atual, chatsRecebidos));
+          setChats((atual) => mesclarChats(atual, chatsRecebidos, substituirBase));
           setTotal(snapshot.total ?? 0);
           setTemMais(snapshot.temMais ?? false);
           setSseConectado(true);
@@ -97,7 +109,7 @@ export function useChatData() {
     return () => {
       unsubscribe();
     };
-  }, [fetchPagina]);
+  }, [busca, fetchPagina]);
 
   return {
     chats,

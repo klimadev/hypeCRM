@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
 import { Loader2, AlertCircle, MessageSquare, Send, FileText, Volume2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/components/ui/toast";
 import NextImage from "next/image";
 import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 import { useChatMessages } from "../hooks/use-chat-messages";
@@ -215,11 +216,14 @@ function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
 }
 
 export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessagesPanelProps, "nomeContato">) {
-  const { messages, carregando, erro, enviando, sseConectado, recarregar, sendMessage } = useChatMessages({
+  const { messages, carregando, erro, enviando, sseConectado, recarregar, sendMessage, scheduleMessage, agendadas } = useChatMessages({
     instanceName,
     remoteJid,
   });
   const [texto, setTexto] = useState("");
+  const [agendar, setAgendar] = useState(false);
+  const [agendadoPara, setAgendadoPara] = useState("");
+  const { addToast } = useToast();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -259,7 +263,21 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
     if (!texto.trim() || enviando) return;
     const conteudo = texto;
     setTexto("");
-    await sendMessage(conteudo);
+    try {
+      if (agendar) {
+        if (!agendadoPara) throw new Error("Selecione data e hora para agendar.");
+        await scheduleMessage(conteudo, new Date(agendadoPara).toISOString());
+        setAgendar(false);
+        setAgendadoPara("");
+        addToast({ type: "success", title: "Mensagem agendada", description: "A mensagem será enviada no horário definido." });
+      } else {
+        await sendMessage(conteudo);
+      }
+    } catch (err) {
+      setTexto(conteudo);
+      const msgErro = err instanceof Error ? err.message : "Nao foi possivel enviar a mensagem agora.";
+      addToast({ type: "error", title: "Erro ao enviar mensagem", description: msgErro });
+    }
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -338,7 +356,35 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
       </div>
 
       <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-3">
+        {agendadas.length > 0 && (
+          <div className="mx-auto mb-2 w-full max-w-4xl rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-xs text-[var(--text-secondary)]">
+            <div className="mb-2 font-medium text-[var(--text-primary)]">Mensagens agendadas</div>
+            <div className="space-y-2">
+              {agendadas.map((item) => (
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2">
+                  <div className="min-w-0">
+                    <div className="truncate text-[var(--text-primary)]">{item.conteudo}</div>
+                    <div>{new Date(item.agendadoPara).toLocaleString()}</div>
+                  </div>
+                  <span className="rounded-full bg-[var(--brand)]/20 px-2 py-1 text-[10px] text-[var(--brand)]">{item.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2 shadow-[var(--shadow-sm)]">
+          <label className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] px-3 py-2 text-xs text-[var(--text-secondary)]">
+            <input type="checkbox" checked={agendar} onChange={(e) => setAgendar(e.target.checked)} />
+            Agendar
+          </label>
+          {agendar && (
+            <input
+              type="datetime-local"
+              value={agendadoPara}
+              onChange={(e) => setAgendadoPara(e.target.value)}
+              className="h-10 rounded-lg border border-[var(--border-subtle)] bg-transparent px-3 text-xs text-[var(--text-primary)]"
+            />
+          )}
           <input
             value={texto}
             onChange={(event) => setTexto(event.target.value)}

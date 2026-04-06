@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
 import { useChatData } from "./use-chat-data";
 import { useToast } from "@/components/ui/toast";
 import { obterFiltroOrigemLead } from "../helpers";
@@ -13,17 +13,19 @@ import type {
 import { atualizarLeadContato } from "@/lib/api/leads";
 
 export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABORADOR"; idUsuario: string }): UseChatModuleReturn {
-  const { chats, carregando, erro, sseConectado, ultimoSyncEm, recarregar, carregarMais, temMais, total } = useChatData();
+  const [busca, setBusca] = useState("");
+  const { chats, carregando, erro, sseConectado, ultimoSyncEm, recarregar, carregarMais, temMais, total } = useChatData(busca);
   const { addToast } = useToast();
   const [chatSelecionado, setChatSelecionado] = useState<ChatUnificado | null>(null);
-  const [busca, setBusca] = useState("");
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "anuncio" | "whatsapp" | "manual">("todos");
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
+  const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
   const ultimoChatMarcadoRef = useRef<string | null>(null);
 
   useEffect(() => {
     const leadId = chatSelecionado?.leadMatch?.id;
     if (!leadId) return;
+    if (chatSelecionado?.canal === "instagram") return;
 
     const chave = `${chatSelecionado.instanceName}:${chatSelecionado.remoteJid}`;
     if (ultimoChatMarcadoRef.current === chave) return;
@@ -57,6 +59,10 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         return false;
       }
 
+      if (filtroCanal !== "todos" && chat.canal !== filtroCanal) {
+        return false;
+      }
+
       if (!termo) {
         return true;
       }
@@ -82,7 +88,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         statusNegocio.toLowerCase().includes(termo)
       );
     });
-  }, [chats, busca, filtroOrigem, filtroFila]);
+  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal]);
 
   const chatsOrdenados = useMemo(() => {
     return [...chatsFiltrados].sort((a, b) => {
@@ -212,6 +218,8 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     setFiltroOrigem,
     filtroFila,
     setFiltroFila,
+    filtroCanal,
+    setFiltroCanal,
     onRegistrarComoLead,
     onCriarNegocio,
     onTransferirLead,

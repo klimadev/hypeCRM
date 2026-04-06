@@ -5,6 +5,10 @@ import {
   assinarMensagensChatUnificado,
   buscarMensagensChatUnificado,
   enviarMensagemChatUnificado,
+  agendarMensagemChatUnificado,
+  listarMensagensAgendadas,
+  cancelarMensagemAgendada,
+  type MensagemAgendada,
 } from "@/lib/api/whatsapp.chat";
 import type { UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 
@@ -48,6 +52,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   const [sseConectado, setSseConectado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [agendadas, setAgendadas] = useState<MensagemAgendada[]>([]);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const paramsRef = useRef(params);
 
@@ -114,6 +119,13 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
 
         const result = await enviarMensagemChatUnificado({ instanceName, remoteJid, text: normalizedText });
         if (!result.ok) {
+          setMessages((prev) =>
+            prev.map((message) =>
+              message.id === tempId
+                ? { ...message, status: "ERROR", optimistic: false, error: result.erro }
+                : message,
+            ),
+          );
           throw new Error(result.erro);
         }
         setMessages((prev) =>
@@ -130,6 +142,55 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     [],
   );
 
+  const fetchAgendadas = useCallback(async () => {
+    const { instanceName, remoteJid } = paramsRef.current;
+    if (!instanceName || !remoteJid) {
+      setAgendadas([]);
+      return;
+    }
+
+    const result = await listarMensagensAgendadas({ instanceName, remoteJid });
+    if (result.ok) {
+      setAgendadas(result.dados.agendadas);
+    }
+  }, []);
+
+  const scheduleMessage = useCallback(
+    async (text: string, agendadoPara: string) => {
+      const { instanceName, remoteJid } = paramsRef.current;
+      if (!instanceName || !remoteJid) return;
+
+      const normalizedText = text.trim();
+      if (!normalizedText) return;
+
+      const result = await agendarMensagemChatUnificado({
+        instanceName,
+        remoteJid,
+        text: normalizedText,
+        agendadoPara,
+      });
+
+      if (!result.ok) {
+        throw new Error(result.erro);
+      }
+
+      await fetchAgendadas();
+      return result.dados;
+    },
+    [fetchAgendadas],
+  );
+
+  const cancelScheduledMessage = useCallback(
+    async (id: string) => {
+      const result = await cancelarMensagemAgendada(id);
+      if (!result.ok) {
+        throw new Error(result.erro);
+      }
+      await fetchAgendadas();
+    },
+    [fetchAgendadas],
+  );
+
   useEffect(() => {
     const { instanceName, remoteJid } = params;
     if (!instanceName || !remoteJid) {
@@ -142,6 +203,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     setCarregando(true);
 
     void fetchInitial();
+    void fetchAgendadas();
 
     const unsubscribe = assinarMensagensChatUnificado(
       { instanceName, remoteJid, limite: 100 },
@@ -176,5 +238,9 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     hasMore,
     recarregar: fetchInitial,
     sendMessage,
+    scheduleMessage,
+    cancelScheduledMessage,
+    agendadas,
+    recarregarAgendadas: fetchAgendadas,
   };
 }

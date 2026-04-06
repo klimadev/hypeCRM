@@ -121,10 +121,36 @@ model InstagramConta {
   status              String   @default("active")
   criado_em           DateTime @default(now())
   atualizado_em       DateTime @default(now())
+  InstagramMensagem   InstagramMensagem[]
 
   @@unique([id_empresa, instagram_user_id])
   @@index([id_empresa, status])
   @@index([id_empresa])
+}
+
+model InstagramMensagem {
+  id                  String         @id
+  id_empresa          String
+  id_instagram_conta  String
+  conversation_id     String
+  mensagem_id         String
+  participant_id      String?
+  participant_name    String?
+  participant_username String?
+  from_me             Boolean
+  tipo                String         @default("text")
+  conteudo            String?
+  timestamp           Int
+  payload_json        String?
+  erro                String?
+  criado_em           DateTime       @default(now())
+  atualizado_em       DateTime       @default(now())
+  InstagramConta      InstagramConta @relation(fields: [id_instagram_conta], references: [id], onDelete: Cascade)
+
+  @@unique([id_instagram_conta, mensagem_id])
+  @@index([id_empresa, conversation_id, timestamp])
+  @@index([id_empresa, participant_username])
+  @@index([id_instagram_conta, conversation_id])
 }
 
 model Empresa {
@@ -334,6 +360,29 @@ model LeadProduto {
   @@index([id_produto])
   @@index([id_lead])
   @@index([id_empresa])
+}
+
+model MensagemAgendada {
+  id               String   @id
+  id_empresa       String
+  id_lead          String?
+  instance_name    String
+  remote_jid       String
+  conteudo         String
+  tipo             String   @default("text")
+  agendado_para    DateTime
+  status           String   @default("PENDENTE")
+  tentativas       Int      @default(0)
+  erro             String?
+  enviado_em       DateTime?
+  mensagem_id      String?
+  criado_por       String
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @default(now())
+
+  @@index([id_empresa, status, agendado_para])
+  @@index([instance_name, remote_jid])
+  @@index([status, agendado_para])
 }
 
 model NegocioEstagioLog {

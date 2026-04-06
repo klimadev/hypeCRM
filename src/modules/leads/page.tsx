@@ -18,7 +18,7 @@ export function ModuloLeads() {
   const vm = useLeadsModule();
 
   return (
-    <ModulePageShell spacing="lg" className="bg-[linear-gradient(180deg,rgba(9,9,11,0.98),rgba(12,12,14,0.96))]">
+    <ModulePageShell spacing="lg">
       <ModulePageHeader
         title="Leads"
         subtitle="Lista operacional de contatos e vínculos comerciais."

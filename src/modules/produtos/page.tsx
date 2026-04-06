@@ -18,7 +18,7 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
   const vm = useProdutosCatalogo(estadoInicial);
 
   return (
-    <ModulePageShell spacing="lg" className="overflow-hidden rounded-[22px] bg-[radial-gradient(circle_at_top_left,_rgba(139,92,246,0.14),_transparent_22%),radial-gradient(circle_at_top_right,_rgba(34,211,238,0.08),_transparent_24%),linear-gradient(180deg,_#09090b_0%,_#0c0c0e_45%,_#09090b_100%)] shadow-[var(--shadow-sm)]">
+    <ModulePageShell spacing="lg">
       <ModulePageHeader
         title="Produtos internos"
         subtitle="Monte formularios internos claros e reutilizaveis para o time anexar no lead sem precisar aprender uma ferramenta complexa."

@@ -324,16 +324,117 @@ export async function enviarMensagemChatUnificado(payload: {
   remoteJid: string;
   text: string;
 }): Promise<ResultadoApi<{ ok: true }>> {
-  const resposta = await fetch("/api/chat/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload),
-  });
-  const json = await resposta.json().catch(() => ({}));
+  let json: Record<string, unknown>;
 
-  if (!resposta.ok) {
-    return { ok: false, erro: json.erro ?? "Erro ao enviar mensagem." };
+  try {
+    const resposta = await fetch("/api/chat/messages", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    json = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      return { ok: false, erro: (json.erro as string) ?? "Erro ao enviar mensagem." };
+    }
+  } catch (erroFetch) {
+    console.error("[Chat] Erro de rede ao enviar mensagem", {
+      erro: erroFetch instanceof Error ? erroFetch.message : String(erroFetch),
+    });
+    return { ok: false, erro: "Nao foi possivel conectar ao servidor. Verifique sua conexao." };
   }
 
   return { ok: true, dados: { ok: true } };
+}
+
+export type MensagemAgendada = {
+  id: string;
+  conteudo: string;
+  agendadoPara: string;
+  status: string;
+  erro: string | null;
+  tentativas: number;
+  criadoEm: string;
+};
+
+export async function agendarMensagemChatUnificado(payload: {
+  instanceName: string;
+  remoteJid: string;
+  text: string;
+  agendadoPara: string;
+  idLead?: string;
+}): Promise<ResultadoApi<{ id: string; agendadoPara: string; status: string }>> {
+  try {
+    const resposta = await fetch("/api/chat/messages/schedule", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    const json = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      return { ok: false, erro: (json.erro as string) ?? "Erro ao agendar mensagem." };
+    }
+
+    return { ok: true, dados: json.mensagem };
+  } catch (erroFetch) {
+    console.error("[Chat] Erro de rede ao agendar mensagem", {
+      erro: erroFetch instanceof Error ? erroFetch.message : String(erroFetch),
+    });
+    return { ok: false, erro: "Nao foi possivel conectar ao servidor." };
+  }
+}
+
+export async function listarMensagensAgendadas(params: {
+  instanceName: string;
+  remoteJid: string;
+}): Promise<ResultadoApi<{ agendadas: MensagemAgendada[] }>> {
+  const searchParams = new URLSearchParams({
+    instanceName: params.instanceName,
+    remoteJid: params.remoteJid,
+  });
+
+  try {
+    const resposta = await fetch(`/api/chat/messages/scheduled?${searchParams.toString()}`, {
+      cache: "no-store",
+    });
+
+    const json = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      return { ok: false, erro: (json.erro as string) ?? "Erro ao listar mensagens agendadas." };
+    }
+
+    return { ok: true, dados: { agendadas: json.agendadas ?? [] } };
+  } catch (erroFetch) {
+    console.error("[Chat] Erro de rede ao listar agendadas", {
+      erro: erroFetch instanceof Error ? erroFetch.message : String(erroFetch),
+    });
+    return { ok: false, erro: "Nao foi possivel conectar ao servidor." };
+  }
+}
+
+export async function cancelarMensagemAgendada(id: string): Promise<ResultadoApi<{ ok: true }>> {
+  try {
+    const resposta = await fetch("/api/chat/messages/scheduled", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ id }),
+    });
+
+    const json = await resposta.json().catch(() => ({}));
+
+    if (!resposta.ok) {
+      return { ok: false, erro: (json.erro as string) ?? "Erro ao cancelar mensagem agendada." };
+    }
+
+    return { ok: true, dados: { ok: true } };
+  } catch (erroFetch) {
+    console.error("[Chat] Erro de rede ao cancelar agendada", {
+      erro: erroFetch instanceof Error ? erroFetch.message : String(erroFetch),
+    });
+    return { ok: false, erro: "Nao foi possivel conectar ao servidor." };
+  }
 }

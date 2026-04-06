@@ -1,0 +1,82 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - img "HYPE CRM" [ref=e7]
+        - navigation "Navegação principal" [ref=e8]:
+          - 'link "Resumo: Visão geral da operação" [ref=e10] [cursor=pointer]':
+            - /url: /resumo
+            - img [ref=e11]
+          - 'link "Leads: Carteira e originação" [ref=e14] [cursor=pointer]':
+            - /url: /leads
+            - img [ref=e15]
+          - 'link "Produtos: Catálogo de produtos e serviços" [ref=e21] [cursor=pointer]':
+            - /url: /produtos
+            - img [ref=e22]
+          - 'link "Negócios: Pipeline e movimentações" [ref=e27] [cursor=pointer]':
+            - /url: /kanban
+            - img [ref=e28]
+          - 'link "Chat: Conversas unificadas" [ref=e34] [cursor=pointer]':
+            - /url: /chat
+            - img [ref=e35]
+          - 'link "Recebimentos: Fluxo financeiro e caixa" [ref=e38] [cursor=pointer]':
+            - /url: /recebimentos
+            - img [ref=e39]
+          - 'link "Equipe: Gestão de pessoas e metas" [ref=e44] [cursor=pointer]':
+            - /url: /equipe
+            - img [ref=e45]
+          - 'link "Integrações: Conexões e agenda externa" [ref=e50] [cursor=pointer]':
+            - /url: /integracoes
+            - img [ref=e51]
+          - 'link "WhatsApp: Automação e atendimento" [ref=e55] [cursor=pointer]':
+            - /url: /whatsapp
+            - img [ref=e56]
+          - 'link "Automações: Regras e gatilhos" [ref=e59] [cursor=pointer]':
+            - /url: /automacoes
+            - img [ref=e60]
+          - 'link "Configurações: Preferências da empresa" [ref=e63] [cursor=pointer]':
+            - /url: /configs
+            - img [ref=e64]
+        - generic [ref=e67]:
+          - button "lima, Administrador" [ref=e69]: LI
+          - generic [ref=e70]: lima
+          - button "Sair" [ref=e71]:
+            - img [ref=e72]
+    - main [ref=e75]:
+      - generic [ref=e77]:
+        - generic [ref=e80]:
+          - img [ref=e83]
+          - generic [ref=e85]:
+            - heading "Chat" [level=1] [ref=e86]
+            - paragraph [ref=e87]: Conversas unificadas de todas as instâncias WhatsApp
+            - generic [ref=e89]:
+              - img [ref=e90]
+              - text: Aguardando atualizacoes...
+        - generic [ref=e97]:
+          - generic [ref=e100]:
+            - heading "Chats" [level=2] [ref=e102]
+            - generic [ref=e103]:
+              - generic [ref=e104]:
+                - generic [ref=e105]: Em CRM
+                - generic [ref=e106]: "0"
+                - generic [ref=e107]: Conversas com lead vinculado
+              - generic [ref=e108]:
+                - generic [ref=e109]: Novos
+                - generic [ref=e110]: "0"
+                - generic [ref=e111]: Contatos sem match no CRM
+            - generic [ref=e112]:
+              - img [ref=e113]
+              - textbox "Buscar chats..." [ref=e116]
+            - generic [ref=e117]:
+              - generic [ref=e118]: 0 vinculados
+              - generic [ref=e120]: 0 sem match
+            - generic [ref=e122]:
+              - button "Todos" [ref=e123]
+              - button "Anúncio" [ref=e124]
+              - button "WhatsApp" [ref=e125]
+              - button "Manual" [ref=e126]
+          - generic [ref=e138]:
+            - img [ref=e139]
+            - paragraph [ref=e141]: Selecione um chat para visualizar
+            - paragraph [ref=e142]: As conversas de todas as instâncias aparecem na barra lateral
+  - alert [ref=e143]

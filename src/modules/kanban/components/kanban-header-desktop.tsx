@@ -262,7 +262,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
       />
 
       <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.94),rgba(12,12,14,0.94))] p-4 shadow-[var(--shadow-sm)]">
+        <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
           <div className="flex flex-wrap items-center gap-2">
             {FILTROS_RAPIDOS_KANBAN.map((filtroRapido) => (
               <button
@@ -286,7 +286,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
               <div
                 key={kpi.id}
                 className={cn(
-                  "rounded-[20px] border p-4",
+                  "rounded-[18px] border bg-[var(--surface-elevated)] p-4",
                   kpi.destaque === "brand" && "border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.12)]",
                   kpi.destaque === "success" && "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)]",
                   kpi.destaque === "warning" && "border-[color:rgba(245,158,11,0.22)] bg-[color:rgba(245,158,11,0.1)]",
@@ -301,7 +301,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.94),rgba(12,12,14,0.94))] p-4 shadow-[var(--shadow-sm)]">
+        <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Leitura rápida</p>
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>

@@ -14,9 +14,6 @@ export const NOME_COOKIE_INSTAGRAM_OAUTH_STATE = "hype_instagram_oauth_state";
 export const ESCOPOS_INSTAGRAM = [
   "instagram_business_basic",
   "instagram_business_manage_messages",
-  "instagram_business_manage_comments",
-  "instagram_business_content_publish",
-  "instagram_business_manage_insights",
 ] as const;
 
 type TokenCurtaDuracaoInstagram = {

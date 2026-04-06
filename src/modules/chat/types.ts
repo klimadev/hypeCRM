@@ -4,6 +4,7 @@ export type ChatUnificado = {
   telefone: string;
   pushName: string | null;
   isGroup: boolean;
+  canal: "whatsapp" | "instagram";
   ultimaMensagem: {
     conteudo: string;
     fromMe: boolean;
@@ -63,6 +64,8 @@ export type UseChatModuleReturn = {
   setFiltroOrigem: (filtro: "todos" | "anuncio" | "whatsapp" | "manual") => void;
   filtroFila: "todas" | "sem_dono" | "sem_negocio";
   setFiltroFila: (filtro: "todas" | "sem_dono" | "sem_negocio") => void;
+  filtroCanal: "todos" | "whatsapp" | "instagram";
+  setFiltroCanal: (filtro: "todos" | "whatsapp" | "instagram") => void;
   carregando: boolean;
   erro: string | null;
   sseConectado: boolean;

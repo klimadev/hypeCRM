@@ -1,0 +1,2 @@
+[  327270ms] [ERROR] Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING @ http://127.0.0.1:3434/api/chat/stream:0
+[  327273ms] [ERROR] Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING @ http://127.0.0.1:3434/api/chat/messages/stream?instanceName=hype_lima_hype_lima&remoteJid=555199309404%40s.whatsapp.net&limite=100:0

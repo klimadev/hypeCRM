@@ -3,6 +3,11 @@ import { exigirSessao } from "@/lib/permissoes";
 import { criarRespostaSse } from "@/lib/whatsapp-chat-realtime.sse";
 import type { ChatMessagesStreamParams } from "@/lib/whatsapp-chat-realtime.state";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
+import { listarMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
+
+function ehInstagram(instanceName: string) {
+  return instanceName === "instagram";
+}
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -27,6 +32,28 @@ export async function GET(request: NextRequest) {
     chave,
     pollMs: 10000,
     carregarSnapshot: async () => {
+      if (ehInstagram(instanceName)) {
+        const mensagensIg = await listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite);
+
+        return {
+          messages: mensagensIg.map((msg) => ({
+            id: msg.id,
+            remoteJid,
+            fromMe: msg.from_me,
+            text: msg.text ?? "",
+            kind: msg.attachments[0]?.type ?? "text",
+            timestamp: Math.floor(new Date(msg.created_at).getTime() / 1000),
+            pushName: msg.from_name ?? null,
+            status: "SENT",
+            hasMedia: msg.attachments.length > 0,
+            mediaUrl: msg.attachments[0]?.url ?? null,
+            optimistic: false,
+            error: null,
+          })),
+          hasMore: false,
+        };
+      }
+
       const result = await buscarMensagensPorContato(instanceName, remoteJid, 1, limite);
       return {
         messages: result.messages,

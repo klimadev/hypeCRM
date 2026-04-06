@@ -174,10 +174,10 @@ export function ModuloInstagram({ perfil }: ModuloInstagramProps) {
                   <p className="text-sm text-[var(--text-secondary)]">O redirecionamento usa o callback configurado em `app.hypecrm.com.br`.</p>
                 </div>
                 <Button asChild className="min-w-52">
-                  <Link href="/api/integracoes/instagram/oauth/start">
+                  <a href="/api/integracoes/instagram/oauth/start">
                     <Instagram className="mr-2 h-4 w-4" />
                     Conectar Instagram
-                  </Link>
+                  </a>
                 </Button>
               </div>
             </CardContent>

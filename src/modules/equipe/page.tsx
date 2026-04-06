@@ -39,7 +39,7 @@ export function ModuloEquipe({ perfil, id_pdv }: Props) {
   }
 
   return (
-    <ModulePageShell className="space-y-5 rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(9,9,11,0.96),rgba(12,12,14,0.94))] pb-20 shadow-[var(--shadow-sm)] md:pb-20">
+    <ModulePageShell className="pb-20 md:pb-20">
       <EquipeHeader 
         vm={vm} 
         onAbrirNovaLoja={() => setDrawerNovaLojaAberto(true)}

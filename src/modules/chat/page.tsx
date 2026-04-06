@@ -15,7 +15,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
     <ModulePageShell
       spacing="lg"
       fillHeight
-      className="flex-1 h-[100dvh] max-h-[100dvh] overflow-auto p-0 lg:-mx-1 xl:-mx-2"
+      className="flex-1 min-h-0"
     >
       <div className="flex h-full min-h-0 max-h-full gap-2 overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.96),rgba(9,9,11,0.98))] lg:gap-1.5">
         <aside
@@ -42,6 +42,8 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             erro={vm.erro}
             filtroFila={vm.filtroFila}
             setFiltroFila={vm.setFiltroFila}
+            filtroCanal={vm.filtroCanal}
+            setFiltroCanal={vm.setFiltroCanal}
             temMais={vm.temMais}
             carregarMais={vm.carregarMais}
             total={vm.total}
