@@ -3,6 +3,14 @@ import { exigirSessao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 import { mensagemErroValidacao, esquemaChatUnificadoScheduledList } from "@/lib/validacoes";
 
+async function verificarInstanciaPertenceEmpresa(idEmpresa: string, instanceName: string): Promise<boolean> {
+  const instancia = await prisma.whatsappInstancia.findFirst({
+    where: { instance_name: instanceName, id_empresa: idEmpresa },
+    select: { id: true },
+  });
+  return !!instancia;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
   if (auth.erro) return auth.erro;
@@ -18,6 +26,11 @@ export async function GET(request: NextRequest) {
   }
 
   const { instanceName, remoteJid } = validacao.data;
+
+  const instanciaPermitida = await verificarInstanciaPertenceEmpresa(auth.sessao.id_empresa, instanceName);
+  if (!instanciaPermitida) {
+    return NextResponse.json({ erro: "Instancia nao encontrada nesta empresa." }, { status: 403 });
+  }
 
   const agendadas = await prisma.mensagemAgendada.findMany({
     where: {

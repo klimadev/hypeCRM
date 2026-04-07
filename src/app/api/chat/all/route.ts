@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
       temBusca: !!busca,
     });
 
-    const cacheKey = `chat:list:${auth.sessao.id_empresa}:${pagina}:${limite}:${busca?.trim() ?? ""}`;
+    const cacheKey = `chat:list:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${auth.sessao.id_pdv ?? ""}:${pagina}:${limite}:${busca?.trim() ?? ""}`;
     const resultado = await obterSnapshotCacheado({
       key: cacheKey,
       ttlMs: CHAT_LIST_TTL_MS,

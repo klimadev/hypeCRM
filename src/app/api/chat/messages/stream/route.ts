@@ -1,15 +1,48 @@
 import { NextRequest } from "next/server";
-import { exigirSessao } from "@/lib/permissoes";
+import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { criarRespostaSse } from "@/lib/whatsapp-chat-realtime.sse";
 import type { ChatMessagesStreamParams } from "@/lib/whatsapp-chat-realtime.state";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+import { prisma } from "@/lib/prisma";
+import type { SessaoToken } from "@/lib/tipos";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
 
 function ehInstagram(instanceName: string) {
   return instanceName === "instagram";
+}
+
+function extrairTelefoneDeRemoteJid(remoteJid: string): string {
+  return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
+}
+
+async function verificarAcessoConversa(
+  sessao: SessaoToken,
+  instanceName: string,
+  remoteJid: string,
+): Promise<boolean> {
+  const telefone = extrairTelefoneDeRemoteJid(remoteJid);
+  if (!telefone) return false;
+
+  const whereLeads = await whereLeadsPorPerfil(sessao);
+
+  const lead = await prisma.lead.findFirst({
+    where: {
+      ...whereLeads,
+      telefone: { contains: telefone },
+    },
+    select: { id: true },
+  });
+
+  if (lead) return true;
+
+  if (sessao.perfil === "EMPRESA") {
+    return true;
+  }
+
+  return false;
 }
 
 export async function GET(request: NextRequest) {
@@ -28,6 +61,14 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const acessoPermitido = await verificarAcessoConversa(auth.sessao, instanceName, remoteJid);
+  if (!acessoPermitido) {
+    return new Response(
+      JSON.stringify({ erro: "Sem permissao para acessar esta conversa." }),
+      { status: 403, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
   const chave = `messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}`;
 
   const params: ChatMessagesStreamParams = {
@@ -37,7 +78,7 @@ export async function GET(request: NextRequest) {
     carregarSnapshot: async () => {
       if (ehInstagram(instanceName)) {
         const mensagensIg = await obterSnapshotCacheado({
-          key: `chat:messages:${auth.sessao.id_empresa}:instagram:${remoteJid}:${limite}`,
+          key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:instagram:${remoteJid}:${limite}`,
           ttlMs: CHAT_MESSAGES_TTL_MS,
           loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
         });
@@ -62,7 +103,7 @@ export async function GET(request: NextRequest) {
       }
 
       const result = await obterSnapshotCacheado({
-        key: `chat:messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}:${limite}`,
+        key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${remoteJid}:${limite}`,
         ttlMs: CHAT_MESSAGES_TTL_MS,
         loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
       });

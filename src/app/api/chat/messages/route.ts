@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { exigirSessao } from "@/lib/permissoes";
+import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+import { prisma } from "@/lib/prisma";
+import type { SessaoToken } from "@/lib/tipos";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
 
@@ -26,6 +28,33 @@ function logChat(evento: string, detalhes?: Record<string, unknown>) {
   console.info(`[Chat] ${evento}`);
 }
 
+async function verificarAcessoConversa(
+  sessao: SessaoToken,
+  instanceName: string,
+  remoteJid: string,
+): Promise<boolean> {
+  const telefone = extrairTelefoneDeRemoteJid(remoteJid);
+  if (!telefone) return false;
+
+  const whereLeads = await whereLeadsPorPerfil(sessao);
+
+  const lead = await prisma.lead.findFirst({
+    where: {
+      ...whereLeads,
+      telefone: { contains: telefone },
+    },
+    select: { id: true },
+  });
+
+  if (lead) return true;
+
+  if (sessao.perfil === "EMPRESA") {
+    return true;
+  }
+
+  return false;
+}
+
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
   if (auth.erro) return auth.erro;
@@ -43,6 +72,11 @@ export async function GET(request: NextRequest) {
 
   const { instanceName, remoteJid, limite } = validacao.data;
 
+  const acessoPermitido = await verificarAcessoConversa(auth.sessao, instanceName, remoteJid);
+  if (!acessoPermitido) {
+    return NextResponse.json({ erro: "Sem permissao para acessar esta conversa." }, { status: 403 });
+  }
+
   if (ehInstagram(instanceName)) {
     try {
       logChat("Carregando mensagens da conversa do Instagram", {
@@ -52,7 +86,7 @@ export async function GET(request: NextRequest) {
       });
 
       const mensagensIg = await obterSnapshotCacheado({
-        key: `chat:messages:${auth.sessao.id_empresa}:instagram:${remoteJid}:${limite}`,
+        key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:instagram:${remoteJid}:${limite}`,
         ttlMs: CHAT_MESSAGES_TTL_MS,
         loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
       });
@@ -87,7 +121,7 @@ export async function GET(request: NextRequest) {
   }
 
   const result = await obterSnapshotCacheado({
-    key: `chat:messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}:${limite}`,
+    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${remoteJid}:${limite}`,
     ttlMs: CHAT_MESSAGES_TTL_MS,
     loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
   });
@@ -104,6 +138,11 @@ export async function POST(request: NextRequest) {
 
   if (!validacao.success) {
     return NextResponse.json({ erro: mensagemErroValidacao(validacao.error) }, { status: 400 });
+  }
+
+  const acessoPermitido = await verificarAcessoConversa(auth.sessao, validacao.data.instanceName, validacao.data.remoteJid);
+  if (!acessoPermitido) {
+    return NextResponse.json({ erro: "Sem permissao para acessar esta conversa." }, { status: 403 });
   }
 
   if (ehInstagram(validacao.data.instanceName)) {
