@@ -14,12 +14,12 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
   return (
     <ModulePageShell
       spacing="md"
-      className="flex h-[calc(100dvh-7rem)] min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-2.5rem)] xl:h-[calc(100dvh-3rem)]"
+      className="flex h-[calc(100dvh-6.25rem)] min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-1.5rem)] xl:h-[calc(100dvh-2rem)]"
     >
-      <div className="flex flex-1 min-h-0 overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.98),rgba(9,9,11,1))] shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.98),rgba(9,9,11,1))] shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
         <aside
           className={cn(
-            "h-full min-h-0 w-full shrink-0 overflow-hidden md:w-[20rem] xl:w-[22rem] 2xl:w-[24rem]",
+            "h-full min-h-0 w-full shrink-0 overflow-hidden md:w-[18rem] xl:w-[19.5rem] 2xl:w-[21rem]",
             vm.chatSelecionado ? "hidden md:block" : "block",
           )}
         >
@@ -49,7 +49,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
           />
         </aside>
 
-        <section className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden border-l border-[var(--border-subtle)] bg-[var(--surface)]/90 backdrop-blur-sm">
+        <section className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--surface)]/90 backdrop-blur-sm md:border-l md:border-[var(--border-subtle)]">
           {vm.chatSelecionado ? (
             <ChatPanel
               chat={vm.chatSelecionado}

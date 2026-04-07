@@ -3,7 +3,6 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
-  CalendarClock,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -84,8 +83,8 @@ export function ChatPanel({
   return (
     <>
       <div className="flex h-full min-h-0 flex-1 flex-col bg-[var(--surface)]">
-        <header className="flex shrink-0 flex-col gap-3 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-3 py-3 md:px-4">
-          <div className="flex items-center gap-3">
+        <header className="shrink-0 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-3 py-2.5 md:px-4">
+          <div className="flex flex-wrap items-start gap-2.5 lg:items-center">
             {onVoltar ? (
               <button
                 type="button"
@@ -96,12 +95,12 @@ export function ChatPanel({
               </button>
             ) : null}
 
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
               {chat.semMatch ? <MessageCircle className="h-4 w-4" /> : nome.charAt(0).toUpperCase()}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <p className="truncate text-sm font-semibold text-[var(--text-primary)] md:text-[15px]">{nome}</p>
                 <Badge variant={chat.semMatch ? "secondary" : "success"} size="sm" dot>
                   {chat.semMatch ? "Novo" : "CRM"}
@@ -114,7 +113,7 @@ export function ChatPanel({
                 ) : null}
               </div>
 
-              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-secondary)]">
+              <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-[var(--text-secondary)]">
                 <span className="inline-flex items-center gap-1.5">
                   <Phone className="h-3 w-3 text-[var(--text-tertiary)]" />
                   {telefone}
@@ -124,34 +123,42 @@ export function ChatPanel({
               </div>
             </div>
 
-            <div className="flex shrink-0 items-center gap-2">
-              <Button variant="ghost" size="sm" className="gap-2" onClick={() => setDetalhesAbertos(true)}>
+            <div className="flex flex-wrap items-center justify-end gap-1.5">
+              {chat.semMatch ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]"
+                  onClick={() => setDialogOpen("lead")}
+                >
+                  <UserPlus className="h-4 w-4" />
+                  <span>Registrar lead</span>
+                </Button>
+              ) : null}
+              <Button size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={() => setDialogOpen("negocio")}>
+                <Briefcase className="h-4 w-4" />
+                <span>Criar negócio</span>
+              </Button>
+              {chat.leadMatch ? (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]"
+                  onClick={() => setTransferirAberto(true)}
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Transferir</span>
+                </Button>
+              ) : null}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-9 min-h-9 gap-1.5 rounded-xl px-2.5 text-[11px]"
+                onClick={() => setDetalhesAbertos(true)}
+              >
                 <PanelRight className="h-4 w-4" />
                 <span className="hidden sm:inline">Detalhes</span>
               </Button>
-              {chat.leadMatch ? (
-                <Button variant="outline" size="sm" className="gap-2" onClick={() => setTransferirAberto(true)}>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span className="hidden sm:inline">Transferir</span>
-                </Button>
-              ) : null}
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2 pl-0 md:pl-14">
-            {chat.semMatch ? (
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setDialogOpen("lead")}>
-                <UserPlus className="h-4 w-4" />
-                <span>Registrar lead</span>
-              </Button>
-            ) : null}
-            <Button size="sm" className="gap-2" onClick={() => setDialogOpen("negocio")}>
-              <Briefcase className="h-4 w-4" />
-              <span>Criar negócio</span>
-            </Button>
-            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-1.5 text-[11px] text-[var(--text-secondary)]">
-              <CalendarClock className="h-3.5 w-3.5 text-[var(--brand)]" />
-              Agende sem sair da conversa
             </div>
           </div>
         </header>
