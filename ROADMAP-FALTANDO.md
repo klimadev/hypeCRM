@@ -17,11 +17,7 @@
 - [ ] Melhorias de UX (se necessário)
 
 ### Gerenciamento de Conversas
-- [ ] Ownership e transferência de conversas
-- [ ] Fila/equipe de atendimento
-- [ ] Tags de categorização (InboxTag)
-- [ ] Notas internas do operador (InboxNotaInterna)
-- [ ] Busca por número/nome funcional
+- [x] Busca por número/nome funcional (JÁ EXISTE - usa Evolution API)
 - [x] ⚠️ **Instagram: IGNORAR TEMPORARIAMENTE** — Aguardando aprovação do app na Meta. Manter o básico existente até nova ordem.
 
 ---
@@ -67,15 +63,14 @@
 
 # 🔥 PRIORIDADE DO QUE FALTA
 
-1. **Chat operacional** — Ownership, transferência, filas, tags, notas
-2. **Follow-ups automáticos** — Sequências e reengajamento
-3. **Disparo em massa** — Broadcast segmentado
-4. **API de conversão Meta** — Tracking de eventos
-5. **Agendamento de mensagens** — Envio programado
+1. **Follow-ups automáticos** — Sequências e reengajamento
+2. **Disparo em massa** — Broadcast segmentado
+3. **API de conversão Meta** — Tracking de eventos
+4. **Agendamento de mensagens** — Envio programado
 
 ---
 
-**Resumo:** O Core CRM (Lead → Negócios, Pipelines, Produtos) está completo. O que falta é principalmente operações de atendimento (ownership, transferência, tags), automações de follow-up, disparo em massa e integração com Meta Ads.
+**Resumo:** O Core CRM (Lead → Negócios, Pipelines, Produtos) está completo. O que falta é principalmente automações de follow-up, disparo em massa, integração com Meta Ads e agendamento de mensagens.
 
 ---
 

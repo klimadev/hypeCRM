@@ -25,3 +25,5 @@
    Do instead: trace the first ancestor with infinite height, fix containment there, and only then apply internal scrolling.
 2. **[2026-04-07] Playwright deve validar areas protegidas com sessao real da empresa alvo**
    Do instead: para testes autenticados, reutilize ou injete um cookie `hype_sessao` valido da conta `limawebvision@gmail.com` antes de abrir a rota protegida.
+3. **[2026-04-07] Planejamentos grandes devem virar artefatos TLC persistentes**
+   Do instead: para features nao triviais, salvar `.specs/features/<slug>/spec.md`, `design.md` e `tasks.md`; mantenha arquivos de codigo pequenos, mas deixe arquivos de plano crescerem quando isso melhorar clareza e rastreabilidade.

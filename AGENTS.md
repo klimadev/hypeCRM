@@ -1,5 +1,7 @@
 # AGENTS.md - Directrices para Agentes de Codificación
 
+> **⚠️ IMPORTANTE:** Carregue a skill `napkin` no início de cada sessão usando o comando `/napkin` ou `skill napkin` para ter acesso ao runbook do projeto.
+
 ## Visión General
 
 CRM HYPE - app multi-tenant Next.js 16 (App Router) para seguros y productos financieros. Stack: React 19, TypeScript, Prisma, Tailwind CSS 4, Shadcn UI/Radix.
