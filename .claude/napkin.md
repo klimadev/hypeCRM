@@ -16,6 +16,10 @@
 1. **[2026-04-07] `h-full` does not constrain children when the ancestor only has `min-height`**
    Do instead: give the feature shell a real viewport-based height or a fully constrained ancestor chain, then pair inner scroll areas with `min-h-0` and `overflow-y-auto`.
 
+## Local Artifacts
+1. **[2026-04-07] Playwright MCP leaves temp outputs in `.playwright-mcp/` and `chat-*.png`**
+   Do instead: delete those artifacts after browser sessions so `git status` stays focused on real code changes.
+
 ## User Directives
 1. **[2026-04-07] Layout fixes must be structural, not cosmetic**
    Do instead: trace the first ancestor with infinite height, fix containment there, and only then apply internal scrolling.
