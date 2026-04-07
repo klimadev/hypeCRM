@@ -3,12 +3,14 @@ import { whereLeadsPorPerfil } from "@/lib/permissoes";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 import { listarInstancias } from "@/lib/evolution-api.instances";
 import { buscarConversasPaginado, buscarConversasEvolution } from "@/lib/evolution-api.chat";
+import type { EvolutionConversa } from "@/lib/evolution-api.types";
 import type { SessaoToken } from "@/lib/tipos";
 import type { ChatUnificado } from "@/modules/chat/types";
 import { listarConversasInstagram, listarPreviewsMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
+const CHAT_DEBUG_ENABLED = process.env.CHAT_DEBUG === "1";
 
 function logChat(evento: string, detalhes?: Record<string, unknown>) {
   if (detalhes) {
@@ -55,6 +57,14 @@ type DebugInfo = {
   leadsCount: number;
   leadsMapSize: number;
   instagramThreads: number;
+  timingsMs: {
+    leads: number;
+    instances: number;
+    whatsapp: number;
+    instagram: number;
+    enrichment: number;
+    total: number;
+  };
 };
 
 export type ResultadoUnificacao = {
@@ -178,12 +188,19 @@ async function fetchFindChatsRaw(instanceName: string): Promise<unknown> {
   }
 }
 
+async function medirDuracao<T>(fn: () => Promise<T>) {
+  const inicio = Date.now();
+  const resultado = await fn();
+  return { resultado, duracaoMs: Date.now() - inicio };
+}
+
 export async function unificarChatsComLeads({
   sessao,
   pagina = 1,
   limite = 50,
   busca,
 }: UnificarChatsParams): Promise<ResultadoUnificacao> {
+  const inicioTotal = Date.now();
   const debug: DebugInfo = {
     url: EVOLUTION_API_URL,
     keySet: !!EVOLUTION_API_KEY,
@@ -196,25 +213,36 @@ export async function unificarChatsComLeads({
     leadsCount: 0,
     leadsMapSize: 0,
     instagramThreads: 0,
+    timingsMs: {
+      leads: 0,
+      instances: 0,
+      whatsapp: 0,
+      instagram: 0,
+      enrichment: 0,
+      total: 0,
+    },
   };
 
   const where = await whereLeadsPorPerfil(sessao);
-  const leads = await prisma.lead.findMany({
-    where,
-    select: {
-      id: true,
-      nome: true,
-      telefone: true,
-      id_negocio: true,
-      id_funcionario: true,
-      id_pdv: true,
-      id_estagio: true,
-      origem: true,
-      fonte: true,
-      empresa_origem: true,
-    },
-  });
+  const { resultado: leads, duracaoMs: duracaoLeadsMs } = await medirDuracao(() =>
+    prisma.lead.findMany({
+      where,
+      select: {
+        id: true,
+        nome: true,
+        telefone: true,
+        id_negocio: true,
+        id_funcionario: true,
+        id_pdv: true,
+        id_estagio: true,
+        origem: true,
+        fonte: true,
+        empresa_origem: true,
+      },
+    }),
+  );
   debug.leadsCount = leads.length;
+  debug.timingsMs.leads = duracaoLeadsMs;
 
   const idsFunc = leads.map((l) => l.id_funcionario).filter(Boolean) as string[];
   const idsEstagio = leads.map((l) => l.id_estagio).filter(Boolean) as string[];
@@ -265,19 +293,36 @@ export async function unificarChatsComLeads({
   }
   debug.leadsMapSize = mapaLeads.size;
 
-  const instanciasEmpresa = await prisma.whatsappInstancia.findMany({
-    where: { id_empresa: sessao.id_empresa },
-    select: { instance_name: true },
-  });
+  const instagramThreadsPromise = listarConversasInstagram(sessao.id_empresa)
+    .then((threads) => {
+      logChat("Conversas do Instagram encontradas", { total: threads.length });
+      return threads;
+    })
+    .catch((error) => {
+      const mensagem = `Erro ao buscar conversas do Instagram: ${error instanceof Error ? error.message : String(error)}`;
+      debug.errors.push(mensagem);
+      console.error(mensagem, { idEmpresa: sessao.id_empresa });
+      return [] as Awaited<ReturnType<typeof listarConversasInstagram>>;
+    });
+
+  logChat("Buscando conversas do Instagram...", { idEmpresa: sessao.id_empresa });
+
+  const { resultado: [instanciasEmpresa, todasInstancias], duracaoMs: duracaoInstanciasMs } = await medirDuracao(
+    () =>
+      Promise.all([
+        prisma.whatsappInstancia.findMany({
+          where: { id_empresa: sessao.id_empresa },
+          select: { instance_name: true },
+        }),
+        listarInstancias().catch((e) => {
+          debug.errors.push(`listarInstancias: ${e instanceof Error ? e.message : String(e)}`);
+          return [] as Array<{ instanceName: string; status: string; instanceId: string }>;
+        }),
+      ]),
+  );
   const instanceNamesEmpresa = new Set(instanciasEmpresa.map((i) => i.instance_name));
   debug.dbInstances = Array.from(instanceNamesEmpresa);
-
-  let todasInstancias: Array<{ instanceName: string; status: string; instanceId: string }> = [];
-  try {
-    todasInstancias = await listarInstancias();
-  } catch (e) {
-    debug.errors.push(`listarInstancias: ${e instanceof Error ? e.message : String(e)}`);
-  }
+  debug.timingsMs.instances = duracaoInstanciasMs;
   debug.evolutionInstances = todasInstancias.map((i) => ({ name: i.instanceName, status: i.status }));
 
   const instanciasValidas = todasInstancias.filter(
@@ -295,131 +340,138 @@ export async function unificarChatsComLeads({
   if (busca && busca.trim().length > 0) {
     logChat("Executando busca no Evolution", { termo: busca });
 
-    for (const inst of instanciasValidas) {
-      try {
-        const conversasEncontradas = await buscarConversasEvolution(inst.instanceName, busca.trim(), 1, 50);
+    const { resultado: resultadosBusca, duracaoMs: duracaoWhatsappMs } = await medirDuracao(() =>
+      Promise.all(
+        instanciasValidas.map(async (inst) => {
+          try {
+            return await buscarConversasEvolution(inst.instanceName, busca.trim(), 1, 50);
+          } catch (error) {
+            const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
+            debug.errors.push(msg);
+            console.error(msg);
+            return [];
+          }
+        }),
+      ),
+    );
+    debug.timingsMs.whatsapp = duracaoWhatsappMs;
 
-        for (const conv of conversasEncontradas) {
-          if (conv.isGroup) continue;
-          if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+    for (const [index, conversasEncontradas] of resultadosBusca.entries()) {
+      const inst = instanciasValidas[index];
+      for (const conv of conversasEncontradas) {
+        if (conv.isGroup) continue;
+        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
 
-          const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
-          const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
 
-          const existente = mapaPorTelefone.get(telefone);
-          if (existente) continue;
+        const existente = mapaPorTelefone.get(telefone);
+        if (existente) continue;
 
-          const leadMatch = mapaLeads.get(telefone) ?? null;
+        const leadMatch = mapaLeads.get(telefone) ?? null;
 
-          mapaPorTelefone.set(telefone, {
-            instanceName: inst.instanceName,
-            remoteJid: conv.remoteJid,
-            telefone,
-            pushName: conv.pushName ?? null,
-            isGroup: false,
-            canal: "whatsapp",
-            unreadCount: 0,
-            ultimaMensagem: conv.lastMessage
-              ? {
-                  conteudo: extrairConteudoMensagem(conv.lastMessage),
-                  fromMe: conv.lastMessage.key?.fromMe ?? false,
-                  timestamp: extrairTimestamp(conv),
-                }
-              : null,
-            leadMatch,
-            semMatch: !leadMatch,
-          });
-        }
-      } catch (error) {
-        const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
-        debug.errors.push(msg);
-        console.error(msg);
+        mapaPorTelefone.set(telefone, {
+          instanceName: inst.instanceName,
+          remoteJid: conv.remoteJid,
+          telefone,
+          pushName: conv.pushName ?? null,
+          isGroup: false,
+          canal: "whatsapp",
+          unreadCount: 0,
+          ultimaMensagem: conv.lastMessage
+            ? {
+                conteudo: extrairConteudoMensagem(conv.lastMessage),
+                fromMe: conv.lastMessage.key?.fromMe ?? false,
+                timestamp: extrairTimestamp(conv),
+              }
+            : null,
+          leadMatch,
+          semMatch: !leadMatch,
+        });
       }
     }
   } else {
     // Modo normal: buscar todas as conversas para listagem (sem busca)
-    for (const inst of instanciasValidas) {
-      try {
-        const raw = await fetchFindChatsRaw(inst.instanceName);
-        debug.rawFindChatsSample[inst.instanceName] = raw;
-
-        // Paginação interna: buscar todas as conversas da instância em lotes
-        let paginaAtual = 1;
-        const limitePagina = 100;
-        let temMais = true;
-
-        while (temMais) {
-          const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
-          const conversas = resultado.conversas;
-          temMais = resultado.temMais;
-          paginaAtual++;
-
-          for (const conv of conversas) {
-            if (conv.isGroup) continue;
-
-            // Regra: se é @lid e remoteJidAlt não é @s.whatsapp.net, ignorar
-            if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
-
-            // Selecionar JID correto para extrair telefone
-            const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
-            const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
-
-            // Deduplicação por telefone: se já existe, manter o que tem remoteJidAlt válido
-            const existente = mapaPorTelefone.get(telefone);
-            if (existente) {
-              // Preferir versão com remoteJidAlt (@s.whatsapp.net) sobre @lid
-              if (conv.remoteJidAlt?.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
-                // Substituir pela versão mais limpa
-              } else {
-                continue; // Manter existente
-              }
+    const { resultado: resultadosWhatsapp, duracaoMs: duracaoWhatsappMs } = await medirDuracao(() =>
+      Promise.all(
+        instanciasValidas.map(async (inst) => {
+          try {
+            if (CHAT_DEBUG_ENABLED) {
+              debug.rawFindChatsSample[inst.instanceName] = await fetchFindChatsRaw(inst.instanceName);
             }
 
-            const leadMatch = mapaLeads.get(telefone) ?? null;
+            const conversasInstancia: EvolutionConversa[] = [];
+            let paginaAtual = 1;
+            const limitePagina = 100;
+            let temMais = true;
 
-            mapaPorTelefone.set(telefone, {
-              instanceName: inst.instanceName,
-              remoteJid: conv.remoteJid,
-              telefone,
-              pushName: conv.pushName ?? null,
-              isGroup: false,
-              canal: "whatsapp",
-              unreadCount: 0,
-              ultimaMensagem: conv.lastMessage
-                ? {
-                    conteudo: extrairConteudoMensagem(conv.lastMessage),
-                    fromMe: conv.lastMessage.key?.fromMe ?? false,
-                    timestamp: extrairTimestamp(conv),
-                  }
-                : null,
-              leadMatch,
-              semMatch: !leadMatch,
-            });
+            while (temMais) {
+              const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
+              conversasInstancia.push(...resultado.conversas);
+              temMais = resultado.temMais;
+              paginaAtual += 1;
+            }
+
+            return { inst, conversas: conversasInstancia };
+          } catch (error) {
+            const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
+            debug.errors.push(msg);
+            console.error(msg);
+            return { inst, conversas: [] as EvolutionConversa[] };
+          }
+        }),
+      ),
+    );
+    debug.timingsMs.whatsapp = duracaoWhatsappMs;
+
+    for (const { inst, conversas } of resultadosWhatsapp) {
+      for (const conv of conversas) {
+        if (conv.isGroup) continue;
+
+        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+
+        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+
+        const existente = mapaPorTelefone.get(telefone);
+        if (existente) {
+          if (conv.remoteJidAlt?.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
+            // Preferir a versão limpa quando a Evolution devolver lid + alt.
+          } else {
+            continue;
           }
         }
 
-        debug.chatsPerInstance[inst.instanceName] = mapaPorTelefone.size;
-      } catch (error) {
-        const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
-        debug.errors.push(msg);
-        console.error(msg);
+        const leadMatch = mapaLeads.get(telefone) ?? null;
+
+        mapaPorTelefone.set(telefone, {
+          instanceName: inst.instanceName,
+          remoteJid: conv.remoteJid,
+          telefone,
+          pushName: conv.pushName ?? null,
+          isGroup: false,
+          canal: "whatsapp",
+          unreadCount: 0,
+          ultimaMensagem: conv.lastMessage
+            ? {
+                conteudo: extrairConteudoMensagem(conv.lastMessage),
+                fromMe: conv.lastMessage.key?.fromMe ?? false,
+                timestamp: extrairTimestamp(conv),
+              }
+            : null,
+          leadMatch,
+          semMatch: !leadMatch,
+        });
       }
+
+      debug.chatsPerInstance[inst.instanceName] = conversas.length;
     }
   }
 
-  let instagramThreads: Awaited<ReturnType<typeof listarConversasInstagram>> = [];
-
-  try {
-    logChat("Buscando conversas do Instagram...", { idEmpresa: sessao.id_empresa });
-    instagramThreads = await listarConversasInstagram(sessao.id_empresa);
-    logChat("Conversas do Instagram encontradas", { total: instagramThreads.length });
-  } catch (error) {
-    const mensagem = `Erro ao buscar conversas do Instagram: ${error instanceof Error ? error.message : String(error)}`;
-    debug.errors.push(mensagem);
-    console.error(mensagem, {
-      idEmpresa: sessao.id_empresa,
-    });
-  }
+  const { resultado: instagramThreads, duracaoMs: duracaoInstagramMs } = await medirDuracao(
+    () => instagramThreadsPromise,
+  );
+  debug.timingsMs.instagram = duracaoInstagramMs;
 
   if (instagramThreads.length > 0) {
     logChat("Buscando previews das conversas do Instagram...", { total: instagramThreads.length });
@@ -501,52 +553,60 @@ export async function unificarChatsComLeads({
     return tsB - tsA;
   });
 
-  const idsLeadsVinculados = todasOrdenadas
-    .map((chat) => chat.leadMatch?.id)
-    .filter((id): id is string => Boolean(id));
+  const { resultado: { negociosPorId, unreadPorLead }, duracaoMs: duracaoEnrichmentMs } = await medirDuracao(
+    async () => {
+      const idsLeadsVinculados = todasOrdenadas
+        .map((chat) => chat.leadMatch?.id)
+        .filter((id): id is string => Boolean(id));
 
-  const idsNegociosVinculados = todasOrdenadas
-    .map((chat) => chat.leadMatch?.id_negocio)
-    .filter((id): id is string => Boolean(id));
+      const idsNegociosVinculados = todasOrdenadas
+        .map((chat) => chat.leadMatch?.id_negocio)
+        .filter((id): id is string => Boolean(id));
 
-  const negociosPorId = new Map<string, NegocioInfo>();
-  if (idsNegociosVinculados.length > 0) {
-    const negocios = await prisma.negocio.findMany({
-      where: {
-        id_empresa: sessao.id_empresa,
-        id: { in: idsNegociosVinculados },
-      },
-      select: {
-        id: true,
-        titulo: true,
-        status: true,
-        id_funcionario: true,
-        id_estagio: true,
-      },
-    });
+      const [negocios, contagens] = await Promise.all([
+        idsNegociosVinculados.length > 0
+          ? prisma.negocio.findMany({
+              where: {
+                id_empresa: sessao.id_empresa,
+                id: { in: idsNegociosVinculados },
+              },
+              select: {
+                id: true,
+                titulo: true,
+                status: true,
+                id_funcionario: true,
+                id_estagio: true,
+              },
+            })
+          : [],
+        idsLeadsVinculados.length > 0
+          ? prisma.whatsappMensagem.groupBy({
+              by: ["id_lead"],
+              where: {
+                id_empresa: sessao.id_empresa,
+                id_lead: { in: idsLeadsVinculados },
+                from_me: false,
+                lida_no_crm_em: null,
+              },
+              _count: { _all: true },
+            })
+          : [],
+      ]);
 
-    for (const negocio of negocios) {
-      negociosPorId.set(negocio.id, negocio);
-    }
-  }
+      const negociosMap = new Map<string, NegocioInfo>();
+      for (const negocio of negocios) {
+        negociosMap.set(negocio.id, negocio);
+      }
 
-  const unreadPorLead = new Map<string, number>();
-  if (idsLeadsVinculados.length > 0) {
-    const contagens = await prisma.whatsappMensagem.groupBy({
-      by: ["id_lead"],
-      where: {
-        id_empresa: sessao.id_empresa,
-        id_lead: { in: idsLeadsVinculados },
-        from_me: false,
-        lida_no_crm_em: null,
-      },
-      _count: { _all: true },
-    });
+      const unreadMap = new Map<string, number>();
+      for (const item of contagens) {
+        unreadMap.set(item.id_lead, item._count._all);
+      }
 
-    for (const item of contagens) {
-      unreadPorLead.set(item.id_lead, item._count._all);
-    }
-  }
+      return { negociosPorId: negociosMap, unreadPorLead: unreadMap };
+    },
+  );
+  debug.timingsMs.enrichment = duracaoEnrichmentMs;
 
   for (const chat of todasOrdenadas) {
     chat.unreadCount = chat.leadMatch?.id ? unreadPorLead.get(chat.leadMatch.id) ?? 0 : 0;
@@ -569,6 +629,12 @@ export async function unificarChatsComLeads({
     pagina,
     limite,
     temMais: fim < total,
-    debug,
+    debug: {
+      ...debug,
+      timingsMs: {
+        ...debug.timingsMs,
+        total: Date.now() - inicioTotal,
+      },
+    },
   };
 }

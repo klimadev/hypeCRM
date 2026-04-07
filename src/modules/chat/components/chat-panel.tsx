@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
+  CalendarClock,
   Briefcase,
   Building2,
   CheckCircle2,
@@ -78,68 +79,80 @@ export function ChatPanel({
   const origemLead = obterMetaOrigemLead(chat.leadMatch?.origem);
   const telefone = formatarTelefoneChat(chat.telefone);
   const statusPrincipal = chat.semMatch ? "Novo contato" : chat.leadMatch?.nome_estagio ?? "Lead vinculado";
+  const canalLabel = chat.canal === "instagram" ? "Instagram" : "WhatsApp";
 
   return (
     <>
       <div className="flex h-full min-h-0 flex-1 flex-col bg-[var(--surface)]">
-        <header className="flex shrink-0 items-center gap-3 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.03),transparent)] px-3 py-2.5 md:px-4">
-          {onVoltar ? (
-            <button
-              type="button"
-              onClick={onVoltar}
-              className="rounded-xl p-2 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] md:hidden"
-            >
-              <ArrowLeft className="h-4 w-4" />
-            </button>
-          ) : null}
+        <header className="flex shrink-0 flex-col gap-3 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-3 py-3 md:px-4">
+          <div className="flex items-center gap-3">
+            {onVoltar ? (
+              <button
+                type="button"
+                onClick={onVoltar}
+                className="rounded-xl p-2 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] md:hidden"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </button>
+            ) : null}
 
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
-            {chat.semMatch ? <MessageCircle className="h-4 w-4" /> : nome.charAt(0).toUpperCase()}
-          </div>
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
+              {chat.semMatch ? <MessageCircle className="h-4 w-4" /> : nome.charAt(0).toUpperCase()}
+            </div>
 
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-semibold text-[var(--text-primary)] md:text-[15px]">{nome}</p>
-              <Badge variant={chat.semMatch ? "secondary" : "success"} size="sm" dot>
-                {chat.semMatch ? "Novo" : "CRM"}
-              </Badge>
-              {origemLead ? (
-                <Badge variant={origemLead.variant} size="sm" className="hidden sm:inline-flex" dot>
-                  {origemLead.label}
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="truncate text-sm font-semibold text-[var(--text-primary)] md:text-[15px]">{nome}</p>
+                <Badge variant={chat.semMatch ? "secondary" : "success"} size="sm" dot>
+                  {chat.semMatch ? "Novo" : "CRM"}
                 </Badge>
+                <Badge variant="secondary" size="sm">{canalLabel}</Badge>
+                {origemLead ? (
+                  <Badge variant={origemLead.variant} size="sm" className="hidden sm:inline-flex" dot>
+                    {origemLead.label}
+                  </Badge>
+                ) : null}
+              </div>
+
+              <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-secondary)]">
+                <span className="inline-flex items-center gap-1.5">
+                  <Phone className="h-3 w-3 text-[var(--text-tertiary)]" />
+                  {telefone}
+                </span>
+                <span className="truncate">{statusPrincipal}</span>
+                {chat.unreadCount > 0 ? <span>{chat.unreadCount} não lida(s)</span> : null}
+              </div>
+            </div>
+
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="ghost" size="sm" className="gap-2" onClick={() => setDetalhesAbertos(true)}>
+                <PanelRight className="h-4 w-4" />
+                <span className="hidden sm:inline">Detalhes</span>
+              </Button>
+              {chat.leadMatch ? (
+                <Button variant="outline" size="sm" className="gap-2" onClick={() => setTransferirAberto(true)}>
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span className="hidden sm:inline">Transferir</span>
+                </Button>
               ) : null}
             </div>
-
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-[var(--text-secondary)]">
-              <span className="inline-flex items-center gap-1.5">
-                <Phone className="h-3 w-3 text-[var(--text-tertiary)]" />
-                {telefone}
-              </span>
-              <span className="truncate">{statusPrincipal}</span>
-            </div>
           </div>
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Button variant="ghost" size="sm" className="gap-2" onClick={() => setDetalhesAbertos(true)}>
-              <PanelRight className="h-4 w-4" />
-              <span className="hidden sm:inline">Detalhes</span>
-            </Button>
+          <div className="flex flex-wrap items-center gap-2 pl-0 md:pl-14">
             {chat.semMatch ? (
               <Button variant="outline" size="sm" className="gap-2" onClick={() => setDialogOpen("lead")}>
                 <UserPlus className="h-4 w-4" />
-                <span className="hidden lg:inline">Registrar lead</span>
+                <span>Registrar lead</span>
               </Button>
             ) : null}
             <Button size="sm" className="gap-2" onClick={() => setDialogOpen("negocio")}>
               <Briefcase className="h-4 w-4" />
-              <span className="hidden sm:inline">Criar negócio</span>
+              <span>Criar negócio</span>
             </Button>
-            {chat.leadMatch ? (
-              <Button variant="outline" size="sm" className="gap-2" onClick={() => setTransferirAberto(true)}>
-                <CheckCircle2 className="h-4 w-4" />
-                <span className="hidden sm:inline">Transferir</span>
-              </Button>
-            ) : null}
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-1.5 text-[11px] text-[var(--text-secondary)]">
+              <CalendarClock className="h-3.5 w-3.5 text-[var(--brand)]" />
+              Agende sem sair da conversa
+            </div>
           </div>
         </header>
 

@@ -4,6 +4,9 @@ import { criarRespostaSse } from "@/lib/whatsapp-chat-realtime.sse";
 import type { ChatMessagesStreamParams } from "@/lib/whatsapp-chat-realtime.state";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
+import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+
+const CHAT_MESSAGES_TTL_MS = 5_000;
 
 function ehInstagram(instanceName: string) {
   return instanceName === "instagram";
@@ -33,7 +36,11 @@ export async function GET(request: NextRequest) {
     pollMs: 10000,
     carregarSnapshot: async () => {
       if (ehInstagram(instanceName)) {
-        const mensagensIg = await listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite);
+        const mensagensIg = await obterSnapshotCacheado({
+          key: `chat:messages:${auth.sessao.id_empresa}:instagram:${remoteJid}:${limite}`,
+          ttlMs: CHAT_MESSAGES_TTL_MS,
+          loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
+        });
 
         return {
           messages: mensagensIg.map((msg) => ({
@@ -54,7 +61,11 @@ export async function GET(request: NextRequest) {
         };
       }
 
-      const result = await buscarMensagensPorContato(instanceName, remoteJid, 1, limite);
+      const result = await obterSnapshotCacheado({
+        key: `chat:messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}:${limite}`,
+        ttlMs: CHAT_MESSAGES_TTL_MS,
+        loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
+      });
       return {
         messages: result.messages,
         hasMore: result.hasMore,

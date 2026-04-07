@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, type Dispatch, type SetStateAction } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useChatData } from "./use-chat-data";
 import { useToast } from "@/components/ui/toast";
 import { obterFiltroOrigemLead } from "../helpers";
@@ -14,13 +14,24 @@ import { atualizarLeadContato } from "@/lib/api/leads";
 
 export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABORADOR"; idUsuario: string }): UseChatModuleReturn {
   const [busca, setBusca] = useState("");
-  const { chats, carregando, erro, sseConectado, ultimoSyncEm, recarregar, carregarMais, temMais, total } = useChatData(busca);
+  const [buscaDebounced, setBuscaDebounced] = useState("");
+  const { chats, carregando, erro, sseConectado, ultimoSyncEm, recarregar, carregarMais, temMais, total, atualizarChatLocal } = useChatData(buscaDebounced);
   const { addToast } = useToast();
   const [chatSelecionado, setChatSelecionado] = useState<ChatUnificado | null>(null);
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "anuncio" | "whatsapp" | "manual">("todos");
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
   const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
   const ultimoChatMarcadoRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setBuscaDebounced(busca);
+    }, 250);
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [busca]);
 
   useEffect(() => {
     const leadId = chatSelecionado?.leadMatch?.id;
@@ -37,10 +48,13 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
       body: JSON.stringify({ leadId }),
     }).then(async (res) => {
       if (res.ok) {
-        await recarregar();
+        atualizarChatLocal(chatSelecionado.instanceName, chatSelecionado.remoteJid, (chat) => ({
+          ...chat,
+          unreadCount: 0,
+        }));
       }
     });
-  }, [chatSelecionado, recarregar]);
+  }, [atualizarChatLocal, chatSelecionado]);
 
   const chatsFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
@@ -205,6 +219,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     ultimoSyncEm,
     recarregar,
     carregarMais,
+    atualizarChatLocal,
     temMais,
     total,
     totalChats,

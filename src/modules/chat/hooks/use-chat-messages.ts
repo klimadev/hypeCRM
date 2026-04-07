@@ -12,6 +12,8 @@ import {
 } from "@/lib/api/whatsapp.chat";
 import type { UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 
+const CHAT_MESSAGES_CACHE_PREFIX = "chat:messages:";
+
 function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatMessage[]) {
   const mapa = new Map<string, UnifiedChatMessage>();
 
@@ -56,6 +58,35 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const paramsRef = useRef(params);
 
+  const obterChaveCache = useCallback((instanceName: string, remoteJid: string) => {
+    return `${CHAT_MESSAGES_CACHE_PREFIX}${instanceName}:${remoteJid}`;
+  }, []);
+
+  const salvarCache = useCallback(
+    (instanceName: string, remoteJid: string, snapshot: UnifiedChatMessage[]) => {
+      if (typeof window === "undefined") return;
+      window.sessionStorage.setItem(obterChaveCache(instanceName, remoteJid), JSON.stringify(snapshot));
+    },
+    [obterChaveCache],
+  );
+
+  const hidratarCache = useCallback(
+    (instanceName: string, remoteJid: string) => {
+      if (typeof window === "undefined") return null;
+      const raw = window.sessionStorage.getItem(obterChaveCache(instanceName, remoteJid));
+      if (!raw) return null;
+
+      try {
+        const snapshot = JSON.parse(raw) as UnifiedChatMessage[];
+        return Array.isArray(snapshot) ? snapshot : null;
+      } catch {
+        window.sessionStorage.removeItem(obterChaveCache(instanceName, remoteJid));
+        return null;
+      }
+    },
+    [obterChaveCache],
+  );
+
   paramsRef.current = params;
 
   const mensagensOrdenadas = useMemo(
@@ -78,7 +109,11 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         setErro(result.erro);
         return;
       }
-      setMessages((prev) => mesclarMensagensChat(prev, result.dados.messages));
+      setMessages((prev) => {
+        const proximas = mesclarMensagensChat(prev, result.dados.messages);
+        salvarCache(instanceName, remoteJid, proximas);
+        return proximas;
+      });
       setHasMore(result.dados.hasMore);
       setErro(null);
     } catch (err) {
@@ -86,7 +121,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     } finally {
       setCarregando(false);
     }
-  }, []);
+  }, [salvarCache]);
 
   const sendMessage = useCallback(
     async (text: string, retryId?: string) => {
@@ -115,31 +150,41 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
           error: null,
         };
 
-        setMessages((prev) => mesclarMensagensChat(prev, [tempMessage]));
+        setMessages((prev) => {
+          const proximas = mesclarMensagensChat(prev, [tempMessage]);
+          salvarCache(instanceName, remoteJid, proximas);
+          return proximas;
+        });
 
         const result = await enviarMensagemChatUnificado({ instanceName, remoteJid, text: normalizedText });
         if (!result.ok) {
-          setMessages((prev) =>
-            prev.map((message) =>
+          setMessages((prev) => {
+            const proximas = prev.map((message) =>
               message.id === tempId
                 ? { ...message, status: "ERROR", optimistic: false, error: result.erro }
                 : message,
-            ),
-          );
+            );
+            salvarCache(instanceName, remoteJid, proximas);
+            return proximas;
+          });
           throw new Error(result.erro);
         }
         setMessages((prev) =>
-          prev.map((message) =>
-            message.id === tempId
-              ? { ...message, status: "SENT", optimistic: false, error: null }
-              : message,
-          ),
+          {
+            const proximas = prev.map((message) =>
+              message.id === tempId
+                ? { ...message, status: "SENT", optimistic: false, error: null }
+                : message,
+            );
+            salvarCache(instanceName, remoteJid, proximas);
+            return proximas;
+          }
         );
       } finally {
         setEnviando(false);
       }
     },
-    [],
+    [salvarCache],
   );
 
   const fetchAgendadas = useCallback(async () => {
@@ -200,34 +245,51 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     }
 
     setErro(null);
-    setCarregando(true);
+    const mensagensEmCache = hidratarCache(instanceName, remoteJid);
+    setMessages(mensagensEmCache ?? []);
+    setCarregando(!mensagensEmCache);
 
-    void fetchInitial();
-    void fetchAgendadas();
+    let ativo = true;
+    let unsubscribe: (() => void) | null = null;
 
-    const unsubscribe = assinarMensagensChatUnificado(
-      { instanceName, remoteJid, limite: 100 },
-      {
-        onSnapshot: (snapshot) => {
-          setMessages((prev) => mesclarMensagensChat(prev, snapshot.messages ?? []));
-          setHasMore(snapshot.hasMore ?? false);
-          setSseConectado(true);
-          setCarregando(false);
-          setErro(null);
+    const iniciar = async () => {
+      if (!mensagensEmCache) {
+        await fetchInitial();
+      }
+
+      if (!ativo) return;
+
+      unsubscribe = assinarMensagensChatUnificado(
+        { instanceName, remoteJid, limite: 100 },
+        {
+          onSnapshot: (snapshot) => {
+            setMessages((prev) => {
+              const proximas = mesclarMensagensChat(prev, snapshot.messages ?? []);
+              salvarCache(instanceName, remoteJid, proximas);
+              return proximas;
+            });
+            setHasMore(snapshot.hasMore ?? false);
+            setSseConectado(true);
+            setCarregando(false);
+            setErro(null);
+          },
+          onError: () => {
+            setSseConectado(false);
+          },
         },
-        onError: () => {
-          setSseConectado(false);
-        },
-      },
-    );
+      );
 
-    unsubscribeRef.current = unsubscribe;
+      unsubscribeRef.current = unsubscribe;
+    };
+
+    void iniciar();
 
     return () => {
-      unsubscribe();
+      ativo = false;
+      unsubscribe?.();
       unsubscribeRef.current = null;
     };
-  }, [params.instanceName, params.remoteJid, fetchInitial]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: paramsRef handles current values, only re-subscribe on identity change
+  }, [fetchInitial, hidratarCache, params.instanceName, params.remoteJid, salvarCache]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: paramsRef handles current values, only re-subscribe on identity change
 
   return {
     messages: mensagensOrdenadas,

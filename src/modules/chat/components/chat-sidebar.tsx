@@ -1,6 +1,7 @@
 "use client";
 
-import { Search, MessageCircle, ChevronDown } from "lucide-react";
+import type { ReactNode } from "react";
+import { Search, MessageCircle, ChevronDown, Activity, Inbox, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
 import type { ChatUnificado } from "../types";
@@ -55,13 +56,17 @@ export function ChatSidebar({
   total,
 }: ChatSidebarProps) {
   return (
-    <div className="flex h-[100dvh] max-h-[100dvh] min-h-0 w-full flex-col overflow-hidden bg-[var(--surface)]">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--surface)]">
       <div className="flex shrink-0 flex-col gap-3 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.06),transparent)] px-3 py-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <h2 className="text-sm font-semibold tracking-tight text-[var(--text-primary)]">Chats</h2>
+            <div className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
+              <Inbox className="h-3.5 w-3.5" />
+              Inbox
+            </div>
+            <h2 className="mt-1 text-base font-semibold tracking-tight text-[var(--text-primary)]">Conversas</h2>
             <p className="mt-1 text-xs text-[var(--text-secondary)]">
-              {totalMatched} em CRM · {totalOrphans} novos · {total} no total
+              {totalMatched} no CRM, {totalOrphans} novos e {total} ativos.
             </p>
           </div>
           {total > 0 ? (
@@ -71,37 +76,50 @@ export function ChatSidebar({
           ) : null}
         </div>
 
+        <div className="grid grid-cols-3 gap-2">
+          <QuickMetric label="Novos" value={String(totalOrphans)} icon={<Sparkles className="h-3.5 w-3.5" />} />
+          <QuickMetric label="Sem dono" value={String(totalSemDono)} />
+          <QuickMetric label="Sem negócio" value={String(totalSemNegocio)} accent="info" />
+        </div>
+
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
           <input
             type="text"
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar chats..."
-            className="h-9 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-colors focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
+            placeholder="Buscar nome, telefone ou negócio"
+            className="h-10 w-full rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-colors focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <FilterPill label="Todos" active={filtroOrigem === "todos"} onClick={() => setFiltroOrigem("todos")} />
-          <FilterPill label="Anúncio" active={filtroOrigem === "anuncio"} tone="info" onClick={() => setFiltroOrigem("anuncio")} />
-          <FilterPill label="WhatsApp" active={filtroOrigem === "whatsapp"} tone="success" onClick={() => setFiltroOrigem("whatsapp")} />
-          <FilterPill label="Manual" active={filtroOrigem === "manual"} tone="secondary" onClick={() => setFiltroOrigem("manual")} />
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
+            <Activity className="h-3.5 w-3.5" />
+            Filtros rápidos
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <FilterPill label="Todos" active={filtroOrigem === "todos"} onClick={() => setFiltroOrigem("todos")} />
+            <FilterPill label="Anúncio" active={filtroOrigem === "anuncio"} tone="info" onClick={() => setFiltroOrigem("anuncio")} />
+            <FilterPill label="WhatsApp" active={filtroOrigem === "whatsapp"} tone="success" onClick={() => setFiltroOrigem("whatsapp")} />
+            <FilterPill label="Manual" active={filtroOrigem === "manual"} tone="secondary" onClick={() => setFiltroOrigem("manual")} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <FilterPill label="Fila limpa" active={filtroFila === "todas"} onClick={() => setFiltroFila("todas")} />
+            <FilterPill label={`Sem dono ${totalSemDono}`} active={filtroFila === "sem_dono"} tone="secondary" onClick={() => setFiltroFila("sem_dono")} />
+            <FilterPill label={`Sem negócio ${totalSemNegocio}`} active={filtroFila === "sem_negocio"} tone="info" onClick={() => setFiltroFila("sem_negocio")} />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            <FilterPill label="Todos canais" active={filtroCanal === "todos"} onClick={() => setFiltroCanal("todos")} />
+            <FilterPill label="Instagram" active={filtroCanal === "instagram"} tone="secondary" onClick={() => setFiltroCanal("instagram")} />
+            <FilterPill label="WhatsApp" active={filtroCanal === "whatsapp"} tone="success" onClick={() => setFiltroCanal("whatsapp")} />
+          </div>
         </div>
 
-        <div className="flex flex-wrap items-center gap-1.5">
-          <FilterPill label={`Sem dono (${totalSemDono})`} active={filtroFila === "sem_dono"} tone="secondary" onClick={() => setFiltroFila("sem_dono")} />
-          <FilterPill label={`Sem negócio (${totalSemNegocio})`} active={filtroFila === "sem_negocio"} tone="info" onClick={() => setFiltroFila("sem_negocio")} />
-          <FilterPill label="Limpar fila" active={filtroFila === "todas"} onClick={() => setFiltroFila("todas")} />
-        </div>
-
-        <div className="flex flex-wrap items-center gap-1.5">
-          <FilterPill label="Todos" active={filtroCanal === "todos"} onClick={() => setFiltroCanal("todos")} />
-          <FilterPill label="Instagram" active={filtroCanal === "instagram"} tone="secondary" onClick={() => setFiltroCanal("instagram")} />
-          <FilterPill label="WhatsApp" active={filtroCanal === "whatsapp"} tone="success" onClick={() => setFiltroCanal("whatsapp")} />
-        </div>
-
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-[11px] text-[var(--text-secondary)]">
+        <div className="rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-[11px] text-[var(--text-secondary)]">
           <div className="flex items-center justify-between gap-3">
             <span>Saúde da sincronização</span>
             <span className={cn("font-medium", sseConectado ? "text-[var(--success)]" : "text-[var(--warning)]")}>
@@ -118,7 +136,7 @@ export function ChatSidebar({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto px-2 pb-2 pt-2">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 pb-2 pt-2">
         {carregando ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -155,7 +173,7 @@ export function ChatSidebar({
               <button
                 type="button"
                 onClick={carregarMais}
-              className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] py-1.5 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+                className="mt-2 flex w-full items-center justify-center gap-1.5 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] py-2 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
               >
                 <ChevronDown className="h-3.5 w-3.5" />
                 Carregar mais
@@ -164,6 +182,35 @@ export function ChatSidebar({
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+function QuickMetric({
+  label,
+  value,
+  accent = "secondary",
+  icon,
+}: {
+  label: string;
+  value: string;
+  accent?: "info" | "secondary";
+  icon?: ReactNode;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-[16px] border px-2.5 py-2",
+        accent === "info"
+          ? "border-[color:rgba(56,189,248,0.16)] bg-[color:rgba(56,189,248,0.08)]"
+          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)]",
+      )}
+    >
+      <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
+        {icon}
+        {label}
+      </div>
+      <div className="mt-1 text-sm font-semibold text-[var(--text-primary)]">{value}</div>
     </div>
   );
 }

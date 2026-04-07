@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it } from "vitest";
 import { prisma } from "@/lib/prisma";
 import { enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";

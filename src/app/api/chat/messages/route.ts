@@ -5,6 +5,9 @@ import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
+import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+
+const CHAT_MESSAGES_TTL_MS = 5_000;
 
 function extrairTelefoneDeRemoteJid(remoteJid: string): string {
   return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
@@ -48,7 +51,11 @@ export async function GET(request: NextRequest) {
         limite,
       });
 
-      const mensagensIg = await listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite);
+      const mensagensIg = await obterSnapshotCacheado({
+        key: `chat:messages:${auth.sessao.id_empresa}:instagram:${remoteJid}:${limite}`,
+        ttlMs: CHAT_MESSAGES_TTL_MS,
+        loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
+      });
       const messages = mensagensIg.map((msg: { id: string; text: string | null; created_at: string; from_name: string | null; from_me: boolean; attachments?: Array<{ type: string; url: string | null }> }) => ({
         id: msg.id,
         remoteJid,
@@ -79,7 +86,11 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const result = await buscarMensagensPorContato(instanceName, remoteJid, 1, limite);
+  const result = await obterSnapshotCacheado({
+    key: `chat:messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}:${limite}`,
+    ttlMs: CHAT_MESSAGES_TTL_MS,
+    loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
+  });
 
   return NextResponse.json({ messages: result.messages, hasMore: result.hasMore });
 }

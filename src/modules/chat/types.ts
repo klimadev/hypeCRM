@@ -72,6 +72,7 @@ export type UseChatModuleReturn = {
   ultimoSyncEm: number | null;
   recarregar: () => Promise<void>;
   carregarMais: () => void;
+  atualizarChatLocal: (instanceName: string, remoteJid: string, updater: (chat: ChatUnificado) => ChatUnificado) => void;
   temMais: boolean;
   total: number;
   totalChats: number;

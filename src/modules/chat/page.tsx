@@ -13,14 +13,13 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
 
   return (
     <ModulePageShell
-      spacing="lg"
-      fillHeight
-      className="flex-1 min-h-0"
+      spacing="md"
+      className="flex h-[calc(100dvh-7rem)] min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-2.5rem)] xl:h-[calc(100dvh-3rem)]"
     >
-      <div className="flex h-full min-h-0 max-h-full gap-2 overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.96),rgba(9,9,11,0.98))] lg:gap-1.5">
+      <div className="flex flex-1 min-h-0 overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.98),rgba(9,9,11,1))] shadow-[0_18px_60px_rgba(0,0,0,0.28)]">
         <aside
           className={cn(
-            "min-h-0 w-full shrink-0 md:w-[18rem] lg:w-[18.5rem] xl:w-[19rem]",
+            "h-full min-h-0 w-full shrink-0 overflow-hidden md:w-[20rem] xl:w-[22rem] 2xl:w-[24rem]",
             vm.chatSelecionado ? "hidden md:block" : "block",
           )}
         >
@@ -50,7 +49,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
           />
         </aside>
 
-        <section className="flex min-h-0 min-w-0 flex-1 overflow-hidden border-l border-[var(--border-subtle)] bg-[var(--surface)] md:border-l md:border-r-0">
+        <section className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden border-l border-[var(--border-subtle)] bg-[var(--surface)]/90 backdrop-blur-sm">
           {vm.chatSelecionado ? (
             <ChatPanel
               chat={vm.chatSelecionado}
@@ -62,15 +61,15 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             />
           ) : (
             <div className="hidden h-full items-center justify-center p-8 text-center md:flex">
-              <div className="max-w-sm space-y-3">
-                <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)]">
+              <div className="max-w-md space-y-4">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.12),rgba(255,255,255,0.03))]">
                   <MessageCircle className="h-6 w-6 text-[var(--text-tertiary)]" />
                 </div>
-                <p className="text-base font-semibold tracking-tight text-[var(--text-primary)]">
-                  Abra uma conversa para começar
+                <p className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">
+                  Caixa unificada pronta para operar
                 </p>
-                <p className="text-sm text-[var(--text-secondary)]">
-                  A lista fica fixa na esquerda e o restante da tela vira o contexto da conversa.
+                <p className="text-sm leading-6 text-[var(--text-secondary)]">
+                  Selecione um contato para ler, responder ou agendar sem perder o contexto do CRM.
                 </p>
               </div>
             </div>

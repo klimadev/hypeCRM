@@ -3,6 +3,9 @@ import { exigirSessao } from "@/lib/permissoes";
 import { criarRespostaSse } from "@/lib/whatsapp-chat-realtime";
 import { unificarChatsComLeads } from "@/lib/chat-unificado";
 import type { UnifiedChatsStreamParams } from "@/lib/whatsapp-chat-realtime.state";
+import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+
+const CHAT_LIST_TTL_MS = 8_000;
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -17,7 +20,11 @@ export async function GET(request: NextRequest) {
     chave,
     pollMs: 10000,
     carregarSnapshot: async () => {
-      const resultado = await unificarChatsComLeads({ sessao: auth.sessao, pagina: 1, limite: 50 });
+      const resultado = await obterSnapshotCacheado({
+        key: `chat:list:${auth.sessao.id_empresa}:1:50:`,
+        ttlMs: CHAT_LIST_TTL_MS,
+        loader: () => unificarChatsComLeads({ sessao: auth.sessao, pagina: 1, limite: 50 }),
+      });
       return { chats: resultado.chats, total: resultado.total, temMais: resultado.temMais };
     },
   };

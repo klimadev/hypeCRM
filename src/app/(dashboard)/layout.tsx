@@ -34,7 +34,7 @@ export default async function LayoutDashboard({
       <TrialNotification />
       <div className="min-h-[100dvh] overflow-x-hidden bg-[var(--canvas)] lg:flex lg:items-stretch">
         <SidebarPrincipal sessao={sessao} dadosUsuario={dadosUsuario} />
-        <main className="min-h-0 min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-3 pt-3 lg:flex lg:flex-col lg:pb-4 lg:p-4 lg:pl-[5.75rem] xl:p-5 xl:pl-[6.25rem]">
+        <main className="min-h-0 min-w-0 flex-1 pb-[calc(5.5rem+env(safe-area-inset-bottom))] p-3 pt-3 lg:flex lg:h-full lg:flex-col lg:min-h-0 lg:pb-4 lg:p-4 lg:pl-[5.75rem] xl:p-5 xl:pl-[6.25rem]">
           <DashboardErrorBoundary>
             {children}
           </DashboardErrorBoundary>

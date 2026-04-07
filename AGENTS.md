@@ -39,6 +39,11 @@ pnpm db:migrate:deploy
 pm2 start hypecrm-web
 ```
 
+### Playwright autenticado
+- Para validar fluxos protegidos no Playwright, reutilize uma sessão existente em vez de testar deslogado.
+- Conta padrão para reprodução autenticada neste projeto: `limawebvision@gmail.com`.
+- Se não houver sessão exportada pronta, gere/injete o cookie `hype_sessao` correspondente a essa empresa antes de abrir a rota protegida.
+
 ---
 
 ## 2. Estilo de Código

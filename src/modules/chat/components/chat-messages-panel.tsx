@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from "react";
-import { Loader2, AlertCircle, MessageSquare, Send, FileText, Volume2 } from "lucide-react";
+import { Loader2, AlertCircle, MessageSquare, Send, FileText, Volume2, CalendarClock, Clock3, X } from "lucide-react";
+import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
-import NextImage from "next/image";
+import { cn } from "@/lib/utils";
 import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 import { useChatMessages } from "../hooks/use-chat-messages";
 
@@ -54,7 +55,21 @@ function getKindIcon(kind: string): string {
   return icons[kind] ?? "";
 }
 
-function MediaPreview({ instanceName, message }: { instanceName: string; message: UnifiedChatMessage }) {
+function statusLabel(msg: UnifiedChatMessage) {
+  if (msg.error || msg.status === "ERROR") return "Falhou";
+  if (msg.optimistic || msg.status === "PENDING") return "Enviando";
+  return "Enviado";
+}
+
+function MediaPreview({
+  instanceName,
+  message,
+  compact = false,
+}: {
+  instanceName: string;
+  message: UnifiedChatMessage;
+  compact?: boolean;
+}) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(message.mediaUrl ?? null);
   const [loading, setLoading] = useState(!message.mediaUrl);
   const [erro, setErro] = useState(false);
@@ -88,7 +103,7 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
 
   if (loading) {
     return (
-      <div className="mt-1 flex h-36 w-56 items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)]">
+      <div className={cn("mt-2 flex items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)]", compact ? "h-28 w-full" : "h-36 w-56")}>
         <Loader2 className="h-5 w-5 animate-spin text-[var(--text-tertiary)]" />
       </div>
     );
@@ -97,7 +112,7 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   if (erro || !mediaUrl) {
     const label = message.kind === "audioMessage" ? "Áudio" : message.kind === "videoMessage" ? "Vídeo" : "Mídia";
     return (
-      <div className="mt-1 flex h-24 w-56 items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3">
+      <div className={cn("mt-2 flex items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3", compact ? "h-20 w-full" : "h-24 w-56")}>
         <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />
         <span className="text-xs text-[var(--text-secondary)]">{label} indisponível</span>
       </div>
@@ -112,14 +127,14 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
         width={480}
         height={320}
         unoptimized
-        className="mt-1 max-h-72 max-w-full rounded-2xl object-contain"
+        className="mt-2 max-h-80 max-w-full rounded-2xl object-contain"
       />
     );
   }
 
   if (message.kind === "audioMessage") {
     return (
-      <div className="mt-1 flex w-72 flex-col gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3">
+      <div className="mt-2 flex w-full min-w-[15rem] max-w-[20rem] flex-col gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3">
         <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <Volume2 className="h-4 w-4 text-[var(--brand)]" />
           Áudio
@@ -130,55 +145,51 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   }
 
   if (message.kind === "videoMessage") {
-    return (
-      <video controls className="mt-1 max-h-72 max-w-full rounded-2xl border border-[var(--border-subtle)] bg-black" src={mediaUrl} />
-    );
+    return <video controls className="mt-2 max-h-72 max-w-full rounded-2xl border border-[var(--border-subtle)] bg-black" src={mediaUrl} />;
   }
 
   return (
-    <div className="mt-1 flex w-56 items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+    <div className="mt-2 flex w-full items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
       <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />
       <span className="truncate text-xs text-[var(--text-secondary)]">Anexo</span>
     </div>
   );
 }
 
-function MessageBubble({ msg }: { msg: UnifiedChatMessage }) {
+function MessageBubble({ instanceName, msg }: { instanceName: string; msg: UnifiedChatMessage }) {
   const isFromMe = msg.fromMe;
-  const isMedia = msg.hasMedia;
   const kindIcon = getKindIcon(msg.kind);
   const isProtocol = msg.kind === "protocolMessage";
+  const hasBodyText = Boolean(msg.text) && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage";
 
   if (isProtocol) return null;
 
   return (
-    <div className={`flex ${isFromMe ? "justify-end" : "justify-start"} px-2 py-0.5`}>
+    <div className={cn("flex px-3 py-1.5 md:px-4", isFromMe ? "justify-end" : "justify-start")}>
       <div
-        className={`relative max-w-[64%] rounded-[18px] px-3 py-2 text-sm shadow-sm ${
+        className={cn(
+          "relative max-w-[88%] rounded-[22px] px-3 py-2.5 text-sm shadow-sm sm:max-w-[80%] xl:max-w-[68%]",
           isFromMe
-            ? "bg-[color:rgba(139,92,246,0.18)] text-[var(--text-primary)]"
-            : "bg-[var(--surface-elevated)] text-[var(--text-primary)]"
-        }`}
+            ? "bg-[linear-gradient(180deg,rgba(139,92,246,0.26),rgba(139,92,246,0.16))] text-[var(--text-primary)]"
+            : "border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)]",
+        )}
       >
-        {!isFromMe && msg.pushName && msg.pushName !== "Você" && (
-          <p className="mb-0.5 text-[11px] font-medium text-[var(--brand)]">{msg.pushName}</p>
-        )}
+        {!isFromMe && msg.pushName && msg.pushName !== "Você" ? (
+          <p className="mb-1 text-[11px] font-medium text-[var(--brand)]">{msg.pushName}</p>
+        ) : null}
 
-        {isMedia && kindIcon && !msg.mediaUrl && msg.kind !== "imageMessage" && (
-          <span className="mr-1.5 text-base">{kindIcon}</span>
-        )}
+        {msg.hasMedia ? <MediaPreview instanceName={instanceName} message={msg} compact /> : null}
 
-        {msg.text && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage" && (
-          <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed">{msg.text}</p>
-        )}
+        {hasBodyText ? (
+          <p className={cn("whitespace-pre-wrap break-words text-[13px] leading-relaxed", msg.hasMedia ? "mt-2" : "")}>{kindIcon && !msg.hasMedia ? `${kindIcon} ` : ""}{msg.text}</p>
+        ) : null}
 
-        <p
-          className={`mt-1 text-[10px] ${
-            isFromMe ? "text-[var(--text-tertiary)]" : "text-[var(--text-tertiary)]"
-          }`}
-        >
-          {formatarHora(msg.timestamp)}
-        </p>
+        {!hasBodyText && kindIcon && !msg.hasMedia ? <p className="text-[13px] leading-relaxed">{kindIcon}</p> : null}
+
+        <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px] text-[var(--text-tertiary)]">
+          {isFromMe ? <span>{statusLabel(msg)}</span> : null}
+          <span>{formatarHora(msg.timestamp)}</span>
+        </div>
       </div>
     </div>
   );
@@ -216,7 +227,19 @@ function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
 }
 
 export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessagesPanelProps, "nomeContato">) {
-  const { messages, carregando, erro, enviando, sseConectado, recarregar, sendMessage, scheduleMessage, agendadas } = useChatMessages({
+  const {
+    messages,
+    carregando,
+    erro,
+    enviando,
+    sseConectado,
+    recarregar,
+    sendMessage,
+    scheduleMessage,
+    cancelScheduledMessage,
+    agendadas,
+    recarregarAgendadas,
+  } = useChatMessages({
     instanceName,
     remoteJid,
   });
@@ -253,6 +276,11 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
     inicializadoRef.current = false;
   }, [instanceName, remoteJid]);
 
+  useEffect(() => {
+    if (!agendar) return;
+    void recarregarAgendadas();
+  }, [agendar, recarregarAgendadas]);
+
   const grouped = groupMessagesByDate(messages);
   const exibirLoadingVazio = carregando && messages.length === 0;
   const exibirErroVazio = erro && messages.length === 0;
@@ -280,7 +308,7 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
     }
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
       void handleSubmit();
@@ -289,118 +317,150 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
 
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
-      {!sseConectado && (
+      {!sseConectado ? (
         <div className="flex items-center justify-center gap-2 border-b border-[var(--border-subtle)] bg-amber-500/10 px-4 py-1.5">
           <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
           <span className="text-xs text-amber-400">Atualizando em tempo real...</span>
         </div>
-      )}
+      ) : null}
 
       <div className="min-h-0 flex-1 overflow-hidden bg-[var(--surface)]">
         <div
           ref={containerRef}
           className="h-full overflow-y-auto overscroll-contain"
           style={{
-            backgroundImage: `radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)`,
+            backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)",
             backgroundSize: "24px 24px",
           }}
         >
-        {exibirLoadingVazio ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3">
-              <Loader2 className="h-6 w-6 animate-spin text-[var(--brand)]" />
-              <p className="text-sm text-[var(--text-tertiary)]">Carregando mensagens...</p>
+          {exibirLoadingVazio ? (
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-6">
+              {Array.from({ length: 8 }).map((_, index) => (
+                <div key={index} className={cn("flex", index % 3 === 0 ? "justify-end" : "justify-start")}>
+                  <div className="h-16 w-[min(24rem,72%)] animate-pulse rounded-[18px] bg-[var(--surface-elevated)]" />
+                </div>
+              ))}
             </div>
-          </div>
-        ) : exibirErroVazio ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3 p-6">
-              <AlertCircle className="h-8 w-8 text-[var(--danger)]" />
-              <p className="text-sm text-[var(--text-secondary)]">{erro}</p>
-              <button
-                type="button"
-                onClick={() => recarregar()}
-                className="rounded-lg bg-[var(--brand-soft)] px-4 py-2 text-sm font-medium text-[var(--brand)] transition-colors hover:bg-[var(--brand)]/20"
-              >
-                Tentar novamente
-              </button>
-            </div>
-          </div>
-        ) : exibirEstadoVazio ? (
-          <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3 p-6">
-              <MessageSquare className="h-10 w-10 text-[var(--text-tertiary)]" />
-              <p className="text-sm text-[var(--text-secondary)]">Nenhuma mensagem encontrada</p>
-              <p className="text-xs text-[var(--text-tertiary)]">
-                As mensagens aparecerão aqui quando houver atividade
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="mx-auto flex w-full max-w-4xl flex-col gap-0 py-4">
-            {grouped.map((group) => (
-              <div key={group.date}>
-                <MessageDateSeparator timestamp={group.timestamp} />
-                {group.messages.map((msg) => (
-                  <div key={msg.id}>
-                    <MessageBubble msg={msg} />
-                    {msg.hasMedia ? <MediaPreview instanceName={instanceName} message={msg} /> : null}
-                  </div>
-                ))}
+          ) : exibirErroVazio ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="flex flex-col items-center gap-3 p-6">
+                <AlertCircle className="h-8 w-8 text-[var(--danger)]" />
+                <p className="text-sm text-[var(--text-secondary)]">{erro}</p>
+                <button
+                  type="button"
+                  onClick={() => recarregar()}
+                  className="rounded-lg bg-[var(--brand-soft)] px-4 py-2 text-sm font-medium text-[var(--brand)] transition-colors hover:bg-[var(--brand)]/20"
+                >
+                  Tentar novamente
+                </button>
               </div>
-            ))}
-            <div ref={messagesEndRef} />
-          </div>
-        )}
+            </div>
+          ) : exibirEstadoVazio ? (
+            <div className="flex h-full items-center justify-center">
+              <div className="flex flex-col items-center gap-3 p-6">
+                <MessageSquare className="h-10 w-10 text-[var(--text-tertiary)]" />
+                <p className="text-sm text-[var(--text-secondary)]">Nenhuma mensagem encontrada</p>
+                <p className="text-xs text-[var(--text-tertiary)]">As mensagens aparecerão aqui quando houver atividade</p>
+              </div>
+            </div>
+          ) : (
+            <div className="mx-auto flex w-full max-w-5xl flex-col gap-0 py-4">
+              {grouped.map((group) => (
+                <div key={group.date}>
+                  <MessageDateSeparator timestamp={group.timestamp} />
+                  {group.messages.map((msg) => (
+                    <MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />
+                  ))}
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+          )}
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-3">
-        {agendadas.length > 0 && (
-          <div className="mx-auto mb-2 w-full max-w-4xl rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-xs text-[var(--text-secondary)]">
-            <div className="mb-2 font-medium text-[var(--text-primary)]">Mensagens agendadas</div>
+      <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.94),rgba(12,12,14,1))] px-3 py-3">
+        {agendadas.length > 0 ? (
+          <div className="mx-auto mb-2 w-full max-w-5xl rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-xs text-[var(--text-secondary)]">
+            <div className="mb-2 flex items-center gap-2 font-medium text-[var(--text-primary)]">
+              <Clock3 className="h-4 w-4 text-[var(--brand)]" />
+              Mensagens agendadas
+            </div>
             <div className="space-y-2">
               {agendadas.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl bg-black/10 px-3 py-2">
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-black/10 px-3 py-2">
                   <div className="min-w-0">
                     <div className="truncate text-[var(--text-primary)]">{item.conteudo}</div>
-                    <div>{new Date(item.agendadoPara).toLocaleString()}</div>
+                    <div>{new Date(item.agendadoPara).toLocaleString("pt-BR")}</div>
                   </div>
-                  <span className="rounded-full bg-[var(--brand)]/20 px-2 py-1 text-[10px] text-[var(--brand)]">{item.status}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="rounded-full bg-[var(--brand)]/20 px-2 py-1 text-[10px] text-[var(--brand)]">{item.status}</span>
+                    {item.status === "PENDENTE" ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          void cancelScheduledMessage(item.id).catch((err) => {
+                            addToast({
+                              type: "error",
+                              title: "Erro ao cancelar agendamento",
+                              description: err instanceof Error ? err.message : "Tente novamente.",
+                            });
+                          });
+                        }}
+                        className="rounded-full border border-[var(--border-subtle)] p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
+                        aria-label="Cancelar mensagem agendada"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
           </div>
-        )}
-        <div className="mx-auto flex w-full max-w-4xl items-end gap-2 rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2 shadow-[var(--shadow-sm)]">
-          <label className="flex items-center gap-2 rounded-lg border border-[var(--border-subtle)] px-3 py-2 text-xs text-[var(--text-secondary)]">
-            <input type="checkbox" checked={agendar} onChange={(e) => setAgendar(e.target.checked)} />
-            Agendar
-          </label>
-          {agendar && (
-            <input
-              type="datetime-local"
-              value={agendadoPara}
-              onChange={(e) => setAgendadoPara(e.target.value)}
-              className="h-10 rounded-lg border border-[var(--border-subtle)] bg-transparent px-3 text-xs text-[var(--text-primary)]"
+        ) : null}
+
+        <div className="mx-auto w-full max-w-5xl rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2 shadow-[var(--shadow-sm)]">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-subtle)] px-2 pb-2">
+            <label className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] px-3 py-1.5 text-xs text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]">
+              <input type="checkbox" checked={agendar} onChange={(e) => setAgendar(e.target.checked)} />
+              <CalendarClock className="h-3.5 w-3.5" />
+              Agendar envio
+            </label>
+            <div className="text-[11px] text-[var(--text-tertiary)]">Enter envia, Shift+Enter quebra linha</div>
+          </div>
+
+          {agendar ? (
+            <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-subtle)] px-2 py-2">
+              <div className="text-[11px] font-medium text-[var(--text-secondary)]">Enviar em</div>
+              <input
+                type="datetime-local"
+                value={agendadoPara}
+                onChange={(e) => setAgendadoPara(e.target.value)}
+                className="h-10 rounded-xl border border-[var(--border-subtle)] bg-transparent px-3 text-xs text-[var(--text-primary)]"
+              />
+            </div>
+          ) : null}
+
+          <div className="flex items-end gap-2 px-2 pt-2">
+            <textarea
+              value={texto}
+              onChange={(event) => setTexto(event.target.value)}
+              onKeyDown={handleKeyDown}
+              disabled={enviando || !instanceName || !remoteJid}
+              placeholder={agendar ? "Escreva a mensagem que será enviada depois..." : "Escreva uma mensagem"}
+              rows={1}
+              className="max-h-32 min-h-[2.75rem] flex-1 resize-none bg-transparent px-2 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
             />
-          )}
-          <input
-            value={texto}
-            onChange={(event) => setTexto(event.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={enviando || !instanceName || !remoteJid}
-            placeholder="Digite uma mensagem..."
-            className="h-10 flex-1 bg-transparent px-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
-          />
-          <Button
-            type="submit"
-            size="icon"
-            disabled={enviando || !texto.trim()}
-            className="h-10 w-10 rounded-full bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
-          >
-            {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          </Button>
+            <Button
+              type="submit"
+              size="icon"
+              disabled={enviando || !texto.trim() || (agendar && !agendadoPara)}
+              className="h-11 w-11 rounded-full bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
+            >
+              {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
         </div>
       </form>
     </div>
