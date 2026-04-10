@@ -1,0 +1,40 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e6]:
+        - application:
+          - img
+          - generic [ref=e8]:
+            - button "Zoom in" [ref=e9]:
+              - img [ref=e10]
+            - button "Zoom out" [ref=e13]:
+              - img [ref=e14]
+            - button "Adicionar nodo" [ref=e17]:
+              - img [ref=e18]
+    - navigation "Navegação principal móvel":
+      - generic [ref=e22]:
+        - link "Resumo" [ref=e23] [cursor=pointer]:
+          - /url: /resumo
+          - generic [ref=e24]:
+            - img [ref=e25]
+            - generic [ref=e27]: Resumo
+        - link "Leads" [ref=e28] [cursor=pointer]:
+          - /url: /leads
+          - generic [ref=e29]:
+            - img [ref=e30]
+            - generic [ref=e35]: Leads
+        - link "Negócios" [ref=e36] [cursor=pointer]:
+          - /url: /kanban
+          - generic [ref=e37]:
+            - img [ref=e38]
+            - generic [ref=e43]: Negócios
+        - link "Caixa" [ref=e44] [cursor=pointer]:
+          - /url: /recebimentos
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - generic [ref=e50]: Caixa
+        - button "Menu" [ref=e51]:
+          - generic [ref=e52]:
+            - img [ref=e53]
+            - generic [ref=e57]: Menu
+  - alert [ref=e58]

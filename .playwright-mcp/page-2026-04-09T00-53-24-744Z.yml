@@ -1,0 +1,65 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e6]
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - paragraph [ref=e11]: Trial termina em 22 dias
+          - generic [ref=e12]: 22d
+        - paragraph [ref=e13]: Até 30/04/2026. Seu trial expira em 22 dias.
+    - generic [ref=e14]:
+      - link "Fazer upgrade" [ref=e15] [cursor=pointer]:
+        - /url: https://hypecrm.com.br
+        - img [ref=e16]
+        - text: Fazer upgrade
+      - button "Fechar notificação do trial" [ref=e19]:
+        - img [ref=e20]
+  - generic [ref=e23]:
+    - main [ref=e24]:
+      - generic [ref=e27]:
+        - generic:
+          - generic [ref=e30]:
+            - generic [ref=e32]: Builder visual
+            - paragraph [ref=e34]: Automações
+            - paragraph [ref=e35]: Canvas pronto para criar o primeiro fluxo.
+          - generic [ref=e36]:
+            - button "Afastar canvas" [ref=e37]:
+              - img [ref=e38]
+            - button "Aproximar canvas" [ref=e41]:
+              - img [ref=e42]
+            - button "Ajustar fluxo ao canvas" [ref=e45]:
+              - img [ref=e46]
+        - generic [ref=e48]:
+          - img [ref=e50]
+          - heading "Comece pelo primeiro gatilho" [level=1] [ref=e53]
+          - paragraph [ref=e54]: Escolha como a automação entra em cena e monte o fluxo direto no canvas.
+          - button "Criar primeiro nó" [ref=e55]:
+            - img [ref=e56]
+            - text: Criar primeiro nó
+    - navigation "Navegação principal móvel":
+      - generic [ref=e59]:
+        - link "Resumo" [ref=e60] [cursor=pointer]:
+          - /url: /resumo
+          - generic [ref=e61]:
+            - img [ref=e62]
+            - generic [ref=e64]: Resumo
+        - link "Leads" [ref=e65] [cursor=pointer]:
+          - /url: /leads
+          - generic [ref=e66]:
+            - img [ref=e67]
+            - generic [ref=e72]: Leads
+        - link "Negócios" [ref=e73] [cursor=pointer]:
+          - /url: /kanban
+          - generic [ref=e74]:
+            - img [ref=e75]
+            - generic [ref=e80]: Negócios
+        - link "Caixa" [ref=e81] [cursor=pointer]:
+          - /url: /recebimentos
+          - generic [ref=e82]:
+            - img [ref=e83]
+            - generic [ref=e87]: Caixa
+        - button "Menu" [ref=e88]:
+          - generic [ref=e89]:
+            - img [ref=e90]
+            - generic [ref=e94]: Menu
+  - alert [ref=e95]

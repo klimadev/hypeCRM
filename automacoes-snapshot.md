@@ -1,0 +1,55 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e60]:
+    - generic [ref=e61]:
+      - img [ref=e63]
+      - generic [ref=e66]:
+        - generic [ref=e67]:
+          - paragraph [ref=e68]: Trial termina em 22 dias
+          - generic [ref=e69]: 22d
+        - paragraph [ref=e70]: Até 30/04/2026. Seu trial expira em 22 dias.
+    - generic [ref=e71]:
+      - link "Fazer upgrade" [ref=e72] [cursor=pointer]:
+        - /url: https://hypecrm.com.br
+        - img [ref=e73]
+        - text: Fazer upgrade
+      - button "Fechar notificação do trial" [ref=e76]:
+        - img [ref=e77]
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e6]:
+        - application:
+          - group [ref=e80]
+          - img
+          - generic [ref=e8]
+    - navigation "Navegação principal móvel":
+      - generic [ref=e22]:
+        - link "Resumo" [ref=e23] [cursor=pointer]:
+          - /url: /resumo
+          - generic [ref=e24]
+        - link "Leads" [ref=e28] [cursor=pointer]:
+          - /url: /leads
+          - generic [ref=e29]
+        - link "Negócios" [ref=e36] [cursor=pointer]:
+          - /url: /kanban
+          - generic [ref=e37]
+        - link "Caixa" [ref=e44] [cursor=pointer]:
+          - /url: /recebimentos
+          - generic [ref=e45]
+        - button "Menu" [ref=e51]:
+          - generic [ref=e52]
+  - generic:
+    - img
+  - dialog "Bem-vindo ao HYPE CRM" [ref=e92]:
+    - generic [ref=e93]:
+      - generic [ref=e94]: Tour guiado
+      - generic [ref=e95]:
+        - paragraph [ref=e96]: Bem-vindo ao HYPE CRM
+        - paragraph [ref=e97]: Vamos fazer um tour rapido para mostrar os principais modulos do sistema.
+      - generic [ref=e98]:
+        - generic [ref=e99]:
+          - generic [ref=e100]: Passo
+          - text: 1 de 6
+        - generic [ref=e101]:
+          - button "Pular tour" [ref=e102]: Pular
+          - button "Avançar para próximo passo" [ref=e103]: Continuar
+  - alert [ref=e58]

@@ -40,6 +40,12 @@ pm2 stop hypecrm-web
 pnpm db:migrate:deploy
 pm2 start hypecrm-web
 ```
+- Para reiniciar o servidor no ambiente local/PM2, `npm run pm2:restart` já faz build junto; use isso quando quiser um reinicio completo e rápido.
+- Fluxo recomendado quando houver tempo: rode `pnpm build` primeiro e, se passar, faça o restart manual com `pm2 restart hypecrm-web`.
+
+### Layout de Altura
+- Em módulos full-height dentro do dashboard, `fillHeight` sozinho pode colapsar sob `main` fora de `lg`; use altura explícita em viewport quando o canvas precisar ocupar a tela inteira.
+- Para canvases/boards como `automacoes`, siga o padrão de `chat`/`kanban` com `h-[calc(100dvh-...)]` no shell do módulo e `min-h-0` em todos os wrappers intermediários.
 
 ### Playwright autenticado
 - Para validar fluxos protegidos no Playwright, reutilize uma sessão existente em vez de testar deslogado.

@@ -1,0 +1,84 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - generic:
+            - generic [ref=e10]:
+              - generic [ref=e11]: Fluxo
+              - generic [ref=e13]: MVP local (nao salva)
+            - generic [ref=e15]:
+              - button "Excluir selecao" [disabled]:
+                - img
+              - button "Afastar canvas" [ref=e16]:
+                - img [ref=e17]
+              - button "Aproximar canvas" [ref=e20]:
+                - img [ref=e21]
+              - button "Ajustar fluxo ao canvas" [ref=e24]:
+                - img [ref=e25]
+          - generic [ref=e27]:
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: Comece pelo gatilho
+              - paragraph [ref=e30]: Crie o primeiro nó para iniciar o fluxo.
+            - button "Criar nó" [active] [ref=e31]:
+              - img [ref=e32]
+              - text: Criar nó
+        - generic [ref=e93]:
+          - button "Fechar modal" [ref=e94]
+          - generic [ref=e95]:
+            - button "Fechar" [ref=e96]:
+              - img [ref=e97]
+            - generic [ref=e101]:
+              - heading "Escolha o gatilho inicial" [level=2] [ref=e102]
+              - paragraph [ref=e103]: Crie a entrada visual que inicia o fluxo no canvas.
+            - generic [ref=e104]:
+              - button "Gatilho Recebeu mensagem Dispara visualmente quando um contato envia uma nova mensagem." [ref=e105]:
+                - generic [ref=e107]:
+                  - paragraph [ref=e108]: Gatilho
+                  - paragraph [ref=e109]: Recebeu mensagem
+                  - paragraph [ref=e110]: Dispara visualmente quando um contato envia uma nova mensagem.
+              - button "Gatilho Lead criado Inicia a jornada quando um novo lead entra no CRM." [ref=e112]:
+                - generic [ref=e114]:
+                  - paragraph [ref=e115]: Gatilho
+                  - paragraph [ref=e116]: Lead criado
+                  - paragraph [ref=e117]: Inicia a jornada quando um novo lead entra no CRM.
+              - button "Gatilho Negócio mudou de etapa Abre o fluxo ao detectar uma mudança de etapa comercial." [ref=e119]:
+                - generic [ref=e121]:
+                  - paragraph [ref=e122]: Gatilho
+                  - paragraph [ref=e123]: Negócio mudou de etapa
+                  - paragraph [ref=e124]: Abre o fluxo ao detectar uma mudança de etapa comercial.
+              - button "Gatilho Horário agendado Começa a automação quando um compromisso é marcado." [ref=e126]:
+                - generic [ref=e128]:
+                  - paragraph [ref=e129]: Gatilho
+                  - paragraph [ref=e130]: Horário agendado
+                  - paragraph [ref=e131]: Começa a automação quando um compromisso é marcado.
+            - generic [ref=e133]:
+              - button "Cancelar" [ref=e134]
+              - button "Criar primeiro nó" [ref=e135]
+    - navigation "Navegação principal móvel":
+      - generic [ref=e35]:
+        - link "Resumo" [ref=e36] [cursor=pointer]:
+          - /url: /resumo
+          - generic [ref=e37]:
+            - img [ref=e38]
+            - generic [ref=e40]: Resumo
+        - link "Leads" [ref=e41] [cursor=pointer]:
+          - /url: /leads
+          - generic [ref=e42]:
+            - img [ref=e43]
+            - generic [ref=e48]: Leads
+        - link "Negócios" [ref=e49] [cursor=pointer]:
+          - /url: /kanban
+          - generic [ref=e50]:
+            - img [ref=e51]
+            - generic [ref=e56]: Negócios
+        - link "Caixa" [ref=e57] [cursor=pointer]:
+          - /url: /recebimentos
+          - generic [ref=e58]:
+            - img [ref=e59]
+            - generic [ref=e63]: Caixa
+        - button "Menu" [ref=e64]:
+          - generic [ref=e65]:
+            - img [ref=e66]
+            - generic [ref=e70]: Menu
+  - alert [ref=e71]

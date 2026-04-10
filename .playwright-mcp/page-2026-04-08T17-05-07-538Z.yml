@@ -1,0 +1,51 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - main [ref=e3]:
+      - generic [ref=e99]:
+        - img [ref=e101]
+        - generic [ref=e103]:
+          - heading "Algo deu errado" [level=2] [ref=e104]
+          - paragraph [ref=e105]: Ocorreu um erro ao carregar esta seção.
+        - button "Recarregar Página" [ref=e106]
+    - navigation "Navegação principal móvel":
+      - generic [ref=e38]:
+        - link "Resumo" [ref=e39] [cursor=pointer]:
+          - /url: /resumo
+          - generic [ref=e40]:
+            - img [ref=e41]
+            - generic [ref=e43]: Resumo
+        - link "Leads" [ref=e44] [cursor=pointer]:
+          - /url: /leads
+          - generic [ref=e45]:
+            - img [ref=e46]
+            - generic [ref=e51]: Leads
+        - link "Negócios" [ref=e52] [cursor=pointer]:
+          - /url: /kanban
+          - generic [ref=e53]:
+            - img [ref=e54]
+            - generic [ref=e59]: Negócios
+        - link "Caixa" [ref=e60] [cursor=pointer]:
+          - /url: /recebimentos
+          - generic [ref=e61]:
+            - img [ref=e62]
+            - generic [ref=e66]: Caixa
+        - button "Menu" [ref=e67]:
+          - generic [ref=e68]:
+            - img [ref=e69]
+            - generic [ref=e73]: Menu
+  - generic:
+    - img
+  - dialog "Bem-vindo ao HYPE CRM" [ref=e109]:
+    - generic [ref=e110]:
+      - generic [ref=e111]: Tour guiado
+      - generic [ref=e112]:
+        - paragraph [ref=e113]: Bem-vindo ao HYPE CRM
+        - paragraph [ref=e114]: Vamos fazer um tour rapido para mostrar os principais modulos do sistema.
+      - generic [ref=e115]:
+        - generic [ref=e116]:
+          - generic [ref=e117]: Passo
+          - text: 1 de 6
+        - generic [ref=e118]:
+          - button "Pular tour" [ref=e119]: Pular
+          - button "Avançar para próximo passo" [ref=e120]: Continuar
+  - alert [ref=e74]

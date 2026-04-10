@@ -1,0 +1,105 @@
+- generic [ref=e2]:
+  - complementary [ref=e3]:
+    - generic [ref=e4]:
+      - img "HYPE CRM" [ref=e5]
+      - navigation "Navegação principal" [ref=e6]:
+        - 'link "Resumo: Visão geral da operação" [ref=e10] [cursor=pointer]':
+          - /url: /resumo
+          - img [ref=e12]
+        - generic [ref=e15]:
+          - 'link "Leads: Carteira e originação" [ref=e17] [cursor=pointer]':
+            - /url: /leads
+            - img [ref=e19]
+          - 'link "Produtos: Catálogo de produtos e serviços" [ref=e25] [cursor=pointer]':
+            - /url: /produtos
+            - img [ref=e27]
+          - 'link "Negócios: Pipeline e movimentações" [ref=e32] [cursor=pointer]':
+            - /url: /kanban
+            - img [ref=e34]
+          - 'link "Chat: Conversas unificadas" [ref=e40] [cursor=pointer]':
+            - /url: /chat
+            - img [ref=e42]
+          - 'link "Recebimentos: Fluxo financeiro e caixa" [ref=e45] [cursor=pointer]':
+            - /url: /recebimentos
+            - img [ref=e47]
+          - 'link "Equipe: Gestão de pessoas e metas" [ref=e52] [cursor=pointer]':
+            - /url: /equipe
+            - img [ref=e54]
+        - generic [ref=e59]:
+          - 'link "Integrações: Conexões e agenda externa" [ref=e61] [cursor=pointer]':
+            - /url: /integracoes
+            - img [ref=e63]
+          - 'link "Automações: Builder visual e jornadas" [ref=e67] [cursor=pointer]':
+            - /url: /automacoes
+            - img [ref=e69]
+          - 'link "WhatsApp: Automação e atendimento" [ref=e74] [cursor=pointer]':
+            - /url: /whatsapp
+            - img [ref=e76]
+          - 'link "Configurações: Preferências da empresa" [ref=e79] [cursor=pointer]':
+            - /url: /configs
+            - img [ref=e81]
+      - generic [ref=e84]:
+        - button "lima, Administrador" [ref=e85]: LI
+        - button "Sair" [ref=e86]:
+          - img [ref=e87]
+  - main [ref=e90]:
+    - generic [ref=e93]:
+      - generic:
+        - application:
+          - img
+          - generic "Control Panel" [ref=e94]:
+            - button "Zoom In" [ref=e95] [cursor=pointer]:
+              - img [ref=e96]
+            - button "Zoom Out" [ref=e98] [cursor=pointer]:
+              - img [ref=e99]
+            - button "Fit View" [ref=e101] [cursor=pointer]:
+              - img [ref=e102]
+          - link "React Flow attribution" [ref=e105] [cursor=pointer]:
+            - /url: https://reactflow.dev
+            - text: React Flow
+      - generic [ref=e107]:
+        - generic [ref=e109]:
+          - generic [ref=e110]: Fluxo
+          - generic [ref=e111]: MVP local (nao salva)
+        - generic [ref=e112]:
+          - button "Excluir selecao" [disabled] [ref=e113]:
+            - img [ref=e114]
+          - button "Afastar canvas" [ref=e117]:
+            - img [ref=e118]
+          - button "Aproximar canvas" [ref=e121]:
+            - img [ref=e122]
+          - button "Ajustar fluxo ao canvas" [ref=e125]:
+            - img [ref=e126]
+      - generic [ref=e129]:
+        - generic [ref=e130]:
+          - paragraph [ref=e131]: Comece pelo gatilho
+          - paragraph [ref=e132]: Crie o primeiro nó para iniciar o fluxo.
+        - button "Criar nó" [ref=e133]:
+          - img [ref=e134]
+          - text: Criar nó
+  - navigation "Navegação principal móvel" [ref=e135]:
+    - generic [ref=e138]:
+      - link "Resumo" [ref=e139] [cursor=pointer]:
+        - /url: /resumo
+        - generic [ref=e140]:
+          - img [ref=e141]
+          - text: Resumo
+      - link "Leads" [ref=e143] [cursor=pointer]:
+        - /url: /leads
+        - generic [ref=e144]:
+          - img [ref=e145]
+          - text: Leads
+      - link "Negócios" [ref=e150] [cursor=pointer]:
+        - /url: /kanban
+        - generic [ref=e151]:
+          - img [ref=e152]
+          - text: Negócios
+      - link "Caixa" [ref=e157] [cursor=pointer]:
+        - /url: /recebimentos
+        - generic [ref=e158]:
+          - img [ref=e159]
+          - text: Caixa
+      - button "Menu" [ref=e163]:
+        - generic [ref=e164]:
+          - img [ref=e165]
+          - text: Menu

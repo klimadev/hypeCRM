@@ -1,11 +1,17 @@
-import { Metadata } from "next";
-import { ModuloAutmacoesClient } from "./modulo-automacoes-client";
+import { redirect } from "next/navigation";
+import { obterSessaoNoServidor } from "@/lib/autenticacao";
+import { ModuloAutomacoes } from "@/modules/automacoes";
 
-export const metadata: Metadata = {
-  title: "Automações | HYPE CRM",
-  description: "Gerencie automações de mensagens e notificações",
-};
+export default async function PaginaAutomacoes() {
+  const sessao = await obterSessaoNoServidor();
 
-export default function AutomacoesPage() {
-  return <ModuloAutmacoesClient />;
+  if (!sessao) {
+    redirect("/login");
+  }
+
+  if (sessao.perfil !== "EMPRESA" && sessao.perfil !== "GERENTE") {
+    redirect("/kanban");
+  }
+
+  return <ModuloAutomacoes />;
 }

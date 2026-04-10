@@ -1,0 +1,95 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img [ref=e6]
+      - generic [ref=e9]:
+        - generic [ref=e10]:
+          - paragraph [ref=e11]: Trial termina em 20 dias
+          - generic [ref=e12]: 20d
+        - paragraph [ref=e13]: Até 30/04/2026. Seu trial expira em 20 dias.
+    - generic [ref=e14]:
+      - link "Fazer upgrade" [ref=e15] [cursor=pointer]:
+        - /url: https://hypecrm.com.br
+        - img [ref=e16]
+        - text: Fazer upgrade
+      - button "Fechar notificação do trial" [ref=e19]:
+        - img [ref=e20]
+  - generic [ref=e23]:
+    - complementary [ref=e24]:
+      - generic [ref=e25]:
+        - img "HYPE CRM" [ref=e28]
+        - navigation "Navegação principal" [ref=e29]:
+          - 'link "Resumo: Visão geral da operação" [ref=e33] [cursor=pointer]':
+            - /url: /resumo
+            - img [ref=e35]
+          - generic [ref=e38]:
+            - 'link "Leads: Carteira e originação" [ref=e40] [cursor=pointer]':
+              - /url: /leads
+              - img [ref=e42]
+            - 'link "Produtos: Catálogo de produtos e serviços" [ref=e48] [cursor=pointer]':
+              - /url: /produtos
+              - img [ref=e50]
+            - 'link "Negócios: Pipeline e movimentações" [ref=e55] [cursor=pointer]':
+              - /url: /kanban
+              - img [ref=e57]
+            - 'link "Chat: Conversas unificadas" [ref=e63] [cursor=pointer]':
+              - /url: /chat
+              - img [ref=e65]
+            - 'link "Recebimentos: Fluxo financeiro e caixa" [ref=e68] [cursor=pointer]':
+              - /url: /recebimentos
+              - img [ref=e70]
+            - 'link "Equipe: Gestão de pessoas e metas" [ref=e75] [cursor=pointer]':
+              - /url: /equipe
+              - img [ref=e77]
+          - generic [ref=e82]:
+            - 'link "Integrações: Conexões e agenda externa" [ref=e84] [cursor=pointer]':
+              - /url: /integracoes
+              - img [ref=e86]
+            - 'link "Automações: Builder visual e jornadas" [ref=e90] [cursor=pointer]':
+              - /url: /automacoes
+              - img [ref=e92]
+            - 'link "WhatsApp: Automação e atendimento" [ref=e97] [cursor=pointer]':
+              - /url: /whatsapp
+              - img [ref=e99]
+            - 'link "Configurações: Preferências da empresa" [ref=e102] [cursor=pointer]':
+              - /url: /configs
+              - img [ref=e104]
+        - generic [ref=e107]:
+          - button "lima, Administrador" [ref=e108]: LI
+          - button "Sair" [ref=e109]:
+            - img [ref=e110]
+    - main [ref=e113]:
+      - generic [ref=e116]:
+        - application [ref=e118]:
+          - img
+          - generic "Control Panel" [ref=e121]:
+            - button "Zoom In" [ref=e122] [cursor=pointer]:
+              - img [ref=e123]
+            - button "Zoom Out" [ref=e125] [cursor=pointer]:
+              - img [ref=e126]
+            - button "Fit View" [ref=e128] [cursor=pointer]:
+              - img [ref=e129]
+          - link "React Flow attribution" [ref=e132] [cursor=pointer]:
+            - /url: https://reactflow.dev
+            - text: React Flow
+        - generic:
+          - generic [ref=e135]:
+            - generic [ref=e136]: Fluxo
+            - generic [ref=e138]: MVP local (nao salva)
+          - generic [ref=e140]:
+            - button "Excluir selecao" [disabled]:
+              - img
+            - button "Afastar canvas" [ref=e141]:
+              - img [ref=e142]
+            - button "Aproximar canvas" [ref=e145]:
+              - img [ref=e146]
+            - button "Ajustar fluxo ao canvas" [ref=e149]:
+              - img [ref=e150]
+        - generic [ref=e152]:
+          - generic [ref=e153]:
+            - paragraph [ref=e154]: Comece pelo gatilho
+            - paragraph [ref=e155]: Crie o primeiro nó para iniciar o fluxo.
+          - button "Criar nó" [ref=e156]:
+            - img [ref=e157]
+            - text: Criar nó
+  - alert [ref=e158]

@@ -33,6 +33,9 @@ model Automacao {
   fonte                String
   gatilho              String
   config_json          String                 @default("{}")
+  editor_modelo        String                 @default("LEGACY")
+  rascunho_grafo_json  String?
+  versao_publicada_id  String?
   ativo                Boolean                @default(true)
   ultimo_sync_em       DateTime               @default(now())
   criado_em            DateTime               @default(now())
@@ -40,10 +43,45 @@ model Automacao {
   Empresa              Empresa                @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
   AutomacaoAcao        AutomacaoAcao[]
   AutomacaoAgendamento AutomacaoAgendamento[]
+  AutomacaoVersao      AutomacaoVersao[]
+  AutomacaoExecucao    AutomacaoExecucao[]
 
   @@index([id_empresa])
   @@index([fonte, gatilho])
   @@index([id_empresa, ativo])
+}
+
+model AutomacaoVersao {
+  id               String           @id
+  id_automacao     String
+  numero           Int
+  grafo_json       String
+  trigger_principal String
+  publicado_em     DateTime         @default(now())
+  Automacao        Automacao        @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+  AutomacaoExecucao AutomacaoExecucao[]
+
+  @@unique([id_automacao, numero])
+  @@index([id_automacao, publicado_em])
+}
+
+model AutomacaoExecucao {
+  id                 String            @id
+  id_automacao       String
+  id_versao          String
+  status             String
+  trigger_tipo       String
+  contexto_ref_tipo  String?
+  contexto_ref_id    String?
+  log_resumido_json  String?
+  criado_em          DateTime          @default(now())
+  atualizado_em      DateTime          @default(now())
+  Automacao          Automacao         @relation(fields: [id_automacao], references: [id], onDelete: Cascade)
+  AutomacaoVersao    AutomacaoVersao   @relation(fields: [id_versao], references: [id], onDelete: Cascade)
+
+  @@index([id_automacao, criado_em])
+  @@index([id_versao])
+  @@index([status, criado_em])
 }
 
 model AutomacaoAcao {

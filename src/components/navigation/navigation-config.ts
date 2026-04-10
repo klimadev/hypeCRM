@@ -1,4 +1,4 @@
-import { BarChart3, Blocks, LayoutGrid, MessageCircle, MessageSquare, Package, Settings2, Target, Users, WalletCards, Zap } from "lucide-react";
+import { BarChart3, Blocks, GitBranch, LayoutGrid, MessageCircle, MessageSquare, Package, Settings2, Target, Users, WalletCards } from "lucide-react";
 import type { SessaoToken } from "@/lib/tipos";
 import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
 import { TOUR_TARGETS } from "@/modules/onboarding/lib/selectors";
@@ -18,9 +18,9 @@ function getItemDescricao(label: string) {
     Metas: "Objetivos e acompanhamento",
     "Minhas Metas": "Acompanhamento individual",
     Integrações: "Conexões e agenda externa",
+    Automações: "Builder visual e jornadas",
     WhatsApp: "Automação e atendimento",
     Chat: "Conversas unificadas",
-    Automações: "Regras e gatilhos",
     Configurações: "Preferências da empresa",
   };
   return mapa[label] ?? "Acesso rápido da área";
@@ -55,12 +55,12 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
     },
     {
       titulo: "Sistema",
-      itens: [
-        ...(podeExibirIntegracoesNaNavegacao(sessao.perfil) ? [{ href: itemIntegracoes.href, label: itemIntegracoes.label, descricao: itemIntegracoes.descricao, icon: Blocks }] : []),
-        ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle, tourTarget: TOUR_TARGETS.sidebarWhatsapp }] : []),
-        ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/automacoes", label: "Automações", descricao: getItemDescricao("Automações"), icon: Zap }] : []),
-        ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2, tourTarget: TOUR_TARGETS.sidebarConfigs }] : []),
-      ],
+        itens: [
+          ...(podeExibirIntegracoesNaNavegacao(sessao.perfil) ? [{ href: itemIntegracoes.href, label: itemIntegracoes.label, descricao: itemIntegracoes.descricao, icon: Blocks }] : []),
+          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/automacoes", label: "Automações", descricao: getItemDescricao("Automações"), icon: GitBranch }] : []),
+          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle, tourTarget: TOUR_TARGETS.sidebarWhatsapp }] : []),
+          ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2, tourTarget: TOUR_TARGETS.sidebarConfigs }] : []),
+        ],
     },
   ];
 }

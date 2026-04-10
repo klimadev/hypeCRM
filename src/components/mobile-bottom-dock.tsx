@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
-import { BarChart3, Blocks, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Zap, Users, MoreHorizontal } from "lucide-react";
+import { BarChart3, Blocks, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Users, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -38,15 +38,14 @@ function obterItensDock(perfil: SessaoToken["perfil"]): DockItem[] {
     ...itensPrincipais,
     itemQuarto,
     ...(perfil === "EMPRESA" || perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", icon: MessageCircle }] : []),
-    ...(perfil === "EMPRESA" || perfil === "GERENTE" ? [{ href: "/automacoes", label: "Aut.", icon: Zap }] : []),
     ...(perfil === "EMPRESA" ? [{ href: "/configs", label: "Ajustes", icon: Settings2 }] : []),
   ];
 }
 
 const itensAgrupados: DockItem[] = [
   { href: "/integracoes", label: "Integrações", icon: Blocks },
+
   { href: "/whatsapp", label: "WhatsApp", icon: MessageCircle },
-  { href: "/automacoes", label: "Automações", icon: Zap },
   { href: "/configs", label: "Ajustes", icon: Settings2 },
 ];
 
@@ -56,7 +55,7 @@ export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
   const itemIntegracoes = obterItemIntegracoesNavegacao();
   const itensMais = itensAgrupados.filter((item) => {
     if (item.href === itemIntegracoes.href) return podeExibirIntegracoesNaNavegacao(perfil);
-    if (item.href === "/whatsapp" || item.href === "/automacoes") return perfil === "EMPRESA" || perfil === "GERENTE";
+    if (item.href === "/whatsapp") return perfil === "EMPRESA" || perfil === "GERENTE";
     if (item.href === "/configs") return perfil === "EMPRESA";
     return true;
   });

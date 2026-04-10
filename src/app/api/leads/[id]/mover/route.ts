@@ -5,7 +5,6 @@ import { exigirSessao } from "@/lib/permissoes";
 import { esquemaMoverLead } from "@/lib/validacoes";
 import { badRequest, forbidden, notFound } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
-import { executarAutomacoesLeadStageChanged } from "@/lib/whatsapp-automations";
 
 type LeadMovimentacaoPayload = {
   id: string;
@@ -114,7 +113,6 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     return notFound("Lead nao encontrado.");
   }
 
-  const empresaLead = lead.Empresa ?? lead.empresa ?? null;
   const estagioAtualLead = lead.EstagioFunil ?? lead.estagio;
   const funcionarioLead = lead.Funcionario ?? lead.funcionario;
 
@@ -142,16 +140,15 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const estagioEfetivo = estagioDestino;
 
-  // Same-stage no-op guard: skip automation scheduling if lead is already in destination stage
   if (estagioAtualLead?.id === estagioEfetivo.id) {
-    return NextResponse.json({ 
-      lead, 
+    return NextResponse.json({
+      lead,
       mensagem: "Lead ja esta neste estagio.",
-      noop: true 
+      noop: true,
     });
   }
 
-  const { leadAtualizado, logMovimentacao } = await prisma.$transaction(async (tx) => {
+  const { leadAtualizado } = await prisma.$transaction(async (tx) => {
     const leadMovido = await tx.lead.update({
       where: { id: lead.id },
       data: {
@@ -161,11 +158,11 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       include: { EstagioFunil: true },
     }) as LeadAtualizadoPayload;
 
-    const log = await tx.leadEstagioLog.create({
+    await tx.leadEstagioLog.create({
       data: {
         id: randomUUID(),
         id_lead: lead.id,
-          id_estagio_anterior: estagioAtualLead?.id,
+        id_estagio_anterior: estagioAtualLead?.id,
         id_estagio_novo: estagioEfetivo.id,
         empresa_id: auth.sessao.id_empresa,
       },
@@ -173,43 +170,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
     return {
       leadAtualizado: leadMovido,
-      logMovimentacao: log,
     };
   });
-
-  // Disparar automações em background para não bloquear a resposta
-  void (async () => {
-    try {
-      await executarAutomacoesLeadStageChanged({
-        idEmpresa: auth.sessao.id_empresa,
-        leadEstagioLogId: logMovimentacao.id,
-        lead: {
-          id: leadAtualizado.id,
-          nome: leadAtualizado.nome,
-          telefone: leadAtualizado.telefone,
-          email: leadAtualizado.email,
-        },
-        estagioAnterior: {
-          id: estagioAtualLead?.id ?? null,
-          nome: estagioAtualLead?.nome ?? null,
-        },
-        estagioAtual: {
-          id: estagioEfetivo.id,
-          nome: estagioEfetivo.nome,
-        },
-        empresa: {
-          nome: empresaLead?.nome ?? null,
-        },
-        negocio: {
-          id: lead.id,
-          titulo: null,
-        },
-        disparadoEm: logMovimentacao.criado_em,
-      });
-    } catch (error) {
-      console.error("Falha ao disparar automacoes de mudanca de estagio:", error);
-    }
-  })();
 
   const estagioAtualizado = leadAtualizado.EstagioFunil ?? leadAtualizado.estagio;
 

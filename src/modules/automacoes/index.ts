@@ -1,0 +1,1 @@
+export { ModuloAutomacoes } from "./page";

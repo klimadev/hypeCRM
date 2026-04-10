@@ -1,15 +1,8 @@
 "use client";
 
-import dynamic from "next/dynamic";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ComponentType } from "react";
 import { readTourCompletion, writeTourCompletion } from "@/modules/onboarding/lib/storage";
 import type { RunnerProps, TourBundle, TourIdentity } from "@/modules/onboarding/types";
-
-// [ME2] Lazy loading do tour runner - @reactour/tour só é carregado quando o tour é iniciado
-const OnboardingTourRunner = dynamic(
-  () => import("@/modules/onboarding/components/onboarding-tour-runner"),
-  { ssr: false }
-);
 
 type OnboardingTourGateProps = {
   bundle: TourBundle;
@@ -20,6 +13,7 @@ export function OnboardingTourGate({ bundle, identity }: OnboardingTourGateProps
   const hasInitialized = useRef(false);
   const [isReady, setIsReady] = useState(false);
   const [shouldRenderRunner, setShouldRenderRunner] = useState(false);
+  const [RunnerComponent, setRunnerComponent] = useState<ComponentType<RunnerProps> | null>(null);
 
   useEffect(() => {
     if (hasInitialized.current) {
@@ -41,9 +35,39 @@ export function OnboardingTourGate({ bundle, identity }: OnboardingTourGateProps
     setShouldRenderRunner(false);
   };
 
-  if (!isReady || !shouldRenderRunner) {
+  useEffect(() => {
+    if (!isReady || !shouldRenderRunner || RunnerComponent) {
+      return;
+    }
+
+    let active = true;
+
+    import("@/modules/onboarding/components/onboarding-tour-runner")
+      .then((module) => {
+        if (!active) {
+          return;
+        }
+
+        setRunnerComponent(() => module.default);
+      })
+      .catch((error) => {
+        if (process.env.NODE_ENV !== "production") {
+          console.error("[onboarding] falha ao carregar tour runner:", error);
+        }
+
+        if (active) {
+          setShouldRenderRunner(false);
+        }
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [RunnerComponent, isReady, shouldRenderRunner]);
+
+  if (!isReady || !shouldRenderRunner || !RunnerComponent) {
     return null;
   }
 
-  return <OnboardingTourRunner bundle={bundle} onFinish={handleFinish} />;
+  return <RunnerComponent bundle={bundle} onFinish={handleFinish} />;
 }

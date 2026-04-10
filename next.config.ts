@@ -9,18 +9,31 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: !buildEstrito,
   },
 
-  // [QW2] Prisma deve ser external no server - evita bundling desnecessário
   serverExternalPackages: ["@prisma/client"],
 
-  // [QW3] Logging de fetches em dev - ajuda a debugar data fetching
   logging: {
     fetches: {
       fullUrl: true,
     },
   },
 
-  // [ME1] Build rápido por padrão; validação estrita fica disponível em `npm run build:strict`.
   cacheComponents: false,
+
+  experimental: {
+    optimizePackageImports: [
+      "lucide-react",
+      "@radix-ui/react-dialog",
+      "@radix-ui/react-select",
+      "@radix-ui/react-tabs",
+      "@hello-pangea/dnd",
+    ],
+  },
+
+  modularizeImports: {
+    lucideReact: {
+      transform: "lucide-react/dist/esm/{{member}}",
+    },
+  },
 };
 
 export default nextConfig;

@@ -1,0 +1,24 @@
+[    7503ms] [ERROR] Error: Module 59897 was instantiated because it was required from module 43773, but the module factory is not available.
+    at q (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:563)
+    at B (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:480)
+    at o.m [as i] (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:1:2383)
+    at module evaluation (http://localhost:3434/_next/static/chunks/919ae824d7c8e9d4.js:83:191170)
+    at q (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:939)
+    at B (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:480)
+    at l.r (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:1:2969)
+    at f (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:731)
+    at k (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:4140)
+    at E (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:1391) @ http://localhost:3434/_next/static/chunks/7c4521640c976e16.js:0
+[    7751ms] [ERROR] ErrorBoundary caught an error: Error: Module 59897 was instantiated because it was required from module 43773, but the module factory is not available.
+    at q (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:563)
+    at B (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:480)
+    at o.m [as i] (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:1:2383)
+    at module evaluation (http://localhost:3434/_next/static/chunks/919ae824d7c8e9d4.js:83:191170)
+    at q (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:939)
+    at B (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:4:480)
+    at l.r (http://localhost:3434/_next/static/chunks/turbopack-2203df5b42695b58.js:1:2969)
+    at f (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:731)
+    at k (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:4140)
+    at E (http://localhost:3434/_next/static/chunks/61dee7ded0207c5a.js:1:1391) {componentStack: 
+    at Lazy (<anonymous>)
+    at E (http://localh…_next/static/chunks/7c4521640c976e16.js:1:222940)} @ http://localhost:3434/_next/static/chunks/b81edb93f5661eb8.js:0
