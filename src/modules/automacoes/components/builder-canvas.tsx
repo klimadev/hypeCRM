@@ -23,9 +23,18 @@ import {
   type NodeProps,
 } from "@xyflow/react";
 import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import { WORKFLOW_KIND_META } from "../lib/workflow-builder-seeds";
 import type { WorkflowBranch, WorkflowEdgeModel, WorkflowNodeConfig, WorkflowNodeModel } from "../types";
 import "@xyflow/react/dist/style.css";
+
+type WhatsappInstanciaOption = {
+  id: string;
+  nome: string;
+};
 
 export type BuilderCanvasApi = {
   fit: () => void;
@@ -49,18 +58,18 @@ type BuilderCanvasProps = {
   onRequestInsertOnEdge: (edgeId: string) => void;
   onNodeConfigChange: (nodeId: string, configPatch: WorkflowNodeConfig) => void;
   onCanvasReady: (api: BuilderCanvasApi) => void;
+  whatsappInstancias: WhatsappInstanciaOption[];
 };
 
 type FlowNodeData = {
   model: WorkflowNodeModel;
   onAddNext: (nodeId: string, branch?: WorkflowBranch) => void;
   hasOutgoing: boolean;
-  hasOutgoingSim: boolean;
-  hasOutgoingNao: boolean;
   isFocused: boolean;
   entering: boolean;
   onDeleteNode: (nodeId: string) => void;
   onConfigChange: (nodeId: string, configPatch: WorkflowNodeConfig) => void;
+  whatsappInstancias: WhatsappInstanciaOption[];
 };
 
 type FlowEdgeData = {
@@ -72,12 +81,19 @@ type FlowEdgeData = {
 
 const NODE_SIZE = { width: 248, height: 124 };
 
+function parseManualPhones(value: string) {
+  return value
+    .split(/[\n,;]+/)
+    .map((item) => item.trim())
+    .filter((item, idx, arr) => item.length > 0 && arr.indexOf(item) === idx);
+}
+
 const nodeTypes = {
   workflow: memo(function WorkflowNodeCard({ data, dragging }: NodeProps<Node<FlowNodeData, "workflow">>) {
+    const [manualPhoneDraft, setManualPhoneDraft] = useState("");
     const meta = WORKFLOW_KIND_META[data.model.kind];
     const continuationBorder = data.hasOutgoing ? "rgba(56,189,248,0.28)" : "rgba(56,189,248,0.45)";
-    const isCondition = data.model.kind === "condicao";
-
+    const manualPhones = data.model.config.manualPhones ?? [];
     return (
       <div
         className="relative rounded-[22px] border bg-[rgba(16,16,19,0.98)] p-4 transition-[border-color,box-shadow,opacity] duration-150 ease-[var(--ease-productive)]"
@@ -122,60 +138,86 @@ const nodeTypes = {
 
         {data.isFocused ? (
           <div className="nodrag nopan mt-3 grid gap-2 rounded-[12px] border border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.82)] p-2.5">
-            {data.model.kind === "gatilho" ? (
-              <>
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={data.model.config.canal ?? ""}
-                  onChange={(event) => data.onConfigChange(data.model.id, { canal: event.target.value })}
-                  placeholder="Canal"
-                />
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={String(data.model.config.janelaMinutos ?? "")}
-                  onChange={(event) => data.onConfigChange(data.model.id, { janelaMinutos: Number(event.target.value || 0) })}
-                  placeholder="Janela (min)"
-                />
-              </>
-            ) : null}
+            {data.model.kind === "gatilho" ? <p className="text-xs text-[var(--text-secondary)]">Sem configurações para este gatilho.</p> : null}
 
             {data.model.kind === "acao" ? (
               <>
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={data.model.config.modeloMensagem ?? ""}
-                  onChange={(event) => data.onConfigChange(data.model.id, { modeloMensagem: event.target.value })}
-                  placeholder="Template"
+                <Textarea
+                  className="min-h-20 text-xs"
+                  value={data.model.config.messageTemplate ?? ""}
+                  onChange={(event) => data.onConfigChange(data.model.id, { messageTemplate: event.target.value })}
+                  placeholder="Digite a mensagem"
                 />
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={String(data.model.config.delayMinutos ?? "")}
-                  onChange={(event) => data.onConfigChange(data.model.id, { delayMinutos: Number(event.target.value || 0) })}
-                  placeholder="Delay (min)"
-                />
-              </>
-            ) : null}
+                <Select
+                  value={data.model.config.whatsappInstanceId ?? ""}
+                  onValueChange={(value) => data.onConfigChange(data.model.id, { whatsappInstanceId: value })}
+                >
+                  <SelectTrigger className="h-8 text-xs">
+                    <SelectValue placeholder="Selecione a instância" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {data.whatsappInstancias.map((instancia) => (
+                      <SelectItem key={instancia.id} value={instancia.id}>
+                        {instancia.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-            {data.model.kind === "condicao" ? (
-              <>
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={data.model.config.campo ?? ""}
-                  onChange={(event) => data.onConfigChange(data.model.id, { campo: event.target.value })}
-                  placeholder="Campo"
-                />
-                <input
-                  className="h-8 rounded-[8px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 text-xs text-[var(--text-primary)]"
-                  value={data.model.config.valor ?? ""}
-                  onChange={(event) => data.onConfigChange(data.model.id, { valor: event.target.value })}
-                  placeholder="Valor"
-                />
+                <div className="flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-2.5 py-2">
+                  <span className="text-[11px] text-[var(--text-secondary)]">Usar telefone do lead criado</span>
+                  <Switch
+                    checked={data.model.config.sendToLeadPhone !== false}
+                    onCheckedChange={(checked) => data.onConfigChange(data.model.id, { sendToLeadPhone: checked })}
+                  />
+                </div>
+
+                <div className="grid gap-1.5">
+                  <p className="text-[11px] text-[var(--text-secondary)]">Números manuais (tags)</p>
+                  <Input
+                    value={manualPhoneDraft}
+                    onChange={(event) => setManualPhoneDraft(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key !== "Enter" && event.key !== ",") {
+                        return;
+                      }
+                      event.preventDefault();
+                      const phones = parseManualPhones(manualPhoneDraft);
+                      if (phones.length === 0) {
+                        return;
+                      }
+                      const merged = [...manualPhones, ...phones].filter((item, idx, arr) => arr.indexOf(item) === idx);
+                      data.onConfigChange(data.model.id, { manualPhones: merged });
+                      setManualPhoneDraft("");
+                    }}
+                    placeholder="Digite e pressione Enter"
+                    className="h-8 text-xs"
+                  />
+                  {manualPhones.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5">
+                      {manualPhones.map((phone) => (
+                        <button
+                          key={phone}
+                          type="button"
+                          className="inline-flex items-center gap-1 rounded-full border border-[color:rgba(56,189,248,0.32)] bg-[color:rgba(56,189,248,0.1)] px-2 py-0.5 text-[10px] text-[#a5f3fc]"
+                          onClick={() => data.onConfigChange(data.model.id, { manualPhones: manualPhones.filter((item) => item !== phone) })}
+                          title="Remover número"
+                        >
+                          {phone}
+                          <span className="text-[11px] leading-none">x</span>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-[var(--text-tertiary)]">Sem números manuais adicionados.</p>
+                  )}
+                </div>
               </>
             ) : null}
           </div>
         ) : null}
 
-        {data.isFocused && !isCondition ? (
+        {data.isFocused ? (
           <div className="pointer-events-none absolute -right-[92px] top-1/2 flex -translate-y-1/2 items-center">
             <div className="h-px w-11 bg-[linear-gradient(90deg,rgba(56,189,248,0.52),rgba(56,189,248,0.08))]" />
             <button
@@ -193,41 +235,6 @@ const nodeTypes = {
           </div>
         ) : null}
 
-        {data.isFocused && isCondition ? (
-          <div className="pointer-events-none absolute -right-[108px] top-1/2 grid -translate-y-1/2 gap-3">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Sim</span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  data.onAddNext(data.model.id, "sim");
-                }}
-                className="animate-scale-in pointer-events-auto nodrag nopan inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[color:rgba(12,12,14,0.96)] text-[18px] font-semibold leading-none text-[#67e8f9]"
-                style={{ borderColor: data.hasOutgoingSim ? continuationBorder : "rgba(56,189,248,0.65)" }}
-                aria-label="Adicionar ramo sim"
-              >
-                +
-              </button>
-            </div>
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] uppercase tracking-[0.12em] text-[var(--text-tertiary)]">Nao</span>
-              <button
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  data.onAddNext(data.model.id, "nao");
-                }}
-                className="animate-scale-in pointer-events-auto nodrag nopan inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[color:rgba(12,12,14,0.96)] text-[18px] font-semibold leading-none text-[#67e8f9]"
-                style={{ borderColor: data.hasOutgoingNao ? continuationBorder : "rgba(56,189,248,0.65)" }}
-                aria-label="Adicionar ramo nao"
-              >
-                +
-              </button>
-            </div>
-          </div>
-        ) : null}
-
         <Handle
           type="target"
           id="input"
@@ -237,20 +244,11 @@ const nodeTypes = {
         />
         <Handle
           type="source"
-          id={isCondition ? "sim" : "default"}
+          id="default"
           position={Position.Right}
           className="!h-3.5 !w-3.5 !border-2 !bg-[var(--text-primary)]"
-          style={{ borderColor: meta.color, top: isCondition ? "35%" : undefined }}
+          style={{ borderColor: meta.color }}
         />
-        {isCondition ? (
-          <Handle
-            type="source"
-            id="nao"
-            position={Position.Right}
-            className="!h-3.5 !w-3.5 !border-2 !bg-[var(--text-primary)]"
-            style={{ borderColor: meta.color, top: "68%" }}
-          />
-        ) : null}
       </div>
     );
   }),
@@ -336,6 +334,7 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
     onRequestInsertOnEdge,
     onNodeConfigChange,
     onCanvasReady,
+    whatsappInstancias,
   } = props;
   const reactFlow = useReactFlow<Node<FlowNodeData, "workflow">, Edge>();
   const didAutoCenterRef = useRef(false);
@@ -343,16 +342,10 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
   const [enteringNodeIds, setEnteringNodeIds] = useState<Set<string>>(new Set());
 
   const outgoingCountByNode = useMemo(() => {
-    const map = new Map<string, { total: number; sim: number; nao: number }>();
+    const map = new Map<string, { total: number }>();
     edges.forEach((edge) => {
-      const current = map.get(edge.source) ?? { total: 0, sim: 0, nao: 0 };
+      const current = map.get(edge.source) ?? { total: 0 };
       current.total += 1;
-      if (edge.sourceHandle === "sim") {
-        current.sim += 1;
-      }
-      if (edge.sourceHandle === "nao") {
-        current.nao += 1;
-      }
       map.set(edge.source, current);
     });
     return map;
@@ -368,16 +361,15 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
           model: node,
           onAddNext: onRequestCreateFromNode,
           hasOutgoing: (outgoingCountByNode.get(node.id)?.total ?? 0) > 0,
-          hasOutgoingSim: (outgoingCountByNode.get(node.id)?.sim ?? 0) > 0,
-          hasOutgoingNao: (outgoingCountByNode.get(node.id)?.nao ?? 0) > 0,
           isFocused: node.id === selectedNodeId,
           entering: enteringNodeIds.has(node.id),
           onDeleteNode,
           onConfigChange: onNodeConfigChange,
+          whatsappInstancias,
         },
         draggable: true,
       })),
-    [enteringNodeIds, nodes, onDeleteNode, onNodeConfigChange, onRequestCreateFromNode, outgoingCountByNode, selectedNodeId],
+    [enteringNodeIds, nodes, onDeleteNode, onNodeConfigChange, onRequestCreateFromNode, outgoingCountByNode, selectedNodeId, whatsappInstancias],
   );
 
   const [flowNodes, setFlowNodes] = useState<Node<FlowNodeData, "workflow">[]>(externalFlowNodes);

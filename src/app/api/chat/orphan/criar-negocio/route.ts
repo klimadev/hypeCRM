@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { obterEstagioIndefinido } from "@/lib/estagios-fixos";
 import { badRequest, forbidden, serverError } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { disparaAutomacoesPorEvento } from "@/lib/automacoes";
 
 const esquemaCriarNegocio = z.object({
   telefone: z.string().trim().refine((v) => v.replace(/\D/g, "").length >= 10, "Telefone invalido."),
@@ -116,6 +117,12 @@ export async function POST(request: NextRequest) {
 
       return { lead, negocio };
     });
+
+    disparaAutomacoesPorEvento(auth.sessao.id_empresa, "lead_criado", {
+      empresaId: auth.sessao.id_empresa,
+      leadId: resultado.lead.id,
+      lead: { id: resultado.lead.id, nome: resultado.lead.nome, telefone: resultado.lead.telefone },
+    }).catch(() => {});
 
     return NextResponse.json(resultado, { status: 201 });
   } catch (error) {

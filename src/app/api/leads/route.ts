@@ -6,6 +6,7 @@ import { badRequest, forbidden } from "@/lib/api/http";
 import { handleRouteError } from "@/lib/api/route-errors";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
 import { criarLeadContato, listarLeadsContato } from "@/lib/leads";
+import { disparaAutomacoesPorEvento } from "@/lib/automacoes";
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -101,6 +102,16 @@ export async function POST(request: NextRequest) {
     if (!lead) {
       return badRequest("Nao foi possivel criar o lead.");
     }
+
+    disparaAutomacoesPorEvento(auth.sessao.id_empresa, "lead_criado", {
+      empresaId: auth.sessao.id_empresa,
+      leadId: lead.id,
+      lead: {
+        id: lead.id,
+        nome: lead.nome,
+        telefone: lead.telefone,
+      },
+    }).catch(() => {});
 
     return NextResponse.json({ lead });
   } catch (erro) {

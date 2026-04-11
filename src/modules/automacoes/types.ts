@@ -1,15 +1,12 @@
-export type WorkflowNodeKind = "gatilho" | "acao" | "condicao";
+export type WorkflowNodeKind = "gatilho" | "acao";
 
-export type WorkflowBranch = "default" | "sim" | "nao";
+export type WorkflowBranch = "default";
 
 export type WorkflowNodeConfig = {
-  canal?: string;
-  janelaMinutos?: number;
-  delayMinutos?: number;
-  modeloMensagem?: string;
-  campo?: string;
-  operador?: string;
-  valor?: string;
+  messageTemplate?: string;
+  whatsappInstanceId?: string;
+  sendToLeadPhone?: boolean;
+  manualPhones?: string[];
 };
 
 export type WorkflowNodeTemplate = {
@@ -22,6 +19,7 @@ export type WorkflowNodeTemplate = {
 export type WorkflowNodeModel = {
   id: string;
   kind: WorkflowNodeKind;
+  type: "trigger.lead_criado" | "whatsapp.enviar_texto";
   label: string;
   description: string;
   x: number;

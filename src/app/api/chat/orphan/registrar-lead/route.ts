@@ -6,6 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { obterEstagioIndefinido } from "@/lib/estagios-fixos";
 import { badRequest, forbidden, serverError } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { disparaAutomacoesPorEvento } from "@/lib/automacoes";
 
 const esquemaRegistrarLead = z.object({
   telefone: z.string().trim().refine((v) => v.replace(/\D/g, "").length >= 10, "Telefone invalido."),
@@ -87,6 +88,16 @@ export async function POST(request: NextRequest) {
         origem: "MANUAL",
       },
     });
+
+    disparaAutomacoesPorEvento(auth.sessao.id_empresa, "lead_criado", {
+      empresaId: auth.sessao.id_empresa,
+      leadId: lead.id,
+      lead: {
+        id: lead.id,
+        nome: lead.nome,
+        telefone: lead.telefone,
+      },
+    }).catch(() => {});
 
     return NextResponse.json({ lead }, { status: 201 });
   } catch (error) {
