@@ -1,18 +1,41 @@
 "use client";
 
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
 import { Loader2, AlertCircle, MessageSquare, Send, FileText, Volume2, CalendarClock, Clock3, X, ChevronDown } from "lucide-react";
 import NextImage from "next/image";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/toast";
+import { listarAtalhosChat, type ChatShortcut } from "@/lib/api/chat-shortcuts";
+import { renderizarTemplateWhatsapp, type ContextoTemplateWhatsapp } from "@/lib/whatsapp-template";
 import { cn } from "@/lib/utils";
 import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
+import {
+  filtrarOrdenarAtalhos,
+  normalizarMapaUsosAtalho,
+  obterQueryAtalho,
+  registrarUsoRecenteAtalho,
+  resolverAcaoAtalhoTeclado,
+} from "@/modules/chat/shortcuts-composer";
 import { useChatMessages } from "../hooks/use-chat-messages";
 
 type ChatMessagesPanelProps = {
   instanceName: string;
   remoteJid: string;
-  nomeContato: string;
+  chatContext?: {
+    telefone: string;
+    pushName: string | null;
+    canal: "whatsapp" | "instagram";
+    leadMatch: {
+      id: string;
+      nome: string;
+      id_estagio: string;
+      id_negocio: string | null;
+      nome_estagio: string | null;
+      nome_funcionario: string | null;
+      nome_pdv: string | null;
+      negocio: { titulo: string } | null;
+    } | null;
+  };
 };
 
 function formatarHora(timestamp: number): string {
@@ -258,7 +281,7 @@ function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
   return groups;
 }
 
-export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessagesPanelProps, "nomeContato">) {
+export function ChatMessagesPanel({ instanceName, remoteJid, chatContext }: ChatMessagesPanelProps) {
   const {
     messages,
     carregando,
@@ -279,11 +302,53 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
   const [agendar, setAgendar] = useState(false);
   const [agendadoPara, setAgendadoPara] = useState("");
   const [agendadasAbertas, setAgendadasAbertas] = useState(false);
+  const [atalhos, setAtalhos] = useState<ChatShortcut[]>([]);
+  const [ultimosUsosAtalhos, setUltimosUsosAtalhos] = useState<Record<string, number>>({});
+  const [atalhosAbertos, setAtalhosAbertos] = useState(false);
+  const [indiceAtalhoAtivo, setIndiceAtalhoAtivo] = useState(0);
   const { addToast } = useToast();
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inicializadoRef = useRef(false);
+
+  const queryAtalho = obterQueryAtalho(texto);
+  const chaveRecenciaAtalhos = useMemo(
+    () => `chat.shortcuts.recentes:${chatContext?.leadMatch?.id || remoteJid}`,
+    [chatContext?.leadMatch?.id, remoteJid],
+  );
+  const atalhosFiltrados = useMemo(() => {
+    return filtrarOrdenarAtalhos(atalhos, queryAtalho, ultimosUsosAtalhos);
+  }, [atalhos, queryAtalho, ultimosUsosAtalhos]);
+
+  function montarContextoVariaveis(): ContextoTemplateWhatsapp {
+    return {
+      lead_nome: chatContext?.leadMatch?.nome || chatContext?.pushName || "",
+      lead_telefone: chatContext?.telefone || "",
+      lead_id: chatContext?.leadMatch?.id || "",
+      estagio_nome: chatContext?.leadMatch?.nome_estagio || "",
+      negocio_titulo: chatContext?.leadMatch?.negocio?.titulo || "",
+      nome_funcionario: chatContext?.leadMatch?.nome_funcionario || "",
+      nome_pdv: chatContext?.leadMatch?.nome_pdv || "",
+      canal: chatContext?.canal || "",
+    };
+  }
+
+  function aplicarAtalho(atalho: ChatShortcut) {
+    const renderizado = renderizarTemplateWhatsapp(atalho.conteudo, montarContextoVariaveis());
+    setTexto(renderizado);
+    setUltimosUsosAtalhos((atual) => {
+      const atualizadoLimitado = registrarUsoRecenteAtalho(atual, atalho.slug, Date.now());
+      try {
+        localStorage.setItem(chaveRecenciaAtalhos, JSON.stringify(atualizadoLimitado));
+      } catch {
+        // ignorar falhas de armazenamento local
+      }
+      return atualizadoLimitado;
+    });
+    setAtalhosAbertos(false);
+    setIndiceAtalhoAtivo(0);
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -314,6 +379,45 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
     void recarregarAgendadas();
   }, [agendar, agendadasAbertas, recarregarAgendadas]);
 
+  useEffect(() => {
+    let mounted = true;
+    void listarAtalhosChat().then((resultado) => {
+      if (!mounted || !resultado.ok) return;
+      setAtalhos(resultado.dados.atalhos);
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    try {
+      const salvo = localStorage.getItem(chaveRecenciaAtalhos);
+      if (!salvo) {
+        setUltimosUsosAtalhos({});
+        return;
+      }
+
+      const parsed = JSON.parse(salvo) as unknown;
+      const normalizado = normalizarMapaUsosAtalho(parsed);
+      setUltimosUsosAtalhos(normalizado);
+    } catch {
+      setUltimosUsosAtalhos({});
+    }
+  }, [chaveRecenciaAtalhos]);
+
+  useEffect(() => {
+    if (!texto.startsWith("/") || texto.includes(" ")) {
+      setAtalhosAbertos(false);
+      setIndiceAtalhoAtivo(0);
+      return;
+    }
+
+    setAtalhosAbertos(atalhosFiltrados.length > 0);
+    setIndiceAtalhoAtivo(0);
+  }, [texto, atalhosFiltrados.length]);
+
   const grouped = groupMessagesByDate(messages);
   const exibirLoadingVazio = carregando && messages.length === 0;
   const exibirErroVazio = erro && messages.length === 0;
@@ -342,7 +446,40 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    const acao = resolverAcaoAtalhoTeclado({
+      atalhosAbertos,
+      quantidadeAtalhos: atalhosFiltrados.length,
+      indiceAtual: indiceAtalhoAtivo,
+      input: {
+        key: event.key,
+        ctrlKey: event.ctrlKey,
+        metaKey: event.metaKey,
+        shiftKey: event.shiftKey,
+      },
+    });
+
+    if (acao.tipo === "navegar") {
+      event.preventDefault();
+      setIndiceAtalhoAtivo(acao.indice);
+      return;
+    }
+
+    if (acao.tipo === "aplicar") {
+      event.preventDefault();
+      const alvo = atalhosFiltrados[indiceAtalhoAtivo] ?? atalhosFiltrados[0];
+      if (alvo) {
+        aplicarAtalho(alvo);
+      }
+      return;
+    }
+
+    if (acao.tipo === "fechar") {
+      event.preventDefault();
+      setAtalhosAbertos(false);
+      return;
+    }
+
+    if (acao.tipo === "enviar") {
       event.preventDefault();
       void handleSubmit();
     }
@@ -477,7 +614,7 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
             </div>
           ) : null}
 
-          <div className="flex items-end gap-2 px-2.5 py-2">
+          <div className="relative flex items-end gap-2 px-2.5 py-2">
             <textarea
               value={texto}
               onChange={(event) => setTexto(event.target.value)}
@@ -487,6 +624,36 @@ export function ChatMessagesPanel({ instanceName, remoteJid }: Omit<ChatMessages
               rows={1}
               className="max-h-28 min-h-[2.5rem] flex-1 resize-none bg-transparent px-2 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
             />
+            {atalhosAbertos ? (
+              <div className="absolute bottom-[calc(100%+0.5rem)] left-2.5 right-16 z-20 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-1.5 shadow-[var(--shadow-md)]">
+                <div className="mb-1 px-2 text-[10px] text-[var(--text-tertiary)]">
+                  Digite <span className="font-semibold">/</span>, navegue com ↑ ↓ (ou Ctrl/Cmd+J/K) e confirme com Enter/Tab
+                </div>
+                <div className="max-h-52 overflow-y-auto">
+                  {atalhosFiltrados.map((atalho, index) => (
+                    <button
+                      key={atalho.id}
+                      type="button"
+                      onClick={() => aplicarAtalho(atalho)}
+                      className={cn(
+                        "flex w-full items-start gap-2 rounded-xl px-2 py-2 text-left transition-colors",
+                        indiceAtalhoAtivo === index
+                          ? "bg-[var(--brand-soft)] text-[var(--text-primary)]"
+                          : "hover:bg-[color:rgba(255,255,255,0.04)]",
+                      )}
+                    >
+                      <span className="mt-0.5 rounded-md border border-[var(--border-subtle)] bg-black/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--brand)]">
+                        /{atalho.slug}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate text-[12px] font-medium text-[var(--text-primary)]">{atalho.nome}</span>
+                        <span className="block truncate text-[11px] text-[var(--text-secondary)]">{atalho.conteudo}</span>
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : null}
             <Button
               type="submit"
               size="icon"

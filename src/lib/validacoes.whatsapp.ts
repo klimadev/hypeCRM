@@ -243,6 +243,22 @@ export const esquemaChatUnificadoScheduledList = z.object({
   remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
 });
 
+export const esquemaAtalhoMensagemChatPayload = z.object({
+  nome: z.string().trim().min(2, "Nome obrigatorio.").max(80, "Nome muito longo."),
+  slug: z.string().trim().min(2, "Atalho obrigatorio.").max(60, "Atalho muito longo.").regex(/^[a-z0-9][a-z0-9-_]*$/, "Use apenas letras minusculas, numeros, - e _."),
+  conteudo: z.string().trim().min(1, "Conteudo obrigatorio.").max(4096, "Conteudo muito longo."),
+  tags: z.array(z.string().trim().min(1).max(24)).max(20).default([]),
+  ativo: z.boolean().optional().default(true),
+});
+
+export const esquemaAtalhoMensagemChatAtualizar = esquemaAtalhoMensagemChatPayload.extend({
+  id: z.string().trim().min(1, "ID obrigatorio."),
+});
+
+export const esquemaAtalhoMensagemChatExcluir = z.object({
+  id: z.string().trim().min(1, "ID obrigatorio."),
+});
+
 export const esquemaWebhookLoggerPayload = z.unknown().refine(
   (valor): valor is Record<string, unknown> => typeof valor === "object" && valor !== null && !Array.isArray(valor),
   { message: "Payload do webhook deve ser um objeto JSON." },

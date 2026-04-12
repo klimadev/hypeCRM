@@ -163,7 +163,16 @@ export function ChatPanel({
           </div>
         </header>
 
-        <ChatMessagesPanel instanceName={chat.instanceName} remoteJid={chat.remoteJid} />
+        <ChatMessagesPanel
+          instanceName={chat.instanceName}
+          remoteJid={chat.remoteJid}
+          chatContext={{
+            telefone: chat.telefone,
+            pushName: chat.pushName,
+            canal: chat.canal,
+            leadMatch: chat.leadMatch,
+          }}
+        />
       </div>
 
       <Sheet open={detalhesAbertos} onOpenChange={setDetalhesAbertos}>
