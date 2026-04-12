@@ -75,6 +75,71 @@ export type ResultadoRemocaoLead = {
   negocios_removidos?: number;
 };
 
+export type CampanhaResumoApi = {
+  id: string;
+  nome: string;
+  status: string;
+  inicioEm: string;
+  ultimoAgendamentoEm: string | null;
+  selecionadosTotal: number;
+  elegiveisTotal: number;
+  ignoradosTotal: number;
+  duracaoEstimadaSegundos: number;
+  criadoEm: string;
+  atualizadoEm: string;
+  resumoStatus: {
+    pendentes: number;
+    processando: number;
+    enviados: number;
+    falhas: number;
+    cancelados: number;
+    total: number;
+  };
+};
+
+export type CampanhaDetalheApi = {
+  id: string;
+  nome: string;
+  status: string;
+  mensagemTemplate: string;
+  inicioEm: string;
+  ultimoAgendamentoEm: string | null;
+  selecionadosTotal: number;
+  elegiveisTotal: number;
+  ignoradosTotal: number;
+  duracaoEstimadaSegundos: number;
+  resumoStatus: CampanhaResumoApi["resumoStatus"];
+  inelegiveis: Array<{ leadId: string; nome: string; motivo: string }>;
+  itens: Array<{
+    id: string;
+    leadId: string | null;
+    leadNome: string;
+    instancia: string;
+    remoteJid: string;
+    mensagem: string;
+    agendadoPara: string;
+    status: string;
+    tentativas: number;
+    erro: string | null;
+    enviadoEm: string | null;
+    criadoEm: string;
+  }>;
+};
+
+export type PayloadCriarCampanhaDisparo = {
+  nome: string;
+  leadIds: string[];
+  mensagemTemplate: string;
+  iniciarAgora: boolean;
+  inicioEm?: string;
+  delayMinSegundos: number;
+  delayMaxSegundos: number;
+  jitterMsMax: number;
+  filtrosSnapshot?: Record<string, unknown>;
+  pdvInstancias: Array<{ pdvId: string; instanciaId: string }>;
+  fallbackInstanciaSemPdvId?: string;
+};
+
 async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
   return (await resposta.json().catch(() => ({}))) as T;
 }
@@ -164,4 +229,86 @@ export async function removerLeadContato(
       negocios_removidos: json.negocios_removidos ?? 0,
     },
   };
+}
+
+export async function criarCampanhaDisparoLeadsApi(payload: PayloadCriarCampanhaDisparo): Promise<
+  ResultadoApi<{
+    campanhaId: string;
+    resumo: {
+      selecionadosTotal: number;
+      elegiveisTotal: number;
+      ignoradosTotal: number;
+      duracaoEstimadaSegundos: number;
+    };
+    inelegiveis: Array<{ leadId: string; nome: string; motivo: string }>;
+    inicio: string;
+    ultimoAgendamento: string | null;
+  }>
+> {
+  const resposta = await fetch("/api/leads/disparos", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  const json = await lerJsonSeguro<{
+    campanhaId?: string;
+    resumo?: {
+      selecionadosTotal?: number;
+      elegiveisTotal?: number;
+      ignoradosTotal?: number;
+      duracaoEstimadaSegundos?: number;
+    };
+    inelegiveis?: Array<{ leadId: string; nome: string; motivo: string }>;
+    inicio?: string;
+    ultimoAgendamento?: string | null;
+  } & ApiErro>(resposta);
+
+  if (!resposta.ok || !json.campanhaId || !json.resumo || !json.inicio) {
+    return { ok: false, erro: json.erro ?? "Erro ao criar campanha de disparo." };
+  }
+
+  return {
+    ok: true,
+    dados: {
+      campanhaId: json.campanhaId,
+      resumo: {
+        selecionadosTotal: json.resumo.selecionadosTotal ?? 0,
+        elegiveisTotal: json.resumo.elegiveisTotal ?? 0,
+        ignoradosTotal: json.resumo.ignoradosTotal ?? 0,
+        duracaoEstimadaSegundos: json.resumo.duracaoEstimadaSegundos ?? 0,
+      },
+      inelegiveis: json.inelegiveis ?? [],
+      inicio: json.inicio,
+      ultimoAgendamento: json.ultimoAgendamento ?? null,
+    },
+  };
+}
+
+export async function listarCampanhasDisparoLeadsApi(limite = 20): Promise<ResultadoApi<{ campanhas: CampanhaResumoApi[] }>> {
+  const resposta = await fetch(`/api/leads/disparos?limite=${limite}`, { cache: "no-store" });
+  const json = await lerJsonSeguro<{ campanhas?: CampanhaResumoApi[] } & ApiErro>(resposta);
+
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao listar campanhas." };
+  }
+
+  return { ok: true, dados: { campanhas: json.campanhas ?? [] } };
+}
+
+export async function detalharCampanhaDisparoLeadsApi(id: string): Promise<ResultadoApi<{ campanha: CampanhaDetalheApi }>> {
+  const resposta = await fetch(`/api/leads/disparos/${id}`, { cache: "no-store" });
+  const json = await lerJsonSeguro<{ campanha?: CampanhaDetalheApi } & ApiErro>(resposta);
+  if (!resposta.ok || !json.campanha) {
+    return { ok: false, erro: json.erro ?? "Erro ao carregar campanha." };
+  }
+  return { ok: true, dados: { campanha: json.campanha } };
+}
+
+export async function cancelarCampanhaDisparoLeadsApi(id: string): Promise<ResultadoApi<{ cancelados: number }>> {
+  const resposta = await fetch(`/api/leads/disparos/${id}/cancelar`, { method: "POST" });
+  const json = await lerJsonSeguro<{ cancelados?: number } & ApiErro>(resposta);
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao cancelar campanha." };
+  }
+  return { ok: true, dados: { cancelados: json.cancelados ?? 0 } };
 }

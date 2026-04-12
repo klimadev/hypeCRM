@@ -207,3 +207,31 @@ export function obterNegociosRelacionadosAoLead(lead: ApiLeadContato | null, neg
 export function criarMapaPdvs(pdvs: ApiPdvContato[]) {
   return new Map(pdvs.map((item) => [item.id, item.nome] as const));
 }
+
+export function obterLeadsSelecionados(idsSelecionados: string[], leads: ApiLeadContato[]) {
+  const idsSelecionadosSet = new Set(idsSelecionados);
+  return leads.filter((lead) => idsSelecionadosSet.has(lead.id));
+}
+
+export function calcularResumoSelecaoDisparo(leadsSelecionados: ApiLeadContato[], pdvsPorId: Map<string, string>) {
+  const pdvSet = new Set<string>();
+  let semPdvSelecionados = 0;
+
+  for (const lead of leadsSelecionados) {
+    if (lead.id_pdv) {
+      pdvSet.add(lead.id_pdv);
+      continue;
+    }
+    semPdvSelecionados += 1;
+  }
+
+  const pdvsPresentesNaSelecao = Array.from(pdvSet).map((id) => ({
+    id,
+    nome: pdvsPorId.get(id) ?? "PDV",
+  }));
+
+  return {
+    pdvsPresentesNaSelecao,
+    semPdvSelecionados,
+  };
+}

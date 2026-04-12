@@ -216,6 +216,7 @@ model Empresa {
   Pdv               Pdv[]
   Produto           Produto[]
   RegistroIP        RegistroIP[]
+  CampanhaDisparoLead CampanhaDisparoLead[]
 }
 
 model Funil {
@@ -404,6 +405,7 @@ model MensagemAgendada {
   id               String   @id
   id_empresa       String
   id_lead          String?
+  id_campanha_disparo String?
   instance_name    String
   remote_jid       String
   conteudo         String
@@ -417,10 +419,41 @@ model MensagemAgendada {
   criado_por       String
   criado_em        DateTime @default(now())
   atualizado_em    DateTime @default(now())
+  CampanhaDisparoLead CampanhaDisparoLead? @relation(fields: [id_campanha_disparo], references: [id], onDelete: SetNull)
 
   @@index([id_empresa, status, agendado_para])
   @@index([instance_name, remote_jid])
   @@index([status, agendado_para])
+  @@index([id_campanha_disparo, status])
+}
+
+model CampanhaDisparoLead {
+  id                     String             @id
+  id_empresa             String
+  nome                   String
+  mensagem_template      String
+  status                 String             @default("AGENDADA")
+  inicio_em              DateTime
+  delay_min_segundos     Int                @default(120)
+  delay_max_segundos     Int                @default(240)
+  jitter_ms_max          Int                @default(999)
+  selecionados_total     Int                @default(0)
+  elegiveis_total        Int                @default(0)
+  ignorados_total        Int                @default(0)
+  duracao_estimada_segundos Int             @default(0)
+  filtros_snapshot_json  String             @default("{}")
+  configuracao_pdvs_json String             @default("{}")
+  resumo_inelegiveis_json String            @default("[]")
+  ultimo_agendamento_em  DateTime?
+  finalizada_em          DateTime?
+  criado_por             String
+  criado_em              DateTime           @default(now())
+  atualizado_em          DateTime           @default(now())
+  Empresa                Empresa            @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  MensagemAgendada       MensagemAgendada[]
+
+  @@index([id_empresa, criado_em])
+  @@index([id_empresa, status])
 }
 
 model MensagemAtalho {

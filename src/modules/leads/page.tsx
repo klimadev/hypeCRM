@@ -13,6 +13,9 @@ import { LeadsTable } from "./components/leads-table";
 import { VinculoNegocioDialog } from "./components/vinculo-negocio-dialog";
 import { LeadFormDialog } from "./components/lead-form-dialog";
 import { LeadDeleteDialog } from "./components/lead-delete-dialog";
+import { LeadsBulkActions } from "./components/leads-bulk-actions";
+import { LeadDisparoCampaignDialog } from "./components/lead-disparo-campaign-dialog";
+import { LeadDisparoCampaignsPanel } from "./components/lead-disparo-campaigns-panel";
 
 export function ModuloLeads() {
   const vm = useLeadsModule();
@@ -41,6 +44,19 @@ export function ModuloLeads() {
       />
 
       <InlineStatusAlert variant="error" message={vm.erro} />
+      <InlineStatusAlert variant="error" message={vm.erroDisparo} />
+
+      <LeadDisparoCampaignsPanel
+        campanhas={vm.campanhas}
+        carregando={vm.carregandoCampanhas}
+        detalheIdAberta={vm.campanhaDetalheIdAberta}
+        detalhe={vm.campanhaDetalhe}
+        carregandoDetalhe={vm.carregandoDetalheCampanha}
+        erro={vm.erroDisparo}
+        onAbrirDetalhe={(id) => void vm.abrirDetalheCampanha(id)}
+        onFecharDetalhe={vm.fecharDetalheCampanha}
+        onCancelar={(id) => void vm.cancelarCampanha(id)}
+      />
 
       {vm.carregando ? (
         <div className="flex min-h-[240px] items-center justify-center rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
@@ -65,11 +81,38 @@ export function ModuloLeads() {
         <LeadsTable
           linhas={vm.linhasTabela}
           resumoTotal={vm.resumoTotal}
+          idsSelecionados={vm.idsSelecionados}
+          todosDaPaginaSelecionados={vm.linhasTabela.length > 0 && vm.linhasTabela.every((item) => vm.idsSelecionados.includes(item.id))}
+          onAlternarSelecao={vm.alternarSelecao}
+          onAlternarSelecaoPagina={vm.alternarSelecaoPagina}
           onEditar={vm.abrirEdicaoLead}
           onVincular={vm.abrirVinculo}
           onRemover={vm.abrirRemocaoLead}
         />
       )}
+
+      <LeadsBulkActions
+        totalSelecionados={vm.totalSelecionados}
+        totalFiltrados={vm.leadsFiltrados.length}
+        todosFiltradosSelecionados={vm.todosFiltradosSelecionados}
+        onSelecionarTodosFiltrados={vm.selecionarTodosFiltrados}
+        onLimparSelecao={vm.limparSelecao}
+        onDisparar={vm.abrirDialogDisparo}
+      />
+
+      <LeadDisparoCampaignDialog
+        open={vm.dialogDisparoAberto}
+        onOpenChange={(aberto) => (aberto ? vm.abrirDialogDisparo() : vm.fecharDialogDisparo())}
+        formulario={vm.formularioDisparo}
+        pdvsPresentes={vm.pdvsPresentesNaSelecao}
+        semPdvSelecionados={vm.semPdvSelecionados}
+        instancias={vm.instanciasWhatsapp}
+        erro={vm.erroDisparo}
+        enviando={vm.disparandoCampanha}
+        onCampoChange={vm.atualizarFormularioDisparo}
+        onInstanciaPdvChange={vm.atualizarInstanciaPdvDisparo}
+        onConfirmar={() => void vm.submitCampanhaDisparo()}
+      />
 
       <VinculoNegocioDialog
         open={vm.dialogVinculoAberto}

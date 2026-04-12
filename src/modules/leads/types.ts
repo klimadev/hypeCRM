@@ -1,7 +1,10 @@
 import type { FormEvent } from "react";
 import type {
+  CampanhaDetalheApi,
+  CampanhaResumoApi,
   ApiFuncionarioContato,
   ApiLeadContato,
+  PayloadCriarCampanhaDisparo,
 } from "@/lib/api/leads";
 import type {
   ApiNegocioResumo,
@@ -46,10 +49,26 @@ export type UseLeadsModuleReturn = {
   carregando: boolean;
   recarregando: boolean;
   erro: string | null;
+  erroDisparo: string | null;
   title: string;
   resumoTotal: string;
   leadsFiltrados: ApiLeadContato[];
   linhasTabela: LeadLinhaTabela[];
+  campanhas: CampanhaResumoApi[];
+  campanhaDetalhe: CampanhaDetalheApi | null;
+  carregandoCampanhas: boolean;
+  carregandoDetalheCampanha: boolean;
+  campanhaDetalheIdAberta: string | null;
+  disparandoCampanha: boolean;
+  dialogDisparoAberto: boolean;
+  podeDispararLote: boolean;
+  idsSelecionados: string[];
+  totalSelecionados: number;
+  todosFiltradosSelecionados: boolean;
+  pdvsPresentesNaSelecao: Array<{ id: string; nome: string }>;
+  semPdvSelecionados: number;
+  instanciasWhatsapp: Array<{ id: string; nome: string; instance_name: string }>;
+  formularioDisparo: PayloadCriarCampanhaDisparo;
   funcionarios: ApiFuncionarioContato[];
   negociosParaVinculo: ApiNegocioResumo[];
   dialogVinculoAberto: boolean;
@@ -69,7 +88,20 @@ export type UseLeadsModuleReturn = {
   erroRemocaoLead: string | null;
   negociosRelacionadosAoLead: ApiNegocioResumo[];
   carregarDados: (silencioso?: boolean) => Promise<void>;
+  carregarCampanhas: () => Promise<void>;
   limparBusca: () => void;
+  abrirDialogDisparo: () => void;
+  fecharDialogDisparo: () => void;
+  atualizarFormularioDisparo: <Campo extends keyof PayloadCriarCampanhaDisparo>(campo: Campo, valor: PayloadCriarCampanhaDisparo[Campo]) => void;
+  atualizarInstanciaPdvDisparo: (pdvId: string, instanciaId: string) => void;
+  alternarSelecao: (leadId: string) => void;
+  alternarSelecaoPagina: () => void;
+  selecionarTodosFiltrados: () => void;
+  limparSelecao: () => void;
+  submitCampanhaDisparo: () => Promise<void>;
+  abrirDetalheCampanha: (campanhaId: string) => Promise<void>;
+  fecharDetalheCampanha: () => void;
+  cancelarCampanha: (campanhaId: string) => Promise<void>;
   abrirVinculo: (lead: ApiLeadContato) => void;
   fecharVinculo: () => void;
   setBuscaNegocio: (valor: string) => void;

@@ -11,12 +11,16 @@ import type { LeadLinhaTabela } from "../types";
 type LeadsTableProps = {
   linhas: LeadLinhaTabela[];
   resumoTotal: string;
+  idsSelecionados: string[];
+  todosDaPaginaSelecionados: boolean;
+  onAlternarSelecao: (leadId: string) => void;
+  onAlternarSelecaoPagina: () => void;
   onEditar: (lead: ApiLeadContato) => void;
   onVincular: (lead: ApiLeadContato) => void;
   onRemover: (lead: ApiLeadContato) => void;
 };
 
-export function LeadsTable({ linhas, resumoTotal, onEditar, onVincular, onRemover }: LeadsTableProps) {
+export function LeadsTable({ linhas, resumoTotal, idsSelecionados, todosDaPaginaSelecionados, onAlternarSelecao, onAlternarSelecaoPagina, onEditar, onVincular, onRemover }: LeadsTableProps) {
   return (
     <section className="min-w-0 overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
@@ -28,6 +32,15 @@ export function LeadsTable({ linhas, resumoTotal, onEditar, onVincular, onRemove
         <Table className="min-w-[900px] w-full">
           <TableHeader className="sticky top-0 bg-[var(--surface-elevated)]">
             <TableRow className="hover:bg-[color:rgba(255,255,255,0.03)]">
+              <TableHead className="w-12">
+                <input
+                  type="checkbox"
+                  checked={todosDaPaginaSelecionados}
+                  onChange={() => onAlternarSelecaoPagina()}
+                  aria-label="Selecionar página"
+                  className="h-4 w-4 rounded border border-[var(--border-strong)] bg-transparent accent-[var(--brand)]"
+                />
+              </TableHead>
               <TableHead>Lead</TableHead>
               <TableHead>Telefone</TableHead>
               <TableHead>Etapa</TableHead>
@@ -42,6 +55,15 @@ export function LeadsTable({ linhas, resumoTotal, onEditar, onVincular, onRemove
           <TableBody>
             {linhas.map((linha) => (
               <TableRow key={linha.id} className="border-[var(--border-subtle)]">
+                <TableCell className="py-4">
+                  <input
+                    type="checkbox"
+                    checked={idsSelecionados.includes(linha.id)}
+                    onChange={() => onAlternarSelecao(linha.id)}
+                    aria-label={`Selecionar ${linha.nome}`}
+                    className="h-4 w-4 rounded border border-[var(--border-strong)] bg-transparent accent-[var(--brand)]"
+                  />
+                </TableCell>
                 <TableCell className="py-4">
                   <div className="min-w-0">
                     <p className="truncate font-medium text-[var(--text-primary)]">{linha.nome}</p>

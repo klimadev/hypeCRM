@@ -4,13 +4,19 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { useToast } from "@/components/ui/toast";
 import {
   atualizarLeadContato,
+  cancelarCampanhaDisparoLeadsApi,
+  criarCampanhaDisparoLeadsApi,
   criarLeadContato,
+  detalharCampanhaDisparoLeadsApi,
+  listarCampanhasDisparoLeadsApi,
   listarLeadsApi,
   removerLeadContato,
   type ApiFuncionarioContato,
   type ApiLeadContato,
   type ApiPdvContato,
+  type PayloadCriarCampanhaDisparo,
 } from "@/lib/api/leads";
+import { listarInstanciasWhatsapp } from "@/lib/api/whatsapp.instances";
 import {
   listarNegociosApi,
   vincularLeadAoNegocio,
@@ -20,15 +26,32 @@ import type { ApiEstagioLead, FormularioNovoLead, UseLeadsModuleReturn } from ".
 import {
   criarFormularioEdicaoLead,
   criarFormularioNovoLead,
+  criarMapaPdvs,
+  calcularResumoSelecaoDisparo,
+  obterLeadsSelecionados,
   criarPayloadLeadContato,
   criarResumoLeads,
-  criarMapaPdvs,
   filtrarLeads,
   filtrarNegociosParaVinculo,
   mapearLinhaLead,
   obterNegociosRelacionadosAoLead,
   rotuloNegocioLead,
 } from "../utils";
+
+function criarFormularioCampanhaBase(leadIds: string[]): PayloadCriarCampanhaDisparo {
+  return {
+    nome: "Campanha de disparo",
+    leadIds,
+    mensagemTemplate: "Oi {{lead_nome}}, tudo bem?",
+    iniciarAgora: true,
+    delayMinSegundos: 120,
+    delayMaxSegundos: 240,
+    jitterMsMax: 999,
+    filtrosSnapshot: {},
+    pdvInstancias: [],
+    fallbackInstanciaSemPdvId: "",
+  };
+}
 
 export function useLeadsModule(): UseLeadsModuleReturn {
   const { addToast } = useToast();
@@ -41,6 +64,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const [carregando, setCarregando] = useState(true);
   const [recarregando, setRecarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [erroDisparo, setErroDisparo] = useState<string | null>(null);
   const [dialogVinculoAberto, setDialogVinculoAberto] = useState(false);
   const [leadEmVinculo, setLeadEmVinculo] = useState<ApiLeadContato | null>(null);
   const [negocioSelecionadoId, setNegocioSelecionadoId] = useState("");
@@ -56,6 +80,16 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const [erroNovoLead, setErroNovoLead] = useState<string | null>(null);
   const [formularioNovoLead, setFormularioNovoLead] = useState<FormularioNovoLead>(() => criarFormularioNovoLead());
   const [leadEmEdicao, setLeadEmEdicao] = useState<ApiLeadContato | null>(null);
+  const [idsSelecionados, setIdsSelecionados] = useState<string[]>([]);
+  const [dialogDisparoAberto, setDialogDisparoAberto] = useState(false);
+  const [disparandoCampanha, setDisparandoCampanha] = useState(false);
+  const [carregandoCampanhas, setCarregandoCampanhas] = useState(false);
+  const [carregandoDetalheCampanha, setCarregandoDetalheCampanha] = useState(false);
+  const [campanhas, setCampanhas] = useState<UseLeadsModuleReturn["campanhas"]>([]);
+  const [campanhaDetalhe, setCampanhaDetalhe] = useState<UseLeadsModuleReturn["campanhaDetalhe"]>(null);
+  const [campanhaDetalheIdAberta, setCampanhaDetalheIdAberta] = useState<string | null>(null);
+  const [instanciasWhatsapp, setInstanciasWhatsapp] = useState<UseLeadsModuleReturn["instanciasWhatsapp"]>([]);
+  const [formularioDisparo, setFormularioDisparo] = useState<PayloadCriarCampanhaDisparo>(() => criarFormularioCampanhaBase([]));
 
   const carregarDados = async (silencioso = false) => {
     if (silencioso) {
@@ -63,28 +97,32 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     } else {
       setCarregando(true);
     }
-
     setErro(null);
 
     try {
-      const [resultadoLeads, resultadoNegocios] = await Promise.all([
+      const [resultadoLeads, resultadoNegocios, resultadoInstancias] = await Promise.all([
         listarLeadsApi(),
         listarNegociosApi(),
+        listarInstanciasWhatsapp(),
       ]);
 
-      if (!resultadoLeads.ok) {
-        throw new Error(resultadoLeads.erro);
-      }
-
-      if (!resultadoNegocios.ok) {
-        throw new Error(resultadoNegocios.erro);
-      }
+      if (!resultadoLeads.ok) throw new Error(resultadoLeads.erro);
+      if (!resultadoNegocios.ok) throw new Error(resultadoNegocios.erro);
 
       setLeads(resultadoLeads.dados.leads ?? []);
       setFuncionarios(resultadoLeads.dados.funcionarios ?? []);
       setPdvs(resultadoLeads.dados.pdvs ?? []);
       setNegocios(resultadoNegocios.dados.negocios ?? []);
       setEstagios(resultadoNegocios.dados.estagios ?? []);
+      setInstanciasWhatsapp(
+        resultadoInstancias.ok
+          ? (resultadoInstancias.dados.instancias ?? []).map((item) => ({
+              id: item.id,
+              nome: item.nome,
+              instance_name: item.instance_name,
+            }))
+          : [],
+      );
     } catch (error) {
       setErro(error instanceof Error ? error.message : "Não foi possível carregar os dados.");
     } finally {
@@ -93,20 +131,31 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     }
   };
 
+  const carregarCampanhas = async () => {
+    setCarregandoCampanhas(true);
+    try {
+      const resultado = await listarCampanhasDisparoLeadsApi(20);
+      if (resultado.ok) {
+        setCampanhas(resultado.dados.campanhas);
+        setErroDisparo(null);
+      } else {
+        setErroDisparo(resultado.erro);
+      }
+    } catch (error) {
+      setErroDisparo(error instanceof Error ? error.message : "Não foi possível carregar as campanhas.");
+    } finally {
+      setCarregandoCampanhas(false);
+    }
+  };
+
   useEffect(() => {
-    void carregarDados();
+    void Promise.all([carregarDados(), carregarCampanhas()]);
   }, []);
 
   useEffect(() => {
     setFormularioNovoLead((atual) => {
-      if (atual.idFuncionario || funcionarios.length === 0) {
-        return atual;
-      }
-
-      return {
-        ...atual,
-        idFuncionario: funcionarios[0]?.id ?? "",
-      };
+      if (atual.idFuncionario || funcionarios.length === 0) return atual;
+      return { ...atual, idFuncionario: funcionarios[0]?.id ?? "" };
     });
   }, [funcionarios]);
 
@@ -117,39 +166,28 @@ export function useLeadsModule(): UseLeadsModuleReturn {
 
   const leadsFiltrados = useMemo(
     () =>
-      filtrarLeads({
-        busca,
-        leads,
-        estagiosPorId,
-        funcionariosPorId,
-        pdvsPorId,
-        negociosPorId,
-      }),
+      filtrarLeads({ busca, leads, estagiosPorId, funcionariosPorId, pdvsPorId, negociosPorId }),
     [busca, estagiosPorId, funcionariosPorId, leads, negociosPorId, pdvsPorId],
   );
 
   const linhasTabela = useMemo(
     () =>
       leadsFiltrados.map((lead) =>
-        mapearLinhaLead({
-          lead,
-          estagiosPorId,
-          funcionariosPorId,
-          pdvsPorId,
-          negociosPorId,
-        }),
+        mapearLinhaLead({ lead, estagiosPorId, funcionariosPorId, pdvsPorId, negociosPorId }),
       ),
     [estagiosPorId, funcionariosPorId, leadsFiltrados, negociosPorId, pdvsPorId],
   );
 
-  const negociosParaVinculo = useMemo(
-    () => filtrarNegociosParaVinculo(buscaNegocio, negocios),
-    [buscaNegocio, negocios],
-  );
+  const negociosParaVinculo = useMemo(() => filtrarNegociosParaVinculo(buscaNegocio, negocios), [buscaNegocio, negocios]);
+  const negociosRelacionadosAoLead = useMemo(() => obterNegociosRelacionadosAoLead(leadParaRemover, negocios), [leadParaRemover, negocios]);
+  const idsPagina = useMemo(() => linhasTabela.map((item) => item.id), [linhasTabela]);
+  const leadsSelecionados = useMemo(() => obterLeadsSelecionados(idsSelecionados, leads), [idsSelecionados, leads]);
+  const totalSelecionados = idsSelecionados.length;
+  const todosFiltradosSelecionados = leadsFiltrados.length > 0 && leadsFiltrados.every((lead) => idsSelecionados.includes(lead.id));
 
-  const negociosRelacionadosAoLead = useMemo(
-    () => obterNegociosRelacionadosAoLead(leadParaRemover, negocios),
-    [leadParaRemover, negocios],
+  const { pdvsPresentesNaSelecao, semPdvSelecionados } = useMemo(
+    () => calcularResumoSelecaoDisparo(leadsSelecionados, pdvsPorId),
+    [leadsSelecionados, pdvsPorId],
   );
 
   const abrirVinculo = (lead: ApiLeadContato) => {
@@ -161,9 +199,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   };
 
   const fecharVinculo = () => {
-    if (vinculando) {
-      return;
-    }
+    if (vinculando) return;
     setDialogVinculoAberto(false);
     setLeadEmVinculo(null);
     setNegocioSelecionadoId("");
@@ -178,9 +214,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   };
 
   const fecharRemocaoLead = () => {
-    if (removendoLead) {
-      return;
-    }
+    if (removendoLead) return;
     setLeadParaRemover(null);
     setRemoverNegociosVinculados(false);
     setErroRemocaoLead(null);
@@ -201,37 +235,23 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   };
 
   const fecharNovoLead = () => {
-    if (criandoLead) {
-      return;
-    }
+    if (criandoLead) return;
     setDialogNovoLeadAberto(false);
     setErroNovoLead(null);
     setLeadEmEdicao(null);
   };
 
-  const atualizarFormularioNovoLead = <Campo extends keyof FormularioNovoLead>(
-    campo: Campo,
-    valor: FormularioNovoLead[Campo],
-  ) => {
-    setFormularioNovoLead((atual) => ({
-      ...atual,
-      [campo]: valor,
-    }));
+  const atualizarFormularioNovoLead = <Campo extends keyof FormularioNovoLead>(campo: Campo, valor: FormularioNovoLead[Campo]) => {
+    setFormularioNovoLead((atual) => ({ ...atual, [campo]: valor }));
   };
 
   const confirmarRemocaoLead = async () => {
-    if (!leadParaRemover || removendoLead) {
-      return;
-    }
-
+    if (!leadParaRemover || removendoLead) return;
     setRemovendoLead(true);
     setErroRemocaoLead(null);
 
     try {
-      const resultado = await removerLeadContato(leadParaRemover.id, {
-        remover_negocios_vinculados: removerNegociosVinculados,
-      });
-
+      const resultado = await removerLeadContato(leadParaRemover.id, { remover_negocios_vinculados: removerNegociosVinculados });
       if (!resultado.ok) {
         setErroRemocaoLead(resultado.erro);
         return;
@@ -240,7 +260,6 @@ export function useLeadsModule(): UseLeadsModuleReturn {
       setLeadParaRemover(null);
       setRemoverNegociosVinculados(false);
       setLeads((atual) => atual.filter((item) => item.id !== leadParaRemover.id));
-
       await carregarDados(true);
 
       addToast({
@@ -260,10 +279,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
 
   const submitNovoLead = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (criandoLead) {
-      return;
-    }
-
+    if (criandoLead) return;
     if (funcionarios.length > 1 && !formularioNovoLead.idFuncionario) {
       setErroNovoLead("Selecione um responsável para este lead.");
       return;
@@ -274,13 +290,9 @@ export function useLeadsModule(): UseLeadsModuleReturn {
 
     try {
       const payloadBase = criarPayloadLeadContato(formularioNovoLead);
-
       const resultado = leadEmEdicao
         ? await atualizarLeadContato(leadEmEdicao.id, payloadBase)
-        : await criarLeadContato({
-            ...payloadBase,
-            origem: "MANUAL",
-          });
+        : await criarLeadContato({ ...payloadBase, origem: "MANUAL" });
 
       if (!resultado.ok) {
         setErroNovoLead(resultado.erro);
@@ -310,17 +322,12 @@ export function useLeadsModule(): UseLeadsModuleReturn {
       setErroVinculo("Selecione um negócio para vincular o lead.");
       return;
     }
-
-    if (vinculando) {
-      return;
-    }
-
+    if (vinculando) return;
     setVinculando(true);
     setErroVinculo(null);
 
     try {
       const resultado = await vincularLeadAoNegocio(negocioSelecionadoId, leadEmVinculo.id);
-
       if (!resultado.ok) {
         setErroVinculo(resultado.erro);
         return;
@@ -330,21 +337,139 @@ export function useLeadsModule(): UseLeadsModuleReturn {
       setLeadEmVinculo(null);
       setNegocioSelecionadoId("");
       setBuscaNegocio("");
-
       await carregarDados(true);
 
       const negocioAtualizado = resultado.dados.negocio ?? negociosPorId.get(negocioSelecionadoId) ?? null;
       const negocioInfo = rotuloNegocioLead(negocioAtualizado);
-
-      addToast({
-        type: "success",
-        title: "Lead vinculado",
-        description: `${leadEmVinculo.nome} foi vinculado a ${negocioInfo.titulo}.`,
-      });
+      addToast({ type: "success", title: "Lead vinculado", description: `${leadEmVinculo.nome} foi vinculado a ${negocioInfo.titulo}.` });
     } catch (error) {
       setErroVinculo(error instanceof Error ? error.message : "Não foi possível vincular o lead.");
     } finally {
       setVinculando(false);
+    }
+  };
+
+  const alternarSelecao = (leadId: string) => {
+    setIdsSelecionados((atual) => (atual.includes(leadId) ? atual.filter((id) => id !== leadId) : [...atual, leadId]));
+  };
+
+  const alternarSelecaoPagina = () => {
+    const todosSelecionados = idsPagina.every((id) => idsSelecionados.includes(id));
+    if (todosSelecionados) {
+      setIdsSelecionados((atual) => atual.filter((id) => !idsPagina.includes(id)));
+      return;
+    }
+    setIdsSelecionados((atual) => Array.from(new Set([...atual, ...idsPagina])));
+  };
+
+  const selecionarTodosFiltrados = () => {
+    setIdsSelecionados(Array.from(new Set(leadsFiltrados.map((item) => item.id))));
+  };
+
+  const limparSelecao = () => setIdsSelecionados([]);
+
+  const abrirDialogDisparo = () => {
+    const base = criarFormularioCampanhaBase(idsSelecionados);
+    const pdvInstancias = pdvsPresentesNaSelecao
+      .map((pdv) => {
+        const leadPdv = leads.find((lead) => idsSelecionados.includes(lead.id) && lead.id_pdv === pdv.id);
+        if (!leadPdv) return null;
+        return { pdvId: pdv.id, instanciaId: "" };
+      })
+      .filter((item): item is { pdvId: string; instanciaId: string } => item !== null);
+
+    setFormularioDisparo({
+      ...base,
+      pdvInstancias,
+      filtrosSnapshot: { busca, totalFiltrados: leadsFiltrados.length },
+    });
+    setErroDisparo(null);
+    setDialogDisparoAberto(true);
+  };
+
+  const fecharDialogDisparo = () => {
+    if (disparandoCampanha) return;
+    setDialogDisparoAberto(false);
+  };
+
+  const atualizarFormularioDisparo = <Campo extends keyof PayloadCriarCampanhaDisparo>(campo: Campo, valor: PayloadCriarCampanhaDisparo[Campo]) => {
+    setFormularioDisparo((atual) => ({ ...atual, [campo]: valor }));
+  };
+
+  const atualizarInstanciaPdvDisparo = (pdvId: string, instanciaId: string) => {
+    setFormularioDisparo((atual) => ({
+      ...atual,
+      pdvInstancias: atual.pdvInstancias.map((item) => (item.pdvId === pdvId ? { ...item, instanciaId } : item)),
+    }));
+  };
+
+  const submitCampanhaDisparo = async () => {
+    setDisparandoCampanha(true);
+    setErroDisparo(null);
+
+    try {
+      const payload: PayloadCriarCampanhaDisparo = {
+        ...formularioDisparo,
+        leadIds: leadsSelecionados.map((lead) => lead.id),
+        pdvInstancias: formularioDisparo.pdvInstancias.filter((item) => item.instanciaId),
+        fallbackInstanciaSemPdvId: formularioDisparo.fallbackInstanciaSemPdvId || undefined,
+      };
+
+      const resultado = await criarCampanhaDisparoLeadsApi(payload);
+      if (!resultado.ok) {
+        setErroDisparo(resultado.erro);
+        return;
+      }
+
+      addToast({
+        type: "success",
+        title: "Campanha criada",
+        description: `${resultado.dados.resumo.elegiveisTotal} leads foram agendados para disparo.`,
+      });
+
+      setDialogDisparoAberto(false);
+      setIdsSelecionados([]);
+      await carregarCampanhas();
+    } catch (error) {
+      setErroDisparo(error instanceof Error ? error.message : "Não foi possível criar a campanha.");
+    } finally {
+      setDisparandoCampanha(false);
+    }
+  };
+
+  const abrirDetalheCampanha = async (campanhaId: string) => {
+    setCampanhaDetalheIdAberta(campanhaId);
+    setCarregandoDetalheCampanha(true);
+    try {
+      const resultado = await detalharCampanhaDisparoLeadsApi(campanhaId);
+      if (resultado.ok) {
+        setCampanhaDetalhe(resultado.dados.campanha);
+        setErroDisparo(null);
+      } else {
+        setErroDisparo(resultado.erro);
+      }
+    } catch (error) {
+      setErroDisparo(error instanceof Error ? error.message : "Não foi possível carregar o detalhe da campanha.");
+    } finally {
+      setCarregandoDetalheCampanha(false);
+    }
+  };
+
+  const fecharDetalheCampanha = () => {
+    setCampanhaDetalhe(null);
+    setCampanhaDetalheIdAberta(null);
+  };
+
+  const cancelarCampanha = async (campanhaId: string) => {
+    const resultado = await cancelarCampanhaDisparoLeadsApi(campanhaId);
+    if (!resultado.ok) {
+      setErroDisparo(resultado.erro);
+      return;
+    }
+    addToast({ type: "success", title: "Campanha cancelada", description: `${resultado.dados.cancelados} envio(s) pendente(s) foram cancelados.` });
+    await carregarCampanhas();
+    if (campanhaDetalheIdAberta === campanhaId) {
+      await abrirDetalheCampanha(campanhaId);
     }
   };
 
@@ -356,10 +481,26 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     carregando,
     recarregando,
     erro,
+    erroDisparo,
     title,
     resumoTotal,
     leadsFiltrados,
     linhasTabela,
+    campanhas,
+    campanhaDetalhe,
+    carregandoCampanhas,
+    carregandoDetalheCampanha,
+    campanhaDetalheIdAberta,
+    disparandoCampanha,
+    dialogDisparoAberto,
+    podeDispararLote: true,
+    idsSelecionados,
+    totalSelecionados,
+    todosFiltradosSelecionados,
+    pdvsPresentesNaSelecao,
+    semPdvSelecionados,
+    instanciasWhatsapp,
+    formularioDisparo,
     funcionarios,
     negociosParaVinculo,
     dialogVinculoAberto,
@@ -379,7 +520,20 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     erroRemocaoLead,
     negociosRelacionadosAoLead,
     carregarDados,
+    carregarCampanhas,
     limparBusca: () => setBusca(""),
+    abrirDialogDisparo,
+    fecharDialogDisparo,
+    atualizarFormularioDisparo,
+    atualizarInstanciaPdvDisparo,
+    alternarSelecao,
+    alternarSelecaoPagina,
+    selecionarTodosFiltrados,
+    limparSelecao,
+    submitCampanhaDisparo,
+    abrirDetalheCampanha,
+    fecharDetalheCampanha,
+    cancelarCampanha,
     abrirVinculo,
     fecharVinculo,
     setBuscaNegocio,

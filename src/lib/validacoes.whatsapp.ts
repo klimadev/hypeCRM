@@ -259,6 +259,43 @@ export const esquemaAtalhoMensagemChatExcluir = z.object({
   id: z.string().trim().min(1, "ID obrigatorio."),
 });
 
+export const esquemaLeadsDisparoCampanhaCreate = z.object({
+  nome: z.string().trim().min(3, "Nome da campanha obrigatorio.").max(80, "Nome da campanha muito longo."),
+  leadIds: z.array(z.string().trim().min(1, "Lead invalido.")).min(1, "Selecione ao menos 1 lead.").max(5000, "Limite de 5000 leads por campanha."),
+  mensagemTemplate: z.string().trim().min(3, "Mensagem obrigatoria.").max(4096, "Mensagem muito longa."),
+  iniciarAgora: z.boolean().default(true),
+  inicioEm: z.string().datetime("Data/hora invalida.").optional(),
+  delayMinSegundos: z.coerce.number().int().min(120, "Delay minimo de 120 segundos.").max(600, "Delay maximo de 600 segundos."),
+  delayMaxSegundos: z.coerce.number().int().min(120, "Delay maximo invalido.").max(600, "Delay maximo de 600 segundos."),
+  jitterMsMax: z.coerce.number().int().min(0, "Jitter invalido.").max(3000, "Jitter maximo de 3000 ms.").default(999),
+  filtrosSnapshot: z.record(z.string(), z.unknown()).optional().default({}),
+  pdvInstancias: z.array(z.object({
+    pdvId: z.string().trim().min(1, "PDV invalido."),
+    instanciaId: z.string().trim().min(1, "Instancia obrigatoria."),
+  })).default([]),
+  fallbackInstanciaSemPdvId: z.string().trim().optional(),
+}).superRefine((dados, ctx) => {
+  if (dados.delayMaxSegundos < dados.delayMinSegundos) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["delayMaxSegundos"],
+      message: "Delay maximo deve ser maior ou igual ao minimo.",
+    });
+  }
+
+  if (!dados.iniciarAgora && !dados.inicioEm) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["inicioEm"],
+      message: "Informe quando a campanha deve iniciar.",
+    });
+  }
+});
+
+export const esquemaLeadsDisparoCampanhaListQuery = z.object({
+  limite: z.coerce.number().int().min(1, "Limite minimo de 1.").max(50, "Limite maximo de 50.").default(20),
+});
+
 export const esquemaWebhookLoggerPayload = z.unknown().refine(
   (valor): valor is Record<string, unknown> => typeof valor === "object" && valor !== null && !Array.isArray(valor),
   { message: "Payload do webhook deve ser um objeto JSON." },
