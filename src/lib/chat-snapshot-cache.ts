@@ -2,7 +2,10 @@ type CacheEntry<T> = {
   promise: Promise<T> | null;
   snapshot: T | null;
   expiresAt: number;
+  startedAt: number | null;
 };
+
+const MAX_IN_FLIGHT_MS = 30_000;
 
 type CacheStore = Map<string, CacheEntry<unknown>>;
 
@@ -28,7 +31,17 @@ export async function obterSnapshotCacheado<T>(params: {
   const existente = store.get(params.key) as CacheEntry<T> | undefined;
 
   if (existente?.promise) {
-    return existente.promise;
+    if (existente.startedAt && agora - existente.startedAt > MAX_IN_FLIGHT_MS) {
+      store.delete(params.key);
+    } else {
+      return existente.promise;
+    }
+  }
+
+  const existenteAtualizado = store.get(params.key) as CacheEntry<T> | undefined;
+
+  if (existenteAtualizado?.snapshot && existenteAtualizado.expiresAt > agora) {
+    return existenteAtualizado.snapshot;
   }
 
   if (existente?.snapshot && existente.expiresAt > agora) {
@@ -38,20 +51,30 @@ export async function obterSnapshotCacheado<T>(params: {
   const promise = params.loader();
   store.set(params.key, {
     promise,
-    snapshot: existente?.snapshot ?? null,
+    snapshot: existenteAtualizado?.snapshot ?? existente?.snapshot ?? null,
     expiresAt: agora + params.ttlMs,
+    startedAt: agora,
   });
 
   try {
     const snapshot = await promise;
+    const atual = store.get(params.key) as CacheEntry<T> | undefined;
+    if (!atual || atual.promise !== promise) {
+      return snapshot;
+    }
+
     store.set(params.key, {
       promise: null,
       snapshot,
       expiresAt: Date.now() + params.ttlMs,
+      startedAt: null,
     });
     return snapshot;
   } catch (error) {
-    store.delete(params.key);
+    const atual = store.get(params.key) as CacheEntry<T> | undefined;
+    if (atual?.promise === promise) {
+      store.delete(params.key);
+    }
     throw error;
   }
 }
