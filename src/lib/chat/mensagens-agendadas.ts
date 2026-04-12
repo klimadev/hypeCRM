@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
+import { agendarProximoFollowUp } from "@/lib/chat/follow-up";
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
@@ -46,14 +47,46 @@ export async function processarMensagensAgendadas(limite = 20) {
         });
       }
 
-      await prisma.mensagemAgendada.update({
-        where: { id: agendada.id },
-        data: {
-          status: "ENVIADO",
-          enviado_em: new Date(),
-          erro: null,
-        },
+      const enviadoEm = new Date();
+      let deveAgendarProximoFollowUp = false;
+
+      await prisma.$transaction(async (tx) => {
+        await tx.mensagemAgendada.update({
+          where: { id: agendada.id },
+          data: {
+            status: "ENVIADO",
+            enviado_em: enviadoEm,
+            erro: null,
+          },
+        });
+
+        if (!agendada.id_followup_conversa || agendada.followup_etapa === null || agendada.followup_ciclo === null) {
+          return;
+        }
+
+        const conversaAtualizada = await tx.followUpConversa.updateMany({
+          where: {
+            id: agendada.id_followup_conversa,
+            status: "ATIVO",
+            etapa_atual: agendada.followup_etapa,
+            ciclo_atual: agendada.followup_ciclo,
+          },
+          data: {
+            ultima_saida_em: enviadoEm,
+            atualizado_em: enviadoEm,
+          },
+        });
+
+        deveAgendarProximoFollowUp = conversaAtualizada.count > 0;
       });
+
+      if (deveAgendarProximoFollowUp && agendada.id_followup_conversa) {
+        try {
+          await agendarProximoFollowUp(agendada.id_followup_conversa);
+        } catch {
+          // Nao deve marcar a mensagem como falha quando o envio ja foi concluido.
+        }
+      }
 
       resultado.enviadas += 1;
     } catch (error) {
