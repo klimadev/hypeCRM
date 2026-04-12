@@ -6,6 +6,7 @@ import type { ChatUnificado } from "../types";
 
 const LIMITE_PAGINA = 50;
 const CHAT_LIST_CACHE_KEY = "chat:list:root";
+const CHAT_LIST_FETCH_TIMEOUT_MS = 25_000;
 
 function ordenarChatsPorTimestamp(chats: ChatUnificado[]) {
   return [...chats].sort((a, b) => (b.ultimaMensagem?.timestamp ?? 0) - (a.ultimaMensagem?.timestamp ?? 0));
@@ -76,6 +77,9 @@ export function useChatData(busca?: string) {
   }, [busca]);
 
   const fetchPagina = useCallback(async (pag: number, termoBusca?: string) => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), CHAT_LIST_FETCH_TIMEOUT_MS);
+
     try {
       if (pag === 1 && chatsRef.current.length === 0) {
         setCarregando(true);
@@ -86,7 +90,9 @@ export function useChatData(busca?: string) {
       if (termoBusca && termoBusca.trim()) {
         params.set("busca", termoBusca.trim());
       }
-      const res = await fetch(`/api/chat/all?${params.toString()}`);
+      const res = await fetch(`/api/chat/all?${params.toString()}`, {
+        signal: controller.signal,
+      });
       if (!res.ok) {
         const json = await res.json().catch(() => ({}));
         throw new Error(json.erro ?? "Erro ao carregar chats");
@@ -106,8 +112,13 @@ export function useChatData(busca?: string) {
         pagina: data.pagina ?? 1,
       });
     } catch (err) {
-      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      if (err instanceof Error && err.name === "AbortError") {
+        setErro("A busca de conversas excedeu o tempo limite. Tente novamente.");
+      } else {
+        setErro(err instanceof Error ? err.message : "Erro desconhecido");
+      }
     } finally {
+      window.clearTimeout(timeout);
       setCarregando(false);
     }
   }, [salvarCacheLocal]);

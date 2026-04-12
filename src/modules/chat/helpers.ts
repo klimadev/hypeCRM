@@ -5,8 +5,12 @@ type MetaOrigemLead = {
   variant: "success" | "info" | "secondary";
 };
 
-export function formatarTelefoneChat(tel: string): string {
+export function formatarTelefoneChat(tel?: string | null): string {
+  if (!tel) return "-";
+
   const digits = tel.replace(/\D/g, "");
+  if (!digits) return tel;
+
   if (digits.length === 13 && digits.startsWith("55")) {
     const ddd = digits.slice(2, 4);
     const parte = digits.slice(4);

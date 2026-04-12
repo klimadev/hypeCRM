@@ -6,6 +6,8 @@ type FalhaInstagramInput = {
   type?: string;
 };
 
+const INSTAGRAM_FETCH_TIMEOUT_MS = 20_000;
+
 export type CategoriaFalhaInstagram =
   | "token_invalido"
   | "sem_permissao"
@@ -152,11 +154,14 @@ export async function chamarGraphInstagram<T>(input: {
   operacao: string;
 }): Promise<T> {
   let resposta: Response;
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), INSTAGRAM_FETCH_TIMEOUT_MS);
 
   try {
     resposta = await fetch(input.url.toString(), {
       cache: "no-store",
       ...input.init,
+      signal: controller.signal,
     });
   } catch (erroRede) {
     logInstagram("Erro de rede ao chamar API do Instagram", {
@@ -173,6 +178,8 @@ export async function chamarGraphInstagram<T>(input: {
       code: null,
       subcode: null,
     });
+  } finally {
+    clearTimeout(timeout);
   }
 
   const json = await resposta.json().catch(() => null);

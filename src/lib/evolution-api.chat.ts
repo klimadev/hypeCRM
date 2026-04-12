@@ -8,6 +8,7 @@ import {
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
+const EVOLUTION_FETCH_TIMEOUT_MS = 20_000;
 
 const headers = {
   "Content-Type": "application/json",
@@ -18,8 +19,27 @@ async function lerJsonErro(resposta: Response) {
   return await resposta.json().catch(() => ({}));
 }
 
+async function fetchEvolution(path: string, init: RequestInit) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), EVOLUTION_FETCH_TIMEOUT_MS);
+
+  try {
+    return await fetch(`${EVOLUTION_API_URL}${path}`, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof Error && error.name === "AbortError") {
+      throw new Error("Tempo limite ao consultar Evolution API.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 export async function buscarContatos(instanceName: string): Promise<EvolutionContato[]> {
-  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+  const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
     body: JSON.stringify({}),
@@ -42,7 +62,7 @@ export async function buscarContatos(instanceName: string): Promise<EvolutionCon
 }
 
 export async function buscarConversas(instanceName: string): Promise<EvolutionConversa[]> {
-  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+  const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
     body: JSON.stringify({}),
@@ -96,7 +116,7 @@ export async function buscarConversasPaginado(
   pagina: number = 1,
   limite: number = 100,
 ): Promise<ConversasPaginadoResult> {
-  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findChats/${instanceName}`, {
+  const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -156,7 +176,7 @@ export async function buscarConversasEvolution(
   page: number = 1,
   offset: number = 30,
 ): Promise<EvolutionConversa[]> {
-  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+  const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
     headers,
     body: JSON.stringify({
@@ -200,7 +220,7 @@ export async function buscarMensagens(
   let temMaisPaginas = true;
 
   while (temMaisPaginas) {
-    const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+    const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
       method: "POST",
       headers,
       body: JSON.stringify({ limit: limitePorPagina, page: pagina }),
@@ -291,7 +311,7 @@ export async function buscarMensagensPorContato(
   pagina: number = 1,
   limite: number = 50,
 ): Promise<{ messages: Array<{ id: string; remoteJid: string; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
-  const resposta = await fetch(`${EVOLUTION_API_URL}/chat/findMessages/${instanceName}`, {
+  const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
     headers,
     body: JSON.stringify({

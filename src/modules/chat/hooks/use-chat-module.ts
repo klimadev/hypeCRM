@@ -82,6 +82,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
       }
 
       const nome = chat.leadMatch?.nome ?? chat.pushName ?? "";
+      const telefone = chat.telefone ?? "";
       const conteudo = chat.ultimaMensagem?.conteudo ?? "";
       const origem = chat.leadMatch?.origem ?? "";
       const fonte = chat.leadMatch?.fonte ?? "";
@@ -92,7 +93,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
 
       return (
         nome.toLowerCase().includes(termo) ||
-        chat.telefone.includes(termo) ||
+        telefone.includes(termo) ||
         conteudo.toLowerCase().includes(termo) ||
         origem.toLowerCase().includes(termo) ||
         fonte.toLowerCase().includes(termo) ||

@@ -11,6 +11,7 @@ import { listarConversasInstagram, listarPreviewsMensagensInstagramPorEmpresa } 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
 const CHAT_DEBUG_ENABLED = process.env.CHAT_DEBUG === "1";
+const MAX_PAGINAS_POR_INSTANCIA = 40;
 
 function logChat(evento: string, detalhes?: Record<string, unknown>) {
   if (detalhes) {
@@ -404,12 +405,28 @@ export async function unificarChatsComLeads({
             let paginaAtual = 1;
             const limitePagina = 100;
             let temMais = true;
+            const assinaturasPaginas = new Set<string>();
 
-            while (temMais) {
+            while (temMais && paginaAtual <= MAX_PAGINAS_POR_INSTANCIA) {
               const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
+              if (resultado.conversas.length === 0) {
+                break;
+              }
+
+              const assinaturaPagina = `${resultado.conversas.length}:${resultado.conversas.at(0)?.remoteJid ?? ""}:${resultado.conversas.at(-1)?.remoteJid ?? ""}`;
+              if (assinaturasPaginas.has(assinaturaPagina)) {
+                debug.errors.push(`Paginacao repetida detectada na instancia ${inst.instanceName} (pagina ${paginaAtual})`);
+                break;
+              }
+              assinaturasPaginas.add(assinaturaPagina);
+
               conversasInstancia.push(...resultado.conversas);
               temMais = resultado.temMais;
               paginaAtual += 1;
+            }
+
+            if (temMais && paginaAtual > MAX_PAGINAS_POR_INSTANCIA) {
+              debug.errors.push(`Paginacao interrompida por limite na instancia ${inst.instanceName}`);
             }
 
             return { inst, conversas: conversasInstancia };
