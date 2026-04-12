@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   Briefcase,
@@ -9,6 +9,7 @@ import {
   Layers3,
   Megaphone,
   MessageCircle,
+  RefreshCw,
   Phone,
   UserPlus,
   UserRound,
@@ -16,6 +17,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/components/ui/toast";
 import {
   Select,
   SelectContent,
@@ -41,6 +43,71 @@ import {
 import { ChatMessagesPanel } from "./chat-messages-panel";
 import type { ChatUnificado } from "../types";
 import { formatarTelefoneChat, obterMetaOrigemLead, obterNomeChat } from "../helpers";
+import {
+  acionarConversaFollowUp,
+  ativarConversaFollowUp,
+  listarTemplatesFollowUp,
+  obterConversaFollowUp,
+  type FollowUpConversa,
+  type FollowUpTemplate,
+} from "@/lib/api/chat-follow-up";
+
+function obterApresentacaoStatusFollowUp(followUp: FollowUpConversa | null) {
+  if (!followUp) {
+    return { variant: "secondary" as const, label: "Desativado" };
+  }
+
+  if (followUp.status === "ATIVO") {
+    return { variant: "success" as const, label: "Ativo" };
+  }
+
+  if (followUp.status === "PAUSADO") {
+    return { variant: "secondary" as const, label: "Pausado" };
+  }
+
+  if (followUp.motivoEncerramento === "Cliente respondeu") {
+    return { variant: "success" as const, label: "Encerrado (respondeu)" };
+  }
+
+  return { variant: "secondary" as const, label: "Encerrado" };
+}
+
+function formatarTempoAteDisparo(dataIso: string | null) {
+  if (!dataIso) return null;
+
+  const alvo = new Date(dataIso).getTime();
+  if (Number.isNaN(alvo)) return null;
+
+  const diferencaMinutos = Math.round((alvo - Date.now()) / 60000);
+  if (Math.abs(diferencaMinutos) < 1) return "agora";
+
+  const total = Math.abs(diferencaMinutos);
+  const dias = Math.floor(total / 1440);
+  const horas = Math.floor((total % 1440) / 60);
+  const minutos = total % 60;
+  const partes: string[] = [];
+
+  if (dias > 0) partes.push(`${dias}d`);
+  if (horas > 0) partes.push(`${horas}h`);
+  if (minutos > 0) partes.push(`${minutos}min`);
+
+  const sufixo = diferencaMinutos > 0 ? "restantes" : "em atraso";
+  return `${partes.join(" ")} ${sufixo}`;
+}
+
+function formatarTempoRelativoCurto(referencia: Date | null) {
+  if (!referencia) return "sem atualizacao";
+
+  const deltaSegundos = Math.max(0, Math.floor((Date.now() - referencia.getTime()) / 1000));
+  if (deltaSegundos < 10) return "agora";
+  if (deltaSegundos < 60) return `${deltaSegundos}s`;
+
+  const deltaMinutos = Math.floor(deltaSegundos / 60);
+  if (deltaMinutos < 60) return `${deltaMinutos}min`;
+
+  const deltaHoras = Math.floor(deltaMinutos / 60);
+  return `${deltaHoras}h`;
+}
 
 type ChatPanelProps = {
   chat: ChatUnificado;
@@ -73,12 +140,100 @@ export function ChatPanel({
   const [dialogOpen, setDialogOpen] = useState<"lead" | "negocio" | null>(null);
   const [detalhesAbertos, setDetalhesAbertos] = useState(false);
   const [transferirAberto, setTransferirAberto] = useState(false);
+  const [followUp, setFollowUp] = useState<FollowUpConversa | null>(null);
+  const [templates, setTemplates] = useState<FollowUpTemplate[]>([]);
+  const [templateSelecionado, setTemplateSelecionado] = useState("");
+  const [salvandoFollowUp, setSalvandoFollowUp] = useState(false);
+  const [carregandoFollowUp, setCarregandoFollowUp] = useState(false);
+  const [ultimaAtualizacaoFollowUp, setUltimaAtualizacaoFollowUp] = useState<Date | null>(null);
+  const { addToast } = useToast();
 
   const nome = obterNomeChat(chat);
   const origemLead = obterMetaOrigemLead(chat.leadMatch?.origem);
   const telefone = formatarTelefoneChat(chat.telefone);
   const statusPrincipal = chat.semMatch ? "Novo contato" : chat.leadMatch?.nome_estagio ?? "Lead vinculado";
   const canalLabel = chat.canal === "instagram" ? "Instagram" : "WhatsApp";
+
+  const carregarContextoFollowUp = useCallback(async (mostrarErro = false) => {
+    if (!chat.leadMatch || chat.canal !== "whatsapp") return;
+
+    setCarregandoFollowUp(true);
+    const [conversaResult, templatesResult] = await Promise.all([
+      obterConversaFollowUp(chat.instanceName, chat.remoteJid),
+      listarTemplatesFollowUp(),
+    ]);
+    setCarregandoFollowUp(false);
+
+    if (conversaResult.ok) {
+      setFollowUp(conversaResult.dados.conversa);
+    } else if (mostrarErro) {
+      addToast({ type: "error", title: "Erro ao atualizar follow-up", description: conversaResult.erro });
+    }
+
+    if (templatesResult.ok) {
+      setTemplates(templatesResult.dados.templates.filter((template) => template.ativo && template.canal === "whatsapp"));
+    } else if (mostrarErro) {
+      addToast({ type: "error", title: "Erro ao atualizar cadencias", description: templatesResult.erro });
+    }
+
+    setUltimaAtualizacaoFollowUp(new Date());
+  }, [addToast, chat.canal, chat.instanceName, chat.leadMatch, chat.remoteJid]);
+
+  useEffect(() => {
+    if (!detalhesAbertos || !chat.leadMatch || chat.canal !== "whatsapp") return;
+
+    let ativo = true;
+
+    const carregarComControle = async () => {
+      await carregarContextoFollowUp();
+      if (!ativo) return;
+    };
+
+    void carregarComControle();
+    const intervalo = window.setInterval(() => {
+      void carregarComControle();
+    }, 30000);
+
+    return () => {
+      ativo = false;
+      window.clearInterval(intervalo);
+    };
+  }, [carregarContextoFollowUp, chat.canal, chat.leadMatch, detalhesAbertos]);
+
+  const statusUi = obterApresentacaoStatusFollowUp(followUp);
+  const possuiTemplatesAtivos = templates.length > 0;
+  const podeAtivarFollowUp = !followUp && possuiTemplatesAtivos;
+  const templateSelecionadoEfetivo = templateSelecionado || templates[0]?.id || "";
+  const tempoAteProximoDisparo = formatarTempoAteDisparo(followUp?.proximoDisparoEm ?? null);
+  const atualizadoHa = formatarTempoRelativoCurto(ultimaAtualizacaoFollowUp);
+
+  const executarAcaoFollowUp = useCallback(async (acao: "PAUSAR" | "RETOMAR" | "ENCERRAR") => {
+    if (!followUp) return;
+
+    if (acao === "ENCERRAR") {
+      const confirmado = window.confirm("Encerrar este follow-up agora? Os proximos disparos serao cancelados.");
+      if (!confirmado) return;
+    }
+
+    setSalvandoFollowUp(true);
+    const resultado = await acionarConversaFollowUp({ conversaId: followUp.id, acao });
+    setSalvandoFollowUp(false);
+    if (!resultado.ok) {
+      addToast({
+        type: "error",
+        title: acao === "PAUSAR" ? "Erro ao pausar" : acao === "RETOMAR" ? "Erro ao retomar" : "Erro ao encerrar",
+        description: resultado.erro,
+      });
+      return;
+    }
+
+    setFollowUp(resultado.dados.conversa);
+    addToast({
+      type: "success",
+      title: acao === "PAUSAR" ? "Follow-up pausado" : acao === "RETOMAR" ? "Follow-up retomado" : "Follow-up encerrado",
+    });
+    void carregarContextoFollowUp();
+  }, [addToast, carregarContextoFollowUp, followUp]);
 
   return (
     <>
@@ -269,6 +424,199 @@ export function ChatPanel({
                     <span className="truncate font-medium text-[var(--text-primary)]">{chat.leadMatch.nome}</span>
                   </div>
                 </div>
+              </div>
+            ) : null}
+
+            {chat.leadMatch && chat.canal === "whatsapp" ? (
+              <div className="mt-4 rounded-[20px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Follow-up automatico</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">Cadencia por conversa</p>
+                    <p className="mt-1 text-[10px] text-[var(--text-tertiary)]">Atualizado ha {atualizadoHa}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      disabled={carregandoFollowUp}
+                      onClick={() => {
+                        void carregarContextoFollowUp(true);
+                      }}
+                    >
+                      <RefreshCw className={`h-3.5 w-3.5 ${carregandoFollowUp ? "animate-spin" : ""}`} />
+                    </Button>
+                    <Badge variant={statusUi.variant} size="sm" dot>
+                      {statusUi.label}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="mt-3 space-y-2 text-[12px] text-[var(--text-secondary)]">
+                  {followUp ? (
+                    <>
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                        <span>Cadencia</span>
+                        <span className="truncate font-medium text-[var(--text-primary)]">{followUp.template.nome}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                        <span>Etapa atual</span>
+                        <span className="font-medium text-[var(--text-primary)]">Mensagem {Math.max(1, followUp.etapaAtual)}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                        <span>Ciclo</span>
+                        <span className="font-medium text-[var(--text-primary)]">{followUp.cicloAtual}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                        <span>Proximo disparo</span>
+                        <span className="text-right font-medium text-[var(--text-primary)]">
+                          {followUp.proximoDisparoEm ? new Date(followUp.proximoDisparoEm).toLocaleString("pt-BR") : "Sem agendamento"}
+                          {tempoAteProximoDisparo ? <span className="block text-[10px] text-[var(--text-secondary)]">{tempoAteProximoDisparo}</span> : null}
+                        </span>
+                      </div>
+                      {followUp.ultimaRespostaEm ? (
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                          <span>Ultima resposta</span>
+                          <span className="font-medium text-[var(--text-primary)]">{new Date(followUp.ultimaRespostaEm).toLocaleString("pt-BR")}</span>
+                        </div>
+                      ) : null}
+                      {followUp.status === "PAUSADO" && followUp.motivoPausa ? (
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                          <span>Motivo</span>
+                          <span className="font-medium text-[var(--text-primary)]">{followUp.motivoPausa}</span>
+                        </div>
+                      ) : null}
+                      {followUp.status === "ENCERRADO" && followUp.motivoEncerramento ? (
+                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
+                          <span>Motivo</span>
+                          <span className="font-medium text-[var(--text-primary)]">{followUp.motivoEncerramento}</span>
+                        </div>
+                      ) : null}
+                      {followUp.status === "ENCERRADO" ? (
+                        <div className="rounded-xl border border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">
+                          {followUp.motivoEncerramento === "Cliente respondeu"
+                            ? "Follow-up encerrado automaticamente: o lead respondeu e os proximos disparos foram cancelados."
+                            : `Follow-up encerrado: ${followUp.motivoEncerramento ?? "Fluxo concluido."}`}
+                        </div>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      <Select value={templateSelecionadoEfetivo} onValueChange={setTemplateSelecionado}>
+                        <SelectTrigger disabled={salvandoFollowUp || carregandoFollowUp}>
+                          <SelectValue placeholder="Selecione uma cadencia" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {templates.map((template) => (
+                            <SelectItem key={template.id} value={template.id}>
+                              {template.nome}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {!possuiTemplatesAtivos ? (
+                        <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">
+                          Nenhuma cadencia ativa encontrada. Crie/ative uma cadencia em Configuracoes para habilitar o follow-up automatico.
+                        </div>
+                      ) : null}
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={!templateSelecionadoEfetivo || salvandoFollowUp || !podeAtivarFollowUp}
+                        onClick={async () => {
+                          if (!chat.leadMatch || !templateSelecionadoEfetivo) return;
+                          setSalvandoFollowUp(true);
+                          const resultado = await ativarConversaFollowUp({
+                            instanceName: chat.instanceName,
+                            remoteJid: chat.remoteJid,
+                            idLead: chat.leadMatch.id,
+                            templateId: templateSelecionadoEfetivo,
+                          });
+                          setSalvandoFollowUp(false);
+                          if (!resultado.ok) {
+                            addToast({ type: "error", title: "Erro ao ativar follow-up", description: resultado.erro });
+                            return;
+                          }
+                          setFollowUp(resultado.dados.conversa);
+                          void carregarContextoFollowUp();
+                          addToast({ type: "success", title: "Follow-up ativado" });
+                        }}
+                      >
+                        {salvandoFollowUp ? "Ativando..." : "Ativar cadencia"}
+                      </Button>
+                    </>
+                  )}
+                </div>
+
+                {followUp ? (
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {followUp.status === "ATIVO" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={salvandoFollowUp || carregandoFollowUp}
+                        onClick={() => {
+                          void executarAcaoFollowUp("PAUSAR");
+                        }}
+                      >
+                        Pausar
+                      </Button>
+                    ) : null}
+                    {followUp.status === "PAUSADO" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={salvandoFollowUp || carregandoFollowUp}
+                        onClick={() => {
+                          void executarAcaoFollowUp("RETOMAR");
+                        }}
+                      >
+                        Retomar
+                      </Button>
+                    ) : null}
+                    {followUp.status !== "ENCERRADO" ? (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={salvandoFollowUp || carregandoFollowUp}
+                        onClick={() => {
+                          void executarAcaoFollowUp("ENCERRAR");
+                        }}
+                      >
+                        Encerrar
+                      </Button>
+                    ) : null}
+                    {followUp.status === "ENCERRADO" ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={salvandoFollowUp || carregandoFollowUp || !chat.leadMatch}
+                        onClick={async () => {
+                          if (!chat.leadMatch) return;
+                          setSalvandoFollowUp(true);
+                          const resultado = await ativarConversaFollowUp({
+                            instanceName: chat.instanceName,
+                            remoteJid: chat.remoteJid,
+                            idLead: chat.leadMatch.id,
+                            templateId: followUp.template.id,
+                          });
+                          setSalvandoFollowUp(false);
+                          if (!resultado.ok) {
+                            addToast({ type: "error", title: "Erro ao reativar", description: resultado.erro });
+                            return;
+                          }
+                          setFollowUp(resultado.dados.conversa);
+                          void carregarContextoFollowUp();
+                          addToast({ type: "success", title: "Follow-up reativado" });
+                        }}
+                      >
+                        Reativar cadencia
+                      </Button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : null}
           </div>

@@ -406,10 +406,13 @@ model MensagemAgendada {
   id_empresa       String
   id_lead          String?
   id_campanha_disparo String?
+  id_followup_conversa String?
   instance_name    String
   remote_jid       String
   conteudo         String
   tipo             String   @default("text")
+  followup_etapa   Int?
+  followup_ciclo   Int?
   agendado_para    DateTime
   status           String   @default("PENDENTE")
   tentativas       Int      @default(0)
@@ -420,11 +423,74 @@ model MensagemAgendada {
   criado_em        DateTime @default(now())
   atualizado_em    DateTime @default(now())
   CampanhaDisparoLead CampanhaDisparoLead? @relation(fields: [id_campanha_disparo], references: [id], onDelete: SetNull)
+  FollowUpConversa FollowUpConversa? @relation(fields: [id_followup_conversa], references: [id], onDelete: SetNull)
 
   @@index([id_empresa, status, agendado_para])
   @@index([instance_name, remote_jid])
   @@index([status, agendado_para])
   @@index([id_campanha_disparo, status])
+  @@index([id_followup_conversa, status])
+}
+
+model FollowUpTemplate {
+  id               String   @id
+  id_empresa       String
+  nome             String
+  descricao        String?
+  canal            String   @default("whatsapp")
+  ativo            Boolean  @default(true)
+  permite_repeticao Boolean @default(false)
+  max_ciclos       Int      @default(1)
+  pausar_se_responder Boolean @default(true)
+  criado_por       String
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @default(now())
+  etapas           FollowUpTemplateEtapa[]
+  conversas        FollowUpConversa[]
+
+  @@index([id_empresa, ativo])
+  @@index([id_empresa, criado_em])
+}
+
+model FollowUpTemplateEtapa {
+  id               String   @id
+  id_template      String
+  ordem            Int
+  delay_minutos    Int
+  conteudo         String
+  ativo            Boolean  @default(true)
+  criado_em        DateTime @default(now())
+  atualizado_em    DateTime @default(now())
+  template         FollowUpTemplate @relation(fields: [id_template], references: [id], onDelete: Cascade)
+
+  @@unique([id_template, ordem])
+  @@index([id_template, ativo])
+}
+
+model FollowUpConversa {
+  id                 String   @id
+  id_empresa         String
+  id_template        String
+  id_lead            String
+  instance_name      String
+  remote_jid         String
+  status             String   @default("ATIVO")
+  etapa_atual        Int      @default(0)
+  ciclo_atual        Int      @default(1)
+  ultima_saida_em    DateTime?
+  ultima_resposta_em DateTime?
+  proximo_disparo_em DateTime?
+  motivo_pausa       String?
+  motivo_encerramento String?
+  criado_por         String
+  criado_em          DateTime @default(now())
+  atualizado_em      DateTime @default(now())
+  template           FollowUpTemplate @relation(fields: [id_template], references: [id], onDelete: Restrict)
+  mensagens_agendadas MensagemAgendada[]
+
+  @@index([id_empresa, status, proximo_disparo_em])
+  @@index([id_empresa, instance_name, remote_jid, status])
+  @@index([id_template])
 }
 
 model CampanhaDisparoLead {

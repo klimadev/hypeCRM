@@ -259,6 +259,70 @@ export const esquemaAtalhoMensagemChatExcluir = z.object({
   id: z.string().trim().min(1, "ID obrigatorio."),
 });
 
+const esquemaFollowUpTemplateEtapa = z.object({
+  ordem: z.coerce.number().int().min(1, "Ordem invalida."),
+  delayMinutos: z.coerce.number().int().min(5, "Delay minimo de 5 minutos.").max(43200, "Delay maximo de 30 dias."),
+  conteudo: z.string().trim().min(1, "Conteudo obrigatorio.").max(4096, "Conteudo muito longo."),
+  ativo: z.boolean().optional().default(true),
+});
+
+export const esquemaFollowUpTemplatePayload = z.object({
+  nome: z.string().trim().min(2, "Nome obrigatorio.").max(80, "Nome muito longo."),
+  descricao: z.string().trim().max(280, "Descricao muito longa.").optional().nullable(),
+  canal: z.enum(["whatsapp"]).default("whatsapp"),
+  ativo: z.boolean().optional().default(true),
+  permiteRepeticao: z.boolean().optional().default(false),
+  maxCiclos: z.coerce.number().int().min(1, "Maximo de ciclos invalido.").max(365, "Maximo de ciclos muito alto.").default(1),
+  pausarSeResponder: z.boolean().optional().default(true),
+  etapas: z.array(esquemaFollowUpTemplateEtapa).min(1, "Adicione ao menos uma etapa.").max(30, "Limite de 30 etapas por template."),
+}).superRefine((dados, ctx) => {
+  const ordens = new Set<number>();
+  for (const etapa of dados.etapas) {
+    if (ordens.has(etapa.ordem)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["etapas"],
+        message: "As ordens das etapas nao podem repetir.",
+      });
+      break;
+    }
+    ordens.add(etapa.ordem);
+  }
+
+  if (!dados.permiteRepeticao && dados.maxCiclos > 1) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ["maxCiclos"],
+      message: "Maximo de ciclos maior que 1 exige repeticao habilitada.",
+    });
+  }
+});
+
+export const esquemaFollowUpTemplateAtualizar = esquemaFollowUpTemplatePayload.extend({
+  id: z.string().trim().min(1, "ID obrigatorio."),
+});
+
+export const esquemaFollowUpTemplateExcluir = z.object({
+  id: z.string().trim().min(1, "ID obrigatorio."),
+});
+
+export const esquemaFollowUpConversaGet = z.object({
+  instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
+  remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
+});
+
+export const esquemaFollowUpConversaAtivar = z.object({
+  instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
+  remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
+  idLead: z.string().trim().min(1, "Lead obrigatorio."),
+  templateId: z.string().trim().min(1, "Template obrigatorio."),
+});
+
+export const esquemaFollowUpConversaAcao = z.object({
+  conversaId: z.string().trim().min(1, "Conversa obrigatoria."),
+  acao: z.enum(["PAUSAR", "RETOMAR", "ENCERRAR"]),
+});
+
 export const esquemaLeadsDisparoCampanhaCreate = z.object({
   nome: z.string().trim().min(3, "Nome da campanha obrigatorio.").max(80, "Nome da campanha muito longo."),
   leadIds: z.array(z.string().trim().min(1, "Lead invalido.")).min(1, "Selecione ao menos 1 lead.").max(5000, "Limite de 5000 leads por campanha."),
