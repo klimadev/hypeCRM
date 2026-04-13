@@ -7,6 +7,7 @@ import {
   cancelarCampanhaDisparoLeadsApi,
   criarCampanhaDisparoLeadsApi,
   criarLeadContato,
+  importarLeadsCsvApi,
   detalharCampanhaDisparoLeadsApi,
   listarCampanhasDisparoLeadsApi,
   listarLeadsApi,
@@ -76,6 +77,9 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const [removerNegociosVinculados, setRemoverNegociosVinculados] = useState(false);
   const [erroRemocaoLead, setErroRemocaoLead] = useState<string | null>(null);
   const [dialogNovoLeadAberto, setDialogNovoLeadAberto] = useState(false);
+  const [dialogImportacaoAberto, setDialogImportacaoAberto] = useState(false);
+  const [importandoCsv, setImportandoCsv] = useState(false);
+  const [erroImportacaoCsv, setErroImportacaoCsv] = useState<string | null>(null);
   const [criandoLead, setCriandoLead] = useState(false);
   const [erroNovoLead, setErroNovoLead] = useState<string | null>(null);
   const [formularioNovoLead, setFormularioNovoLead] = useState<FormularioNovoLead>(() => criarFormularioNovoLead());
@@ -227,6 +231,17 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     setDialogNovoLeadAberto(true);
   };
 
+  const abrirImportacaoCsv = () => {
+    setErroImportacaoCsv(null);
+    setDialogImportacaoAberto(true);
+  };
+
+  const fecharImportacaoCsv = () => {
+    if (importandoCsv) return;
+    setDialogImportacaoAberto(false);
+    setErroImportacaoCsv(null);
+  };
+
   const abrirEdicaoLead = (lead: ApiLeadContato) => {
     setLeadEmEdicao(lead);
     setFormularioNovoLead(criarFormularioEdicaoLead(lead));
@@ -314,6 +329,32 @@ export function useLeadsModule(): UseLeadsModuleReturn {
       setErroNovoLead(error instanceof Error ? error.message : `Não foi possível ${leadEmEdicao ? "atualizar" : "cadastrar"} o lead.`);
     } finally {
       setCriandoLead(false);
+    }
+  };
+
+  const importarLeadsCsv: UseLeadsModuleReturn["importarLeadsCsv"] = async (payload) => {
+    if (importandoCsv) return;
+    setImportandoCsv(true);
+    setErroImportacaoCsv(null);
+
+    try {
+      const resultado = await importarLeadsCsvApi(payload);
+      if (!resultado.ok) {
+        setErroImportacaoCsv(resultado.erro);
+        return;
+      }
+
+      setDialogImportacaoAberto(false);
+      await carregarDados(true);
+      addToast({
+        type: "success",
+        title: "Importação concluída",
+        description: `${resultado.dados.criados} lead(s) criado(s), ${resultado.dados.ignorados} ignorado(s).`,
+      });
+    } catch (error) {
+      setErroImportacaoCsv(error instanceof Error ? error.message : "Não foi possível importar o CSV.");
+    } finally {
+      setImportandoCsv(false);
     }
   };
 
@@ -510,6 +551,9 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     vinculando,
     erroVinculo,
     dialogNovoLeadAberto,
+    dialogImportacaoAberto,
+    importandoCsv,
+    erroImportacaoCsv,
     criandoLead,
     erroNovoLead,
     formularioNovoLead,
@@ -540,6 +584,9 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     setNegocioSelecionadoId,
     confirmarVinculo,
     abrirNovoLead,
+    abrirImportacaoCsv,
+    fecharImportacaoCsv,
+    importarLeadsCsv,
     abrirEdicaoLead,
     fecharNovoLead,
     atualizarFormularioNovoLead,

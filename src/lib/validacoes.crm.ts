@@ -18,6 +18,19 @@ export const esquemaCriarLead = z.object({
   dados_extras: z.string().trim().optional().nullable(),
 });
 
+export const esquemaImportarLeads = z.object({
+  id_funcionario: z.string().trim().min(1, "Funcionario obrigatorio."),
+  deduplicar: z.boolean().default(true),
+  leads: z.array(z.object({
+    nome: z.string().trim().min(2, "Nome do lead deve ter ao menos 2 caracteres.").max(120, "Nome muito longo."),
+    telefone: z.string().trim().min(8, "Telefone invalido.").max(40, "Telefone muito longo."),
+    email: z.string().trim().email("E-mail invalido.").max(160, "E-mail muito longo.").optional().nullable(),
+    fonte: z.string().trim().max(120, "Fonte muito longa.").optional().nullable(),
+    empresa_origem: z.string().trim().max(120, "Empresa de origem muito longa.").optional().nullable(),
+    observacoes: z.string().trim().max(2000, "Observacoes muito longas.").optional().nullable(),
+  })).min(1, "Informe ao menos 1 lead.").max(2000, "Limite de 2000 leads por importacao."),
+});
+
 export const esquemaCriarNegocio = z.object({
   titulo: z.string().trim().min(2, "Titulo do negocio deve ter ao menos 2 caracteres."),
   valor_estimado: z.number().min(0, "Valor estimado nao pode ser negativo."),

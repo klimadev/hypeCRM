@@ -59,6 +59,27 @@ export type PayloadCriarLead = {
   dados_extras?: string | null;
 };
 
+export type PayloadImportarLeadsCsv = {
+  id_funcionario: string;
+  deduplicar: boolean;
+  leads: Array<{
+    nome: string;
+    telefone: string;
+    email?: string | null;
+    fonte?: string | null;
+    empresa_origem?: string | null;
+    observacoes?: string | null;
+  }>;
+};
+
+export type ResultadoImportacaoLeads = {
+  criados: number;
+  ignorados: number;
+  invalidos: number;
+  duplicadosNoArquivo: number;
+  duplicadosNoSistema: number;
+};
+
 export type PayloadAtualizarLead = {
   nome?: string;
   telefone?: string;
@@ -178,6 +199,32 @@ export async function criarLeadContato(payload: PayloadCriarLead): Promise<Resul
     ok: true,
     dados: {
       lead: json.lead,
+    },
+  };
+}
+
+export async function importarLeadsCsvApi(
+  payload: PayloadImportarLeadsCsv,
+): Promise<ResultadoApi<ResultadoImportacaoLeads>> {
+  const resposta = await fetch("/api/leads/import", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<ResultadoImportacaoLeads & ApiErro>(resposta);
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao importar leads." };
+  }
+
+  return {
+    ok: true,
+    dados: {
+      criados: json.criados ?? 0,
+      ignorados: json.ignorados ?? 0,
+      invalidos: json.invalidos ?? 0,
+      duplicadosNoArquivo: json.duplicadosNoArquivo ?? 0,
+      duplicadosNoSistema: json.duplicadosNoSistema ?? 0,
     },
   };
 }

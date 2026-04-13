@@ -4,6 +4,7 @@ import type {
   CampanhaResumoApi,
   ApiFuncionarioContato,
   ApiLeadContato,
+  PayloadImportarLeadsCsv,
   PayloadCriarCampanhaDisparo,
 } from "@/lib/api/leads";
 import type {
@@ -78,6 +79,9 @@ export type UseLeadsModuleReturn = {
   vinculando: boolean;
   erroVinculo: string | null;
   dialogNovoLeadAberto: boolean;
+  dialogImportacaoAberto: boolean;
+  importandoCsv: boolean;
+  erroImportacaoCsv: string | null;
   criandoLead: boolean;
   erroNovoLead: string | null;
   formularioNovoLead: FormularioNovoLead;
@@ -108,6 +112,9 @@ export type UseLeadsModuleReturn = {
   setNegocioSelecionadoId: (valor: string) => void;
   confirmarVinculo: () => Promise<void>;
   abrirNovoLead: () => void;
+  abrirImportacaoCsv: () => void;
+  fecharImportacaoCsv: () => void;
+  importarLeadsCsv: (payload: PayloadImportarLeadsCsv) => Promise<void>;
   abrirEdicaoLead: (lead: ApiLeadContato) => void;
   fecharNovoLead: () => void;
   atualizarFormularioNovoLead: <Campo extends keyof FormularioNovoLead>(

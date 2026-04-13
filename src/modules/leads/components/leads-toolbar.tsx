@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Plus, RefreshCw, Search } from "lucide-react";
+import { FileUp, Loader2, Plus, RefreshCw, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -8,6 +8,7 @@ type LeadsToolbarProps = {
   busca: string;
   onBuscaChange: (valor: string) => void;
   onNovoLead: () => void;
+  onImportarCsv: () => void;
   onAtualizar: () => void;
   carregando: boolean;
   recarregando: boolean;
@@ -17,6 +18,7 @@ export function LeadsToolbar({
   busca,
   onBuscaChange,
   onNovoLead,
+  onImportarCsv,
   onAtualizar,
   carregando,
   recarregando,
@@ -40,6 +42,16 @@ export function LeadsToolbar({
       >
         <Plus className="mr-2 h-4 w-4" />
         Novo lead
+      </Button>
+
+      <Button
+        type="button"
+        variant="outline"
+        className="h-10 rounded-[var(--radius-control)]"
+        onClick={onImportarCsv}
+      >
+        <FileUp className="mr-2 h-4 w-4" />
+        Importar CSV
       </Button>
 
       <Button

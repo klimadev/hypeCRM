@@ -16,6 +16,7 @@ import { LeadDeleteDialog } from "./components/lead-delete-dialog";
 import { LeadsBulkActions } from "./components/leads-bulk-actions";
 import { LeadDisparoCampaignDialog } from "./components/lead-disparo-campaign-dialog";
 import { LeadDisparoCampaignsPanel } from "./components/lead-disparo-campaigns-panel";
+import { LeadsImportCsvDialog } from "./components/leads-import-csv-dialog";
 
 export function ModuloLeads() {
   const vm = useLeadsModule();
@@ -36,6 +37,7 @@ export function ModuloLeads() {
             busca={vm.busca}
             onBuscaChange={vm.setBusca}
             onNovoLead={vm.abrirNovoLead}
+            onImportarCsv={vm.abrirImportacaoCsv}
             onAtualizar={() => void vm.carregarDados(true)}
             carregando={vm.carregando}
             recarregando={vm.recarregando}
@@ -142,6 +144,20 @@ export function ModuloLeads() {
         }}
         onCampoChange={vm.atualizarFormularioNovoLead}
         onSubmit={vm.submitNovoLead}
+      />
+
+      <LeadsImportCsvDialog
+        open={vm.dialogImportacaoAberto}
+        funcionarios={vm.funcionarios}
+        idFuncionarioPadrao={vm.formularioNovoLead.idFuncionario}
+        importing={vm.importandoCsv}
+        erro={vm.erroImportacaoCsv}
+        onOpenChange={(aberto) => {
+          if (!aberto) {
+            vm.fecharImportacaoCsv();
+          }
+        }}
+        onSubmit={vm.importarLeadsCsv}
       />
 
       <LeadDeleteDialog
