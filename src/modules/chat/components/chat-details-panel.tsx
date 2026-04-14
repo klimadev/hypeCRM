@@ -22,14 +22,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { ChatUnificado } from "../types";
+import type { ChatUnificado, OrphanCriarNegocioParams } from "../types";
 import { formatarTelefoneChat, obterMetaOrigemLead, obterNomeChat } from "../helpers";
 
 type ChatDetailsPanelProps = {
   chat: ChatUnificado;
   onVoltar?: () => void;
   onRegistrarLead: (params: { telefone: string; nome?: string; id_pdv?: string; id_funcionario?: string }) => Promise<void>;
-  onCriarNegocio: (params: { telefone: string; nome?: string; id_pdv?: string; id_funcionario?: string; id_estagio?: string }) => Promise<void>;
+  onCriarNegocio: (params: OrphanCriarNegocioParams) => Promise<void>;
 };
 
 export function ChatDetailsPanel({ chat, onVoltar, onRegistrarLead, onCriarNegocio }: ChatDetailsPanelProps) {
@@ -130,7 +130,7 @@ export function ChatDetailsPanel({ chat, onVoltar, onRegistrarLead, onCriarNegoc
       </div>
 
       <OrphanDialog open={dialogOpen === "lead"} onOpenChange={(open) => !open && setDialogOpen(null)} title="Registrar como Lead" description="Cadastrar este contato como um novo lead no CRM." telefone={chat.telefone} nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""} onSubmit={(params) => { void onRegistrarLead(params); setDialogOpen(null); }} />
-      <OrphanDialog open={dialogOpen === "negocio"} onOpenChange={(open) => !open && setDialogOpen(null)} title="Criar negócio" description="Cadastrar o contato e abrir um negócio a partir desta conversa." telefone={chat.telefone} nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""} onSubmit={(params) => { void onCriarNegocio(params); setDialogOpen(null); }} />
+      <OrphanDialog open={dialogOpen === "negocio"} onOpenChange={(open) => !open && setDialogOpen(null)} title="Criar negócio" description="Cadastrar o contato e abrir um negócio a partir desta conversa." telefone={chat.telefone} nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""} onSubmit={(params) => { void onCriarNegocio({ ...params, id_lead: chat.leadMatch?.id }); setDialogOpen(null); }} />
     </div>
   );
 }

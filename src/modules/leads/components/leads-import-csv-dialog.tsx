@@ -121,6 +121,25 @@ function suggestMapping(headers: string[]) {
   return mapping;
 }
 
+function detectHeaderRow(firstRow: string[]) {
+  const normalizedCells = firstRow.map((cell) => normalizeHeader(cell));
+
+  return normalizedCells.some((cell) => {
+    if (!cell) return false;
+    return (Object.values(SYNONYMS) as string[][])
+      .flat()
+      .some((alias) => cell.includes(normalizeHeader(alias)));
+  });
+}
+
+function buildHeadersWithoutHeader(columnCount: number) {
+  return Array.from({ length: columnCount }, (_, index) => {
+    if (index === 0) return "nome";
+    if (index === 1) return "telefone";
+    return `coluna_${index + 1}`;
+  });
+}
+
 function toLeadPayload(row: CsvPreviewRow, mapping: Partial<Record<CsvMapKey, string>>) {
   const nome = mapping.nome ? row[mapping.nome] ?? "" : "";
   const telefone = mapping.telefone ? row[mapping.telefone] ?? "" : "";
@@ -209,18 +228,27 @@ export function LeadsImportCsvDialog({
       .map((line) => line.trim())
       .filter(Boolean);
 
-    if (lines.length < 2) {
-      throw new Error("O arquivo precisa ter pelo menos 2 linhas (cabeçalho + conteúdo).");
+    if (lines.length === 0) {
+      throw new Error("Não foram encontradas linhas importáveis no arquivo.");
     }
 
     const delimiterEfetivo = forcedDelimiter ?? detectDelimiter(lines);
 
-    const firstRow = parseCsvLine(lines[0], delimiterEfetivo);
-    const csvHeaders = firstRow.map((header, index) => header || `coluna_${index + 1}`);
+    const parsedLines = lines.map((line) => parseCsvLine(line, delimiterEfetivo));
+    const maxColumns = parsedLines.reduce((acc, cells) => Math.max(acc, cells.length), 0);
+    if (maxColumns < 2) {
+      throw new Error("O CSV precisa conter ao menos 2 colunas (nome e telefone).");
+    }
 
-    const contentLines = lines.slice(1);
-    const csvRows = contentLines.map((line) => {
-      const cells = parseCsvLine(line, delimiterEfetivo);
+    const firstRow = parsedLines[0] ?? [];
+    const hasHeader = detectHeaderRow(firstRow);
+
+    const csvHeaders = hasHeader
+      ? firstRow.map((header, index) => header || `coluna_${index + 1}`)
+      : buildHeadersWithoutHeader(maxColumns);
+
+    const contentRows = hasHeader ? parsedLines.slice(1) : parsedLines;
+    const csvRows = contentRows.map((cells) => {
       return csvHeaders.reduce<CsvPreviewRow>((acc, header, index) => {
         acc[header] = cells[index] ?? "";
         return acc;
@@ -238,7 +266,12 @@ export function LeadsImportCsvDialog({
     setHeaders(csvHeaders);
     setRows(csvRows);
     setMapping((current) => {
-      const suggestion = suggestMapping(csvHeaders);
+      const suggestion = hasHeader
+        ? suggestMapping(csvHeaders)
+        : {
+            nome: csvHeaders[0],
+            telefone: csvHeaders[1],
+          };
       return { ...suggestion, ...current };
     });
   };

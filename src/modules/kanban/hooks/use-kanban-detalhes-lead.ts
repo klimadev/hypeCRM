@@ -103,14 +103,34 @@ export function useKanbanDetalhesNegocio({
         return;
       }
 
-      setLeadsDisponiveis(resultado.dados.leads ?? []);
+      const leadsApi = resultado.dados.leads ?? [];
+      const leadsJaVinculados = (negocioSelecionado?.leads_vinculados ?? []).map((lead) => ({
+        id: lead.id,
+        nome: lead.nome,
+        telefone: lead.telefone,
+        id_negocio: lead.id_negocio ?? negocioSelecionado?.id ?? null,
+        id_estagio: negocioSelecionado?.id_estagio ?? "",
+        id_funcionario: negocioSelecionado?.id_funcionario ?? "",
+        valor_oportunidade: 0,
+        atualizado_em: negocioSelecionado?.atualizado_em ?? new Date().toISOString(),
+      }));
+
+      const merged = new Map<string, ApiLeadContato>();
+      for (const lead of leadsJaVinculados) {
+        merged.set(lead.id, lead);
+      }
+      for (const lead of leadsApi) {
+        merged.set(lead.id, { ...merged.get(lead.id), ...lead });
+      }
+
+      setLeadsDisponiveis(Array.from(merged.values()));
     } catch {
       setLeadsDisponiveis([]);
       setErroVinculos("Erro ao carregar leads disponiveis.");
     } finally {
       setCarregandoLeadsDisponiveis(false);
     }
-  }, []);
+  }, [negocioSelecionado]);
 
   const atualizarVinculosNegocio = useCallback(
     async (leadIds: string[]) => {

@@ -169,7 +169,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
       addToast({
         type: "success",
         title: "Negocio criado",
-        description: "O lead e negocio foram criados com sucesso.",
+        description: "O negocio foi criado e vinculado ao contato com sucesso.",
       });
       await recarregar();
     } catch {

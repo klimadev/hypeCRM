@@ -1,4 +1,4 @@
-<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.2 | Updated: 2026-02-24 -->
+<!-- Context: project-intelligence/technical | Priority: critical | Version: 1.3 | Updated: 2026-04-14 -->
 
 # Technical Domain
 
@@ -88,6 +88,67 @@ if (!resposta.ok) {
 }
 ```
 
+### Design System Colors (Dark Premium Theme)
+```css
+/* Cores principais */
+--canvas: #09090b;       /* Background principal */
+--surface: #0c0c0e;       /* Superfície de cards */
+--surface-elevated: #111113;  /* Elementos elevados */
+
+/* Cores de texto */
+--text-primary: #fafafa;
+--text-secondary: #a1a1aa;
+--text-tertiary: #71717a;
+
+/* Cores de marca */
+--brand: #8b5cf6;        /* Roxo - Primary */
+--success: #10b981;     /* Verde */
+--danger: #f43f5e;      /* Vermelho */
+--warning: #f59e0b;      /* Amarelo */
+--info: #38bdf8;        /* Azul info */
+
+/* Bordas */
+--border-subtle: rgba(255,255,255,0.08);
+--border-strong: #3f3f46;
+```
+
+### UI Components Disponíveis (src/components/ui/)
+- `button.tsx` - Botões primários, secondary, ghost, destructive
+- `input.tsx`, `textarea.tsx` - Campos de formulário
+- `select.tsx` - Dropdowns (Radix UI)
+- `dialog.tsx`, `sheet.tsx` - Modais e drawers
+- `card.tsx`, `badge.tsx` - Cards e badges
+- `table.tsx`, `tabs.tsx` - Estrutura de layout
+- `toast.tsx`, `tooltip.tsx`, `popover.tsx` - Feedback
+- `switch.tsx` - Toggle switches
+- Uses Radix UI primitives + Tailwind merge
+
+### Utils Disponíveis
+```ts
+import { cn } from "@/lib/utils";           // clsx + twMerge conditional
+import { formataMoeda } from "@/lib/utils"; // R$ 1.234,56
+import { formataData } from "@/lib/utils";   // DD/MM/AAAA
+import { aplicaMascaraTelefoneBr } from "@/lib/utils";
+import { aplicaMascaraMoedaBr } from "@/lib/utils";
+import { converteMoedaBrParaNumero } from "@/lib/utils";
+```
+
+### API Helpers (src/lib/api/)
+```ts
+import { parseJson, validateBody } from "@/lib/api/route-validation";
+// parseJson(request) → { ok, data } ou { ok: false, response }
+validateBody(schema, payload) → { ok, data } ou { ok: false, response }
+
+import { badRequest, forbidden, ok, notFound, serverError } from "@/lib/api/http";
+// badRequest("msg") → 400 { erro }
+// forbidden("msg") → 403 { erro }
+// ok(data) → 200 data
+// notFound("msg") → 404 { erro }
+
+import { handleRouteError } from "@/lib/api/route-errors";
+// handleRouteError(erro, "Contexto", "Prefixo") → 500 com log
+```
+
 ## Design Patterns
 - Feature module composition: `page.tsx` delegates logic to `use-*-module` hooks.
 - Auth and RBAC gateway in API handlers before business logic.
@@ -119,19 +180,38 @@ if (!resposta.ok) {
 - Scope queries by tenant (`id_empresa`).
 
 ## 📂 Codebase References
+### Core Patterns
 - API route pattern: `src/app/api/leads/route.ts`
 - Auth and RBAC helpers: `src/lib/permissoes.ts`
-- Validation schemas: `src/lib/validacoes.ts`
+- Validation schemas: `src/lib/validacoes.ts` (modular: validacoes.crm.ts, validacoes.financeiro.ts, etc.)
 - Session and JWT handling: `src/lib/autenticacao.ts`
-- Module hook pattern: `src/modules/kanban/hooks/use-kanban-module.ts`
-- Team module hook pattern: `src/modules/equipe/hooks/use-equipe-module.ts`
+- Utils core: `src/lib/utils.ts` (cn, formataMoeda, mascaraTelefone)
+- HTTP helpers: `src/lib/api/http.ts` (badRequest, forbidden, ok, notFound)
+- Route validation: `src/lib/api/route-validation.ts` (parseJson, validateBody)
+- Route errors: `src/lib/api/route-errors.ts` (handleRouteError)
+
+### Feature Modules (src/modules/*)
+- Kanban: `src/modules/kanban/hooks/use-kanban-module.ts`
+- Equipe: `src/modules/equipe/hooks/use-equipe-module.ts`
+-WhatsApp: `src/modules/whatsapp/hooks/use-whatsapp-module.ts`
+- Leads: `src/modules/leads/hooks/use-leads-module.ts`
+- Chat: `src/modules/chat/hooks/use-chat-data.ts`
+- Automacoes: `src/modules/automacoes/`
+- Produto: `src/modules/produtos/`
+- Recebimentos: `src/modules/recebimentos/`
+- Onboarding: `src/modules/onboarding/`
+
+### Integrations
 - WhatsApp integration: `src/lib/evolution-api.ts`
 - WhatsApp automations: `src/lib/whatsapp-automations.ts`
-- WhatsApp automations API: `src/app/api/whatsapp/automations/route.ts`
-- WhatsApp module UI: `src/modules/whatsapp/`
-- Feature directory pattern: `src/modules/`
-- Data model: `prisma/schema.prisma`
-- Tooling: `package.json`, `tsconfig.json`, `eslint.config.mjs`
+- Trial management: `src/lib/trial.ts`
+- Instagram: `src/modules/instagram/`
+
+### Data & Tooling
+- Data model: `prisma/schema.prisma` (~739 lines)
+- Package.json: `package.json`
+- TypeScript config: `tsconfig.json`
+- Tests: Vitest config
 
 ## Reference
 - `.opencode/context/core/context-system/standards/mvi.md`

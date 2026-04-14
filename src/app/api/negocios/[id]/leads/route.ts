@@ -46,11 +46,12 @@ async function validarLeadsPermitidos(idEmpresa: string, whereLeads: WhereLeads,
   });
 
   const idsPermitidos = new Set(leadsPermitidos.map((lead) => lead.id));
-  if (!leadIds.every((leadId) => idsPermitidos.has(leadId))) {
-    return null;
-  }
+  return leadIds.filter((leadId) => idsPermitidos.has(leadId));
+}
 
-  return leadIds;
+function combinarIdsPermitidos(leadIdsSolicitados: string[], leadIdsPermitidos: string[], leadIdsJaVinculados: string[]) {
+  const idsPermitidos = new Set([...leadIdsPermitidos, ...leadIdsJaVinculados]);
+  return leadIdsSolicitados.every((leadId) => idsPermitidos.has(leadId));
 }
 
 async function obterNegocioPermitido(idEmpresa: string, idNegocio: string, whereNegocios: WhereNegocios) {
@@ -87,7 +88,8 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   const leadIds = await validarLeadsPermitidos(auth.sessao.id_empresa, whereLeads, validacao.data.lead_ids);
-  if (!leadIds) {
+  const leadIdsJaVinculados = negocio.leads.map((lead) => lead.id);
+  if (!combinarIdsPermitidos(validacao.data.lead_ids, leadIds, leadIdsJaVinculados)) {
     return badRequest("Um ou mais leads informados sao invalidos.");
   }
 
@@ -131,13 +133,16 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   const leadIdsPermitidos = await validarLeadsPermitidos(auth.sessao.id_empresa, whereLeads, leadIdsDesejados);
-  if (leadIdsPermitidos === null) {
+  const leadIdsJaVinculados = negocio.leads.map((lead) => lead.id);
+
+  if (!combinarIdsPermitidos(leadIdsDesejados, leadIdsPermitidos, leadIdsJaVinculados)) {
     return badRequest("Um ou mais leads informados sao invalidos.");
   }
 
   const atuais = negocio.leads.map((lead) => lead.id);
+  const idsDesejados = new Set(leadIdsDesejados);
   const paraAdicionar = leadIdsPermitidos.filter((leadId) => !atuais.includes(leadId));
-  const paraRemover = atuais.filter((leadId) => !leadIdsPermitidos.includes(leadId));
+  const paraRemover = atuais.filter((leadId) => !idsDesejados.has(leadId));
 
   if (paraRemover.length > 0) {
     await desvincularLeadsDoNegocio({

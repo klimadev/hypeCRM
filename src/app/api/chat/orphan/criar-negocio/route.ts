@@ -1,10 +1,10 @@
 import { z } from "zod";
 import { randomUUID } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
-import { exigirSessao } from "@/lib/permissoes";
+import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 import { obterEstagioIndefinido } from "@/lib/estagios-fixos";
-import { badRequest, forbidden, serverError } from "@/lib/api/http";
+import { badRequest, forbidden, notFound, serverError } from "@/lib/api/http";
 import { parseJson, validateBody } from "@/lib/api/route-validation";
 import { disparaAutomacoesPorEvento } from "@/lib/automacoes";
 
@@ -14,6 +14,7 @@ const esquemaCriarNegocio = z.object({
   id_pdv: z.string().trim().optional(),
   id_funcionario: z.string().trim().optional(),
   id_estagio: z.string().trim().optional(),
+  id_lead: z.string().trim().optional(),
 });
 
 export async function POST(request: NextRequest) {
@@ -32,7 +33,29 @@ export async function POST(request: NextRequest) {
     return validacao.response;
   }
 
-  const { telefone, nome, id_pdv, id_funcionario, id_estagio } = validacao.data;
+  const { telefone, nome, id_pdv, id_funcionario, id_estagio, id_lead } = validacao.data;
+
+  const whereLeads = await whereLeadsPorPerfil(auth.sessao);
+  const leadExistente = id_lead
+    ? await prisma.lead.findFirst({
+        where: {
+          ...whereLeads,
+          id: id_lead,
+        },
+        select: {
+          id: true,
+          nome: true,
+          telefone: true,
+          id_funcionario: true,
+          id_pdv: true,
+          id_estagio: true,
+        },
+      })
+    : null;
+
+  if (id_lead && !leadExistente) {
+    return notFound("Lead nao encontrado.");
+  }
 
   let idFuncFinal: string;
   let idPdvFinal: string | undefined;
@@ -48,8 +71,11 @@ export async function POST(request: NextRequest) {
     if (!auth.sessao.id_pdv) {
       return forbidden("Gerente sem PDV vinculado.");
     }
-    idPdvFinal = id_pdv ?? auth.sessao.id_pdv;
-    idFuncFinal = id_funcionario ?? auth.sessao.id_usuario;
+    if (id_pdv && id_pdv !== auth.sessao.id_pdv) {
+      return forbidden("Gerente nao pode criar negocio fora do proprio PDV.");
+    }
+    idPdvFinal = auth.sessao.id_pdv;
+    idFuncFinal = id_funcionario ?? leadExistente?.id_funcionario ?? auth.sessao.id_usuario;
     const func = await prisma.funcionario.findFirst({
       where: { id: idFuncFinal, id_pdv: idPdvFinal, id_empresa: auth.sessao.id_empresa, ativo: true },
     });
@@ -57,11 +83,25 @@ export async function POST(request: NextRequest) {
       return forbidden("Funcionario nao pertence ao seu PDV.");
     }
   } else {
-    idPdvFinal = id_pdv;
-    idFuncFinal = id_funcionario ?? auth.sessao.id_usuario;
-    const func = await prisma.funcionario.findFirst({
+    idPdvFinal = id_pdv ?? leadExistente?.id_pdv ?? undefined;
+    idFuncFinal = id_funcionario ?? leadExistente?.id_funcionario ?? auth.sessao.id_usuario;
+
+    let func = await prisma.funcionario.findFirst({
       where: { id: idFuncFinal, id_empresa: auth.sessao.id_empresa, ativo: true },
+      select: { id: true, id_pdv: true },
     });
+
+    if (!func && auth.sessao.perfil === "EMPRESA" && !id_funcionario) {
+      func = await prisma.funcionario.findFirst({
+        where: { id_empresa: auth.sessao.id_empresa, ativo: true },
+        orderBy: { criado_em: "asc" },
+        select: { id: true, id_pdv: true },
+      });
+      if (func) {
+        idFuncFinal = func.id;
+      }
+    }
+
     if (!func) {
       return badRequest("Funcionario invalido.");
     }
@@ -75,25 +115,47 @@ export async function POST(request: NextRequest) {
   }
 
   const estagioIndefinido = await obterEstagioIndefinido(auth.sessao.id_empresa);
-  const estagioFinal = id_estagio ?? estagioIndefinido.id;
+  const estagioIdPreferido = id_estagio ?? leadExistente?.id_estagio ?? estagioIndefinido.id;
+  const estagioSelecionado = await prisma.estagioFunil.findFirst({
+    where: {
+      id: estagioIdPreferido,
+      id_empresa: auth.sessao.id_empresa,
+    },
+    select: { id: true, id_funil: true },
+  });
+
+  if (!estagioSelecionado) {
+    return badRequest("Estagio invalido.");
+  }
 
   try {
     const resultado = await prisma.$transaction(async (tx) => {
-      const lead = await tx.lead.create({
-        data: {
-          id: randomUUID(),
-          nome: nome ?? telefone,
-          telefone,
-          id_empresa: auth.sessao.id_empresa,
-          id_funcionario: idFuncFinal,
-          id_pdv: idPdvFinal ?? null,
-          id_estagio: estagioFinal,
-          origem: "MANUAL",
-        },
-      });
+      const lead = leadExistente
+        ? await tx.lead.update({
+            where: { id: leadExistente.id },
+            data: {
+              nome: nome ?? leadExistente.nome,
+              id_funcionario: idFuncFinal,
+              id_pdv: idPdvFinal ?? null,
+              id_estagio: estagioSelecionado.id,
+              telefone,
+            },
+          })
+        : await tx.lead.create({
+            data: {
+              id: randomUUID(),
+              nome: nome ?? telefone,
+              telefone,
+              id_empresa: auth.sessao.id_empresa,
+              id_funcionario: idFuncFinal,
+              id_pdv: idPdvFinal ?? null,
+              id_estagio: estagioSelecionado.id,
+              origem: "MANUAL",
+            },
+          });
 
       const funil = await tx.funil.findFirst({
-        where: { id_empresa: auth.sessao.id_empresa, padrao: true },
+        where: { id: estagioSelecionado.id_funil, id_empresa: auth.sessao.id_empresa },
         select: { id: true },
       });
 
@@ -107,24 +169,31 @@ export async function POST(request: NextRequest) {
           id_empresa: auth.sessao.id_empresa,
           id_lead: lead.id,
           id_funil: funil.id,
-          id_estagio: estagioFinal,
+          id_estagio: estagioSelecionado.id,
           id_funcionario: idFuncFinal,
-          titulo: nome ?? telefone,
+          titulo: nome ?? lead.nome ?? telefone,
           valor_estimado: 0,
           data_abertura: new Date(),
         },
       });
 
-      return { lead, negocio };
+      await tx.lead.update({
+        where: { id: lead.id },
+        data: { id_negocio: negocio.id },
+      });
+
+      return { lead, negocio, criouNovoLead: !leadExistente };
     });
 
-    disparaAutomacoesPorEvento(auth.sessao.id_empresa, "lead_criado", {
-      empresaId: auth.sessao.id_empresa,
-      leadId: resultado.lead.id,
-      lead: { id: resultado.lead.id, nome: resultado.lead.nome, telefone: resultado.lead.telefone },
-    }).catch(() => {});
+    if (resultado.criouNovoLead) {
+      disparaAutomacoesPorEvento(auth.sessao.id_empresa, "lead_criado", {
+        empresaId: auth.sessao.id_empresa,
+        leadId: resultado.lead.id,
+        lead: { id: resultado.lead.id, nome: resultado.lead.nome, telefone: resultado.lead.telefone },
+      }).catch(() => {});
+    }
 
-    return NextResponse.json(resultado, { status: 201 });
+    return NextResponse.json({ lead: resultado.lead, negocio: resultado.negocio }, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar negocio a partir de orphan:", error);
     if (error instanceof Error && error.message === "Funil padrao nao encontrado.") {

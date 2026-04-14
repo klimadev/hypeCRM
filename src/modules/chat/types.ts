@@ -52,6 +52,7 @@ export type OrphanCriarNegocioParams = {
   id_pdv?: string;
   id_funcionario?: string;
   id_estagio?: string;
+  id_lead?: string;
 };
 
 export type UseChatModuleReturn = {

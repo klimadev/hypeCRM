@@ -41,7 +41,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ChatMessagesPanel } from "./chat-messages-panel";
-import type { ChatUnificado } from "../types";
+import type { ChatUnificado, OrphanCriarNegocioParams } from "../types";
 import { formatarTelefoneChat, obterMetaOrigemLead, obterNomeChat } from "../helpers";
 import {
   acionarConversaFollowUp,
@@ -119,13 +119,7 @@ type ChatPanelProps = {
     id_pdv?: string;
     id_funcionario?: string;
   }) => Promise<void>;
-  onCriarNegocio: (params: {
-    telefone: string;
-    nome?: string;
-    id_pdv?: string;
-    id_funcionario?: string;
-    id_estagio?: string;
-  }) => Promise<void>;
+  onCriarNegocio: (params: OrphanCriarNegocioParams) => Promise<void>;
   onTransferirLead: (params: { idLead: string; idFuncionario: string }) => Promise<void>;
 };
 
@@ -652,7 +646,10 @@ export function ChatPanel({
         nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""}
         perfil={perfil}
         onSubmit={(params) => {
-          void onCriarNegocio(params);
+          void onCriarNegocio({
+            ...params,
+            id_lead: chat.leadMatch?.id,
+          });
           setDialogOpen(null);
         }}
       />
