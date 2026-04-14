@@ -3,10 +3,10 @@ import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
-import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 import { prisma } from "@/lib/prisma";
+import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
@@ -160,90 +160,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ ok: true, messageId: resultado.message_id });
     } catch (error) {
-      if (error instanceof ErroInstagramApi && error.categoria === "janela_expirada") {
-        logChat("Envio bloqueado por janela de 24h", {
-          remoteJid: validacao.data.remoteJid,
-          code: error.code,
-          subcode: error.subcode,
-        });
-        return NextResponse.json(
-          { erro: "Nao foi possivel enviar a mensagem porque esta conversa esta fora da janela permitida pela plataforma.", codigo: "JANELA_EXPIRADA" },
-          { status: 403 },
-        );
-      }
-
-      if (error instanceof ErroInstagramApi && error.categoria === "token_invalido") {
-        logChat("Envio falhou: token invalido", {
-          remoteJid: validacao.data.remoteJid,
-          code: error.code,
-        });
-        return NextResponse.json(
-          { erro: "A conexao com o Instagram esta invalida ou sem permissao. Reconecte sua conta nas configuracoes.", codigo: "TOKEN_INVALIDO" },
-          { status: 401 },
-        );
-      }
-
-      if (error instanceof ErroInstagramApi && error.categoria === "erro_rede") {
-        logChat("Erro de rede ao enviar mensagem no Instagram", {
-          remoteJid: validacao.data.remoteJid,
-          mensagem: error.message,
-        });
-        return NextResponse.json(
-          { erro: "Nao foi possivel conectar ao Instagram. Verifique sua conexao e tente novamente.", codigo: "ERRO_REDE" },
-          { status: 502 },
-        );
-      }
-
-      if (error instanceof ErroInstagramApi && error.categoria === "endpoint_invalido") {
-        logChat("Erro de endpoint ao enviar mensagem no Instagram", {
-          remoteJid: validacao.data.remoteJid,
-          code: error.code,
-          mensagem: error.message,
-        });
-        return NextResponse.json(
-          { erro: "Nao foi possivel enviar a mensagem. A conversa pode ter sido encerrada ou nao existe mais na plataforma.", codigo: "CONVERSA_INVALIDA" },
-          { status: 400 },
-        );
-      }
-
-      if (error instanceof ErroInstagramApi && error.categoria === "sem_permissao") {
-        logChat("Permissao negada ao enviar mensagem no Instagram", {
-          remoteJid: validacao.data.remoteJid,
-          code: error.code,
-        });
-        return NextResponse.json(
-          { erro: "Nao foi possivel enviar a mensagem porque a conta nao tem permissao para esta operacao.", codigo: "PERMISSAO_NEGADA" },
-          { status: 403 },
-        );
-      }
-
-      if (error instanceof ErroInstagramApi && error.categoria === "limite_excedido") {
-        logChat("Limite de requisicoes atingido no Instagram", {
-          remoteJid: validacao.data.remoteJid,
-          code: error.code,
-          subcode: error.subcode,
-        });
-        return NextResponse.json(
-          { erro: "O Instagram atingiu o limite de requisoes. Aguarde alguns instantes e tente novamente.", codigo: "LIMITE_EXCEDIDO" },
-          { status: 429 },
-        );
-      }
-
-      // Fallback: log completo do erro real para debug
-      console.error("[Chat] Erro nao classificado ao enviar mensagem no Instagram", {
-        remoteJid: validacao.data.remoteJid,
-        tipo: error instanceof ErroInstagramApi ? "ErroInstagramApi" : typeof error,
-        categoria: error instanceof ErroInstagramApi ? error.categoria : undefined,
-        status: error instanceof ErroInstagramApi ? error.status : undefined,
-        code: error instanceof ErroInstagramApi ? error.code : undefined,
-        subcode: error instanceof ErroInstagramApi ? error.subcode : undefined,
-        mensagem: error instanceof Error ? error.message : String(error),
-      });
-
-      return NextResponse.json(
-        { erro: "Nao foi possivel enviar a mensagem agora.", codigo: "ERRO_DESCONHECIDO" },
-        { status: 500 },
-      );
+      return instagramErrorToResponse(error, validacao.data.remoteJid);
     }
   }
 

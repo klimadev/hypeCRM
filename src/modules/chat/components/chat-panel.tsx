@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   ArrowLeft,
   Briefcase,
@@ -9,7 +9,6 @@ import {
   Layers3,
   Megaphone,
   MessageCircle,
-  RefreshCw,
   Phone,
   UserPlus,
   UserRound,
@@ -19,21 +18,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
   Sheet,
   SheetContent,
   SheetDescription,
@@ -41,6 +25,10 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ChatMessagesPanel } from "./chat-messages-panel";
+import { ChatInfoCard } from "./chat-info-card";
+import { ChatOrphanDialog } from "./chat-orphan-dialog";
+import { ChatTransferLeadDialog } from "./chat-transfer-lead-dialog";
+import { ChatFollowUpCard } from "./chat-follow-up-card";
 import type { ChatUnificado, OrphanCriarNegocioParams } from "../types";
 import { formatarTelefoneChat, obterMetaOrigemLead, obterNomeChat } from "../helpers";
 import {
@@ -376,11 +364,11 @@ export function ChatPanel({
             </div>
 
             <div className="mt-4 grid grid-cols-1 gap-3">
-              <InfoCard icon={<Layers3 className="h-4 w-4" />} label="Estágio" value={chat.leadMatch?.nome_estagio ?? "Sem estágio"} description="Fase operacional atual" />
-              <InfoCard icon={<UserRound className="h-4 w-4" />} label="Responsável" value={chat.leadMatch?.nome_funcionario ?? "Não atribuído"} description="Pessoa que conduz o lead" />
-              <InfoCard icon={<Building2 className="h-4 w-4" />} label="PDV" value={chat.leadMatch?.nome_pdv ?? "Sem PDV"} description={chat.leadMatch?.empresa_origem ?? "Origem operacional do lead"} />
-              <InfoCard icon={<Megaphone className="h-4 w-4" />} label="Origem" value={origemLead?.label ?? "Não informada"} description={chat.leadMatch?.fonte ?? "Sem fonte complementar"} />
-              <InfoCard
+              <ChatInfoCard icon={<Layers3 className="h-4 w-4" />} label="Estágio" value={chat.leadMatch?.nome_estagio ?? "Sem estágio"} description="Fase operacional atual" />
+              <ChatInfoCard icon={<UserRound className="h-4 w-4" />} label="Responsável" value={chat.leadMatch?.nome_funcionario ?? "Não atribuído"} description="Pessoa que conduz o lead" />
+              <ChatInfoCard icon={<Building2 className="h-4 w-4" />} label="PDV" value={chat.leadMatch?.nome_pdv ?? "Sem PDV"} description={chat.leadMatch?.empresa_origem ?? "Origem operacional do lead"} />
+              <ChatInfoCard icon={<Megaphone className="h-4 w-4" />} label="Origem" value={origemLead?.label ?? "Não informada"} description={chat.leadMatch?.fonte ?? "Sem fonte complementar"} />
+              <ChatInfoCard
                 icon={<Briefcase className="h-4 w-4" />}
                 label="Negócio"
                 value={chat.leadMatch?.negocio?.titulo ?? (chat.leadMatch?.id_negocio ? "Vinculado" : "Nenhum")}
@@ -421,203 +409,73 @@ export function ChatPanel({
               </div>
             ) : null}
 
-            {chat.leadMatch && chat.canal === "whatsapp" ? (
-              <div className="mt-4 rounded-[20px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4">
-                <div className="flex items-center justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Follow-up automatico</p>
-                    <p className="mt-1 text-sm font-semibold text-[var(--text-primary)]">Cadencia por conversa</p>
-                    <p className="mt-1 text-[10px] text-[var(--text-tertiary)]">Atualizado ha {atualizadoHa}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      disabled={carregandoFollowUp}
-                      onClick={() => {
-                        void carregarContextoFollowUp(true);
-                      }}
-                    >
-                      <RefreshCw className={`h-3.5 w-3.5 ${carregandoFollowUp ? "animate-spin" : ""}`} />
-                    </Button>
-                    <Badge variant={statusUi.variant} size="sm" dot>
-                      {statusUi.label}
-                    </Badge>
-                  </div>
-                </div>
-
-                <div className="mt-3 space-y-2 text-[12px] text-[var(--text-secondary)]">
-                  {followUp ? (
-                    <>
-                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                        <span>Cadencia</span>
-                        <span className="truncate font-medium text-[var(--text-primary)]">{followUp.template.nome}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                        <span>Etapa atual</span>
-                        <span className="font-medium text-[var(--text-primary)]">Mensagem {Math.max(1, followUp.etapaAtual)}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                        <span>Ciclo</span>
-                        <span className="font-medium text-[var(--text-primary)]">{followUp.cicloAtual}</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                        <span>Proximo disparo</span>
-                        <span className="text-right font-medium text-[var(--text-primary)]">
-                          {followUp.proximoDisparoEm ? new Date(followUp.proximoDisparoEm).toLocaleString("pt-BR") : "Sem agendamento"}
-                          {tempoAteProximoDisparo ? <span className="block text-[10px] text-[var(--text-secondary)]">{tempoAteProximoDisparo}</span> : null}
-                        </span>
-                      </div>
-                      {followUp.ultimaRespostaEm ? (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                          <span>Ultima resposta</span>
-                          <span className="font-medium text-[var(--text-primary)]">{new Date(followUp.ultimaRespostaEm).toLocaleString("pt-BR")}</span>
-                        </div>
-                      ) : null}
-                      {followUp.status === "PAUSADO" && followUp.motivoPausa ? (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                          <span>Motivo</span>
-                          <span className="font-medium text-[var(--text-primary)]">{followUp.motivoPausa}</span>
-                        </div>
-                      ) : null}
-                      {followUp.status === "ENCERRADO" && followUp.motivoEncerramento ? (
-                        <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
-                          <span>Motivo</span>
-                          <span className="font-medium text-[var(--text-primary)]">{followUp.motivoEncerramento}</span>
-                        </div>
-                      ) : null}
-                      {followUp.status === "ENCERRADO" ? (
-                        <div className="rounded-xl border border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">
-                          {followUp.motivoEncerramento === "Cliente respondeu"
-                            ? "Follow-up encerrado automaticamente: o lead respondeu e os proximos disparos foram cancelados."
-                            : `Follow-up encerrado: ${followUp.motivoEncerramento ?? "Fluxo concluido."}`}
-                        </div>
-                      ) : null}
-                    </>
-                  ) : (
-                    <>
-                      <Select value={templateSelecionadoEfetivo} onValueChange={setTemplateSelecionado}>
-                        <SelectTrigger disabled={salvandoFollowUp || carregandoFollowUp}>
-                          <SelectValue placeholder="Selecione uma cadencia" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {templates.map((template) => (
-                            <SelectItem key={template.id} value={template.id}>
-                              {template.nome}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      {!possuiTemplatesAtivos ? (
-                        <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">
-                          Nenhuma cadencia ativa encontrada. Crie/ative uma cadencia em Configuracoes para habilitar o follow-up automatico.
-                        </div>
-                      ) : null}
-                      <Button
-                        type="button"
-                        size="sm"
-                        disabled={!templateSelecionadoEfetivo || salvandoFollowUp || !podeAtivarFollowUp}
-                        onClick={async () => {
-                          if (!chat.leadMatch || !templateSelecionadoEfetivo) return;
-                          setSalvandoFollowUp(true);
-                          const resultado = await ativarConversaFollowUp({
-                            instanceName: chat.instanceName,
-                            remoteJid: chat.remoteJid,
-                            idLead: chat.leadMatch.id,
-                            templateId: templateSelecionadoEfetivo,
-                          });
-                          setSalvandoFollowUp(false);
-                          if (!resultado.ok) {
-                            addToast({ type: "error", title: "Erro ao ativar follow-up", description: resultado.erro });
-                            return;
-                          }
-                          setFollowUp(resultado.dados.conversa);
-                          void carregarContextoFollowUp();
-                          addToast({ type: "success", title: "Follow-up ativado" });
-                        }}
-                      >
-                        {salvandoFollowUp ? "Ativando..." : "Ativar cadencia"}
-                      </Button>
-                    </>
-                  )}
-                </div>
-
-                {followUp ? (
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {followUp.status === "ATIVO" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={salvandoFollowUp || carregandoFollowUp}
-                        onClick={() => {
-                          void executarAcaoFollowUp("PAUSAR");
-                        }}
-                      >
-                        Pausar
-                      </Button>
-                    ) : null}
-                    {followUp.status === "PAUSADO" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={salvandoFollowUp || carregandoFollowUp}
-                        onClick={() => {
-                          void executarAcaoFollowUp("RETOMAR");
-                        }}
-                      >
-                        Retomar
-                      </Button>
-                    ) : null}
-                    {followUp.status !== "ENCERRADO" ? (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        disabled={salvandoFollowUp || carregandoFollowUp}
-                        onClick={() => {
-                          void executarAcaoFollowUp("ENCERRAR");
-                        }}
-                      >
-                        Encerrar
-                      </Button>
-                    ) : null}
-                    {followUp.status === "ENCERRADO" ? (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={salvandoFollowUp || carregandoFollowUp || !chat.leadMatch}
-                        onClick={async () => {
-                          if (!chat.leadMatch) return;
-                          setSalvandoFollowUp(true);
-                          const resultado = await ativarConversaFollowUp({
-                            instanceName: chat.instanceName,
-                            remoteJid: chat.remoteJid,
-                            idLead: chat.leadMatch.id,
-                            templateId: followUp.template.id,
-                          });
-                          setSalvandoFollowUp(false);
-                          if (!resultado.ok) {
-                            addToast({ type: "error", title: "Erro ao reativar", description: resultado.erro });
-                            return;
-                          }
-                          setFollowUp(resultado.dados.conversa);
-                          void carregarContextoFollowUp();
-                          addToast({ type: "success", title: "Follow-up reativado" });
-                        }}
-                      >
-                        Reativar cadencia
-                      </Button>
-                    ) : null}
-                  </div>
-                ) : null}
-              </div>
-            ) : null}
+            <ChatFollowUpCard
+              chat={chat}
+              followUp={followUp}
+              templates={templates}
+              templateSelecionadoEfetivo={templateSelecionadoEfetivo}
+              salvandoFollowUp={salvandoFollowUp}
+              carregandoFollowUp={carregandoFollowUp}
+              atualizadoHa={atualizadoHa}
+              statusUi={statusUi}
+              tempoAteProximoDisparo={tempoAteProximoDisparo}
+              possuiTemplatesAtivos={possuiTemplatesAtivos}
+              podeAtivarFollowUp={podeAtivarFollowUp}
+              onTemplateSelecionadoChange={setTemplateSelecionado}
+              onAtualizarContexto={() => {
+                void carregarContextoFollowUp(true);
+              }}
+              onAtivarCadencia={async () => {
+                if (!chat.leadMatch || !templateSelecionadoEfetivo) return;
+                setSalvandoFollowUp(true);
+                const resultado = await ativarConversaFollowUp({
+                  instanceName: chat.instanceName,
+                  remoteJid: chat.remoteJid,
+                  idLead: chat.leadMatch.id,
+                  templateId: templateSelecionadoEfetivo,
+                });
+                setSalvandoFollowUp(false);
+                if (!resultado.ok) {
+                  addToast({ type: "error", title: "Erro ao ativar follow-up", description: resultado.erro });
+                  return;
+                }
+                setFollowUp(resultado.dados.conversa);
+                void carregarContextoFollowUp();
+                addToast({ type: "success", title: "Follow-up ativado" });
+              }}
+              onPausar={() => {
+                void executarAcaoFollowUp("PAUSAR");
+              }}
+              onRetomar={() => {
+                void executarAcaoFollowUp("RETOMAR");
+              }}
+              onEncerrar={() => {
+                void executarAcaoFollowUp("ENCERRAR");
+              }}
+              onReativar={async () => {
+                if (!chat.leadMatch || !followUp) return;
+                setSalvandoFollowUp(true);
+                const resultado = await ativarConversaFollowUp({
+                  instanceName: chat.instanceName,
+                  remoteJid: chat.remoteJid,
+                  idLead: chat.leadMatch.id,
+                  templateId: followUp.template.id,
+                });
+                setSalvandoFollowUp(false);
+                if (!resultado.ok) {
+                  addToast({ type: "error", title: "Erro ao reativar", description: resultado.erro });
+                  return;
+                }
+                setFollowUp(resultado.dados.conversa);
+                void carregarContextoFollowUp();
+                addToast({ type: "success", title: "Follow-up reativado" });
+              }}
+            />
           </div>
         </SheetContent>
       </Sheet>
 
-      <OrphanDialog
+      <ChatOrphanDialog
         key={`lead-${chat.instanceName}-${chat.remoteJid}`}
         open={dialogOpen === "lead"}
         onOpenChange={(open) => {
@@ -634,7 +492,7 @@ export function ChatPanel({
         }}
       />
 
-      <OrphanDialog
+      <ChatOrphanDialog
         key={`negocio-${chat.instanceName}-${chat.remoteJid}`}
         open={dialogOpen === "negocio"}
         onOpenChange={(open) => {
@@ -654,7 +512,7 @@ export function ChatPanel({
         }}
       />
 
-      <TransferLeadDialog
+      <ChatTransferLeadDialog
         open={transferirAberto}
         onOpenChange={setTransferirAberto}
         leadId={chat.leadMatch?.id ?? null}
@@ -662,220 +520,5 @@ export function ChatPanel({
         onSubmit={onTransferirLead}
       />
     </>
-  );
-}
-
-type FuncionarioItem = {
-  id: string;
-  nome: string;
-};
-
-function TransferLeadDialog({
-  open,
-  onOpenChange,
-  leadId,
-  leadAtual,
-  onSubmit,
-}: {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  leadId: string | null;
-  leadAtual: string | null;
-  onSubmit: (params: { idLead: string; idFuncionario: string }) => Promise<void>;
-}) {
-  const [funcionarios, setFuncionarios] = useState<FuncionarioItem[]>([]);
-  const [idFuncionario, setIdFuncionario] = useState("");
-  const [carregando, setCarregando] = useState(false);
-  const [salvando, setSalvando] = useState(false);
-
-  useEffect(() => {
-    if (!open) return;
-
-    let ativo = true;
-    setCarregando(true);
-    fetch("/api/leads", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((json) => {
-        if (!ativo) return;
-        setFuncionarios(Array.isArray(json?.funcionarios) ? json.funcionarios : []);
-      })
-      .finally(() => {
-        if (ativo) setCarregando(false);
-      });
-
-    return () => {
-      ativo = false;
-    };
-  }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      setIdFuncionario("");
-    }
-  }, [open]);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Transferir responsabilidade</DialogTitle>
-          <DialogDescription>
-            Reatribua o lead para outro colaborador sem sair do chat.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
-            <div className="text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Atual</div>
-            <div className="mt-1 font-medium text-[var(--text-primary)]">{leadAtual ?? "Sem responsável"}</div>
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">Novo responsável</label>
-            <Select value={idFuncionario} onValueChange={setIdFuncionario} disabled={carregando || salvando}>
-              <SelectTrigger>
-                <SelectValue placeholder={carregando ? "Carregando colaboradores..." : "Selecione um colaborador"} />
-              </SelectTrigger>
-              <SelectContent>
-                {funcionarios.map((funcionario) => (
-                  <SelectItem key={funcionario.id} value={funcionario.id}>
-                    {funcionario.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={salvando}>
-            Cancelar
-          </Button>
-          <Button
-            disabled={!leadId || !idFuncionario || salvando}
-            onClick={async () => {
-              if (!leadId || !idFuncionario) return;
-              setSalvando(true);
-              try {
-                await onSubmit({ idLead: leadId, idFuncionario });
-                onOpenChange(false);
-              } finally {
-                setSalvando(false);
-              }
-            }}
-          >
-            Confirmar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-type InfoCardProps = {
-  icon: ReactNode;
-  label: string;
-  value: string;
-  description: string;
-};
-
-function InfoCard({ icon, label, value, description }: InfoCardProps) {
-  return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-3">
-      <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.18em] text-[var(--text-tertiary)]">
-        <span className="text-[var(--brand)]">{icon}</span>
-        {label}
-      </div>
-      <div className="mt-2 truncate text-sm font-semibold text-[var(--text-primary)]">{value}</div>
-      <div className="mt-1 text-[11px] text-[var(--text-secondary)]">{description}</div>
-    </div>
-  );
-}
-
-type OrphanDialogProps = {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  title: string;
-  description: string;
-  telefone: string;
-  nomeInicial: string;
-  perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
-  onSubmit: (params: {
-    telefone: string;
-    nome?: string;
-    id_pdv?: string;
-    id_funcionario?: string;
-    id_estagio?: string;
-  }) => void;
-};
-
-function OrphanDialog({
-  open,
-  onOpenChange,
-  title,
-  description,
-  telefone,
-  nomeInicial,
-  perfil,
-  onSubmit,
-}: OrphanDialogProps) {
-  const [nome, setNome] = useState(nomeInicial);
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>{description}</DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4 py-4">
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">Telefone</label>
-            <input
-              type="text"
-              value={formatarTelefoneChat(telefone)}
-              disabled
-              className="h-10 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface)] px-3 text-sm text-[var(--text-tertiary)]"
-            />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">Nome (opcional)</label>
-            <input
-              type="text"
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              placeholder="Nome do contato"
-              className="h-10 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-colors focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
-            />
-          </div>
-
-          <p className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-xs text-[var(--text-secondary)]">
-            {perfil === "COLABORADOR"
-              ? "O lead será vinculado automaticamente a você."
-              : perfil === "GERENTE"
-                ? "O responsável será escolhido dentro do seu PDV após o cadastro."
-                : "Você poderá complementar PDV e responsável na próxima etapa."}
-          </p>
-        </div>
-
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={() =>
-              onSubmit({
-                telefone,
-                nome: nome.trim() || undefined,
-              })
-            }
-          >
-            Confirmar
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   );
 }

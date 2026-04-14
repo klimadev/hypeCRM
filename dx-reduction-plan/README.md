@@ -12,6 +12,40 @@
   - UI regressions: `0` critical regressions.
   - API behavior regressions: `0` breaking contract changes.
 
+## Completed Refactors (Abril 2026)
+
+### Lote A — Chat Panel Decomposition
+**Target**: `src/modules/chat/components/chat-panel.tsx` (881 linhas)
+**Result**: Extraídos 5 componentes focados
+- `chat-info-card.tsx` — InfoCard presentacional
+- `chat-orphan-dialog.tsx` — Diálogo de criação lead/negócio
+- `chat-transfer-lead-dialog.tsx` — Transferência de responsabilidade
+- `chat-follow-up-card.tsx` — Card de follow-up automático
+
+### Lote B — Chat Messages Panel Decomposition
+**Target**: `src/modules/chat/components/chat-messages-panel.tsx` (670 linhas)
+**Result**: Separação em 2 componentes especializados
+- `chat-message-list.tsx` — Rendering, agrupamento por data, media lazy-load, scroll anchor
+- `chat-message-composer.tsx` — Composer, shortcuts, agendamento
+
+### Lote C — Automações Module Decomposition
+**Target**: `src/modules/automacoes/page.tsx` (701 linhas)
+**Result**: Extrações em 3 camadas
+- `lib/workflow-graph-utils.ts` — Utilitários puros de grafo
+- `lib/automacoes-logs.ts` — Parsing de logs de execução
+- `hooks/use-workflow-validation.ts` — Validação de workflow
+- `hooks/use-automacoes-workspace-io.ts` — IO (load/save/publish/unpublish)
+- `hooks/use-whatsapp-instancias-conectadas.ts` — Instâncias conectadas
+- `components/automacoes-logs-section.tsx` — Seção de logs
+- `components/automacoes-canvas-status.tsx` — Status card
+- `components/automacoes-canvas-toolbar.tsx` — Toolbar flutuante
+
+### Lote D — API Consistency
+**Target**: `src/app/api/chat/messages/route.ts` (262 linhas → 179 linhas)
+**Result**: Centralização de tratamento de erros Instagram
+- `lib/api/instagram-errors.ts` — `instagramErrorToResponse()` padronizado
+- Rota reduzida em ~32% (83 linhas removidas)
+
 ## Priority Order
 1. Remove dead files and thin wrappers (fast wins).
 2. Consolidate repeated UI shells/headers/alerts.
