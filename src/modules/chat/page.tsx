@@ -52,6 +52,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
         <section className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--surface)]/90 backdrop-blur-sm md:border-l md:border-[var(--border-subtle)]">
           {vm.chatSelecionado ? (
             <ChatPanel
+              key={`${vm.chatSelecionado.instanceName}:${vm.chatSelecionado.remoteJid}`}
               chat={vm.chatSelecionado}
               perfil={vm.perfil}
               onVoltar={() => vm.setChatSelecionado(null)}

@@ -9,6 +9,7 @@ import {
   salvarRascunho,
   publicarWorkspace,
   despublicarWorkspace,
+  excluirWorkspace,
   obterVersaoPublicada,
 } from "@/lib/automacoes";
 
@@ -145,7 +146,15 @@ export async function DELETE(request: NextRequest) {
     return auth.erro;
   }
 
+  const { searchParams } = new URL(request.url);
+  const acao = searchParams.get("acao");
+
   try {
+    if (acao === "excluir") {
+      await excluirWorkspace(auth.sessao.id_empresa);
+      return NextResponse.json({ sucesso: true, mensagem: "Automacao excluida com sucesso." });
+    }
+
     const workspace = await despublicarWorkspace(auth.sessao.id_empresa);
 
     return NextResponse.json({
@@ -157,6 +166,9 @@ export async function DELETE(request: NextRequest) {
       published: null,
     });
   } catch (erro) {
+    if (acao === "excluir") {
+      return handleRouteError(erro, "Erro ao excluir workspace.", "Erro ao excluir workspace:");
+    }
     return handleRouteError(erro, "Erro ao despublicar workspace.", "Erro ao despublicar workspace:");
   }
 }

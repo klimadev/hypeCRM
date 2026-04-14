@@ -21,6 +21,7 @@ import { listarInstanciasWhatsapp } from "@/lib/api/whatsapp.instances";
 import {
   listarNegociosApi,
   vincularLeadAoNegocio,
+  criarNegocioApi,
   type ApiNegocioResumo,
 } from "@/lib/api/negocios";
 import type { ApiEstagioLead, FormularioNovoLead, UseLeadsModuleReturn } from "../types";
@@ -94,6 +95,18 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const [campanhaDetalheIdAberta, setCampanhaDetalheIdAberta] = useState<string | null>(null);
   const [instanciasWhatsapp, setInstanciasWhatsapp] = useState<UseLeadsModuleReturn["instanciasWhatsapp"]>([]);
   const [formularioDisparo, setFormularioDisparo] = useState<PayloadCriarCampanhaDisparo>(() => criarFormularioCampanhaBase([]));
+  const [dialogConversaoAberto, setDialogConversaoAberto] = useState(false);
+  const [convertendoLeads, setConvertendoLeads] = useState(false);
+  const [erroConversao, setErroConversao] = useState<string | null>(null);
+  const [formularioConversao, setFormularioConversao] = useState({
+    idEstagio: "",
+    idFuncionario: "",
+    usarResponsavelAutomatico: false,
+  });
+  const [leadsComNegocio, setLeadsComNegocio] = useState<ApiLeadContato[]>([]);
+  const [leadsSemNegocio, setLeadsSemNegocio] = useState<ApiLeadContato[]>([]);
+  const [dialogConflitoAberto, setDialogConflitoAberto] = useState(false);
+  const [acaoConflito, setAcaoConflito] = useState<"substituir" | "ignorar" | "criar_novo" | null>(null);
 
   const carregarDados = async (silencioso = false) => {
     if (silencioso) {
@@ -514,6 +527,161 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     }
   };
 
+  const abrirDialogConversao = () => {
+    // Inicializar formulário com primeiro estágio e primeiro funcionário
+    const primeiroEstagio = estagios[0]?.id ?? "";
+    const primeiroFuncionario = funcionarios[0]?.id ?? "";
+    setFormularioConversao({
+      idEstagio: primeiroEstagio,
+      idFuncionario: primeiroFuncionario,
+      usarResponsavelAutomatico: false,
+    });
+    setErroConversao(null);
+    setAcaoConflito(null);
+    setDialogConversaoAberto(true);
+  };
+
+  const fecharDialogConversao = () => {
+    if (convertendoLeads) return;
+    setDialogConversaoAberto(false);
+    setDialogConflitoAberto(false);
+    setErroConversao(null);
+    setAcaoConflito(null);
+  };
+
+  const atualizarFormularioConversao = <Campo extends "idEstagio" | "idFuncionario" | "usarResponsavelAutomatico">(
+    campo: Campo,
+    valor: string | boolean,
+  ) => {
+    setFormularioConversao((atual) => ({ ...atual, [campo]: valor }));
+  };
+
+  const submitConversaoLeadsEmNegocios = async () => {
+    if (!formularioConversao.idEstagio) {
+      setErroConversao("Selecione um estágio para os negócios.");
+      return;
+    }
+    if (estagios.length === 0) {
+      setErroConversao("Nenhum estágio disponível. Configure um funil primeiro.");
+      return;
+    }
+    if (convertendoLeads) return;
+    if (leadsSelecionados.length === 0) {
+      setErroConversao("Nenhum lead selecionado.");
+      return;
+    }
+
+    // Separar leads com e sem negócio vinculado
+    const comNegocio = leadsSelecionados.filter((lead) => lead.id_negocio);
+    const semNegocio = leadsSelecionados.filter((lead) => !lead.id_negocio);
+
+    setLeadsComNegocio(comNegocio);
+    setLeadsSemNegocio(semNegocio);
+
+    // Se não há conflitos, proceed directly
+    if (comNegocio.length === 0) {
+      await executarConversao(semNegocio);
+      return;
+    }
+
+    // Se há conflitos, abrir tela de resolução
+    setDialogConflitoAberto(true);
+  };
+
+  const executarConversao = async (leadsParaConverter: ApiLeadContato[]) => {
+    if (leadsParaConverter.length === 0) {
+      setDialogConversaoAberto(false);
+      setDialogConflitoAberto(false);
+      setAcaoConflito(null);
+      addToast({
+        type: "success",
+        title: "Leads convertidos",
+        description: `Todos os leads foram processados.`,
+      });
+      setIdsSelecionados([]);
+      await carregarDados(true);
+      return;
+    }
+
+    setConvertendoLeads(true);
+    setErroConversao(null);
+
+    try {
+      const funilId = negocios.length > 0 ? negocios[0].id_funil : "";
+
+      // Função round-robin para atribuição automática
+      const ativos = funcionarios.filter((f) => f.id);
+      let indiceRoundRobin = Math.floor(Date.now() / 1000) % Math.max(ativos.length, 1);
+
+      const getProximoFuncionario = () => {
+        if (ativos.length === 0) return formularioConversao.idFuncionario;
+        const id = ativos[indiceRoundRobin % ativos.length].id;
+        indiceRoundRobin++;
+        return id;
+      };
+
+      // Criar um negócio para cada lead
+      for (const lead of leadsParaConverter) {
+        const idResponsavel = formularioConversao.usarResponsavelAutomatico
+          ? getProximoFuncionario()
+          : formularioConversao.idFuncionario;
+
+        const resultado = await criarNegocioApi({
+          titulo: lead.nome,
+          valor_estimado: 0,
+          id_funil: funilId,
+          id_estagio: formularioConversao.idEstagio,
+          id_funcionario: idResponsavel,
+          lead_ids: [lead.id],
+        });
+
+        if (!resultado.ok) {
+          console.error(`Erro ao converter lead ${lead.nome}:`, resultado.erro);
+        }
+      }
+
+      addToast({
+        type: "success",
+        title: "Leads convertidos",
+        description: `${leadsParaConverter.length} lead(s) foram convertidos em negócios.`,
+      });
+
+      setDialogConversaoAberto(false);
+      setDialogConflitoAberto(false);
+      setAcaoConflito(null);
+      setIdsSelecionados([]);
+      await carregarDados(true);
+    } catch (error) {
+      setErroConversao(error instanceof Error ? error.message : "Não foi possível converter os leads.");
+    } finally {
+      setConvertendoLeads(false);
+    }
+  };
+
+  const confirmarConflito = async () => {
+    if (!acaoConflito) return;
+
+    const leadsFiltrados = leadsSelecionados;
+
+    // Ação: ignorar - apenas converter leads sem negócio
+    if (acaoConflito === "ignorar") {
+      await executarConversao(leadsSemNegocio);
+      return;
+    }
+
+    // Ação: criar_novo - converter todos (novos negócios, independente de já ter vínculo)
+    if (acaoConflito === "criar_novo") {
+      await executarConversao(leadsFiltrados);
+      return;
+    }
+
+    // Ação: substituir - para MVP, treat as criar_novo (ignora vínculo anterior)
+    if (acaoConflito === "substituir") {
+      await executarConversao(leadsFiltrados);
+      return;
+    }
+  };
+
   const { title, resumoTotal } = criarResumoLeads(leadsFiltrados.length, leads.length);
 
   return {
@@ -527,6 +695,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     resumoTotal,
     leadsFiltrados,
     linhasTabela,
+    estagios,
     campanhas,
     campanhaDetalhe,
     carregandoCampanhas,
@@ -563,6 +732,7 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     removerNegociosVinculados,
     erroRemocaoLead,
     negociosRelacionadosAoLead,
+    leadsSelecionados,
     carregarDados,
     carregarCampanhas,
     limparBusca: () => setBusca(""),
@@ -595,5 +765,20 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     fecharRemocaoLead,
     setRemoverNegociosVinculados,
     confirmarRemocaoLead,
+    // Conversão em massa de leads para negócios
+    dialogConversaoAberto,
+    convertendoLeads,
+    erroConversao,
+    formularioConversao,
+    leadsComNegocio,
+    leadsSemNegocio,
+    dialogConflitoAberto,
+    acaoConflito,
+    abrirDialogConversao,
+    fecharDialogConversao,
+    atualizarFormularioConversao,
+    setAcaoConflito,
+    submitConversaoLeadsEmNegocios,
+    confirmarConflito,
   };
 }

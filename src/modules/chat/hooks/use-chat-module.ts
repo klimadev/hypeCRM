@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useChatData } from "./use-chat-data";
 import { useToast } from "@/components/ui/toast";
 import { obterFiltroOrigemLead } from "../helpers";
@@ -21,6 +21,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "anuncio" | "whatsapp" | "manual">("todos");
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
   const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
+  const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
   const ultimoChatMarcadoRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -77,6 +78,14 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         return false;
       }
 
+      // Filtro por instância (para chats duplicados)
+      if (filtroInstancia && chat.isDuplicado) {
+        const instanciasDoChat = chat.instancias?.map((i) => i.instanceName) ?? [];
+        if (!instanciasDoChat.includes(filtroInstancia)) {
+          return false;
+        }
+      }
+
       if (!termo) {
         return true;
       }
@@ -103,7 +112,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         statusNegocio.toLowerCase().includes(termo)
       );
     });
-  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal]);
+  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal, filtroInstancia]);
 
   const chatsOrdenados = useMemo(() => {
     return [...chatsFiltrados].sort((a, b) => {
@@ -118,6 +127,15 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const totalMatched = chats.filter((c) => !c.semMatch).length;
   const totalSemDono = chats.filter((c) => !c.leadMatch?.id_funcionario).length;
   const totalSemNegocio = chats.filter((c) => !c.leadMatch?.id_negocio).length;
+  const totalDuplicados = chats.filter((c) => c.isDuplicado).length;
+
+  const selecionarInstancia = useCallback(
+    (_telefone: string, _instancia: string | null): void => {
+      // A seleção de instância é feita através do chatSelecionado
+      // Esta função existe para satisfazer a interface, implementação futura
+    },
+    [],
+  );
 
   const onRegistrarComoLead = async (params: OrphanRegistrarLeadParams) => {
     try {
@@ -228,6 +246,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     totalMatched,
     totalSemDono,
     totalSemNegocio,
+    totalDuplicados,
     perfil: params.perfil,
     idUsuario: params.idUsuario,
     filtroOrigem,
@@ -236,8 +255,11 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     setFiltroFila,
     filtroCanal,
     setFiltroCanal,
+    filtroInstancia,
+    setFiltroInstancia,
     onRegistrarComoLead,
     onCriarNegocio,
     onTransferirLead,
+    selecionarInstancia,
   };
 }

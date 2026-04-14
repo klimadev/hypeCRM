@@ -4,7 +4,7 @@ import { unificarChatsComLeads } from "@/lib/chat-unificado";
 import { serverError } from "@/lib/api/http";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 
-const CHAT_LIST_TTL_MS = 8_000;
+const CHAT_LIST_TTL_MS = 30_000;
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);

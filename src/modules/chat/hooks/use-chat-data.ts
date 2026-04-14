@@ -13,7 +13,8 @@ function ordenarChatsPorTimestamp(chats: ChatUnificado[]) {
 }
 
 function chaveDoChat(chat: ChatUnificado) {
-  return `${chat.instanceName}:${chat.remoteJid}`;
+  // Agora a chave é apenas telefone (um chat por telefone, independente da instância)
+  return chat.telefone || chat.remoteJid;
 }
 
 function mesclarChats(base: ChatUnificado[], novos: ChatUnificado[], substituirBase = false) {

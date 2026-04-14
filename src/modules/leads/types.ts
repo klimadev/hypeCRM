@@ -55,6 +55,7 @@ export type UseLeadsModuleReturn = {
   resumoTotal: string;
   leadsFiltrados: ApiLeadContato[];
   linhasTabela: LeadLinhaTabela[];
+  estagios: ApiEstagioLead[];
   campanhas: CampanhaResumoApi[];
   campanhaDetalhe: CampanhaDetalheApi | null;
   carregandoCampanhas: boolean;
@@ -91,6 +92,20 @@ export type UseLeadsModuleReturn = {
   removerNegociosVinculados: boolean;
   erroRemocaoLead: string | null;
   negociosRelacionadosAoLead: ApiNegocioResumo[];
+  // Conversão em massa de leads para negócios
+  dialogConversaoAberto: boolean;
+  convertendoLeads: boolean;
+  erroConversao: string | null;
+  formularioConversao: {
+    idEstagio: string;
+    idFuncionario: string;
+    usarResponsavelAutomatico: boolean;
+  };
+  leadsSelecionados: ApiLeadContato[];
+  leadsComNegocio: ApiLeadContato[];
+  leadsSemNegocio: ApiLeadContato[];
+  dialogConflitoAberto: boolean;
+  acaoConflito: "substituir" | "ignorar" | "criar_novo" | null;
   carregarDados: (silencioso?: boolean) => Promise<void>;
   carregarCampanhas: () => Promise<void>;
   limparBusca: () => void;
@@ -126,4 +141,10 @@ export type UseLeadsModuleReturn = {
   fecharRemocaoLead: () => void;
   setRemoverNegociosVinculados: (valor: boolean) => void;
   confirmarRemocaoLead: () => Promise<void>;
+  abrirDialogConversao: () => void;
+  fecharDialogConversao: () => void;
+  atualizarFormularioConversao: <Campo extends "idEstagio" | "idFuncionario" | "usarResponsavelAutomatico">(campo: Campo, valor: string | boolean) => void;
+  setAcaoConflito: (acao: "substituir" | "ignorar" | "criar_novo" | null) => void;
+  submitConversaoLeadsEmNegocios: () => Promise<void>;
+  confirmarConflito: () => Promise<void>;
 };

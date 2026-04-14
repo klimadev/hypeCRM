@@ -17,6 +17,7 @@ import { LeadsBulkActions } from "./components/leads-bulk-actions";
 import { LeadDisparoCampaignDialog } from "./components/lead-disparo-campaign-dialog";
 import { LeadDisparoCampaignsPanel } from "./components/lead-disparo-campaigns-panel";
 import { LeadsImportCsvDialog } from "./components/leads-import-csv-dialog";
+import { LeadConversaoDialog } from "./components/lead-conversao-dialog";
 
 export function ModuloLeads() {
   const vm = useLeadsModule();
@@ -100,6 +101,7 @@ export function ModuloLeads() {
         onSelecionarTodosFiltrados={vm.selecionarTodosFiltrados}
         onLimparSelecao={vm.limparSelecao}
         onDisparar={vm.abrirDialogDisparo}
+        onConverterEmNegocios={vm.abrirDialogConversao}
       />
 
       <LeadDisparoCampaignDialog
@@ -174,6 +176,26 @@ export function ModuloLeads() {
         }}
         onRemoverNegociosChange={vm.setRemoverNegociosVinculados}
         onConfirmar={() => void vm.confirmarRemocaoLead()}
+      />
+
+      <LeadConversaoDialog
+        open={vm.dialogConversaoAberto}
+        onOpenChange={(aberto) => (aberto ? vm.abrirDialogConversao() : vm.fecharDialogConversao())}
+        totalLeads={vm.totalSelecionados}
+        leadsPreview={vm.leadsSelecionados.map((lead) => ({ id: lead.id, nome: lead.nome }))}
+        estagios={vm.estagios}
+        funcionarios={vm.funcionarios}
+        formulario={vm.formularioConversao}
+        erro={vm.erroConversao}
+        convertendo={vm.convertendoLeads}
+        onCampoChange={vm.atualizarFormularioConversao}
+        onConfirmar={() => void vm.submitConversaoLeadsEmNegocios()}
+        leadsComNegocio={vm.leadsComNegocio}
+        leadsSemNegocio={vm.leadsSemNegocio}
+        dialogConflitoAberto={vm.dialogConflitoAberto}
+        acaoConflito={vm.acaoConflito}
+        onAcaoConflitoChange={vm.setAcaoConflito}
+        onConfirmarConflito={() => void vm.confirmarConflito()}
       />
     </ModulePageShell>
   );

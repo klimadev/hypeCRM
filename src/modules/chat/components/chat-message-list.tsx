@@ -245,6 +245,9 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
   const exibirErroVazio = erro && messages.length === 0;
   const exibirEstadoVazio = !carregando && !erro && messages.length === 0;
 
+  // Loading incremental quando há mensagens
+  const exibirLoadingIncremental = carregando && messages.length > 0;
+
   return (
     <div className="min-h-0 flex-1 overflow-hidden bg-[var(--surface)]">
       <div
@@ -257,11 +260,29 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
       >
         {exibirLoadingVazio ? (
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-5">
+            {/* Header skeleton */}
+            <div className="flex items-center gap-3 px-2 py-3">
+              <div className="h-8 w-8 animate-pulse rounded-full bg-[var(--surface-elevated)]" />
+              <div className="flex-1 space-y-2">
+                <div className="h-3 w-24 animate-pulse rounded bg-[var(--surface-elevated)]" />
+                <div className="h-2 w-32 animate-pulse rounded bg-[var(--surface-elevated)]" />
+              </div>
+            </div>
+            {/* Message skeletons - varied patterns */}
             {Array.from({ length: 8 }).map((_, index) => (
               <div key={index} className={cn("flex", index % 3 === 0 ? "justify-end" : "justify-start")}>
-                <div className="h-14 w-[min(22rem,72%)] animate-pulse rounded-[18px] bg-[var(--surface-elevated)]" />
+                <div
+                  className={cn(
+                    "animate-pulse rounded-[18px] bg-[var(--surface-elevated)]",
+                    index % 3 === 0 ? "h-12 w-32" : index % 3 === 1 ? "h-16 w-48" : "h-10 w-40",
+                  )}
+                />
               </div>
             ))}
+            {/* Timestamp skeleton */}
+            <div className="flex justify-center pt-2">
+              <div className="h-4 w-20 animate-pulse rounded-full bg-[var(--surface-elevated)]" />
+            </div>
           </div>
         ) : exibirErroVazio ? (
           <div className="flex h-full items-center justify-center">
@@ -279,11 +300,41 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
           </div>
         ) : exibirEstadoVazio ? (
           <div className="flex h-full items-center justify-center">
-            <div className="flex flex-col items-center gap-3 p-6">
-              <MessageSquare className="h-10 w-10 text-[var(--text-tertiary)]" />
-              <p className="text-sm text-[var(--text-secondary)]">Nenhuma mensagem encontrada</p>
-              <p className="text-xs text-[var(--text-tertiary)]">As mensagens aparecerão aqui quando houver atividade</p>
+            <div className="flex flex-col items-center gap-4 p-6 text-center">
+              <div className="relative">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.08),rgba(255,255,255,0.02))]">
+                  <MessageSquare className="h-7 w-7 text-[var(--text-tertiary)]" />
+                </div>
+                <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface)] border border-[var(--border-subtle)]">
+                  <div className="h-2 w-2 rounded-full bg-[var(--success)]" />
+                </div>
+              </div>
+              <div className="space-y-1.5">
+                <p className="text-sm font-medium text-[var(--text-primary)]">Nenhuma mensagem ainda</p>
+                <p className="text-xs text-[var(--text-tertiary)] max-w-[200px]">
+                  As mensagens desta conversa aparecerão aqui quando houver atividade
+                </p>
+              </div>
             </div>
+          </div>
+        ) : exibirLoadingIncremental ? (
+          <div className="mx-auto flex w-full max-w-5xl flex-col gap-0 py-3">
+            {grouped.map((group) => (
+              <div key={group.date}>
+                <MessageDateSeparator timestamp={group.timestamp} />
+                {group.messages.map((msg) => (
+                  <MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />
+                ))}
+              </div>
+            ))}
+            {/* Loading indicator at bottom */}
+            <div className="flex items-center justify-center py-4">
+              <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Carregando mais...
+              </div>
+            </div>
+            <div ref={messagesEndRef} />
           </div>
         ) : (
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-0 py-3">

@@ -231,3 +231,30 @@ export async function removerNegocio(
     },
   };
 }
+
+export type PayloadCriarNegocio = {
+  titulo: string;
+  valor_estimado: number;
+  id_funil?: string;
+  id_estagio: string;
+  id_funcionario: string;
+  lead_ids?: string[];
+  probabilidade?: number;
+  observacoes_comerciais?: string | null;
+  motivo_perda?: string | null;
+};
+
+export async function criarNegocioApi(payload: PayloadCriarNegocio): Promise<ResultadoApi<{ negocio?: ApiNegocioResumo }>> {
+  const resposta = await fetch("/api/negocios", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<{ negocio?: ApiNegocioResumo } & ApiErro>(resposta);
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao criar o negócio." };
+  }
+
+  return { ok: true, dados: { negocio: json.negocio } };
+}

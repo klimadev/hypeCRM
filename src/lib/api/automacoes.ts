@@ -1,3 +1,51 @@
+const isDebug = process.env.NODE_ENV === "development";
+
+type ErrorPayload = {
+  erro?: string;
+};
+
+function logDebug(action: string, payload?: Record<string, unknown>) {
+  if (!isDebug) {
+    return;
+  }
+
+  console.info("[AutomacoesAPI]", action, payload ?? {});
+}
+
+async function parseErroResposta(res: Response, fallback: string) {
+  try {
+    const json = (await res.json()) as ErrorPayload;
+    return json.erro || fallback;
+  } catch {
+    const texto = await res.text().catch(() => "");
+    if (texto && isDebug) {
+      console.error("[AutomacoesAPI] Resposta não-JSON recebida", {
+        status: res.status,
+        statusText: res.statusText,
+        preview: texto.slice(0, 200),
+      });
+    }
+    return fallback;
+  }
+}
+
+async function requestWorkspace(method: string, url: string, options: RequestInit = {}) {
+  const res = await fetch(url, { ...options, method });
+
+  logDebug(`${method} ${url}`, {
+    ok: res.ok,
+    status: res.status,
+    statusText: res.statusText,
+  });
+
+  if (!res.ok) {
+    const mensagem = await parseErroResposta(res, `Erro ao ${method.toLowerCase()} automações`);
+    throw new Error(mensagem);
+  }
+
+  return res;
+}
+
 export interface WorkspaceResponse {
   workspace: {
     id: string;
@@ -30,51 +78,36 @@ export interface AutomacaoExecucoesResponse {
 }
 
 export async function obterWorkspace() {
-  const res = await fetch("/api/automacoes/workspace", { method: "GET" });
-  if (!res.ok) {
-    const erro = await res.json();
-    throw new Error(erro.erro || "Erro ao carregar workspace");
-  }
+  const res = await requestWorkspace("GET", "/api/automacoes/workspace");
   return res.json() as Promise<WorkspaceResponse>;
 }
 
 export async function salvarWorkspace(grafoJson: string) {
-  const res = await fetch("/api/automacoes/workspace", {
+  const res = await requestWorkspace("PUT", "/api/automacoes/workspace", {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ rascunho_grafo_json: grafoJson }),
   });
-  if (!res.ok) {
-    const erro = await res.json();
-    throw new Error(erro.erro || "Erro ao salvar workspace");
-  }
   return res.json() as Promise<{ workspace: { id: string; atualizado_em: string } }>;
 }
 
 export async function publicarWorkspace() {
-  const res = await fetch("/api/automacoes/workspace", { method: "POST" });
-  if (!res.ok) {
-    const erro = await res.json();
-    throw new Error(erro.erro || "Erro ao publicar workspace");
-  }
+  const res = await requestWorkspace("POST", "/api/automacoes/workspace");
   return res.json() as Promise<WorkspaceResponse>;
 }
 
 export async function despublicarWorkspace() {
-  const res = await fetch("/api/automacoes/workspace", { method: "DELETE" });
-  if (!res.ok) {
-    const erro = await res.json();
-    throw new Error(erro.erro || "Erro ao despublicar workspace");
-  }
+  const res = await requestWorkspace("DELETE", "/api/automacoes/workspace");
   return res.json() as Promise<WorkspaceResponse>;
+}
+
+export async function excluirWorkspace() {
+  const res = await requestWorkspace("DELETE", "/api/automacoes/workspace?acao=excluir");
+  return res.json() as Promise<{ sucesso: boolean; mensagem: string }>;
 }
 
 export async function listarExecucoesWorkspace(limit = 50) {
   const params = new URLSearchParams({ limit: String(limit) });
-  const res = await fetch(`/api/automacoes/execucoes?${params.toString()}`, { method: "GET" });
-  if (!res.ok) {
-    const erro = await res.json();
-    throw new Error(erro.erro || "Erro ao carregar execucoes do workspace");
-  }
+  const res = await requestWorkspace("GET", `/api/automacoes/execucoes?${params.toString()}`);
   return res.json() as Promise<AutomacaoExecucoesResponse>;
 }

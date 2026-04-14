@@ -57,6 +57,9 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   const [agendadas, setAgendadas] = useState<MensagemAgendada[]>([]);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const paramsRef = useRef(params);
+  
+  // Generation counter - usado para detectar mudanças de conversa
+  const generationRef = useRef(0);
 
   const obterChaveCache = useCallback((instanceName: string, remoteJid: string) => {
     return `${CHAT_MESSAGES_CACHE_PREFIX}${instanceName}:${remoteJid}`;
@@ -89,6 +92,11 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
 
   paramsRef.current = params;
 
+  const paramsAtuaisRef = useRef<{ instanceName: string | null; remoteJid: string | null }>({
+    instanceName: null,
+    remoteJid: null,
+  });
+
   const mensagensOrdenadas = useMemo(
     () => [...messages].sort((a, b) => a.timestamp - b.timestamp),
     [messages],
@@ -102,14 +110,38 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       return;
     }
 
+    // Guard: evitar buscar/mesclar mensagens de conversas diferentes
+    paramsAtuaisRef.current = { instanceName, remoteJid };
+    const geracaoAtual = generationRef.current;
+
     try {
       setCarregando(true);
       const result = await buscarMensagensChatUnificado({ instanceName, remoteJid, limite: 100 });
+      
+      // Verificação: geração mudou durante fetch?
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando fetch - geração mudou");
+        setCarregando(false);
+        return;
+      }
+      
+      // Verificação pós-busca: params ainda correspondem?
+      if (paramsAtuaisRef.current.instanceName !== instanceName || paramsAtuaisRef.current.remoteJid !== remoteJid) {
+        console.log("[ChatMessages] Abortando fetch - params mudou durante carregamento");
+        setCarregando(false);
+        return;
+      }
+
       if (!result.ok) {
         setErro(result.erro);
         return;
       }
       setMessages((prev) => {
+        // Guard adicional: verificar se ainda estamos na mesma conversa
+        const atual = paramsAtuaisRef.current;
+        if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+          return prev;
+        }
         const proximas = mesclarMensagensChat(prev, result.dados.messages);
         salvarCache(instanceName, remoteJid, proximas);
         return proximas;
@@ -127,6 +159,20 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     async (text: string, retryId?: string) => {
       const { instanceName, remoteJid } = paramsRef.current;
       if (!instanceName || !remoteJid) return;
+
+      // Guard: verificar se ainda estamos na mesma geração (conversation)
+      const geracaoAtual = generationRef.current;
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando envio - geração mudou");
+        return;
+      }
+
+      // Guard: verificar se ainda estamos na mesma conversa
+      const atual = paramsAtuaisRef.current;
+      if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+        console.log("[ChatMessages] Abortando envio - params mudou");
+        return;
+      }
 
       const normalizedText = text.trim();
       if (!normalizedText) return;
@@ -151,6 +197,12 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         };
 
         setMessages((prev) => {
+          // Guard adicional antes de modificar estado
+          const atual = paramsAtuaisRef.current;
+          if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+            console.log("[ChatMessages] Abortando adição de mensagem - params mudou");
+            return prev;
+          }
           const proximas = mesclarMensagensChat(prev, [tempMessage]);
           salvarCache(instanceName, remoteJid, proximas);
           return proximas;
@@ -159,6 +211,10 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         const result = await enviarMensagemChatUnificado({ instanceName, remoteJid, text: normalizedText });
         if (!result.ok) {
           setMessages((prev) => {
+            const atual = paramsAtuaisRef.current;
+            if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+              return prev;
+            }
             const proximas = prev.map((message) =>
               message.id === tempId
                 ? { ...message, status: "ERROR", optimistic: false, error: result.erro }
@@ -169,17 +225,19 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
           });
           throw new Error(result.erro);
         }
-        setMessages((prev) =>
-          {
-            const proximas = prev.map((message) =>
-              message.id === tempId
-                ? { ...message, status: "SENT", optimistic: false, error: null }
-                : message,
-            );
-            salvarCache(instanceName, remoteJid, proximas);
-            return proximas;
+        setMessages((prev) => {
+          const atual = paramsAtuaisRef.current;
+          if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+            return prev;
           }
-        );
+          const proximas = prev.map((message) =>
+            message.id === tempId
+              ? { ...message, status: "SENT", optimistic: false, error: null }
+              : message,
+          );
+          salvarCache(instanceName, remoteJid, proximas);
+          return proximas;
+        });
       } finally {
         setEnviando(false);
       }
@@ -204,6 +262,20 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     async (text: string, agendadoPara: string) => {
       const { instanceName, remoteJid } = paramsRef.current;
       if (!instanceName || !remoteJid) return;
+
+      // Guard: verificar geração
+      const geracaoAtual = generationRef.current;
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando agendamento - geração mudou");
+        return;
+      }
+
+      // Guard: verificar se ainda estamos na mesma conversa
+      const atual = paramsAtuaisRef.current;
+      if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+        console.log("[ChatMessages] Abortando agendamento - params mudou");
+        return;
+      }
 
       const normalizedText = text.trim();
       if (!normalizedText) return;
@@ -244,7 +316,18 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       return;
     }
 
+    // Incrementar geração para invalidar operações assíncronas pendentes
+    generationRef.current++;
+    const geracaoAtual = generationRef.current;
+
+    // Atualizar o ref de params antes de qualquer operação
+    paramsAtuaisRef.current = { instanceName, remoteJid };
+
+    // Limpar mensagens anteriores imediatamente para evitar mistura
+    setMessages([]);
     setErro(null);
+    setSseConectado(false);
+    
     const mensagensEmCache = hidratarCache(instanceName, remoteJid);
     setMessages(mensagensEmCache ?? []);
     setCarregando(!mensagensEmCache);
@@ -253,16 +336,47 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     let unsubscribe: (() => void) | null = null;
 
     const iniciar = async () => {
+      // Verificar se ainda estamos na mesma geração (conversation)
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando - geração mudou");
+        return;
+      }
+
       if (!mensagensEmCache) {
+        // Verificação antes de fetch
+        if (geracaoAtual !== generationRef.current) return;
         await fetchInitial();
       }
 
+      // Verificação após fetch
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando após fetch - geração mudou");
+        return;
+      }
+      
       if (!ativo) return;
+
+      // Verificar se ainda estamos na mesma conversa antes de iniciar SSE
+      const atual = paramsAtuaisRef.current;
+      if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+        console.log("[ChatMessages] Abortando SSE - params mudou");
+        return;
+      }
 
       unsubscribe = assinarMensagensChatUnificado(
         { instanceName, remoteJid, limite: 100 },
         {
           onSnapshot: (snapshot) => {
+            // Verificar geração e params
+            if (geracaoAtual !== generationRef.current) {
+              console.log("[ChatMessages] Ignorando snapshot - geração mudou");
+              return;
+            }
+            const atual = paramsAtuaisRef.current;
+            if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+              console.log("[ChatMessages] Ignorando snapshot - params mudou");
+              return;
+            }
             setMessages((prev) => {
               const proximas = mesclarMensagensChat(prev, snapshot.messages ?? []);
               salvarCache(instanceName, remoteJid, proximas);

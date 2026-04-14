@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { whereLeadsPorPerfil } from "@/lib/permissoes";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 import { listarInstancias } from "@/lib/evolution-api.instances";
-import { buscarConversasPaginado, buscarConversasEvolution } from "@/lib/evolution-api.chat";
+import { buscarConversasPaginado, buscarConversasEvolution, buscarPushNamePorTelefone } from "@/lib/evolution-api.chat";
 import type { EvolutionConversa } from "@/lib/evolution-api.types";
 import type { SessaoToken } from "@/lib/tipos";
 import type { ChatUnificado } from "@/modules/chat/types";
@@ -12,6 +12,8 @@ const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:808
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
 const CHAT_DEBUG_ENABLED = process.env.CHAT_DEBUG === "1";
 const MAX_PAGINAS_POR_INSTANCIA = 40;
+const LIMITE_PAGINA_DEFAULT = 10;
+const PUSHNAME_BATCH_SIZE = 5;
 
 function logChat(evento: string, detalhes?: Record<string, unknown>) {
   if (detalhes) {
@@ -225,9 +227,22 @@ export async function unificarChatsComLeads({
   };
 
   const where = await whereLeadsPorPerfil(sessao);
-  const { resultado: leads, duracaoMs: duracaoLeadsMs } = await medirDuracao(() =>
-    prisma.lead.findMany({
-      where,
+  debug.timingsMs.leads = 0;
+  debug.leadsCount = 0;
+  let idsFunc: string[] = [];
+  let idsEstagio: string[] = [];
+  let idsPdv: string[] = [];
+
+  async function buscarLeadsPorTelefones(telefones: string[]) {
+    if (telefones.length === 0) return [];
+    const telNormalizados = telefones.map((t) => normalizarTelefoneParaWhatsapp(t)).filter((t) => t.waNumber);
+    if (telNormalizados.length === 0) return [];
+    const numeros = telNormalizados.map((t) => t.waNumber) as string[];
+    const leadsDoBanco = await prisma.lead.findMany({
+      where: {
+        ...where,
+        telefone: { in: numeros },
+      },
       select: {
         id: true,
         nome: true,
@@ -240,59 +255,68 @@ export async function unificarChatsComLeads({
         fonte: true,
         empresa_origem: true,
       },
-    }),
-  );
-  debug.leadsCount = leads.length;
-  debug.timingsMs.leads = duracaoLeadsMs;
-
-  const idsFunc = leads.map((l) => l.id_funcionario).filter(Boolean) as string[];
-  const idsEstagio = leads.map((l) => l.id_estagio).filter(Boolean) as string[];
-  const idsPdv = leads.map((l) => l.id_pdv).filter(Boolean) as string[];
-
-  const [funcionarios, estagios, pdvs] = await Promise.all([
-    idsFunc.length > 0
-      ? prisma.funcionario.findMany({
-          where: { id: { in: idsFunc } },
-          select: { id: true, nome: true },
-        })
-      : [],
-    idsEstagio.length > 0
-      ? prisma.estagioFunil.findMany({
-          where: { id: { in: idsEstagio } },
-          select: { id: true, nome: true },
-        })
-      : [],
-    idsPdv.length > 0
-      ? prisma.pdv.findMany({
-          where: { id: { in: idsPdv } },
-          select: { id: true, nome: true },
-        })
-      : [],
-  ]);
+    });
+    idsFunc = leadsDoBanco.map((l) => l.id_funcionario).filter(Boolean) as string[];
+    idsEstagio = leadsDoBanco.map((l) => l.id_estagio).filter(Boolean) as string[];
+    idsPdv = leadsDoBanco.map((l) => l.id_pdv).filter(Boolean) as string[];
+    return leadsDoBanco;
+  }
 
   const mapaLeads = new Map<string, LeadInfo>();
-  for (const lead of leads) {
-    const telNorm = normalizarTelefoneParaWhatsapp(lead.telefone);
-    if (telNorm.waNumber) {
-      mapaLeads.set(telNorm.waNumber, {
-        id: lead.id,
-        nome: lead.nome,
-        telefone: lead.telefone,
-        id_funcionario: lead.id_funcionario,
-        id_pdv: lead.id_pdv,
-        id_estagio: lead.id_estagio,
-        id_negocio: lead.id_negocio,
-        nome_funcionario: funcionarios.find((f) => f.id === lead.id_funcionario)?.nome ?? null,
-        nome_pdv: pdvs.find((p) => p.id === lead.id_pdv)?.nome ?? null,
-        nome_estagio: estagios.find((e) => e.id === lead.id_estagio)?.nome ?? null,
-        origem: lead.origem ?? null,
-        fonte: lead.fonte ?? null,
-        empresa_origem: lead.empresa_origem ?? null,
-        negocio: null,
-      });
+  let funcionarios: Array<{ id: string; nome: string }> = [];
+  let estagios: Array<{ id: string; nome: string }> = [];
+  let pdvs: Array<{ id: string; nome: string }> = [];
+
+  async function enriquLeadsPorTelefones(telefones: string[]) {
+    const leadsEcontrados = await buscarLeadsPorTelefones(telefones);
+    if (leadsEcontrados.length === 0) return;
+    const [funcs, estags, pdvss] = await Promise.all([
+      idsFunc.length > 0
+        ? prisma.funcionario.findMany({
+            where: { id: { in: idsFunc } },
+            select: { id: true, nome: true },
+          })
+        : [],
+      idsEstagio.length > 0
+        ? prisma.estagioFunil.findMany({
+            where: { id: { in: idsEstagio } },
+            select: { id: true, nome: true },
+          })
+        : [],
+      idsPdv.length > 0
+        ? prisma.pdv.findMany({
+            where: { id: { in: idsPdv } },
+            select: { id: true, nome: true },
+          })
+        : [],
+    ]);
+    funcionarios = funcs;
+    estagios = estags;
+    pdvs = pdvss;
+    for (const lead of leadsEcontrados) {
+      const telNorm = normalizarTelefoneParaWhatsapp(lead.telefone);
+      if (telNorm.waNumber) {
+        mapaLeads.set(telNorm.waNumber, {
+          id: lead.id,
+          nome: lead.nome,
+          telefone: lead.telefone,
+          id_funcionario: lead.id_funcionario,
+          id_pdv: lead.id_pdv,
+          id_estagio: lead.id_estagio,
+          id_negocio: lead.id_negocio,
+          nome_funcionario: funcs.find((f) => f.id === lead.id_funcionario)?.nome ?? null,
+          nome_pdv: pdvss.find((p) => p.id === lead.id_pdv)?.nome ?? null,
+          nome_estagio: estags.find((e) => e.id === lead.id_estagio)?.nome ?? null,
+          origem: lead.origem ?? null,
+          fonte: lead.fonte ?? null,
+          empresa_origem: lead.empresa_origem ?? null,
+          negocio: null,
+        });
+      }
     }
+    debug.leadsCount = leadsEcontrados.length;
+    debug.leadsMapSize = mapaLeads.size;
   }
-  debug.leadsMapSize = mapaLeads.size;
 
   const instagramThreadsPromise = listarConversasInstagram(sessao.id_empresa)
     .then((threads) => {
@@ -357,6 +381,20 @@ export async function unificarChatsComLeads({
     );
     debug.timingsMs.whatsapp = duracaoWhatsappMs;
 
+    const telefonesBusca: string[] = [];
+    for (const [index, conversasEncontradas] of resultadosBusca.entries()) {
+      const inst = instanciasValidas[index];
+      for (const conv of conversasEncontradas) {
+        if (conv.isGroup) continue;
+        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+        if (telefone) telefonesBusca.push(telefone);
+      }
+    }
+
+    await enriquLeadsPorTelefones(telefonesBusca);
+
     for (const [index, conversasEncontradas] of resultadosBusca.entries()) {
       const inst = instanciasValidas[index];
       for (const conv of conversasEncontradas) {
@@ -367,96 +405,27 @@ export async function unificarChatsComLeads({
         const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
 
         const existente = mapaPorTelefone.get(telefone);
-        if (existente) continue;
+        const timestampMsg = extrairTimestamp(conv);
 
-        const leadMatch = mapaLeads.get(telefone) ?? null;
-
-        mapaPorTelefone.set(telefone, {
-          instanceName: inst.instanceName,
-          remoteJid: conv.remoteJid,
-          telefone,
-          pushName: conv.pushName ?? null,
-          isGroup: false,
-          canal: "whatsapp",
-          unreadCount: 0,
-          ultimaMensagem: conv.lastMessage
-            ? {
-                conteudo: extrairConteudoMensagem(conv.lastMessage),
-                fromMe: conv.lastMessage.key?.fromMe ?? false,
-                timestamp: extrairTimestamp(conv),
-              }
-            : null,
-          leadMatch,
-          semMatch: !leadMatch,
-        });
-      }
-    }
-  } else {
-    // Modo normal: buscar todas as conversas para listagem (sem busca)
-    const { resultado: resultadosWhatsapp, duracaoMs: duracaoWhatsappMs } = await medirDuracao(() =>
-      Promise.all(
-        instanciasValidas.map(async (inst) => {
-          try {
-            if (CHAT_DEBUG_ENABLED) {
-              debug.rawFindChatsSample[inst.instanceName] = await fetchFindChatsRaw(inst.instanceName);
-            }
-
-            const conversasInstancia: EvolutionConversa[] = [];
-            let paginaAtual = 1;
-            const limitePagina = 100;
-            let temMais = true;
-            const assinaturasPaginas = new Set<string>();
-
-            while (temMais && paginaAtual <= MAX_PAGINAS_POR_INSTANCIA) {
-              const resultado = await buscarConversasPaginado(inst.instanceName, paginaAtual, limitePagina);
-              if (resultado.conversas.length === 0) {
-                break;
-              }
-
-              const assinaturaPagina = `${resultado.conversas.length}:${resultado.conversas.at(0)?.remoteJid ?? ""}:${resultado.conversas.at(-1)?.remoteJid ?? ""}`;
-              if (assinaturasPaginas.has(assinaturaPagina)) {
-                debug.errors.push(`Paginacao repetida detectada na instancia ${inst.instanceName} (pagina ${paginaAtual})`);
-                break;
-              }
-              assinaturasPaginas.add(assinaturaPagina);
-
-              conversasInstancia.push(...resultado.conversas);
-              temMais = resultado.temMais;
-              paginaAtual += 1;
-            }
-
-            if (temMais && paginaAtual > MAX_PAGINAS_POR_INSTANCIA) {
-              debug.errors.push(`Paginacao interrompida por limite na instancia ${inst.instanceName}`);
-            }
-
-            return { inst, conversas: conversasInstancia };
-          } catch (error) {
-            const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
-            debug.errors.push(msg);
-            console.error(msg);
-            return { inst, conversas: [] as EvolutionConversa[] };
-          }
-        }),
-      ),
-    );
-    debug.timingsMs.whatsapp = duracaoWhatsappMs;
-
-    for (const { inst, conversas } of resultadosWhatsapp) {
-      for (const conv of conversas) {
-        if (conv.isGroup) continue;
-
-        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
-
-        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
-        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
-
-        const existente = mapaPorTelefone.get(telefone);
+        // Se já existe, adicionar esta instância à lista de instâncias
         if (existente) {
-          if (conv.remoteJidAlt?.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
-            // Preferir a versão limpa quando a Evolution devolver lid + alt.
-          } else {
-            continue;
+          existente.instancias.push({
+            instanceName: inst.instanceName,
+            remoteJid: conv.remoteJid,
+            ultimaMensagemTimestamp: timestampMsg,
+          });
+          existente.isDuplicado = existente.instancias.length > 1;
+          // Atualizar última mensagem se for mais recente
+          if (timestampMsg && (!existente.ultimaMensagem?.timestamp || timestampMsg > existente.ultimaMensagem.timestamp)) {
+            existente.ultimaMensagem = conv.lastMessage
+              ? {
+                  conteudo: extrairConteudoMensagem(conv.lastMessage),
+                  fromMe: conv.lastMessage.key?.fromMe ?? false,
+                  timestamp: timestampMsg,
+                }
+              : null;
           }
+          continue;
         }
 
         const leadMatch = mapaLeads.get(telefone) ?? null;
@@ -473,15 +442,128 @@ export async function unificarChatsComLeads({
             ? {
                 conteudo: extrairConteudoMensagem(conv.lastMessage),
                 fromMe: conv.lastMessage.key?.fromMe ?? false,
-                timestamp: extrairTimestamp(conv),
+                timestamp: timestampMsg,
               }
             : null,
+          instancias: [
+            {
+              instanceName: inst.instanceName,
+              remoteJid: conv.remoteJid,
+              ultimaMensagemTimestamp: timestampMsg,
+            },
+          ],
+          isDuplicado: false,
+          instanciaSelecionada: null,
           leadMatch,
           semMatch: !leadMatch,
         });
       }
+    }
+} else {
+    // Modo normal: buscar conversas paginadas para listagem (sem busca)
+    // Busca APENAS a página solicitada - paginação real no nível da Evolution API
+    const { resultado: resultadosWhatsapp, duracaoMs: duracaoWhatsappMs } = await medirDuracao(() =>
+      Promise.all(
+        instanciasValidas.map(async (inst) => {
+          try {
+            if (CHAT_DEBUG_ENABLED) {
+              debug.rawFindChatsSample[inst.instanceName] = await fetchFindChatsRaw(inst.instanceName);
+            }
 
+            // Busca apenas a página solicitada com limite de 10 por instância
+            const resultado = await buscarConversasPaginado(inst.instanceName, pagina, LIMITE_PAGINA_DEFAULT);
+            return { inst, conversas: resultado.conversas, temMais: resultado.temMais };
+          } catch (error) {
+            const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
+            debug.errors.push(msg);
+            console.error(msg);
+            return { inst, conversas: [] as EvolutionConversa[], temMais: false };
+          }
+        }),
+      ),
+    );
+    debug.timingsMs.whatsapp = duracaoWhatsappMs;
+
+    const telefonesColetados: string[] = [];
+    for (const { inst, conversas } of resultadosWhatsapp) {
+      for (const conv of conversas) {
+        if (conv.isGroup) continue;
+        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+        if (telefone) telefonesColetados.push(telefone);
+      }
       debug.chatsPerInstance[inst.instanceName] = conversas.length;
+    }
+
+    await enriquLeadsPorTelefones(telefonesColetados);
+
+    for (const { inst, conversas } of resultadosWhatsapp) {
+      for (const conv of conversas) {
+        if (conv.isGroup) continue;
+
+        if (!jidEhValido(conv.remoteJid, conv.remoteJidAlt)) continue;
+
+        const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
+        const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
+        const timestampMsg = extrairTimestamp(conv);
+
+        const existente = mapaPorTelefone.get(telefone);
+
+        // Se já existe, adicionar esta instância à lista de instâncias duplicadas
+        if (existente) {
+          existente.instancias.push({
+            instanceName: inst.instanceName,
+            remoteJid: conv.remoteJid,
+            ultimaMensagemTimestamp: timestampMsg,
+          });
+          existente.isDuplicado = existente.instancias.length > 1;
+
+          // Atualizar última mensagem se for mais recente
+          if (timestampMsg && (!existente.ultimaMensagem?.timestamp || timestampMsg > existente.ultimaMensagem.timestamp)) {
+            existente.ultimaMensagem = conv.lastMessage
+              ? {
+                  conteudo: extrairConteudoMensagem(conv.lastMessage),
+                  fromMe: conv.lastMessage.key?.fromMe ?? false,
+                  timestamp: timestampMsg,
+                }
+              : null;
+            existente.instanceName = inst.instanceName;
+            existente.remoteJid = conv.remoteJid;
+          }
+          continue;
+        }
+
+        const leadMatch = mapaLeads.get(telefone) ?? null;
+
+        mapaPorTelefone.set(telefone, {
+          instanceName: inst.instanceName,
+          remoteJid: conv.remoteJid,
+          telefone,
+          pushName: conv.pushName ?? null,
+          isGroup: false,
+          canal: "whatsapp",
+          unreadCount: 0,
+          ultimaMensagem: conv.lastMessage
+            ? {
+                conteudo: extrairConteudoMensagem(conv.lastMessage),
+                fromMe: conv.lastMessage.key?.fromMe ?? false,
+                timestamp: timestampMsg,
+              }
+            : null,
+          instancias: [
+            {
+              instanceName: inst.instanceName,
+              remoteJid: conv.remoteJid,
+              ultimaMensagemTimestamp: timestampMsg,
+            },
+          ],
+          isDuplicado: false,
+          instanciaSelecionada: null,
+          leadMatch,
+          semMatch: !leadMatch,
+        });
+      }
     }
   }
 
@@ -502,6 +584,11 @@ export async function unificarChatsComLeads({
   if (previewsInstagram.size > 0) {
     logChat("Previews do Instagram carregados do banco", { total: previewsInstagram.size });
   }
+
+  const telefonesIg = instagramThreads
+    .map((t) => (t.participant_username ?? t.participant_id ?? "").replace(/\D/g, ""))
+    .filter((t) => t.length >= 8);
+  await enriquLeadsPorTelefones(telefonesIg);
 
   for (const thread of instagramThreads) {
     const previewPersistido = previewsInstagram.get(thread.id);
@@ -556,6 +643,16 @@ export async function unificarChatsComLeads({
             mediaUrl,
           }
         : null,
+      // Instagram não tem suporte a multi-instâncias por enquanto
+      instancias: [
+        {
+          instanceName: "instagram",
+          remoteJid: thread.id,
+          ultimaMensagemTimestamp: previewPersistido?.timestamp ?? Math.floor(new Date(thread.updated_at).getTime() / 1000),
+        },
+      ],
+      isDuplicado: false,
+      instanciaSelecionada: null,
       leadMatch,
       semMatch: !leadMatch,
     });
@@ -625,6 +722,40 @@ export async function unificarChatsComLeads({
   );
   debug.timingsMs.enrichment = duracaoEnrichmentMs;
 
+  const chatsComPushNamePendente = todasOrdenadas.filter(
+    (chat) => chat.canal === "whatsapp" && chat.pushName === null && chat.ultimaMensagem?.fromMe === true
+  );
+
+  const chatsParaProcessar = chatsComPushNamePendente.slice(0, PUSHNAME_BATCH_SIZE);
+
+  const pushNamePromises = chatsParaProcessar.map(async (chat) => {
+    try {
+      const pushNameBuscado = await buscarPushNamePorTelefone(
+        chat.instanceName,
+        chat.remoteJid,
+        chat.remoteJid
+      );
+      if (pushNameBuscado) {
+        chat.pushName = pushNameBuscado;
+      } else if (chat.leadMatch?.nome) {
+        chat.pushName = chat.leadMatch.nome;
+      }
+    } catch (error) {
+      console.warn("[Chat] Erro ao buscar pushName", {
+        telefone: chat.telefone,
+        instanceName: chat.instanceName,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      if (chat.leadMatch?.nome) {
+        chat.pushName = chat.leadMatch.nome;
+      }
+    }
+  });
+
+  if (pushNamePromises.length > 0) {
+    await Promise.all(pushNamePromises);
+  }
+
   for (const chat of todasOrdenadas) {
     chat.unreadCount = chat.leadMatch?.id ? unreadPorLead.get(chat.leadMatch.id) ?? 0 : 0;
     if (chat.leadMatch?.id_negocio) {
@@ -632,6 +763,10 @@ export async function unificarChatsComLeads({
       if (chat.leadMatch) {
         chat.leadMatch.negocio = negocio;
       }
+    }
+
+    if (chat.pushName === null && chat.leadMatch?.nome) {
+      chat.pushName = chat.leadMatch.nome;
     }
   }
 

@@ -172,6 +172,18 @@ export async function despublicarWorkspace(idEmpresa: string) {
   });
 }
 
+export async function excluirWorkspace(idEmpresa: string) {
+  const workspace = await obterOuCriarWorkspaceDb(idEmpresa);
+
+  await prisma.$transaction([
+    prisma.automacaoExecucao.deleteMany({ where: { id_automacao: workspace.id } }),
+    prisma.automacaoAgendamento.deleteMany({ where: { id_automacao: workspace.id } }),
+    prisma.automacaoAcao.deleteMany({ where: { id_automacao: workspace.id } }),
+    prisma.automacaoVersao.deleteMany({ where: { id_automacao: workspace.id } }),
+    prisma.automacao.delete({ where: { id: workspace.id } }),
+  ]);
+}
+
 export async function obterVersaoPublicada(versaoId: string) {
   return prisma.automacaoVersao.findUnique({
     where: { id: versaoId },

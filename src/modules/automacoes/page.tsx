@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -22,6 +23,7 @@ type DialogMode = "trigger" | "step" | null;
 
 export function ModuloAutomacoes() {
   const { addToast } = useToast();
+  const router = useRouter();
   const [nodes, setNodes] = useState<WorkflowNodeModel[]>([]);
   const [edges, setEdges] = useState<WorkflowEdgeModel[]>([]);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
@@ -46,6 +48,7 @@ export function ModuloAutomacoes() {
     handleSave,
     handlePublish,
     handleUnpublish,
+    handleDelete,
   } = useAutomacoesWorkspaceIO({
     nodes,
     edges,
@@ -335,6 +338,12 @@ export function ModuloAutomacoes() {
                   void handlePublish();
                 }}
                 onRemoveSelection={removeSelection}
+                onDelete={async () => {
+                  const success = await handleDelete();
+                  if (success) {
+                    router.refresh();
+                  }
+                }}
                 onZoomOut={() => canvasApi?.zoomOut()}
                 onZoomIn={() => canvasApi?.zoomIn()}
                 onFit={() => canvasApi?.fit()}

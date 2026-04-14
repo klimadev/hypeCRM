@@ -5,6 +5,7 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
+import { setPushNameInCache, getPushNameFromCache } from "./chat-pushname-cache";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
@@ -120,8 +121,8 @@ export async function buscarConversasPaginado(
     method: "POST",
     headers,
     body: JSON.stringify({
-      page: pagina,
-      limit: limite,
+      take: limite,
+      skip: (pagina - 1) * limite,
     }),
   });
 
@@ -434,4 +435,53 @@ export async function buscarMensagensPorContato(
     });
 
   return { messages: mensagens, hasMore };
+}
+
+export async function buscarPushNamePorTelefone(
+  instanceName: string,
+  remoteJid: string,
+  remoteJidAlt?: string | null
+): Promise<string | null> {
+  const telefone = remoteJid.replace(/@.*/, "").replace(/\D/g, "");
+
+  const cached = getPushNameFromCache(instanceName, telefone);
+  if (cached !== undefined) {
+    return cached;
+  }
+
+  const jidParaBusca = remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : remoteJid;
+
+  const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      where: {
+        key: { remoteJid: jidParaBusca, remoteJidAlt: jidParaBusca },
+      },
+      page: 1,
+      offset: 0,
+      take: 20,
+    }),
+  });
+
+  if (!resposta.ok) {
+    return null;
+  }
+
+  const json = (await resposta.json().catch(() => ({}))) as {
+    messages?: { records?: Array<{ key?: { fromMe?: boolean }; pushName?: string | null }> };
+  };
+
+  const registros = json.messages?.records ?? [];
+
+  for (const msg of registros) {
+    if (msg.key?.fromMe === false && msg.pushName && msg.pushName.trim().length > 0) {
+      const pushName = msg.pushName.trim();
+      setPushNameInCache(instanceName, telefone, pushName);
+      return pushName;
+    }
+  }
+
+  setPushNameInCache(instanceName, telefone, null);
+  return null;
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Megaphone, X } from "lucide-react";
+import { Briefcase, Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 type LeadsBulkActionsProps = {
@@ -10,6 +10,7 @@ type LeadsBulkActionsProps = {
   onSelecionarTodosFiltrados: () => void;
   onLimparSelecao: () => void;
   onDisparar: () => void;
+  onConverterEmNegocios: () => void;
 };
 
 export function LeadsBulkActions({
@@ -19,6 +20,7 @@ export function LeadsBulkActions({
   onSelecionarTodosFiltrados,
   onLimparSelecao,
   onDisparar,
+  onConverterEmNegocios,
 }: LeadsBulkActionsProps) {
   if (totalSelecionados <= 0) {
     return null;
@@ -39,7 +41,11 @@ export function LeadsBulkActions({
           <X className="mr-1 h-3.5 w-3.5" />
           Limpar
         </Button>
-        <div className="ml-auto">
+        <div className="ml-auto flex gap-2">
+          <Button type="button" onClick={onConverterEmNegocios} className="h-9 bg-[var(--success)] text-white hover:bg-[var(--success-hover)]">
+            <Briefcase className="mr-2 h-4 w-4" />
+            Converter em negócios
+          </Button>
           <Button type="button" onClick={onDisparar} className="h-9 bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
             <Megaphone className="mr-2 h-4 w-4" />
             Disparar campanha
