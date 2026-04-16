@@ -13,6 +13,7 @@ type SyncResultado = {
 
 type UseKanbanRealtimeParams = {
   negociosRef: React.MutableRefObject<Lead[]>;
+  pipelineSelecionadaId?: string;
   onSync: (params: { silencioso?: boolean }) => Promise<void>;
   addToast?: (params: {
     type: "success" | "error" | "warning";
@@ -36,9 +37,10 @@ function contarMovimentacoesRemotas(anteriores: Lead[], atuais: Lead[]): number 
   return total;
 }
 
-async function buscarVersao(): Promise<string | null> {
+async function buscarVersao(pipelineSelecionadaId?: string): Promise<string | null> {
   try {
-    const resposta = await fetch("/api/negocios", {
+    const params = pipelineSelecionadaId ? `?id_funil=${encodeURIComponent(pipelineSelecionadaId)}` : "";
+    const resposta = await fetch(`/api/negocios${params}`, {
       credentials: "include",
     });
     if (!resposta.ok) return null;
@@ -49,7 +51,12 @@ async function buscarVersao(): Promise<string | null> {
   }
 }
 
-export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRealtimeParams) {
+export function useKanbanRealtime({
+  negociosRef,
+  pipelineSelecionadaId = "",
+  onSync,
+  addToast,
+}: UseKanbanRealtimeParams) {
   const versaoRef = useRef<string | null>(null);
   const movimentoLocalAteRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -63,7 +70,7 @@ export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRe
   const verificarMudancas = useCallback(async () => {
     if (syncEmAndamentoRef.current) return;
 
-    const novaVersao = await buscarVersao();
+    const novaVersao = await buscarVersao(pipelineSelecionadaId);
     if (!novaVersao) return;
 
     const versaoAnterior = versaoRef.current;
@@ -89,7 +96,7 @@ export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRe
       }
 
       // Buscar dados completos para contar movimentações e mostrar toast
-      const resposta = await listarKanban();
+      const resposta = await listarKanban(pipelineSelecionadaId || undefined);
       if (resposta.ok) {
         const totalMovimentacoes = contarMovimentacoesRemotas(negociosRef.current, resposta.dados.negocios);
 
@@ -104,11 +111,15 @@ export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRe
 
       await onSync({ silencioso: true });
     }
-  }, [onSync, addToast, negociosRef]);
+  }, [onSync, addToast, negociosRef, pipelineSelecionadaId]);
 
   // Iniciar polling ao montar
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    versaoRef.current = null;
+    jaInicializouRef.current = false;
+    movimentoLocalAteRef.current = 0;
 
     const agendarProximoPolling = () => {
       if (timeoutRef.current) {
@@ -136,7 +147,7 @@ export function useKanbanRealtime({ negociosRef, onSync, addToast }: UseKanbanRe
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [verificarMudancas]);
+  }, [pipelineSelecionadaId, verificarMudancas]);
 
   return {
     registrarMovimentoLocal,

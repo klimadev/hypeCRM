@@ -43,7 +43,7 @@ export async function moverNegocioDeEstagio(params: {
     return { negocio: negocioAtual, noop: true };
   }
 
-  const statusNovo = definirStatusNegocioPorTipoEstagio(estagioDestino.tipo as "ABERTO" | "GANHO" | "PERDIDO");
+  const statusNovo = definirStatusNegocioPorTipoEstagio(estagioDestino.tipo);
 
   await prisma.$transaction(async (tx) => {
     await tx.$executeRaw(Prisma.sql`

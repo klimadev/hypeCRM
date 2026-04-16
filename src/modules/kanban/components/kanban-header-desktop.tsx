@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { cn } from "@/lib/utils";
-import type { KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, ResumoPendencias } from "../types";
+import type { KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, Pipeline, ResumoPendencias } from "../types";
 import { PendenciaBadge } from "./pendencia-badge";
 import { ActionButton } from "./action-button";
 import { NovoNegocioDialog } from "./novo-negocio-dialog";
@@ -20,6 +20,9 @@ type KanbanHeaderDesktopProps = {
   setOrdenacao: (ordenacao: OrdenacaoKanban) => void;
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
   pdvs: Array<{ id: string; nome: string }>;
+  pipelines: Pipeline[];
+  pipelineSelecionadaId: string;
+  setPipelineSelecionadaId: (pipelineId: string) => void;
   filtros: KanbanFilters;
   setFiltros: (filtros: KanbanFilters) => void;
   resumoPendencias: ResumoPendencias | null;
@@ -63,9 +66,12 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
     setBusca,
     inputBuscaRef,
     ordenacao,
-    setOrdenacao,
-    perfil,
-    pdvs,
+  setOrdenacao,
+  perfil,
+  pipelines,
+  pipelineSelecionadaId,
+  setPipelineSelecionadaId,
+  pdvs,
     filtros,
     setFiltros,
     resumoPendencias,
@@ -114,6 +120,21 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
         }
         actions={
           <div className="flex flex-wrap items-center gap-3">
+            {pipelines.length > 1 ? (
+              <Select value={pipelineSelecionadaId} onValueChange={setPipelineSelecionadaId}>
+                <SelectTrigger className="h-9 w-56 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
+                  <SelectValue placeholder="Selecione o funil" />
+                </SelectTrigger>
+                <SelectContent>
+                  {pipelines.map((pipeline) => (
+                    <SelectItem key={pipeline.id} value={pipeline.id}>
+                      {pipeline.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            ) : null}
+
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
               <input

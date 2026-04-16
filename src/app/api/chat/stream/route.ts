@@ -21,9 +21,9 @@ export async function GET(request: NextRequest) {
     pollMs: 10000,
     carregarSnapshot: async () => {
       const resultado = await obterSnapshotCacheado({
-        key: `chat:list:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${auth.sessao.id_pdv ?? ""}:1:50:`,
+        key: `chat:list:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${auth.sessao.id_pdv ?? ""}:1:10:`,
         ttlMs: CHAT_LIST_TTL_MS,
-        loader: () => unificarChatsComLeads({ sessao: auth.sessao, pagina: 1, limite: 50 }),
+        loader: () => unificarChatsComLeads({ sessao: auth.sessao, pagina: 1, limite: 10 }),
       });
       return { chats: resultado.chats, total: resultado.total, temMais: resultado.temMais };
     },

@@ -15,6 +15,62 @@ function extrairTelefoneDeRemoteJid(remoteJid: string): string {
   return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
 }
 
+function ehLid(remoteJid: string): boolean {
+  return remoteJid.includes("@lid");
+}
+
+async function resolverLidParaTelefone(instanceName: string, remoteJid: string): Promise<string | null> {
+  try {
+    const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
+    const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
+
+    const resposta = await fetch(`${EVOLUTION_API_URL}/chat/getMessages/${instanceName}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: EVOLUTION_API_KEY,
+      },
+      body: JSON.stringify({
+        where: { remoteJid },
+        limit: 1,
+      }),
+    });
+
+    if (!resposta.ok) {
+      console.warn("[Chat] Falha ao resolver LID - Evolution retornou erro", {
+        instanceName,
+        remoteJid,
+        status: resposta.status,
+      });
+      return null;
+    }
+
+    const json = await resposta.json().catch(() => null);
+    if (!json || !Array.isArray(json) || json.length === 0) {
+      console.warn("[Chat] LID resolvedor - sem mensagens encontradas", { instanceName, remoteJid });
+      return null;
+    }
+
+    const primeiraMensagem = json[0];
+    const jidReal = primeiraMensagem?.key?.remoteJidAlt ?? primeiraMensagem?.key?.remoteJid;
+    if (!jidReal) {
+      console.warn("[Chat] LID resolvedor - sem remoteJidAlt na mensagem", { instanceName, remoteJid });
+      return null;
+    }
+
+    const telefone = extrairTelefoneDeRemoteJid(jidReal);
+    console.log("[Chat] LID resuelto para telefone", { remoteJid, telefone });
+    return telefone;
+  } catch (error) {
+    console.error("[Chat] Erro ao resolver LID", {
+      instanceName,
+      remoteJid,
+      erro: error instanceof Error ? error.message : String(error),
+    });
+    return null;
+  }
+}
+
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
 }
@@ -164,16 +220,52 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  const telefone = extrairTelefoneDeRemoteJid(validacao.data.remoteJid);
+  let telefone = extrairTelefoneDeRemoteJid(validacao.data.remoteJid);
+
   if (!telefone) {
     return NextResponse.json({ erro: "remoteJid invalido." }, { status: 400 });
   }
 
-  await enviarMensagemTexto({
-    instanceName: validacao.data.instanceName,
-    telefone,
-    mensagem: validacao.data.text,
-  });
+  if (ehLid(validacao.data.remoteJid)) {
+    console.log("[Chat] Detectado LID, resolvendo para telefone real", {
+      remoteJid: validacao.data.remoteJid,
+      instanceName: validacao.data.instanceName,
+    });
+
+    const telefoneResolvido = await resolverLidParaTelefone(
+      validacao.data.instanceName,
+      validacao.data.remoteJid,
+    );
+
+    if (!telefoneResolvido) {
+      return NextResponse.json(
+        { erro: "Nao foi possivel resolver o LID para telefone. Tente novamente mais tarde." },
+        { status: 400 },
+      );
+    }
+
+    telefone = telefoneResolvido;
+    console.log("[Chat] LID resuelto", { telefone });
+  }
+
+  try {
+    await enviarMensagemTexto({
+      instanceName: validacao.data.instanceName,
+      telefone,
+      mensagem: validacao.data.text,
+    });
+  } catch (error) {
+    console.error("[Chat] Erro ao enviar mensagem via Evolution", {
+      instanceName: validacao.data.instanceName,
+      telefone,
+      erro: error instanceof Error ? error.message : String(error),
+    });
+
+    return NextResponse.json(
+      { erro: error instanceof Error ? error.message : "Erro ao enviar mensagem." },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({ ok: true });
 }

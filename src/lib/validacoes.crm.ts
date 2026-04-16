@@ -1,5 +1,43 @@
 import { z } from "zod";
 
+const TIPO_ESTAGIO_VALUES = ["ABERTO", "PROGRESSO", "SUCCESS", "FALHA"] as const;
+
+export const EsquemaCriarPipeline = z.object({
+  nome: z.string().trim().min(1, "Nome do pipeline é obrigatório.").max(100),
+  descricao: z.string().trim().max(500).optional(),
+  ordem: z.number().optional(),
+});
+
+export const EsquemaAtualizarPipeline = EsquemaCriarPipeline.partial();
+
+export const EsquemaCriarEstagio = z.object({
+  nome: z.string().trim().min(1, "Nome do estágio é obrigatório.").max(100),
+  tipo: z.enum(TIPO_ESTAGIO_VALUES),
+  ordem: z.number().optional(),
+});
+
+export const EsquemaAtualizarEstagio = z.object({
+  nome: z.string().trim().min(1, "Nome do estágio é obrigatório.").max(100).optional(),
+  tipo: z.enum(TIPO_ESTAGIO_VALUES).optional(),
+});
+
+export const EsquemaAtualizarEstilosEstagio = z.object({
+  cor_fundo: z.string().trim().optional(),
+  cor_texto: z.string().trim().optional(),
+  cor_borda: z.string().trim().optional(),
+  fonte_tamanho: z.number().optional(),
+  fonte_peso: z.number().optional(),
+  borda_arredondamento: z.number().optional(),
+  icone: z.string().trim().optional(),
+});
+
+export const EsquemaReordenarEstagios = z.object({
+  estagios: z.array(z.object({
+    id: z.string().trim().min(1),
+    ordem: z.number(),
+  })),
+});
+
 export const esquemaCriarLead = z.object({
   nome: z.string().trim().min(2, "Nome do lead deve ter ao menos 2 caracteres."),
   telefone: z

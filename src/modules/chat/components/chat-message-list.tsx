@@ -210,11 +210,13 @@ type ChatMessageListProps = {
   remoteJid: string;
   messages: UnifiedChatMessage[];
   carregando: boolean;
+  carregandoMais?: boolean;
   erro: string | null;
   recarregar: () => void;
+  carregarMensagensAnteriores?: () => void;
 };
 
-export function ChatMessageList({ instanceName, remoteJid, messages, carregando, erro, recarregar }: ChatMessageListProps) {
+export function ChatMessageList({ instanceName, remoteJid, messages, carregando, carregandoMais, erro, recarregar, carregarMensagensAnteriores }: ChatMessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inicializadoRef = useRef(false);
@@ -248,6 +250,20 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
   // Loading incremental quando há mensagens
   const exibirLoadingIncremental = carregando && messages.length > 0;
 
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container || !carregarMensagensAnteriores) return;
+
+    const onScroll = () => {
+      if (container.scrollTop <= 40) {
+        carregarMensagensAnteriores();
+      }
+    };
+
+    container.addEventListener("scroll", onScroll, { passive: true });
+    return () => container.removeEventListener("scroll", onScroll);
+  }, [carregarMensagensAnteriores]);
+
   return (
     <div className="min-h-0 flex-1 overflow-hidden bg-[var(--surface)]">
       <div
@@ -258,6 +274,11 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
           backgroundSize: "24px 24px",
         }}
       >
+        {carregandoMais ? (
+          <div className="flex justify-center py-3">
+            <Loader2 className="h-4 w-4 animate-spin text-[var(--text-tertiary)]" />
+          </div>
+        ) : null}
         {exibirLoadingVazio ? (
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-3 px-4 py-5">
             {/* Header skeleton */}

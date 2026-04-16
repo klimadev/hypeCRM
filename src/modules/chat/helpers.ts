@@ -41,6 +41,20 @@ export function formatarTimestampRelativoChat(timestamp?: number | null): string
   }
 }
 
+export function formatarDataAbsolutaChat(timestamp: number): string {
+  try {
+    const data = new Date(timestamp * 1000);
+    return data.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  } catch {
+    return "";
+  }
+}
+
 export function obterNomeChat(chat: ChatUnificado): string {
   return (
     chat.leadMatch?.nome ??

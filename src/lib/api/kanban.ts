@@ -1,4 +1,4 @@
-import type { Estagio, Funcionario, Lead } from "@/modules/kanban/types";
+import type { Estagio, Funcionario, Lead, Pipeline } from "@/modules/kanban/types";
 
 type ApiErro = {
   erro?: string;
@@ -9,6 +9,8 @@ type ResultadoApi<T> =
   | { ok: false; erro: string };
 
 export type ListagemKanban = {
+  pipelines: Pipeline[];
+  pipelineSelecionadaId: string;
   estagios: Estagio[];
   negocios: Lead[];
   funcionarios: Funcionario[];
@@ -68,8 +70,19 @@ type ApiLeadPrincipal = {
   anuncio_url?: string | null;
 };
 
+type ApiFunil = {
+  id: string;
+  nome: string;
+  slug: string;
+  padrao: boolean;
+  descricao?: string | null;
+  ordem?: number | null;
+  is_default?: boolean | null;
+};
+
 type ApiNegocioKanban = {
   id: string;
+  id_funil: string;
   id_estagio: string;
   id_funcionario: string;
   id_pdv?: string | null;
@@ -79,6 +92,9 @@ type ApiNegocioKanban = {
   probabilidade?: number | null;
   motivo_perda?: string | null;
   observacoes_comerciais?: string | null;
+  status?: string;
+  data_abertura?: string;
+  data_fechamento?: string | null;
   atualizado_em: string;
   lead_principal?: ApiLeadPrincipal | null;
   leads?: ApiLeadPrincipal[];
@@ -86,6 +102,9 @@ type ApiNegocioKanban = {
 
 type ApiNegocioListagemResponse = {
   negocios?: ApiNegocioKanban[];
+  funis?: ApiFunil[];
+  funilSelecionado?: ApiFunil;
+  pipelineSelecionadaId?: string;
   estagios?: Estagio[];
   funcionarios?: Funcionario[];
   pdvs?: Array<{ id: string; nome: string }>;
@@ -100,11 +119,14 @@ function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
   return {
     id: negocio.id,
     id_negocio: negocio.id,
+    id_funil: negocio.id_funil,
     id_estagio: negocio.id_estagio,
     id_funcionario: negocio.id_funcionario,
     nome: negocio.titulo,
     telefone: leadPrincipalEfetivo?.telefone ?? "",
     valor_oportunidade: negocio.valor_estimado,
+    valor_fechado: negocio.valor_fechado,
+    status: negocio.status,
     probabilidade: negocio.probabilidade ?? undefined,
     fonte: leadPrincipalEfetivo?.fonte ?? null,
     empresa_origem: leadPrincipalEfetivo?.empresa_origem ?? null,
@@ -112,6 +134,8 @@ function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
     motivo_perda: negocio.motivo_perda ?? null,
     origem: leadPrincipalEfetivo?.origem,
     atualizado_em: negocio.atualizado_em,
+    data_abertura: negocio.data_abertura,
+    data_fechamento: negocio.data_fechamento,
     id_pdv: leadPrincipalEfetivo?.id_pdv ?? negocio.id_pdv ?? null,
     dados_extras: leadPrincipalEfetivo?.dados_extras ?? null,
     anuncio_titulo: leadPrincipalEfetivo?.anuncio_titulo ?? null,
@@ -119,16 +143,16 @@ function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
     anuncio_url: leadPrincipalEfetivo?.anuncio_url ?? null,
     lead_principal: leadPrincipalEfetivo
       ? {
-          id: leadPrincipalEfetivo.id,
-          nome: leadPrincipalEfetivo.nome,
-          telefone: leadPrincipalEfetivo.telefone,
-          email: leadPrincipalEfetivo.email ?? null,
-          origem: leadPrincipalEfetivo.origem,
-          id_negocio: leadPrincipalEfetivo.id_negocio ?? negocio.id,
-          atualizado_em: typeof leadPrincipalEfetivo.atualizado_em === "string"
-            ? leadPrincipalEfetivo.atualizado_em
-            : leadPrincipalEfetivo.atualizado_em?.toISOString(),
-        }
+        id: leadPrincipalEfetivo.id,
+        nome: leadPrincipalEfetivo.nome,
+        telefone: leadPrincipalEfetivo.telefone,
+        email: leadPrincipalEfetivo.email ?? null,
+        origem: leadPrincipalEfetivo.origem,
+        id_negocio: leadPrincipalEfetivo.id_negocio ?? negocio.id,
+        atualizado_em: typeof leadPrincipalEfetivo.atualizado_em === "string"
+          ? leadPrincipalEfetivo.atualizado_em
+          : leadPrincipalEfetivo.atualizado_em?.toISOString(),
+      }
       : null,
     leads_vinculados: leadsVinculados.map((lead) => ({
       id: lead.id,
@@ -139,8 +163,9 @@ function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
   };
 }
 
-export async function listarKanban(): Promise<ResultadoApi<ListagemKanban>> {
-  const resposta = await fetch("/api/negocios");
+export async function listarKanban(pipelineId?: string): Promise<ResultadoApi<ListagemKanban>> {
+  const params = pipelineId ? `?id_funil=${encodeURIComponent(pipelineId)}` : "";
+  const resposta = await fetch(`/api/negocios${params}`);
   const json = await lerJsonSeguro<ApiNegocioListagemResponse>(resposta);
 
   if (!resposta.ok) {
@@ -150,6 +175,16 @@ export async function listarKanban(): Promise<ResultadoApi<ListagemKanban>> {
   return {
     ok: true,
     dados: {
+      pipelines: (json.funis ?? []).map((funil) => ({
+        id: funil.id,
+        nome: funil.nome,
+        slug: funil.slug,
+        padrao: funil.padrao,
+        descricao: funil.descricao ?? null,
+        ordem: funil.ordem ?? 0,
+        is_default: funil.is_default ?? false,
+      })),
+      pipelineSelecionadaId: json.pipelineSelecionadaId ?? json.funilSelecionado?.id ?? "",
       estagios: json.estagios ?? [],
       negocios: (json.negocios ?? []).map(mapearNegocioParaCard),
       funcionarios: json.funcionarios ?? [],

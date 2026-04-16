@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useCallback } from "react";
 import { formataMoeda } from "@/lib/utils";
 import type { KpiKanban, Lead, UseKanbanModuleReturn, Props } from "../types";
 import { useToast } from "@/components/ui/toast";
@@ -10,12 +10,19 @@ import { useKanbanDados } from "./use-kanban-dados";
 import { useKanbanOperacoes } from "./use-kanban-operacoes";
 import { useKanbanDetalhesNegocio } from "./use-kanban-detalhes-lead";
 
-export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleReturn {
+export function useKanbanModule({
+  perfil,
+  idUsuario,
+  pipelineSelecionadaIdInicial,
+}: Props): UseKanbanModuleReturn {
   const { addToast } = useToast();
   const {
     estagios,
     negocios,
     setNegocios,
+    pipelines,
+    pipelineSelecionadaId,
+    setPipelineSelecionadaId,
     funcionarios,
     pdvs,
     bootstrap,
@@ -25,15 +32,34 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     notificacoesAtivadas,
     alternarNotificacoes,
     permissaoNotificacao,
-  } = useKanbanDados({ addToast });
+  } = useKanbanDados({ addToast, pipelineSelecionadaIdInicial });
 
   const [negocioSelecionado, setNegocioSelecionado] = useState<Lead | null>(null);
   const [dialogNovoNegocioAberto, setDialogNovoNegocioAberto] = useState(false);
+  const [dialogPipelineAberto, setDialogPipelineAberto] = useState(false);
+  const [pipelineEditando, setPipelineEditando] = useState<{ id: string; nome: string; descricao?: string | null } | null>(null);
+  const [criandoPipeline, setCriandoPipeline] = useState(false);
   const [stageIdAtivo, setStageIdAtivo] = useState("");
 
   const [cargoNovoNegocio, setCargoNovoNegocio] = useState<{ id_funcionario: string } | null>(null);
   const [estagioNovoNegocio, setEstagioNovoNegocio] = useState("");
   const [valorNovoNegocio, setValorNovoNegocio] = useState("");
+
+  const {
+    movimentoPendente,
+    setMovimentoPendente,
+    motivoPerda,
+    setMotivoPerda,
+    aoDragEnd,
+    confirmarPerda,
+    optimisticNegocios,
+  } = useKanbanMovimentacao({
+    negocios,
+    estagios,
+    setNegocios,
+    registrarMovimentoLocal,
+    addToast,
+  });
 
   const {
     filtros,
@@ -54,7 +80,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     negociosParados,
   } = useKanbanDerivacoes({
     estagios,
-    negocios,
+    negocios: optimisticNegocios,
     negocioSelecionado,
   });
 
@@ -62,7 +88,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     {
       id: "ativos",
       label: "Pipeline visível",
-      valor: `${negocios.length}`,
+      valor: `${optimisticNegocios.length}`,
       descricao: "negócios em acompanhamento",
       destaque: "brand",
     },
@@ -87,7 +113,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
       descricao: "pendências críticas agora",
       destaque: "info",
     },
-  ], [negocios.length, negociosParados, resumoPendencias?.porGravidade.critica, totalPipeline]);
+  ], [optimisticNegocios.length, negociosParados, resumoPendencias?.porGravidade.critica, totalPipeline]);
 
   const stageIdAtivoEfetivo = useMemo(() => {
     if (estagios.length === 0) return "";
@@ -108,21 +134,6 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
 
     return stageSelecionadoExiste ? stageIdAtivo : estagios[0].id;
   }, [estagios, negociosFiltradosPorEstagio, stageIdAtivo]);
-
-  const {
-    movimentoPendente,
-    setMovimentoPendente,
-    motivoPerda,
-    setMotivoPerda,
-    aoDragEnd,
-    confirmarPerda,
-  } = useKanbanMovimentacao({
-    negocios,
-    estagios,
-    setNegocios,
-    registrarMovimentoLocal,
-    addToast,
-  });
 
   const {
     erroDetalhesNegocio,
@@ -160,6 +171,7 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     perfil,
     idUsuario,
     valorNovoNegocio,
+    pipelineSelecionadaId,
     cargoNovoNegocio,
     setNegocios,
     setDialogNovoNegocioAberto,
@@ -169,11 +181,86 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     bootstrap,
   });
 
+  const criarPipelineHandler = useCallback(
+    async (data: { nome: string; descricao?: string }) => {
+      setCriandoPipeline(true);
+      try {
+        const resposta = await fetch("/api/pipelines", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!resposta.ok) {
+          const erro = await resposta.json();
+          addToast({
+            type: "error",
+            title: erro.message || "Erro ao criar pipeline",
+          });
+          return;
+        }
+        addToast({
+          type: "success",
+          title: "Pipeline criado com sucesso",
+        });
+        setDialogPipelineAberto(false);
+        bootstrap();
+      } catch {
+        addToast({
+          type: "error",
+          title: "Erro ao criar pipeline",
+        });
+      } finally {
+        setCriandoPipeline(false);
+      }
+    },
+    [addToast, bootstrap],
+  );
+
+  const atualizarPipelineHandler = useCallback(
+    async (data: { nome: string; descricao?: string }) => {
+      if (!pipelineEditando) return;
+      setCriandoPipeline(true);
+      try {
+        const resposta = await fetch(`/api/pipelines/${pipelineEditando.id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data),
+        });
+        if (!resposta.ok) {
+          const erro = await resposta.json();
+          addToast({
+            type: "error",
+            title: erro.message || "Erro ao atualizar pipeline",
+          });
+          return;
+        }
+        addToast({
+          type: "success",
+          title: "Pipeline atualizado com sucesso",
+        });
+        setDialogPipelineAberto(false);
+        setPipelineEditando(null);
+        bootstrap();
+      } catch {
+        addToast({
+          type: "error",
+          title: "Erro ao atualizar pipeline",
+        });
+      } finally {
+        setCriandoPipeline(false);
+      }
+    },
+    [addToast, pipelineEditando, bootstrap],
+  );
+
   return {
     estagios,
-    negocios,
+    negocios: optimisticNegocios,
     funcionarios,
     pdvs,
+    pipelines,
+    pipelineSelecionadaId,
+    setPipelineSelecionadaId,
     negociosPorEstagio,
     negociosFiltradosPorEstagio,
     pendenciasPorNegocio,
@@ -231,7 +318,14 @@ export function useKanbanModule({ perfil, idUsuario }: Props): UseKanbanModuleRe
     stageIdAtivo: stageIdAtivoEfetivo,
     setStageIdAtivo,
     recarregarPendencias,
-    totalNegocios: negocios.length,
+    dialogPipelineAberto,
+    setDialogPipelineAberto,
+    pipelineEditando,
+    setPipelineEditando,
+    criandoPipeline,
+    criarPipeline: criarPipelineHandler,
+    atualizarPipeline: atualizarPipelineHandler,
+    totalNegocios: optimisticNegocios.length,
     pendenciasCriticas: resumoPendencias?.porGravidade.critica ?? 0,
     origemStats,
     totalPipeline,

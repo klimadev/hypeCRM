@@ -222,6 +222,7 @@ model Empresa {
 model Funil {
   id              String              @id
   id_empresa      String
+  id_pdv          String?
   nome            String
   slug            String
   descricao       String?
@@ -231,6 +232,7 @@ model Funil {
   criado_em       DateTime            @default(now())
   atualizado_em   DateTime            @default(now())
   Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
+  Pdv             Pdv?                @relation(fields: [id_pdv], references: [id])
   EstagioFunil    EstagioFunil[]
   Negocio         Negocio[]
   logs_anteriores NegocioEstagioLog[] @relation("NegocioLogFunilAnterior")
@@ -239,15 +241,18 @@ model Funil {
   @@unique([id_empresa, slug])
   @@index([id_empresa])
   @@index([id_empresa, padrao])
+  @@index([id_pdv])
 }
 
 model EstagioFunil {
   id              String              @id
   id_empresa      String
   id_funil        String
+  id_criador      String?
   nome            String
   ordem           BigInt
   tipo            String
+  estilos         String?
   criado_em       DateTime            @default(now())
   atualizado_em   DateTime            @default(now())
   Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
@@ -613,6 +618,7 @@ model Pdv {
   criado_em             DateTime           @default(now())
   atualizado_em         DateTime           @default(now())
   Funcionario           Funcionario[]
+  Funil                Funil[]
   WhatsappInstancia     WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id])
   Empresa               Empresa            @relation(fields: [id_empresa], references: [id])
 

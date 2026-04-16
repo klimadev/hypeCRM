@@ -23,11 +23,86 @@ export type KpiKanban = {
   destaque?: "brand" | "success" | "warning" | "info";
 };
 
+export type TipoEstagio = "ABERTO" | "PROGRESSO" | "SUCCESS" | "FALHA" | "GANHO" | "PERDIDO" | "";
+
+export type EstagioCor = {
+  bg: string;
+  text: string;
+  border: string;
+  label: string;
+};
+
+export const CORES_ESTAGIO: Partial<Record<TipoEstagio, EstagioCor>> = {
+  ABERTO: {
+    bg: "bg-zinc-500/20",
+    text: "text-zinc-400",
+    border: "border-zinc-500/40",
+    label: "Aberto",
+  },
+  PROGRESSO: {
+    bg: "bg-blue-500/20",
+    text: "text-blue-400",
+    border: "border-blue-500/40",
+    label: "Em Progresso",
+  },
+  SUCCESS: {
+    bg: "bg-emerald-500/20",
+    text: "text-emerald-400",
+    border: "border-emerald-500/40",
+    label: "Sucesso",
+  },
+  FALHA: {
+    bg: "bg-rose-500/20",
+    text: "text-rose-400",
+    border: "border-rose-500/40",
+    label: "Falha",
+  },
+  GANHO: {
+    bg: "bg-emerald-500/20",
+    text: "text-emerald-400",
+    border: "border-emerald-500/40",
+    label: "Fechado",
+  },
+  PERDIDO: {
+    bg: "bg-rose-500/20",
+    text: "text-rose-400",
+    border: "border-rose-500/40",
+    label: "Perdido",
+  },
+  "": {
+    bg: "bg-zinc-500/20",
+    text: "text-zinc-400",
+    border: "border-zinc-500/40",
+    label: "Indefinido",
+  },
+};
+
 export type Estagio = {
   id: string;
   nome: string;
   ordem: number;
-  tipo: string;
+  tipo: TipoEstagio;
+  estilos?: EstagioEstilos;
+};
+
+export type EstagioEstilos = {
+  cor_fundo?: string;
+  cor_texto?: string;
+  cor_borda?: string;
+  fonte_tamanho?: number;
+  fonte_peso?: number;
+  borda_arredondamento?: number;
+  icone?: string;
+};
+
+export type Pipeline = {
+  id: string;
+  nome: string;
+  slug: string;
+  padrao: boolean;
+  descricao?: string | null;
+  ordem?: number;
+  is_default?: boolean;
 };
 
 export type Pdv = {
@@ -38,11 +113,14 @@ export type Pdv = {
 export type Lead = {
   id: string;
   id_negocio?: string | null;
+  id_funil?: string;
   id_estagio: string;
   id_funcionario: string;
   nome: string;
   telefone: string;
   valor_oportunidade: number;
+  valor_fechado?: number | null;
+  status?: "ABERTO" | "GANHO" | "PERDIDO" | string;
   probabilidade?: number;
   fonte?: string | null;
   empresa_origem?: string | null;
@@ -50,6 +128,8 @@ export type Lead = {
   motivo_perda: string | null;
   origem?: OrigemContato;
   atualizado_em: string;
+  data_abertura?: string;
+  data_fechamento?: string | null;
   id_pdv?: string | null;
   dados_extras?: string | null;
   // Campos para anúncios CTWA
@@ -110,6 +190,7 @@ export type OrdenacaoKanban = "valor_maior" | "valor_menor" | "recente" | "antig
 export type Props = {
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
   idUsuario: string;
+  pipelineSelecionadaIdInicial?: string;
 };
 
 export type StatusSalvamentoDetalhesNegocio =
@@ -125,6 +206,9 @@ export type UseKanbanModuleReturn = {
   negocios: Lead[];
   funcionarios: Funcionario[];
   pdvs: Pdv[];
+  pipelines: Pipeline[];
+  pipelineSelecionadaId: string;
+  setPipelineSelecionadaId: (pipelineId: string) => void;
   negociosPorEstagio: Record<string, Lead[]>;
   negociosFiltradosPorEstagio: Record<string, Lead[]>;
   pendenciasPorNegocio: Record<string, PendenciaNegocioInfo>;
@@ -202,6 +286,13 @@ export type UseKanbanModuleReturn = {
   stageIdAtivo: string;
   setStageIdAtivo: (stageId: string) => void;
   recarregarPendencias: () => void;
+  dialogPipelineAberto: boolean;
+  setDialogPipelineAberto: (aberto: boolean) => void;
+  pipelineEditando: { id: string; nome: string; descricao?: string | null } | null;
+  setPipelineEditando: (pipeline: { id: string; nome: string; descricao?: string | null } | null) => void;
+  criandoPipeline: boolean;
+  criarPipeline: (data: { nome: string; descricao?: string }) => Promise<void>;
+  atualizarPipeline: (data: { nome: string; descricao?: string }) => Promise<void>;
   totalNegocios: number;
   pendenciasCriticas: number;
   origemStats: OrigemStats;

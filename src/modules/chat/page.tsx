@@ -46,6 +46,8 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             temMais={vm.temMais}
             carregarMais={vm.carregarMais}
             total={vm.total}
+            onIniciarNovoChat={vm.onIniciarNovoChat}
+            instanciasWhatsapp={vm.instanciasWhatsapp}
           />
         </aside>
 

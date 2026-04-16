@@ -1,16 +1,19 @@
 import { Prisma } from "@prisma/client";
 import type { NegocioResumo } from "@/lib/negocios.types";
+import type { TipoStatusNegocio } from "@/lib/negocio-status";
 
-export function definirStatusNegocioPorTipoEstagio(tipo: "ABERTO" | "GANHO" | "PERDIDO") {
-  if (tipo === "GANHO") {
-    return "GANHO" as const;
+export function definirStatusNegocioPorTipoEstagio(tipo: unknown): TipoStatusNegocio {
+  const tipoNormalizado = typeof tipo === "string" ? tipo.trim().toUpperCase() : "";
+
+  if (tipoNormalizado === "GANHO") {
+    return "GANHO";
   }
 
-  if (tipo === "PERDIDO") {
-    return "PERDIDO" as const;
+  if (tipoNormalizado === "PERDIDO") {
+    return "PERDIDO";
   }
 
-  return "ABERTO" as const;
+  return "ABERTO";
 }
 
 export function coletarIdsLeadsVinculadosNegocio(negocio: NegocioResumo) {
@@ -31,7 +34,7 @@ export function construirCamposAtualizacaoNegocio(params: {
   idFuncionario?: string;
   idFunil?: string;
   idEstagio?: string;
-  status?: "ABERTO" | "GANHO" | "PERDIDO";
+  status?: TipoStatusNegocio;
   observacoesComerciais?: string | null;
 }) {
   return {

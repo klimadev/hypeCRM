@@ -1,10 +1,12 @@
 "use client";
 
 import { useMemo, useState, type ReactNode } from "react";
-import { Search, MessageCircle, ChevronDown, Activity, Inbox, Sparkles } from "lucide-react";
+import { Search, MessageCircle, ChevronDown, Activity, Inbox, Sparkles, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
+import { ChatNewChatDialog } from "./chat-new-chat-dialog";
 import type { ChatUnificado } from "../types";
+import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 
 type ChatSidebarProps = {
   chats: ChatUnificado[];
@@ -29,6 +31,8 @@ type ChatSidebarProps = {
   temMais: boolean;
   carregarMais: () => void;
   total: number;
+  onIniciarNovoChat: (params: { telefone: string; instanceName: string }) => Promise<void>;
+  instanciasWhatsapp: WhatsappInstancia[];
 };
 
 export function ChatSidebar({
@@ -54,8 +58,11 @@ export function ChatSidebar({
   temMais,
   carregarMais,
   total,
+  onIniciarNovoChat,
+  instanciasWhatsapp,
 }: ChatSidebarProps) {
   const [controlesAbertos, setControlesAbertos] = useState(false);
+  const [novoChatOpen, setNovoChatOpen] = useState(false);
   const filtrosAtivos = useMemo(
     () => Number(filtroOrigem !== "todos") + Number(filtroFila !== "todas") + Number(filtroCanal !== "todos"),
     [filtroCanal, filtroFila, filtroOrigem],
@@ -85,19 +92,29 @@ export function ChatSidebar({
               {total} ativos, {totalMatched} no CRM e {totalOrphans} novos.
             </p>
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium",
-              erro
-                ? "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]"
-                : sseConectado
-                  ? "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)] text-[var(--success)]"
-                  : "border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]",
-            )}
-          >
-            <span className="h-1.5 w-1.5 rounded-full bg-current" />
-            {erro ? "Erro" : sseConectado ? "Online" : "Sync"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span
+              className={cn(
+                "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium",
+                erro
+                  ? "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]"
+                  : sseConectado
+                    ? "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)] text-[var(--success)]"
+                    : "border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]",
+              )}
+            >
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              {erro ? "Erro" : sseConectado ? "Online" : "Sync"}
+            </span>
+            <button
+              type="button"
+              onClick={() => setNovoChatOpen(true)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--brand)] transition-colors hover:bg-[var(--brand)] hover:text-white"
+            >
+              <Plus className="h-3 w-3" />
+              Nova conversa
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-2">
@@ -221,6 +238,13 @@ export function ChatSidebar({
           </div>
         )}
       </div>
+
+      <ChatNewChatDialog
+        open={novoChatOpen}
+        onOpenChange={setNovoChatOpen}
+        instancias={instanciasWhatsapp}
+        onSubmit={onIniciarNovoChat}
+      />
     </div>
   );
 }

@@ -47,6 +47,10 @@ function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatM
   return Array.from(mapa.values()).sort((a, b) => a.timestamp - b.timestamp);
 }
 
+function ordenarMensagensPorTimestamp(messages: UnifiedChatMessage[]) {
+  return [...messages].sort((a, b) => a.timestamp - b.timestamp);
+}
+
 export function useChatMessages(params: { instanceName: string | null; remoteJid: string | null }) {
   const [messages, setMessages] = useState<UnifiedChatMessage[]>([]);
   const [carregando, setCarregando] = useState(false);
@@ -54,6 +58,8 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   const [sseConectado, setSseConectado] = useState(false);
   const [enviando, setEnviando] = useState(false);
   const [hasMore, setHasMore] = useState(false);
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [carregandoMais, setCarregandoMais] = useState(false);
   const [agendadas, setAgendadas] = useState<MensagemAgendada[]>([]);
   const unsubscribeRef = useRef<(() => void) | null>(null);
   const paramsRef = useRef(params);
@@ -116,7 +122,8 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
 
     try {
       setCarregando(true);
-      const result = await buscarMensagensChatUnificado({ instanceName, remoteJid, limite: 100 });
+      setPaginaAtual(1);
+      const result = await buscarMensagensChatUnificado({ instanceName, remoteJid, limite: 10, page: 1 });
       
       // Verificação: geração mudou durante fetch?
       if (geracaoAtual !== generationRef.current) {
@@ -137,12 +144,11 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         return;
       }
       setMessages((prev) => {
-        // Guard adicional: verificar se ainda estamos na mesma conversa
         const atual = paramsAtuaisRef.current;
         if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
           return prev;
         }
-        const proximas = mesclarMensagensChat(prev, result.dados.messages);
+        const proximas = ordenarMensagensPorTimestamp(mesclarMensagensChat(prev, result.dados.messages));
         salvarCache(instanceName, remoteJid, proximas);
         return proximas;
       });
@@ -154,6 +160,34 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       setCarregando(false);
     }
   }, [salvarCache]);
+
+  const carregarMensagensAnteriores = useCallback(async () => {
+    const { instanceName, remoteJid } = paramsRef.current;
+    if (!instanceName || !remoteJid || carregando || carregandoMais || !hasMore) return;
+
+    const proximaPagina = paginaAtual + 1;
+    setCarregandoMais(true);
+    try {
+      const result = await buscarMensagensChatUnificado({ instanceName, remoteJid, limite: 10, page: proximaPagina });
+      if (!result.ok) {
+        setErro(result.erro);
+        return;
+      }
+
+      setMessages((prev) => {
+        const proximas = ordenarMensagensPorTimestamp(mesclarMensagensChat(result.dados.messages, prev));
+        salvarCache(instanceName, remoteJid, proximas);
+        return proximas;
+      });
+      setPaginaAtual(proximaPagina);
+      setHasMore(result.dados.hasMore);
+      setErro(null);
+    } catch (err) {
+      setErro(err instanceof Error ? err.message : "Erro desconhecido");
+    } finally {
+      setCarregandoMais(false);
+    }
+  }, [carregando, carregandoMais, hasMore, paginaAtual, salvarCache]);
 
   const sendMessage = useCallback(
     async (text: string, retryId?: string) => {
@@ -364,7 +398,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       }
 
       unsubscribe = assinarMensagensChatUnificado(
-        { instanceName, remoteJid, limite: 100 },
+        { instanceName, remoteJid, limite: 10 },
         {
           onSnapshot: (snapshot) => {
             // Verificar geração e params
@@ -408,6 +442,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   return {
     messages: mensagensOrdenadas,
     carregando,
+    carregandoMais,
     erro,
     enviando,
     sseConectado,
@@ -418,5 +453,6 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     cancelScheduledMessage,
     agendadas,
     recarregarAgendadas: fetchAgendadas,
+    carregarMensagensAnteriores,
   };
 }

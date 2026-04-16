@@ -10,12 +10,58 @@ export type BadgeOrigemKanban = {
   tone: "anuncio" | "whatsapp" | "manual";
 };
 
+export function obterEstilosColunaKanban(estagio: Estagio): Record<string, string> {
+  const estilos = estagio.estilos;
+  if (!estilos) return {};
+
+  const result: Record<string, string> = {};
+
+  if (estilos.cor_fundo) {
+    if (estilos.cor_fundo.startsWith("#")) {
+      result.backgroundColor = `${estilos.cor_fundo}0A`;
+    } else {
+      result.backgroundColor = estilos.cor_fundo;
+    }
+  }
+
+  if (estilos.cor_borda) {
+    result.borderColor = estilos.cor_borda;
+  }
+
+  if (estilos.borda_arredondamento) {
+    result.borderRadius = `${estilos.borda_arredondamento}px`;
+  }
+
+  return result;
+}
+
+export function obterEstilosTextoColuna(estagio: Estagio): Record<string, string> {
+  const estilos = estagio.estilos;
+  if (!estilos) return {};
+
+  const result: Record<string, string> = {};
+
+  if (estilos.cor_texto) {
+    result.color = estilos.cor_texto;
+  }
+
+  if (estilos.fonte_tamanho) {
+    result.fontSize = `${estilos.fonte_tamanho}px`;
+  }
+
+  if (estilos.fonte_peso) {
+    result.fontWeight = String(estilos.fonte_peso);
+  }
+
+  return result;
+}
+
 export function obterTintColunaKanban(estagio: Estagio): string {
-  if (estagio.tipo === "GANHO") {
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") {
     return "bg-[color:rgba(16,185,129,0.04)]";
   }
 
-  if (estagio.tipo === "PERDIDO") {
+  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") {
     return "bg-[color:rgba(255,255,255,0.02)]";
   }
 
@@ -27,14 +73,14 @@ export function obterTintColunaKanban(estagio: Estagio): string {
 }
 
 export function obterSinalVisualNegocioKanban(estagio: Estagio): SinalVisualNegocioKanban {
-  if (estagio.tipo === "GANHO") {
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") {
     return {
       circle: "h-2 w-2 rounded-full bg-emerald-500",
       border: "border-l-2 border-l-emerald-500",
     };
   }
 
-  if (estagio.tipo === "PERDIDO") {
+  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") {
     return {
       circle: "h-2 w-2 rounded-full bg-zinc-500",
       border: "border-l-2 border-l-zinc-500",
@@ -74,8 +120,8 @@ export function obterBadgeOrigemKanban(origem?: OrigemContato | null): BadgeOrig
 }
 
 export function obterClasseIndicadorEtapaKanban(estagio: Estagio) {
-  if (estagio.tipo === "GANHO") return "bg-emerald-500";
-  if (estagio.tipo === "PERDIDO") return "bg-zinc-500";
-  if (estagio.tipo === "ABERTO" && estagio.nome === "Pré Aprovação") return "bg-amber-400";
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") return "bg-emerald-500";
+  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") return "bg-zinc-500";
+  if ((estagio.tipo === "ABERTO" || estagio.tipo === "") && estagio.nome === "Pré Aprovação") return "bg-amber-400";
   return "bg-blue-400";
 }

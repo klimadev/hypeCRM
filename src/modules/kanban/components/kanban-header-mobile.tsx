@@ -4,12 +4,15 @@ import { ArrowUpDown, Bell, BellOff, Filter, Gauge, Search, X } from "lucide-rea
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
-import type { KanbanFilters, KpiKanban, OrdenacaoKanban } from "../types";
+import type { KanbanFilters, KpiKanban, OrdenacaoKanban, Pipeline } from "../types";
 import { NovoNegocioDialog } from "./novo-negocio-dialog";
 import { FILTROS_RAPIDOS_KANBAN, filtroRapidoKanbanAtivo, type ContatoDisponivelNegocio, type FiltroRapidoKanban } from "./kanban-header.utils";
 
 type KanbanHeaderMobileProps = {
   subtitleResumo: string;
+  pipelines: Pipeline[];
+  pipelineSelecionadaId: string;
+  setPipelineSelecionadaId: (pipelineId: string) => void;
   dialogNovoNegocioAberto: boolean;
   onDialogNovoNegocioChange: (aberto: boolean) => void;
   criarNegocio: (evento: React.FormEvent<HTMLFormElement>) => Promise<void>;
@@ -48,6 +51,9 @@ type KanbanHeaderMobileProps = {
 export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
   const {
     subtitleResumo,
+    pipelines,
+    pipelineSelecionadaId,
+    setPipelineSelecionadaId,
     dialogNovoNegocioAberto,
     onDialogNovoNegocioChange,
     criarNegocio,
@@ -118,6 +124,23 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
             trigger={<Button className="h-11 min-w-11 rounded-[var(--radius-control)] bg-[var(--brand)] px-4 text-sm font-medium text-white hover:bg-[var(--brand-strong)]" title="Atalho: Alt+N">Novo</Button>}
           />
         </div>
+
+        {pipelines.length > 1 ? (
+          <div className="mt-3">
+            <Select value={pipelineSelecionadaId} onValueChange={setPipelineSelecionadaId}>
+              <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
+                <SelectValue placeholder="Selecione o funil" />
+              </SelectTrigger>
+              <SelectContent>
+                {pipelines.map((pipeline) => (
+                  <SelectItem key={pipeline.id} value={pipeline.id}>
+                    {pipeline.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
 
         <div className="relative mt-3">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />

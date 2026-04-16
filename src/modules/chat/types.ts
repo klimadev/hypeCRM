@@ -104,6 +104,8 @@ export type UseChatModuleReturn = {
   onRegistrarComoLead: (params: OrphanRegistrarLeadParams) => Promise<void>;
   onCriarNegocio: (params: OrphanCriarNegocioParams) => Promise<void>;
   onTransferirLead: (params: { idLead: string; idFuncionario: string }) => Promise<void>;
+  onIniciarNovoChat: (params: { telefone: string; instanceName: string }) => Promise<void>;
+  instanciasWhatsapp: import("@/modules/whatsapp/types").WhatsappInstancia[];
 };
 
 export type Props = {

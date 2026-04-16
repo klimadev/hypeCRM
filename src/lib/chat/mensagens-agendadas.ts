@@ -3,9 +3,18 @@ import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
 import { agendarProximoFollowUp } from "@/lib/chat/follow-up";
+import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
+}
+
+function ehLid(remoteJid: string): boolean {
+  return remoteJid.includes("@lid");
+}
+
+function extrairTelefoneDeRemoteJid(remoteJid: string): string {
+  return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
 }
 
 export async function processarMensagensAgendadas(limite = 20) {
@@ -34,15 +43,24 @@ export async function processarMensagensAgendadas(limite = 20) {
     }
 
     try {
+      let telefoneDestino: string;
+
+      if (ehLid(agendada.remote_jid)) {
+        const telefoneExtraido = extrairTelefoneDeRemoteJid(agendada.remote_jid);
+        const normalizado = normalizarTelefoneParaWhatsapp(telefoneExtraido);
+        telefoneDestino = normalizado.waNumber ?? telefoneExtraido;
+      } else {
+        telefoneDestino = extrairTelefoneDeRemoteJid(agendada.remote_jid);
+      }
+
       if (ehInstagram(agendada.instance_name)) {
         const company = await prisma.empresa.findUnique({ where: { id: agendada.id_empresa }, select: { id: true } });
         if (!company) throw new Error("Empresa nao encontrada para envio agendado.");
         await enviarMensagemInstagram(company.id, agendada.remote_jid, agendada.conteudo);
       } else {
-        const telefone = agendada.remote_jid.replace(/@.*/, "").replace(/\D/g, "");
         await enviarMensagemTexto({
           instanceName: agendada.instance_name,
-          telefone,
+          telefone: telefoneDestino,
           mensagem: agendada.conteudo,
         });
       }

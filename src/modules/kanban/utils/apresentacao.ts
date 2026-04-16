@@ -10,8 +10,8 @@ type ResumoOperacionalColunaParams = {
 export function obterDescricaoEtapaKanban(estagio: Estagio): string {
   const nome = estagio.nome.toLowerCase();
 
-  if (estagio.tipo === "GANHO") return "Negócios concluídos";
-  if (estagio.tipo === "PERDIDO") return "Oportunidades encerradas";
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") return "Negócios concluídos";
+  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") return "Oportunidades encerradas";
   if (nome.includes("novo") || nome.includes("contato")) return "Leads em primeiro contato";
   if (nome.includes("conversa") || nome.includes("atendimento")) return "Conversas em andamento";
   if (nome.includes("proposta")) return "Propostas aguardando resposta";
@@ -27,7 +27,7 @@ export function obterResumoOperacionalColuna({
   agoraMs,
 }: ResumoOperacionalColunaParams): string {
   if (negocios.length === 0) {
-    return estagio.tipo === "GANHO" ? "Sem fechamentos nesta etapa" : "Sem negócios nesta etapa";
+    return estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS" ? "Sem fechamentos nesta etapa" : "Sem negócios nesta etapa";
   }
 
   const negociosCriticos = negocios.filter((negocio) => pendenciasPorNegocio[negocio.id]?.gravidadeMaxima === "critica").length;
@@ -37,14 +37,14 @@ export function obterResumoOperacionalColuna({
 
   const negociosParados = negocios.filter((negocio) => {
     const diasParados = obterDiasParados(negocio.atualizado_em, agoraMs);
-    return diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO";
+    return diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "SUCCESS" && estagio.tipo !== "PERDIDO" && estagio.tipo !== "FALHA";
   }).length;
 
   if (negociosParados > 0) {
     return `${negociosParados} parado${negociosParados > 1 ? "s" : ""} há mais de 3 dias`;
   }
 
-  if (estagio.tipo === "GANHO") {
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") {
     return `${negocios.length} fechamento${negocios.length > 1 ? "s" : ""} concluído${negocios.length > 1 ? "s" : ""}`;
   }
 

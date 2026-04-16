@@ -247,3 +247,49 @@ export async function whereNegociosPorPerfil(sessao: SessaoToken) {
 
   return { id_empresa: sessao.id_empresa };
 }
+
+export async function podePersonalizarEstagio(
+  sessao: SessaoToken,
+  idEstagio: string,
+): Promise<{ pode: boolean; motivo?: string }> {
+  if (sessao.perfil === "EMPRESA") {
+    return { pode: true };
+  }
+
+  if (sessao.perfil !== "GERENTE") {
+    return { pode: false, motivo: "Apenas gerentes e empresas podem personalizar." };
+  }
+
+  if (!sessao.id_pdv) {
+    return { pode: false, motivo: "Você não possui PDV associado." };
+  }
+
+  const estagio = await prisma.estagioFunil.findUnique({
+    where: { id: idEstagio },
+  });
+
+  if (!estagio) {
+    return { pode: false, motivo: "Estágio não encontrado." };
+  }
+
+  const funil = await prisma.funil.findUnique({
+    where: { id: estagio.id_funil },
+    select: { id_pdv: true },
+  });
+
+  if (!funil) {
+    return { pode: false, motivo: "Funil não encontrado." };
+  }
+
+  const ehCriador = estagio.id_criador === sessao.id_usuario;
+  const mesmoPdv = sessao.id_pdv === funil.id_pdv;
+
+  if (ehCriador || mesmoPdv) {
+    return { pode: true };
+  }
+
+  return {
+    pode: false,
+    motivo: "Você só pode personalizar estágios que criou ou que pertencem ao seu PDV.",
+  };
+}

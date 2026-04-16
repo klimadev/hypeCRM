@@ -24,6 +24,7 @@ export async function GET(request: NextRequest) {
   const funis = await listarFunisDaEmpresa(auth.sessao.id_empresa);
   const idFunil = searchParams.get("funilId")?.trim()
     || searchParams.get("id_funil")?.trim()
+    || searchParams.get("pipelineId")?.trim()
     || funis.find((funil) => funil.padrao)?.id
     || undefined;
 

@@ -104,7 +104,7 @@ export function useKanbanMovimentacao({
       const estagioDestino = estagios.find((item) => item.id === idEstagioDestino);
       if (!estagioDestino) return;
 
-      if (estagioDestino.tipo === "PERDIDO") {
+      if (estagioDestino.tipo === "PERDIDO" || estagioDestino.tipo === "FALHA") {
         setMovimentoPendente({ id_negocio: idNegocio, id_estagio: idEstagioDestino });
         return;
       }

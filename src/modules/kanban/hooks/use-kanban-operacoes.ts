@@ -13,6 +13,7 @@ type UseKanbanOperacoesParams = {
   perfil: Props["perfil"];
   idUsuario: string;
   valorNovoNegocio: string;
+  pipelineSelecionadaId?: string;
   cargoNovoNegocio: { id_funcionario: string } | null;
   setNegocios: Dispatch<SetStateAction<Lead[]>>;
   setDialogNovoNegocioAberto: (aberto: boolean) => void;
@@ -26,6 +27,7 @@ export function useKanbanOperacoes({
   perfil,
   idUsuario,
   valorNovoNegocio,
+  pipelineSelecionadaId,
   cargoNovoNegocio,
   setNegocios,
   setDialogNovoNegocioAberto,
@@ -114,6 +116,7 @@ export function useKanbanOperacoes({
           id_estagio: idEstagio,
           id_funcionario: idFuncionario,
           lead_ids: contatoIds,
+          id_funil: pipelineSelecionadaId || undefined,
         });
 
         if (!resposta.ok) {
@@ -152,6 +155,7 @@ export function useKanbanOperacoes({
       perfil,
       idUsuario,
       cargoNovoNegocio,
+      pipelineSelecionadaId,
       valorNovoNegocio,
       setNegocios,
       setEstagioNovoNegocio,

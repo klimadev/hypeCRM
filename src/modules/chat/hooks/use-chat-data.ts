@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { criarAssinaturaSse } from "@/lib/api/whatsapp.shared";
 import type { ChatUnificado } from "../types";
 
-const LIMITE_PAGINA = 50;
+const LIMITE_PAGINA = 10;
 const CHAT_LIST_CACHE_KEY = "chat:list:root";
 const CHAT_LIST_FETCH_TIMEOUT_MS = 25_000;
 

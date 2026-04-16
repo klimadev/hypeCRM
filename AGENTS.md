@@ -24,6 +24,9 @@ pnpm seed            # Ejecutar seed
 
 # Validación (OBLIGATORIO después de editar)
 pnpm lint; pnpm typecheck; pnpm build
+
+# Deploy em produção (PM2)
+pnpm pm2:prod
 ```
 
 ### Ejecutar un solo test
@@ -166,6 +169,14 @@ Conventional commits con emoji:
 - `test:` ✅ tests
 
 Formato: `<emoji> <tipo>: <descripción>`
+
+### Aprendizado recente: Kanban catálogo
+
+- Não forçar retorno para pipeline padrão apenas por abrir `/kanban` ou clicar em **Voltar ao catálogo**.
+- Regra de navegação:
+  - `/kanban` sem `pipelineId`/`id_funil` deve renderizar catálogo.
+  - Selecionar funil via catálogo passa a `pipelineId` na URL.
+  - Botão **Voltar ao catálogo** remove `pipelineId` e mantém catálogo ativo.
 
 ---
 

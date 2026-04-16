@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/toast";
-import type { Estagio, Funcionario, KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, Pdv, ResumoPendencias } from "../types";
+import type { Estagio, Funcionario, KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, Pdv, Pipeline, ResumoPendencias } from "../types";
 import { KanbanHeaderDesktop } from "./kanban-header-desktop";
 import { KanbanHeaderMobile } from "./kanban-header-mobile";
 import {
@@ -20,6 +20,9 @@ type KanbanHeaderProps = {
   estagios: Estagio[];
   funcionarios: Funcionario[];
   pdvs: Pdv[];
+  pipelines: Pipeline[];
+  pipelineSelecionadaId: string;
+  setPipelineSelecionadaId: (pipelineId: string) => void;
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
   valorNovoNegocio: string;
   setValorNovoNegocio: (valor: string) => void;
@@ -63,6 +66,9 @@ export function KanbanHeader({
   estagios,
   funcionarios,
   pdvs,
+  pipelines,
+  pipelineSelecionadaId,
+  setPipelineSelecionadaId,
   perfil,
   valorNovoNegocio,
   setValorNovoNegocio,
@@ -237,6 +243,9 @@ export function KanbanHeader({
   return (
     <>
       <KanbanHeaderMobile
+        pipelines={pipelines}
+        pipelineSelecionadaId={pipelineSelecionadaId}
+        setPipelineSelecionadaId={setPipelineSelecionadaId}
         subtitleResumo={subtitleResumo}
         dialogNovoNegocioAberto={dialogNovoNegocioAberto}
         onDialogNovoNegocioChange={onDialogNovoNegocioChange}
@@ -274,6 +283,9 @@ export function KanbanHeader({
       />
 
       <KanbanHeaderDesktop
+        pipelines={pipelines}
+        pipelineSelecionadaId={pipelineSelecionadaId}
+        setPipelineSelecionadaId={setPipelineSelecionadaId}
         subtitleResumo={subtitleResumo}
         busca={busca}
         setBusca={setBusca}

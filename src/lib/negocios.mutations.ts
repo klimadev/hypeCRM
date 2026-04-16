@@ -8,7 +8,11 @@ import {
   recalcularPrincipalDoNegocio,
   validarLeadsVinculaveis,
 } from "@/lib/negocios.queries";
-import { construirCamposAtualizacaoNegocio, definirStatusNegocioPorTipoEstagio, transformarCamposAtualizacaoEmSql } from "@/lib/negocios.mutations.utils";
+import {
+  construirCamposAtualizacaoNegocio,
+  definirStatusNegocioPorTipoEstagio,
+  transformarCamposAtualizacaoEmSql,
+} from "@/lib/negocios.mutations.utils";
 
 export async function criarNegocio(params: {
   idEmpresa: string;
@@ -56,14 +60,15 @@ export async function criarNegocio(params: {
     const idLeadPrincipal = leadsVinculaveis[0]?.id ?? null;
     const agora = new Date();
     const negocioId = randomUUID();
+    let statusNegocio: "ABERTO" | "GANHO" | "PERDIDO" = "ABERTO";
 
     await tx.$executeRaw(Prisma.sql`
       INSERT INTO Negocio (
         id,
         id_empresa,
         id_lead,
-        id_funil,
-        id_estagio,
+      id_funil,
+      id_estagio,
         id_funcionario,
         id_produto_principal,
         titulo,
@@ -90,10 +95,12 @@ export async function criarNegocio(params: {
         ${params.valorEstimado},
         ${null},
         ${params.probabilidade ?? null},
-        ${definirStatusNegocioPorTipoEstagio(estagio.tipo as "ABERTO" | "GANHO" | "PERDIDO")},
+        ${(statusNegocio = definirStatusNegocioPorTipoEstagio(estagio.tipo))},
         ${agora},
-        ${estagio.tipo === "ABERTO" ? null : agora},
-        ${estagio.tipo === "PERDIDO" ? params.motivoPerda?.trim() ?? null : null},
+        ${statusNegocio === "ABERTO" ? null : agora},
+        ${statusNegocio === "PERDIDO"
+          ? params.motivoPerda?.trim() ?? null
+          : null},
         ${params.observacoesComerciais?.trim() ?? null},
         ${null},
         ${agora},

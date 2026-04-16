@@ -40,11 +40,40 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
   const contatoPrincipal = negocioSelecionado.lead_principal ?? null;
   const contatosVinculados = negocioSelecionado.leads_vinculados ?? [];
 
-  const statusNegocio = { 
-    rotulo: "Em andamento", 
-    descricao: "Siga preenchendo os dados e conduzindo o negócio no funil.", 
-    classe: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]" 
-  };
+  const statusNegocio = (() => {
+    if (negocioSelecionado.status === "GANHO") {
+      const dataFechamento = negocioSelecionado.data_fechamento
+        ? new Date(negocioSelecionado.data_fechamento).toLocaleDateString("pt-BR")
+        : null;
+
+      return {
+        rotulo: "Ganho",
+        descricao: dataFechamento
+          ? `Negócio ganho em ${dataFechamento}.`
+          : "Negócio marcado como ganho.",
+        classe: "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.08)] text-[color:#6ee7b7]",
+      };
+    }
+
+    if (negocioSelecionado.status === "PERDIDO") {
+      const motivo = negocioSelecionado.motivo_perda?.trim();
+      return {
+        rotulo: "Perdido",
+        descricao: motivo
+          ? `Negócio perdido. Motivo: ${motivo}`
+          : "Negócio marcado como perdido.",
+        classe: "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.08)] text-[color:#fda4af]",
+      };
+    }
+
+    return {
+      rotulo: "Em andamento",
+      descricao: negocioSelecionado.data_abertura
+        ? `Aberto desde ${new Date(negocioSelecionado.data_abertura).toLocaleDateString("pt-BR")}.`
+        : "Siga preenchendo os dados e conduzindo o negócio no funil.",
+      classe: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]",
+    };
+  })();
 
   return (
     <div className="space-y-4 p-4">

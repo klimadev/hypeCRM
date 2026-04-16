@@ -8,7 +8,7 @@ import type { Estagio, Funcionario, Lead, PendenciaNegocioInfo } from "../types"
 import { EmptyState } from "./empty-state";
 import { getClasseBordaGravidade } from "./pendencia-badge";
 import { AlcaArrasteKanban, KanbanNegocioCardContent } from "./kanban-negocio-card-content";
-import { obterClasseIndicadorEtapaKanban, obterSinalVisualNegocioKanban, obterTintColunaKanban } from "./kanban-board.utils";
+import { obterClasseIndicadorEtapaKanban, obterEstilosColunaKanban, obterEstilosTextoColuna, obterSinalVisualNegocioKanban, obterTintColunaKanban } from "./kanban-board.utils";
 
 type KanbanBoardColumnProps = {
   estagio: Estagio;
@@ -30,6 +30,18 @@ export function KanbanBoardColumn({
   agoraMs,
 }: KanbanBoardColumnProps) {
   const visualCue = obterSinalVisualNegocioKanban(estagio);
+  const estilosColuna = obterEstilosColunaKanban(estagio);
+  const estilosTexto = obterEstilosTextoColuna(estagio);
+
+  const inlineStyles: Record<string, string> = {};
+  if (estilosColuna.backgroundColor) inlineStyles.backgroundColor = estilosColuna.backgroundColor;
+  if (estilosColuna.borderColor) inlineStyles.borderColor = estilosColuna.borderColor;
+  if (estilosColuna.borderRadius) inlineStyles.borderRadius = estilosColuna.borderRadius;
+
+  const textoEstilos: Record<string, string> = {};
+  if (estilosTexto.color) textoEstilos.color = estilosTexto.color;
+  if (estilosTexto.fontSize) textoEstilos.fontSize = estilosTexto.fontSize;
+  if (estilosTexto.fontWeight) textoEstilos.fontWeight = estilosTexto.fontWeight;
 
   return (
     <Droppable droppableId={estagio.id}>
@@ -44,11 +56,15 @@ export function KanbanBoardColumn({
               ? "border-[color:rgba(139,92,246,0.3)] bg-[color:rgba(139,92,246,0.04)]"
               : "border-[var(--border-subtle)] hover:border-[var(--border-strong)]",
           )}
+          style={Object.keys(inlineStyles).length > 0 ? inlineStyles : undefined}
         >
           <div className="mb-3 flex items-center justify-between border-b border-[var(--border-subtle)] pb-2.5">
             <div className="flex items-center gap-2">
               <span className={cn("h-2 w-2 rounded-full", obterClasseIndicadorEtapaKanban(estagio))} />
-              <p className="text-[13px] font-semibold text-[var(--text-primary)]">
+              <p
+                className="text-[13px] font-semibold text-[var(--text-primary)]"
+                style={Object.keys(textoEstilos).length > 0 ? textoEstilos : undefined}
+              >
                 {estagio.nome}
               </p>
             </div>

@@ -279,7 +279,7 @@ export async function buscarMediaChatUnificado(params: {
 }
 
 export function assinarMensagensChatUnificado(
-  params: { instanceName: string; remoteJid: string; limite?: number },
+  params: { instanceName: string; remoteJid: string; limite?: number; page?: number },
   callbacks: SseCallbacks<UnifiedMessagesSnapshot>,
 ) {
   const searchParams = new URLSearchParams({
@@ -287,11 +287,12 @@ export function assinarMensagensChatUnificado(
     remoteJid: params.remoteJid,
   });
   if (params.limite) searchParams.set("limite", String(params.limite));
+  if (params.page) searchParams.set("page", String(params.page));
   return criarAssinaturaSse(`/api/chat/messages/stream?${searchParams.toString()}`, callbacks);
 }
 
 export async function buscarMensagensChatUnificado(
-  params: { instanceName: string; remoteJid: string; limite?: number },
+  params: { instanceName: string; remoteJid: string; limite?: number; page?: number },
   signal?: AbortSignal,
 ): Promise<ResultadoApi<UnifiedMessagesSnapshot>> {
   const searchParams = new URLSearchParams({
@@ -299,6 +300,7 @@ export async function buscarMensagensChatUnificado(
     remoteJid: params.remoteJid,
   });
   if (params.limite) searchParams.set("limite", String(params.limite));
+  if (params.page) searchParams.set("page", String(params.page));
   const resposta = await fetch(`/api/chat/messages?${searchParams.toString()}`, {
     signal,
     cache: "no-store",

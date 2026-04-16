@@ -11,6 +11,9 @@ import type {
   OrphanCriarNegocioParams,
 } from "../types";
 import { atualizarLeadContato } from "@/lib/api/leads";
+import { listarInstanciasWhatsapp } from "@/lib/api/whatsapp.instances";
+import { instanciaWhatsappEstaConectada } from "@/lib/whatsapp-instancia-status";
+import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 
 export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABORADOR"; idUsuario: string }): UseChatModuleReturn {
   const [busca, setBusca] = useState("");
@@ -22,6 +25,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
   const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
   const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
+  const [instanciasWhatsapp, setInstanciasWhatsapp] = useState<WhatsappInstancia[]>([]);
   const ultimoChatMarcadoRef = useRef<string | null>(null);
 
   useEffect(() => {
@@ -129,13 +133,15 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const totalSemNegocio = chats.filter((c) => !c.leadMatch?.id_negocio).length;
   const totalDuplicados = chats.filter((c) => c.isDuplicado).length;
 
-  const selecionarInstancia = useCallback(
-    (_telefone: string, _instancia: string | null): void => {
-      // A seleção de instância é feita através do chatSelecionado
-      // Esta função existe para satisfazer a interface, implementação futura
-    },
-    [],
-  );
+  useEffect(() => {
+    void listarInstanciasWhatsapp().then((res) => {
+      if (res.ok) {
+        setInstanciasWhatsapp(res.dados.instancias.filter(instanciaWhatsappEstaConectada));
+      }
+    });
+  }, []);
+
+  const selecionarInstancia = useCallback((): void => {}, []);
 
   const onRegistrarComoLead = async (params: OrphanRegistrarLeadParams) => {
     try {
@@ -153,18 +159,21 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         });
         return;
       }
+      const json = await res.json();
       addToast({
         type: "success",
         title: "Lead registrado",
         description: "O contato foi cadastrado como lead com sucesso.",
       });
       await recarregar();
+      return json.lead;
     } catch {
       addToast({
         type: "error",
         title: "Erro",
         description: "Nao foi possivel conectar ao servidor.",
       });
+      return null;
     }
   };
 
@@ -226,6 +235,43 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     }
   };
 
+  const onIniciarNovoChat = async ({ telefone, instanceName }: { telefone: string; instanceName: string }) => {
+    const telefoneNormalizado = telefone.replace(/\D/g, "");
+    const instancia = instanciasWhatsapp.find((i) => i.instance_name === instanceName && instanciaWhatsappEstaConectada(i));
+
+    if (!instancia) {
+      addToast({
+        type: "error",
+        title: "Instância inválida",
+        description: "Selecione uma instância conectada para iniciar a conversa.",
+      });
+      return;
+    }
+
+    const chatFake: ChatUnificado = {
+      instanceName: instancia.instance_name,
+      remoteJid: `${telefoneNormalizado}@s.whatsapp.net`,
+      telefone: telefoneNormalizado,
+      pushName: null,
+      isGroup: false,
+      canal: "whatsapp",
+      ultimaMensagem: null,
+      unreadCount: 0,
+      instancias: [],
+      isDuplicado: false,
+      instanciaSelecionada: null,
+      leadMatch: null,
+      semMatch: true,
+    };
+
+    setChatSelecionado(chatFake);
+    addToast({
+      type: "success",
+      title: "Conversa iniciada",
+      description: `Chat aberto via ${instancia.instance_name}. Envie uma mensagem para começar.`,
+    });
+  };
+
   return {
     chats: chatsOrdenados,
     chatSelecionado,
@@ -260,6 +306,8 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     onRegistrarComoLead,
     onCriarNegocio,
     onTransferirLead,
+    onIniciarNovoChat,
     selecionarInstancia,
+    instanciasWhatsapp,
   };
 }
