@@ -26,7 +26,7 @@ pnpm seed            # Ejecutar seed
 pnpm lint; pnpm typecheck; pnpm build
 
 # Deploy em produção (PM2)
-pnpm pm2:prod
+pnpm build && pm2 restart hypecrm-web-prod
 ```
 
 ### Ejecutar un solo test
@@ -39,12 +39,12 @@ pnpm vitest src/lib/__tests__/validacoes.test.ts       # Modo watch
 ### PM2 + SQLite
 Si `db:migrate:deploy` falla con "database is locked":
 ```bash
-pm2 stop hypecrm-web
+pm2 stop hypecrm-web-prod
 pnpm db:migrate:deploy
-pm2 start hypecrm-web
+pm2 start hypecrm-web-prod
 ```
-- Para reiniciar o servidor no ambiente local/PM2, `npm run pm2:restart` já faz build junto; use isso quando quiser um reinicio completo e rápido.
-- Fluxo recomendado quando houver tempo: rode `pnpm build` primeiro e, se passar, faça o restart manual com `pm2 restart hypecrm-web`.
+- Para reiniciar o servidor no ambiente local/PM2, use o fluxo completo: `pnpm build && pm2 restart hypecrm-web-prod`.
+- **SEMPRE** execute build E restart juntos - o código antigo continua em memória no PM2 mesmo após build bem-sucedido.
 
 ### Layout de Altura
 - Em módulos full-height dentro do dashboard, `fillHeight` sozinho pode colapsar sob `main` fora de `lg`; use altura explícita em viewport quando o canvas precisar ocupar a tela inteira.
@@ -170,13 +170,50 @@ Conventional commits con emoji:
 
 Formato: `<emoji> <tipo>: <descripción>`
 
-### Aprendizado recente: Kanban catálogo
+---
 
+## 7. Debugging de Bugs
+
+### Metodologia Sistemática
+Quando um bug for reportado, **NÃO tente soluções aleatórias**. Em vez disso:
+
+1. **Identifique o fluxo completo**: frontend → API → banco
+2. **Injete logs estruturados** com prefixo identificável (ex: `[META-TEST]`)
+3. **Monitore os logs no PM2**: `tail -100 ~/.pm2/logs/hypecrm-web-prod-out.log`
+4. **Analise o caminho crítico**: auth → validação → query → resposta
+5. **Identifique a causa raiz**, não o sintoma
+
+### Exemplo de logs injetados
+```typescript
+console.log("[META-TEST] === INICIANDO TESTE DE CONEXÃO ===");
+console.log("[META-TEST] Auth result:", { erro: auth.erro, perfil: auth.sessao?.perfil });
+console.log("[META-TEST] Config encontrada:", JSON.stringify(config, null, 2));
+```
+
+### Build e Deploy
+Após qualquer alteração em código de produção:
+1. Execute `pnpm build` e verifique se passou
+2. **NÃO basta apenas fazer build** - o código antigo ainda está em memória no PM2
+3. Execute `pm2 restart hypecrm-web-prod` para aplicar as mudanças
+4. Verifique nos logs se as alterações foram carregadas
+
+Fluxo completo: `pnpm build && pm2 restart hypecrm-web-prod`
+
+---
+
+## 8. Aprendizados Recentes
+
+### Kanban catálogo
 - Não forçar retorno para pipeline padrão apenas por abrir `/kanban` ou clicar em **Voltar ao catálogo**.
 - Regra de navegação:
   - `/kanban` sem `pipelineId`/`id_funil` deve renderizar catálogo.
-  - Selecionar funil via catálogo passa a `pipelineId` na URL.
+  - Selecionar funil via catálogo passa `pipelineId` na URL.
   - Botão **Voltar ao catálogo** remove `pipelineId` e mantém catálogo ativo.
+
+### Meta CAPI - Teste de conexão
+- O botão "Testar conexão" deve funcionar **independentemente** de a integração estar ativa.
+- Valide apenas `pixel_id` e `access_token`, não exija `ativo: true`.
+- Retorne mensagem clara indicando se o envio automático está ativo ou não.
 
 ---
 

@@ -14,6 +14,7 @@ import {
   coletarIdsLeadsVinculadosNegocio,
   definirStatusNegocioPorTipoEstagio,
 } from "@/lib/negocios.mutations.utils";
+import { registrarMetaCapiFechamento } from "@/lib/meta-capi";
 
 export async function moverNegocioDeEstagio(params: {
   idEmpresa: string;
@@ -83,6 +84,20 @@ export async function moverNegocioDeEstagio(params: {
       )
     `);
   });
+
+  if (statusNovo === "GANHO") {
+    const negocioAtualizado = await obterNegocioBasePorId({
+      idEmpresa: params.idEmpresa,
+      idNegocio: params.idNegocio,
+    });
+
+    if (negocioAtualizado && negocioAtualizado.status === "GANHO") {
+      await registrarMetaCapiFechamento({
+        idEmpresa: params.idEmpresa,
+        negocio: negocioAtualizado,
+      });
+    }
+  }
 
   return {
     negocio: await obterNegocioBasePorId({

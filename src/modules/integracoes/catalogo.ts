@@ -10,6 +10,25 @@ export function podeAcessarIntegracoes(perfil: SessaoToken["perfil"]) {
 export function listarIntegracoesDisponiveis(): IntegracaoCatalogoItem[] {
   return [
     {
+      slug: "meta-capi",
+      nome: "Meta CAPI",
+      tituloCurto: "Conversoes automatizadas do CRM",
+      resumoCurto: "Dispare eventos de conversao quando um lead fechar usando telefone com hash.",
+      descricao: "Conecta o CRM a Conversions API da Meta para enviar eventos automaticamente quando um negocio/lead for marcado como fechado, sem depender do lead_id original.",
+      categoria: "Conversao",
+      href: "/integracoes/meta",
+      disponibilidade: "disponivel",
+      statusLabel: "Disponivel agora",
+      destaque: "Envia conversoes a partir do fechamento do lead com idempotencia e auditoria.",
+      acaoLabel: "Abrir integracao",
+      recursos: [
+        "Gatilho automatico ao fechar o lead",
+        "Phone number em hash como identificador",
+        "Registro de sucesso, erro e tentativas",
+      ],
+      perfisPermitidos: PERFIS_GESTAO,
+    },
+    {
       slug: "calcom",
       nome: "Cal.com",
       tituloCurto: "Agendamentos e reunioes",

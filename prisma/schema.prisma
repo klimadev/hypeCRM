@@ -191,6 +191,38 @@ model InstagramMensagem {
   @@index([id_instagram_conta, conversation_id])
 }
 
+model MetaCapiConfig {
+  id              String   @id
+  id_empresa      String   @unique
+  pixel_id        String?
+  access_token    String?
+  event_name      String   @default("lead_closed")
+  ativo           Boolean  @default(false)
+  criado_em       DateTime @default(now())
+  atualizado_em   DateTime @default(now())
+}
+
+model MetaCapiEvento {
+  id                String   @id
+  id_empresa        String
+  id_negocio        String?
+  evento_nome       String
+  evento_status    String
+  idempotency_key  String
+  telefone_hash    String?
+  payload_json    String
+  resposta_json   String?
+  erro             String?
+  tentativas       Int      @default(0)
+  criado_em        DateTime @default(now())
+  atualizado_em   DateTime @default(now())
+  enviado_em       DateTime?
+  ciclo_fechamento Int      @default(0)
+
+  @@index([id_empresa])
+  @@index([criado_em])
+}
+
 model Empresa {
   id                String           @id
   nome              String
