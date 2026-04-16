@@ -60,10 +60,10 @@ function KpiCard({
 export function ModuloMeta({ perfil }: ModuloMetaProps) {
   const vm = useMetaModule();
 
-  const [pixelId, setPixelId] = useState("");
-  const [accessToken, setAccessToken] = useState("");
-  const [eventName, setEventName] = useState("lead_closed");
-  const [ativo, setAtivo] = useState(false);
+  const [pixelId, setPixelId] = useState(vm.config?.pixelId ?? "");
+  const [accessToken, setAccessToken] = useState(vm.config?.accessToken ?? "");
+  const [eventName, setEventName] = useState(vm.config?.eventName ?? "lead_closed");
+  const [ativo, setAtivo] = useState(vm.config?.ativo ?? false);
   const [feedbackErro, setFeedbackErro] = useState<string | null>(null);
   const [feedbackSucesso, setFeedbackSucesso] = useState<string | null>(null);
   const [dadosConexao, setDadosConexao] = useState<MetaCapiTestResult | null>(null);
@@ -73,13 +73,6 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
   const totalEventos = vm.eventos.length;
   const eventosEnviados = vm.eventos.filter((e) => e.evento_status === "ENVIADO").length;
   const eventosErro = vm.eventos.filter((e) => e.evento_status === "ERRO").length;
-
-  if (vm.config && !pixelId && !accessToken) {
-    setPixelId(vm.config.pixelId);
-    setAccessToken(vm.config.accessToken);
-    setEventName(vm.config.eventName);
-    setAtivo(vm.config.ativo);
-  }
 
   async function handleSalvar(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -240,6 +233,7 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--text-primary)]">Pixel ID</label>
                   <Input
+                    autoComplete="off"
                     placeholder="1234567890"
                     value={pixelId}
                     onChange={(e) => setPixelId(e.target.value)}
@@ -249,8 +243,10 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--text-primary)]">Access Token</label>
                   <Input
+                    autoComplete="off"
                     placeholder="EAAC..."
                     type="password"
+                    name="meta-access-token"
                     value={accessToken}
                     onChange={(e) => setAccessToken(e.target.value)}
                   />
@@ -259,6 +255,7 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--text-primary)]">Nome do Evento</label>
                   <Input
+                    autoComplete="off"
                     placeholder="lead_closed"
                     value={eventName}
                     onChange={(e) => setEventName(e.target.value)}
