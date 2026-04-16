@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao } from "@/lib/permissoes";
 import { unificarChatsComLeads } from "@/lib/chat-unificado";
+import { listarChatsWhatsappPersistidos } from "@/lib/chat-whatsapp-persistence";
 import { serverError } from "@/lib/api/http";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 
 const CHAT_LIST_TTL_MS = 30_000;
+const CHAT_PERSISTENCE_FIRST = process.env.CHAT_PERSISTENCE_FIRST !== "0";
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -38,25 +40,49 @@ export async function GET(request: NextRequest) {
         }),
     });
 
-    const semUltimaMensagem = resultado.chats.filter((chat) => !chat.ultimaMensagem).length;
+    const persistido = CHAT_PERSISTENCE_FIRST
+      ? await listarChatsWhatsappPersistidos({
+          sessao: auth.sessao,
+          pagina,
+          limite,
+          busca,
+        })
+      : null;
+
+    // Se persistence-first ativo E tem chats persistidos, usa eles + instagram
+    // Senão, usa os chats live do Evolution
+    let chatsFinais: typeof resultado.chats;
+    let totalFinal: number;
+    let temMaisFinal: boolean;
+
+    if (persistido && persistido.chats.length > 0) {
+      // Merge: persistidos + instagram (se existirem)
+      const chatsInstagram = resultado.chats.filter((chat) => chat.canal === "instagram");
+      chatsFinais = [...persistido.chats, ...chatsInstagram]
+        .sort((a, b) => (b.ultimaMensagem?.timestamp ?? 0) - (a.ultimaMensagem?.timestamp ?? 0))
+        .slice(0, limite);
+      totalFinal = Math.max(resultado.total, persistido.total);
+      temMaisFinal = persistido.temMais || resultado.temMais;
+    } else {
+      // Persistido vazio/unavailable → usar chats live do Evolution
+      chatsFinais = resultado.chats;
+      totalFinal = resultado.total;
+      temMaisFinal = resultado.temMais;
+    }
+
+    const semUltimaMensagem = chatsFinais.filter((chat) => !chat.ultimaMensagem).length;
     console.info("[Chat] Conversas carregadas", {
       pagina,
-      retornadas: resultado.chats.length,
-      total: resultado.total,
+      retornadas: chatsFinais.length,
+      total: totalFinal,
       semUltimaMensagem,
+      fonte: persistido?.chats.length ? "persistido" : "evolution",
     });
 
-    return NextResponse.json(resultado, {
-      headers: {
-        "Server-Timing": [
-          `leads;dur=${resultado.debug.timingsMs.leads}`,
-          `instances;dur=${resultado.debug.timingsMs.instances}`,
-          `evolution;dur=${resultado.debug.timingsMs.whatsapp}`,
-          `instagram;dur=${resultado.debug.timingsMs.instagram}`,
-          `enrichment;dur=${resultado.debug.timingsMs.enrichment}`,
-          `total;dur=${resultado.debug.timingsMs.total}`,
-        ].join(", "),
-      },
+    return NextResponse.json({
+      chats: chatsFinais,
+      total: totalFinal,
+      temMais: temMaisFinal,
     });
   } catch (error) {
     console.error("[Chat] Erro ao listar conversas", error);
