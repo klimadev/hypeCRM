@@ -103,7 +103,7 @@ export async function obterConversaFollowUp(instanceName: string, remoteJid: str
   return { ok: true, dados: { conversa: json.conversa ?? null } };
 }
 
-export async function ativarConversaFollowUp(payload: { instanceName: string; remoteJid: string; idLead: string; templateId: string }): Promise<ResultadoApi<{ conversa: FollowUpConversa }>> {
+export async function ativarConversaFollowUp(payload: { instanceName: string; remoteJid: string; idLead?: string; templateId: string }): Promise<ResultadoApi<{ conversa: FollowUpConversa }>> {
   const resposta = await fetch("/api/chat/follow-up/conversation", {
     method: "POST",
     headers: { "Content-Type": "application/json" },

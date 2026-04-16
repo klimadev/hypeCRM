@@ -508,7 +508,7 @@ model FollowUpConversa {
   id                 String   @id
   id_empresa         String
   id_template        String
-  id_lead            String
+  id_lead            String?
   instance_name      String
   remote_jid         String
   status             String   @default("ATIVO")
@@ -751,7 +751,7 @@ model WhatsappInstancia {
 model WhatsappMensagem {
   id                    String            @id
   id_empresa            String
-  id_lead               String
+  id_lead               String?
   id_whatsapp_instancia String
   mensagem_id           String
   remote_jid            String
@@ -768,7 +768,7 @@ model WhatsappMensagem {
   criado_em             DateTime          @default(now())
   atualizado_em         DateTime          @default(now())
   WhatsappInstancia     WhatsappInstancia @relation(fields: [id_whatsapp_instancia], references: [id], onDelete: Cascade)
-  Lead                  Lead              @relation(fields: [id_lead], references: [id], onDelete: Cascade)
+  Lead                  Lead?             @relation(fields: [id_lead], references: [id], onDelete: SetNull)
 
   @@unique([id_whatsapp_instancia, mensagem_id])
   @@index([id_empresa, remote_jid])

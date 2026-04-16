@@ -714,6 +714,7 @@ export async function unificarChatsComLeads({
 
       const unreadMap = new Map<string, number>();
       for (const item of contagens) {
+        if (!item.id_lead) continue;
         unreadMap.set(item.id_lead, item._count._all);
       }
 

@@ -6,6 +6,7 @@ const {
   followUpConversaMock,
   followUpTemplateMock,
   whatsappInstanciaMock,
+  leadMock,
   mensagemAgendadaMock,
   agendarProximoFollowUpMock,
 } = vi.hoisted(() => ({
@@ -18,6 +19,7 @@ const {
   },
   followUpTemplateMock: { findFirst: vi.fn() },
   whatsappInstanciaMock: { findFirst: vi.fn() },
+  leadMock: { findFirst: vi.fn() },
   mensagemAgendadaMock: { updateMany: vi.fn() },
   agendarProximoFollowUpMock: vi.fn(),
 }));
@@ -29,6 +31,7 @@ vi.mock("@/lib/prisma", () => ({
     followUpConversa: followUpConversaMock,
     followUpTemplate: followUpTemplateMock,
     whatsappInstancia: whatsappInstanciaMock,
+    lead: leadMock,
     mensagemAgendada: mensagemAgendadaMock,
     $transaction: vi.fn(async (queries: Array<Promise<unknown>>) => Promise.all(queries)),
   },
@@ -59,6 +62,7 @@ describe("follow-up conversation route", () => {
     mockSessao();
     whatsappInstanciaMock.findFirst.mockResolvedValue({ id: "inst-1" });
     followUpTemplateMock.findFirst.mockResolvedValue({ id: "tpl-1" });
+    leadMock.findFirst.mockResolvedValue({ id: "lead-1" });
     followUpConversaMock.findFirst.mockResolvedValueOnce(null);
     followUpConversaMock.create.mockResolvedValue({
       id: "conv-1",
@@ -92,5 +96,49 @@ describe("follow-up conversation route", () => {
 
     expect(response.status).toBe(201);
     expect(agendarProximoFollowUpMock).toHaveBeenCalledWith("conv-1");
+  });
+
+  it("ativa follow-up na conversa sem lead vinculado", async () => {
+    mockSessao();
+    whatsappInstanciaMock.findFirst.mockResolvedValue({ id: "inst-1" });
+    followUpTemplateMock.findFirst.mockResolvedValue({ id: "tpl-1" });
+    followUpConversaMock.findFirst.mockResolvedValueOnce(null);
+    followUpConversaMock.create.mockResolvedValue({
+      id: "conv-2",
+      status: "ATIVO",
+      etapa_atual: 0,
+      ciclo_atual: 1,
+      proximo_disparo_em: null,
+      ultima_saida_em: null,
+      ultima_resposta_em: null,
+      motivo_pausa: null,
+      template: { id: "tpl-1", nome: "Cadencia", max_ciclos: 1, permite_repeticao: false },
+    });
+    followUpConversaMock.findUnique.mockResolvedValue({
+      id: "conv-2",
+      status: "ATIVO",
+      etapa_atual: 1,
+      ciclo_atual: 1,
+      proximo_disparo_em: new Date("2026-01-01T10:00:00.000Z"),
+      ultima_saida_em: null,
+      ultima_resposta_em: null,
+      motivo_pausa: null,
+      template: { id: "tpl-1", nome: "Cadencia", max_ciclos: 1, permite_repeticao: false },
+    });
+
+    const response = await POST(request({
+      instanceName: "inst",
+      remoteJid: "551199999@c.us",
+      templateId: "tpl-1",
+    }));
+
+    expect(response.status).toBe(201);
+    expect(leadMock.findFirst).not.toHaveBeenCalled();
+    expect(followUpConversaMock.create).toHaveBeenCalledWith(expect.objectContaining({
+      data: expect.objectContaining({
+        id_lead: null,
+      }),
+    }));
+    expect(agendarProximoFollowUpMock).toHaveBeenCalledWith("conv-2");
   });
 });

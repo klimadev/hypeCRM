@@ -16,8 +16,65 @@ export type AcaoAtalhoTeclado =
   | { tipo: "enviar" }
   | { tipo: "nenhuma" };
 
+export type AcaoSlashMenuRaizTeclado =
+  | { tipo: "navegar"; indice: number }
+  | { tipo: "selecionar" }
+  | { tipo: "fechar" }
+  | { tipo: "nenhuma" };
+
+export type EstadoSlashMenu = "fechado" | "raiz" | "atalhos" | "follow-up";
+
+export type OpcaoSlashMenu = "atalhos" | "follow-up";
+
 export function obterQueryAtalho(texto: string): string {
   return texto.startsWith("/") && !texto.includes(" ") ? texto.slice(1).toLowerCase() : "";
+}
+
+export function obterEstadoSlashMenu(texto: string): EstadoSlashMenu {
+  if (!texto.startsWith("/") || texto.includes(" ")) return "fechado";
+  if (texto.length === 1) return "raiz";
+  if (texto === "/follow" || texto === "/follow-up") return "follow-up";
+  return "atalhos";
+}
+
+export function obterOpcoesSlashMenu(estado: EstadoSlashMenu): OpcaoSlashMenu[] {
+  if (estado === "raiz") return ["atalhos", "follow-up"];
+  if (estado === "follow-up") return ["follow-up"];
+  return ["atalhos"];
+}
+
+export function resolverAcaoSlashMenuRaizTeclado(params: {
+  menuAberto: boolean;
+  quantidadeOpcoes: number;
+  indiceAtual: number;
+  input: AtalhoKeyboardInput;
+}): AcaoSlashMenuRaizTeclado {
+  const { menuAberto, quantidadeOpcoes, indiceAtual, input } = params;
+
+  if (!menuAberto || quantidadeOpcoes === 0) {
+    return { tipo: "nenhuma" };
+  }
+
+  const isCtrlOuCmd = Boolean(input.ctrlKey || input.metaKey);
+  const keyNormalizada = input.key.toLowerCase();
+
+  if (input.key === "ArrowDown" || (isCtrlOuCmd && keyNormalizada === "j")) {
+    return { tipo: "navegar", indice: (indiceAtual + 1) % quantidadeOpcoes };
+  }
+
+  if (input.key === "ArrowUp" || (isCtrlOuCmd && keyNormalizada === "k")) {
+    return { tipo: "navegar", indice: (indiceAtual - 1 + quantidadeOpcoes) % quantidadeOpcoes };
+  }
+
+  if (input.key === "Tab" || (input.key === "Enter" && !input.shiftKey)) {
+    return { tipo: "selecionar" };
+  }
+
+  if (input.key === "Escape") {
+    return { tipo: "fechar" };
+  }
+
+  return { tipo: "nenhuma" };
 }
 
 export function filtrarOrdenarAtalhos(

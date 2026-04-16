@@ -218,7 +218,7 @@ export function extrairDadosAdDoMapa(mapaMensagens: MapaMensagensContato, remote
 
 export function mapearMensagemDbParaCanonica(registro: {
   id: string;
-  id_lead: string;
+  id_lead: string | null;
   remote_jid: string;
   from_me: boolean;
   tipo: string;
@@ -240,7 +240,7 @@ export function mapearMensagemDbParaCanonica(registro: {
   return {
     id: registro.id,
     messageId: registro.mensagem_id,
-    leadId: registro.id_lead,
+    leadId: registro.id_lead ?? "",
     remoteJid: registro.remote_jid,
     remoteJidAlt: null,
     fromMe: registro.from_me,

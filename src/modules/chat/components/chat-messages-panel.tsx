@@ -2,7 +2,7 @@
 
 import { Loader2 } from "lucide-react";
 import { ChatMessageList } from "./chat-message-list";
-import { ChatMessageComposer } from "./chat-message-composer";
+import { ChatMessageComposer, type ChatMessageComposerFollowUpContext } from "./chat-message-composer";
 import { useChatMessages } from "../hooks/use-chat-messages";
 
 type ChatMessagesPanelProps = {
@@ -23,9 +23,10 @@ type ChatMessagesPanelProps = {
       negocio: { titulo: string } | null;
     } | null;
   };
+  followUpContext?: ChatMessageComposerFollowUpContext | null;
 };
 
-export function ChatMessagesPanel({ instanceName, remoteJid, chatContext }: ChatMessagesPanelProps) {
+export function ChatMessagesPanel({ instanceName, remoteJid, chatContext, followUpContext }: ChatMessagesPanelProps) {
   const {
     messages,
     carregando,
@@ -65,6 +66,7 @@ export function ChatMessagesPanel({ instanceName, remoteJid, chatContext }: Chat
         remoteJid={remoteJid}
         enviando={enviando}
         chatContext={chatContext}
+        followUpContext={followUpContext}
         agendadas={agendadas}
         sendMessage={sendMessage}
         scheduleMessage={scheduleMessage}

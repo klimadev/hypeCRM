@@ -106,15 +106,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ erro: "Template de follow-up invalido." }, { status: 404 });
   }
 
-  const lead = await prisma.lead.findFirst({
-    where: {
-      id: idLead,
-      id_empresa: auth.sessao.id_empresa,
-    },
-    select: { id: true },
-  });
-  if (!lead) {
-    return NextResponse.json({ erro: "Lead nao encontrado nesta empresa." }, { status: 404 });
+  if (idLead) {
+    const lead = await prisma.lead.findFirst({
+      where: {
+        id: idLead,
+        id_empresa: auth.sessao.id_empresa,
+      },
+      select: { id: true },
+    });
+    if (!lead) {
+      return NextResponse.json({ erro: "Lead nao encontrado nesta empresa." }, { status: 404 });
+    }
   }
 
   const ativo = await prisma.followUpConversa.findFirst({
@@ -136,9 +138,9 @@ export async function POST(request: NextRequest) {
       id: randomUUID(),
       id_empresa: auth.sessao.id_empresa,
       id_template: templateId,
-      id_lead: idLead,
-      instance_name: instanceName,
-      remote_jid: remoteJid,
+        id_lead: idLead ?? null,
+        instance_name: instanceName,
+        remote_jid: remoteJid,
       status: "ATIVO",
       etapa_atual: 0,
       ciclo_atual: 1,

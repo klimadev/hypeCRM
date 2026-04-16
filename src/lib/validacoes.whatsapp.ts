@@ -187,6 +187,7 @@ export const esquemaWhatsappChatMessagesQuery = z.object({
 export const esquemaChatUnificadoMessagesQuery = z.object({
   instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
   remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
+  page: z.coerce.number().int().min(1, "Pagina minima de 1.").default(1),
   limite: z.coerce.number().int().min(1, "Limite minimo de 1.").max(200, "Limite maximo de 200.").default(50),
 });
 
@@ -314,7 +315,7 @@ export const esquemaFollowUpConversaGet = z.object({
 export const esquemaFollowUpConversaAtivar = z.object({
   instanceName: z.string().trim().min(1, "Instancia obrigatoria."),
   remoteJid: z.string().trim().min(1, "Remote JID obrigatorio."),
-  idLead: z.string().trim().min(1, "Lead obrigatorio."),
+  idLead: z.string().trim().min(1, "Lead obrigatorio.").optional(),
   templateId: z.string().trim().min(1, "Template obrigatorio."),
 });
 

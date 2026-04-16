@@ -93,10 +93,7 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
   const remoteJid = (chat.remoteJid ?? "").trim();
   if (!remoteJid || remoteJid.includes("@g.us")) return null;
 
-  const remoteJidAlt =
-    chat.remoteJidAlt ??
-    chat.lastMessage?.key?.remoteJidAlt ??
-    (remoteJid.includes("@lid") ? null : remoteJid);
+  const remoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
 
   const pushName = chat.pushName ?? chat.lastMessage?.pushName ?? null;
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
@@ -150,7 +147,7 @@ export function agruparConversasPorBuscaEvolution(
     const remoteJidAlt = msg.key?.remoteJidAlt ?? null;
     const pushName = msg.pushName ?? null;
     const messageTimestamp = msg.messageTimestamp ?? 0;
-    const chaveConversa = remoteJidAlt ?? remoteJid;
+    const chaveConversa = remoteJid;
     const existente = conversasAgrupadas.get(chaveConversa);
 
     if (!existente || messageTimestamp > existente.ultimaMensagemTimestamp) {
@@ -174,18 +171,7 @@ export function agruparConversasPorBuscaEvolution(
 }
 
 export function deduplicarMensagensPorContatoEvolution(mensagens: EvolutionMensagem[]) {
-  const contatosUnicos = new Map<string, EvolutionMensagem>();
-
-  for (const msg of mensagens) {
-    const chave = msg.remoteJidAlt ?? msg.remoteJid;
-    const existente = contatosUnicos.get(chave);
-
-    if (!existente || msg.messageTimestamp > existente.messageTimestamp) {
-      contatosUnicos.set(chave, msg);
-    }
-  }
-
-  return Array.from(contatosUnicos.values());
+  return mensagens;
 }
 
 export function montarEstadoConexaoEvolution(

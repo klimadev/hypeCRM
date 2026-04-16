@@ -132,12 +132,12 @@ export async function agendarProximoFollowUp(conversaId: string) {
   const agendadoPara = new Date(Date.now() + proxima.delayMinutos * 60 * 1000);
 
   const mensagem = await prisma.mensagemAgendada.create({
-    data: {
-      id: randomUUID(),
-      id_empresa: conversa.id_empresa,
-      id_lead: conversa.id_lead,
-      id_followup_conversa: conversa.id,
-      instance_name: conversa.instance_name,
+      data: {
+        id: randomUUID(),
+        id_empresa: conversa.id_empresa,
+        id_lead: conversa.id_lead ?? null,
+        id_followup_conversa: conversa.id,
+        instance_name: conversa.instance_name,
       remote_jid: conversa.remote_jid,
       conteudo: proxima.conteudo,
       tipo: "text",
@@ -188,10 +188,10 @@ export async function verificarRespostaCliente(conversaId: string) {
   const resposta = await prisma.whatsappMensagem.findFirst({
     where: {
       id_empresa: conversa.id_empresa,
-      id_lead: conversa.id_lead,
       from_me: false,
       remote_jid: conversa.remote_jid,
       timestamp: { gt: desde },
+      ...(conversa.id_lead ? { id_lead: conversa.id_lead } : {}),
     },
     orderBy: { timestamp: "desc" },
   });

@@ -7,6 +7,7 @@ import { listarMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 import { prisma } from "@/lib/prisma";
 import type { SessaoToken } from "@/lib/tipos";
+import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
 
@@ -14,16 +15,10 @@ function ehInstagram(instanceName: string) {
   return instanceName === "instagram";
 }
 
-function extrairTelefoneDeRemoteJid(remoteJid: string): string {
-  return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
-}
-
 async function verificarAcessoConversa(
   sessao: SessaoToken,
-  instanceName: string,
-  remoteJid: string,
+  telefone: string,
 ): Promise<boolean> {
-  const telefone = extrairTelefoneDeRemoteJid(remoteJid);
   if (!telefone) return false;
 
   const whereLeads = await whereLeadsPorPerfil(sessao);
@@ -61,7 +56,21 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const acessoPermitido = await verificarAcessoConversa(auth.sessao, instanceName, remoteJid);
+  const destinoWhatsapp = ehInstagram(instanceName)
+    ? null
+    : await resolverDestinoConversaWhatsapp(instanceName, remoteJid);
+
+  if (!ehInstagram(instanceName) && !destinoWhatsapp) {
+    return new Response(
+      JSON.stringify({ erro: "Nao foi possivel resolver a conversa informada." }),
+      { status: 400, headers: { "Content-Type": "application/json" } },
+    );
+  }
+
+  const acessoPermitido = await verificarAcessoConversa(
+    auth.sessao,
+    destinoWhatsapp?.telefone ?? extrairTelefoneDeRemoteJid(remoteJid),
+  );
   if (!acessoPermitido) {
     return new Response(
       JSON.stringify({ erro: "Sem permissao para acessar esta conversa." }),
@@ -69,7 +78,8 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const chave = `messages:${auth.sessao.id_empresa}:${instanceName}:${remoteJid}`;
+  const lookupRemoteJid = destinoWhatsapp?.lookupRemoteJid ?? remoteJid;
+  const chave = `messages:${auth.sessao.id_empresa}:${instanceName}:${lookupRemoteJid}`;
 
   const params: ChatMessagesStreamParams = {
     tipo: "messages",
@@ -103,10 +113,10 @@ export async function GET(request: NextRequest) {
       }
 
       const result = await obterSnapshotCacheado({
-        key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${remoteJid}:${limite}`,
-        ttlMs: CHAT_MESSAGES_TTL_MS,
-        loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
-      });
+          key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${lookupRemoteJid}:${limite}`,
+          ttlMs: CHAT_MESSAGES_TTL_MS,
+          loader: () => buscarMensagensPorContato(instanceName, lookupRemoteJid, 1, limite),
+        });
       return {
         messages: result.messages,
         hasMore: result.hasMore,

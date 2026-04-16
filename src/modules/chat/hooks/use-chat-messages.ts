@@ -12,8 +12,6 @@ import {
 } from "@/lib/api/whatsapp.chat";
 import type { UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 
-const CHAT_MESSAGES_CACHE_PREFIX = "chat:messages:";
-
 function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatMessage[]) {
   const mapa = new Map<string, UnifiedChatMessage>();
 
@@ -67,35 +65,6 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   // Generation counter - usado para detectar mudanças de conversa
   const generationRef = useRef(0);
 
-  const obterChaveCache = useCallback((instanceName: string, remoteJid: string) => {
-    return `${CHAT_MESSAGES_CACHE_PREFIX}${instanceName}:${remoteJid}`;
-  }, []);
-
-  const salvarCache = useCallback(
-    (instanceName: string, remoteJid: string, snapshot: UnifiedChatMessage[]) => {
-      if (typeof window === "undefined") return;
-      window.sessionStorage.setItem(obterChaveCache(instanceName, remoteJid), JSON.stringify(snapshot));
-    },
-    [obterChaveCache],
-  );
-
-  const hidratarCache = useCallback(
-    (instanceName: string, remoteJid: string) => {
-      if (typeof window === "undefined") return null;
-      const raw = window.sessionStorage.getItem(obterChaveCache(instanceName, remoteJid));
-      if (!raw) return null;
-
-      try {
-        const snapshot = JSON.parse(raw) as UnifiedChatMessage[];
-        return Array.isArray(snapshot) ? snapshot : null;
-      } catch {
-        window.sessionStorage.removeItem(obterChaveCache(instanceName, remoteJid));
-        return null;
-      }
-    },
-    [obterChaveCache],
-  );
-
   paramsRef.current = params;
 
   const paramsAtuaisRef = useRef<{ instanceName: string | null; remoteJid: string | null }>({
@@ -148,9 +117,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
           return prev;
         }
-        const proximas = ordenarMensagensPorTimestamp(mesclarMensagensChat(prev, result.dados.messages));
-        salvarCache(instanceName, remoteJid, proximas);
-        return proximas;
+        return ordenarMensagensPorTimestamp(mesclarMensagensChat(prev, result.dados.messages));
       });
       setHasMore(result.dados.hasMore);
       setErro(null);
@@ -159,7 +126,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     } finally {
       setCarregando(false);
     }
-  }, [salvarCache]);
+  }, []);
 
   const carregarMensagensAnteriores = useCallback(async () => {
     const { instanceName, remoteJid } = paramsRef.current;
@@ -175,9 +142,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       }
 
       setMessages((prev) => {
-        const proximas = ordenarMensagensPorTimestamp(mesclarMensagensChat(result.dados.messages, prev));
-        salvarCache(instanceName, remoteJid, proximas);
-        return proximas;
+        return ordenarMensagensPorTimestamp(mesclarMensagensChat(result.dados.messages, prev));
       });
       setPaginaAtual(proximaPagina);
       setHasMore(result.dados.hasMore);
@@ -187,7 +152,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     } finally {
       setCarregandoMais(false);
     }
-  }, [carregando, carregandoMais, hasMore, paginaAtual, salvarCache]);
+  }, [carregando, carregandoMais, hasMore, paginaAtual]);
 
   const sendMessage = useCallback(
     async (text: string, retryId?: string) => {
@@ -237,9 +202,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
             console.log("[ChatMessages] Abortando adição de mensagem - params mudou");
             return prev;
           }
-          const proximas = mesclarMensagensChat(prev, [tempMessage]);
-          salvarCache(instanceName, remoteJid, proximas);
-          return proximas;
+          return mesclarMensagensChat(prev, [tempMessage]);
         });
 
         const result = await enviarMensagemChatUnificado({ instanceName, remoteJid, text: normalizedText });
@@ -254,7 +217,6 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
                 ? { ...message, status: "ERROR", optimistic: false, error: result.erro }
                 : message,
             );
-            salvarCache(instanceName, remoteJid, proximas);
             return proximas;
           });
           throw new Error(result.erro);
@@ -269,14 +231,13 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
               ? { ...message, status: "SENT", optimistic: false, error: null }
               : message,
           );
-          salvarCache(instanceName, remoteJid, proximas);
           return proximas;
         });
       } finally {
         setEnviando(false);
       }
     },
-    [salvarCache],
+    [],
   );
 
   const fetchAgendadas = useCallback(async () => {
@@ -362,9 +323,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     setErro(null);
     setSseConectado(false);
     
-    const mensagensEmCache = hidratarCache(instanceName, remoteJid);
-    setMessages(mensagensEmCache ?? []);
-    setCarregando(!mensagensEmCache);
+    setCarregando(true);
 
     let ativo = true;
     let unsubscribe: (() => void) | null = null;
@@ -376,11 +335,8 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
         return;
       }
 
-      if (!mensagensEmCache) {
-        // Verificação antes de fetch
-        if (geracaoAtual !== generationRef.current) return;
-        await fetchInitial();
-      }
+      if (geracaoAtual !== generationRef.current) return;
+      await fetchInitial();
 
       // Verificação após fetch
       if (geracaoAtual !== generationRef.current) {
@@ -412,9 +368,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
               return;
             }
             setMessages((prev) => {
-              const proximas = mesclarMensagensChat(prev, snapshot.messages ?? []);
-              salvarCache(instanceName, remoteJid, proximas);
-              return proximas;
+              return mesclarMensagensChat(prev, snapshot.messages ?? []);
             });
             setHasMore(snapshot.hasMore ?? false);
             setSseConectado(true);
@@ -437,7 +391,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       unsubscribe?.();
       unsubscribeRef.current = null;
     };
-  }, [fetchInitial, hidratarCache, params.instanceName, params.remoteJid, salvarCache]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: paramsRef handles current values, only re-subscribe on identity change
+  }, [fetchInitial, params.instanceName, params.remoteJid]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: paramsRef handles current values, only re-subscribe on identity change
 
   return {
     messages: mensagensOrdenadas,

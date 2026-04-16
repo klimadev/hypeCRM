@@ -5,7 +5,6 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
-import { setPushNameInCache, getPushNameFromCache } from "./chat-pushname-cache";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
@@ -312,6 +311,32 @@ export async function buscarMensagensPorContato(
   pagina: number = 1,
   limite: number = 50,
 ): Promise<{ messages: Array<{ id: string; remoteJid: string; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+  type MensagemRaw = {
+    key?: { id?: string; remoteJid?: string; remoteJidAlt?: string; fromMe?: boolean };
+    lastMessage?: { key?: { remoteJidAlt?: string } };
+    pushName?: string | null;
+    messageTimestamp?: number;
+    messageType?: string;
+    message?: {
+      conversation?: string;
+      extendedTextMessage?: { text?: string };
+      imageMessage?: { caption?: string };
+      videoMessage?: { caption?: string };
+      audioMessage?: Record<string, unknown>;
+      documentMessage?: { fileName?: string };
+      stickerMessage?: Record<string, unknown>;
+      reactionMessage?: { text?: string };
+      locationMessage?: Record<string, unknown>;
+      contactMessage?: Record<string, unknown>;
+      listMessage?: Record<string, unknown>;
+      buttonsMessage?: Record<string, unknown>;
+      templateMessage?: Record<string, unknown>;
+      liveLocationMessage?: Record<string, unknown>;
+      orderMessage?: Record<string, unknown>;
+      protocolMessage?: Record<string, unknown>;
+    };
+  };
+
   const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
     headers,
@@ -331,7 +356,7 @@ export async function buscarMensagensPorContato(
 
   const json = (await resposta.json().catch(() => ({}))) as {
     messages?: {
-      records?: EvolutionMensagemDetalhada[];
+      records?: MensagemRaw[];
       pages?: number;
       total?: number;
     };
@@ -442,13 +467,6 @@ export async function buscarPushNamePorTelefone(
   remoteJid: string,
   remoteJidAlt?: string | null
 ): Promise<string | null> {
-  const telefone = remoteJid.replace(/@.*/, "").replace(/\D/g, "");
-
-  const cached = getPushNameFromCache(instanceName, telefone);
-  if (cached !== undefined) {
-    return cached;
-  }
-
   const jidParaBusca = remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : remoteJid;
 
   const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
@@ -477,11 +495,9 @@ export async function buscarPushNamePorTelefone(
   for (const msg of registros) {
     if (msg.key?.fromMe === false && msg.pushName && msg.pushName.trim().length > 0) {
       const pushName = msg.pushName.trim();
-      setPushNameInCache(instanceName, telefone, pushName);
       return pushName;
     }
   }
 
-  setPushNameInCache(instanceName, telefone, null);
   return null;
 }

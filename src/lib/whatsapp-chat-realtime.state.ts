@@ -88,15 +88,8 @@ export type StreamChannel = {
   ultimoHash: string | null;
 };
 
-export type ChatSnapshotCache = {
-  promise: Promise<MensagensSnapshot> | null;
-  snapshot: MensagensSnapshot | null;
-  expiresAt: number;
-};
-
 type GlobalRealtimeState = {
   channels: Map<string, StreamChannel>;
-  chatCache: Map<string, ChatSnapshotCache>;
 };
 
 declare global {
@@ -107,7 +100,6 @@ export function obterEstadoGlobalRealtime(): GlobalRealtimeState {
   if (!globalThis.__whatsappChatRealtimeState) {
     globalThis.__whatsappChatRealtimeState = {
       channels: new Map(),
-      chatCache: new Map(),
     };
   }
 

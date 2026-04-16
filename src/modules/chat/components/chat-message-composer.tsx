@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { CalendarClock, ChevronDown, Clock3, Loader2, Send, X } from "lucide-react";
+import { ArrowLeft, CalendarClock, ChevronDown, Clock3, Loader2, RefreshCw, Send, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/toast";
 import { listarAtalhosChat, type ChatShortcut } from "@/lib/api/chat-shortcuts";
 import { renderizarTemplateWhatsapp, type ContextoTemplateWhatsapp } from "@/lib/whatsapp-template";
@@ -14,7 +16,9 @@ import {
   obterQueryAtalho,
   registrarUsoRecenteAtalho,
   resolverAcaoAtalhoTeclado,
+  resolverAcaoSlashMenuRaizTeclado,
 } from "@/modules/chat/shortcuts-composer";
+import type { FollowUpConversa, FollowUpTemplate } from "@/lib/api/chat-follow-up";
 
 type ChatContextInfo = {
   telefone: string;
@@ -32,19 +36,27 @@ type ChatContextInfo = {
   } | null;
 };
 
-function ComposerToggle({
-  active,
-  label,
-  icon,
-  onClick,
-  expanded,
-}: {
-  active?: boolean;
-  label: string;
-  icon: ReactNode;
-  onClick: () => void;
-  expanded?: boolean;
-}) {
+export type ChatMessageComposerFollowUpContext = {
+  followUp: FollowUpConversa | null;
+  templates: FollowUpTemplate[];
+  templateSelecionado: string;
+  salvandoFollowUp: boolean;
+  carregandoFollowUp: boolean;
+  atualizadoHa: string;
+  statusUi: { variant: "success" | "secondary"; label: string };
+  tempoAteProximoDisparo: string | null;
+  possuiTemplatesAtivos: boolean;
+  podeAtivarFollowUp: boolean;
+  onTemplateSelecionadoChange: (value: string) => void;
+  onAtualizarContexto: () => void;
+  onAtivarCadencia: () => void;
+  onPausar: () => void;
+  onRetomar: () => void;
+  onEncerrar: () => void;
+  onReativar: () => void;
+} | null;
+
+function ComposerToggle({ active, label, icon, onClick, expanded }: { active?: boolean; label: string; icon: ReactNode; onClick: () => void; expanded?: boolean }) {
   return (
     <button
       type="button"
@@ -69,6 +81,7 @@ type ChatMessageComposerProps = {
   remoteJid: string;
   enviando: boolean;
   chatContext?: ChatContextInfo;
+  followUpContext?: ChatMessageComposerFollowUpContext;
   agendadas: MensagemAgendada[];
   sendMessage: (conteudo: string) => Promise<void>;
   scheduleMessage: (conteudo: string, agendadoParaIso: string) => Promise<unknown>;
@@ -81,6 +94,7 @@ export function ChatMessageComposer({
   remoteJid,
   enviando,
   chatContext,
+  followUpContext,
   agendadas,
   sendMessage,
   scheduleMessage,
@@ -93,19 +107,19 @@ export function ChatMessageComposer({
   const [agendadasAbertas, setAgendadasAbertas] = useState(false);
   const [atalhos, setAtalhos] = useState<ChatShortcut[]>([]);
   const [ultimosUsosAtalhos, setUltimosUsosAtalhos] = useState<Record<string, number>>({});
-  const [atalhosAbertos, setAtalhosAbertos] = useState(false);
+  const [menuSlashAberto, setMenuSlashAberto] = useState(false);
+  const [menuSlashNivel, setMenuSlashNivel] = useState<"raiz" | "atalhos" | "follow-up" | "fechado">("fechado");
+  const [indiceMenuRaizAtivo, setIndiceMenuRaizAtivo] = useState(0);
   const [indiceAtalhoAtivo, setIndiceAtalhoAtivo] = useState(0);
+  const [menuFechadoManualParaTexto, setMenuFechadoManualParaTexto] = useState<string | null>(null);
   const { addToast } = useToast();
 
   const queryAtalho = obterQueryAtalho(texto);
-  const chaveRecenciaAtalhos = useMemo(
-    () => `chat.shortcuts.recentes:${chatContext?.leadMatch?.id || remoteJid}`,
-    [chatContext?.leadMatch?.id, remoteJid],
-  );
+  const chaveRecenciaAtalhos = useMemo(() => `chat.shortcuts.recentes:${chatContext?.leadMatch?.id || remoteJid}`, [chatContext?.leadMatch?.id, remoteJid]);
 
-  const atalhosFiltrados = useMemo(() => {
-    return filtrarOrdenarAtalhos(atalhos, queryAtalho, ultimosUsosAtalhos);
-  }, [atalhos, queryAtalho, ultimosUsosAtalhos]);
+  const atalhosFiltrados = useMemo(() => filtrarOrdenarAtalhos(atalhos, queryAtalho, ultimosUsosAtalhos), [atalhos, queryAtalho, ultimosUsosAtalhos]);
+  const followUpOperacional = chatContext?.canal === "whatsapp";
+  const opcoesMenuRaiz = ["atalhos", "follow-up"] as const;
 
   function montarContextoVariaveis(): ContextoTemplateWhatsapp {
     return {
@@ -132,7 +146,8 @@ export function ChatMessageComposer({
       }
       return atualizadoLimitado;
     });
-    setAtalhosAbertos(false);
+    setMenuSlashAberto(false);
+    setMenuSlashNivel("fechado");
     setIndiceAtalhoAtivo(0);
   }
 
@@ -162,8 +177,7 @@ export function ChatMessageComposer({
       }
 
       const parsed = JSON.parse(salvo) as unknown;
-      const normalizado = normalizarMapaUsosAtalho(parsed);
-      setUltimosUsosAtalhos(normalizado);
+      setUltimosUsosAtalhos(normalizarMapaUsosAtalho(parsed));
     } catch {
       setUltimosUsosAtalhos({});
     }
@@ -171,20 +185,33 @@ export function ChatMessageComposer({
 
   useEffect(() => {
     if (!texto.startsWith("/") || texto.includes(" ")) {
-      setAtalhosAbertos(false);
-      setIndiceAtalhoAtivo(0);
+      setMenuSlashAberto(false);
+      setMenuSlashNivel("fechado");
+      setMenuFechadoManualParaTexto(null);
       return;
     }
 
-    setAtalhosAbertos(atalhosFiltrados.length > 0);
-    setIndiceAtalhoAtivo(0);
-  }, [texto, atalhosFiltrados.length]);
+    if (menuFechadoManualParaTexto === texto) return;
+
+    setMenuSlashAberto(true);
+    if (texto === "/") {
+      if (menuSlashNivel !== "follow-up") setMenuSlashNivel("raiz");
+      setIndiceMenuRaizAtivo(0);
+      return;
+    }
+
+    if (menuSlashNivel !== "follow-up") {
+      setMenuSlashNivel("atalhos");
+      setIndiceAtalhoAtivo(0);
+    }
+  }, [menuFechadoManualParaTexto, menuSlashNivel, texto]);
 
   const handleSubmit = async (event?: FormEvent) => {
     event?.preventDefault();
     if (!texto.trim() || enviando) return;
     const conteudo = texto;
     setTexto("");
+
     try {
       if (agendar) {
         if (!agendadoPara) throw new Error("Selecione data e hora para agendar.");
@@ -203,38 +230,118 @@ export function ChatMessageComposer({
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    const acao = resolverAcaoAtalhoTeclado({
-      atalhosAbertos,
-      quantidadeAtalhos: atalhosFiltrados.length,
-      indiceAtual: indiceAtalhoAtivo,
-      input: {
-        key: event.key,
-        ctrlKey: event.ctrlKey,
-        metaKey: event.metaKey,
-        shiftKey: event.shiftKey,
-      },
-    });
+    if (menuSlashNivel === "raiz") {
+      const acao = resolverAcaoSlashMenuRaizTeclado({
+        menuAberto: menuSlashAberto,
+        quantidadeOpcoes: opcoesMenuRaiz.length,
+        indiceAtual: indiceMenuRaizAtivo,
+        input: { key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey },
+      });
 
-    if (acao.tipo === "navegar") {
-      event.preventDefault();
-      setIndiceAtalhoAtivo(acao.indice);
-      return;
-    }
+      if (acao.tipo === "navegar") {
+        event.preventDefault();
+        setIndiceMenuRaizAtivo(acao.indice);
+        return;
+      }
 
-    if (acao.tipo === "aplicar") {
-      event.preventDefault();
-      const alvo = atalhosFiltrados[indiceAtalhoAtivo] ?? atalhosFiltrados[0];
-      if (alvo) {
-        aplicarAtalho(alvo);
+      if (acao.tipo === "selecionar") {
+        event.preventDefault();
+        const selecionado = opcoesMenuRaiz[indiceMenuRaizAtivo] ?? opcoesMenuRaiz[0];
+        if (selecionado === "atalhos") {
+          setMenuSlashNivel("atalhos");
+          setMenuSlashAberto(true);
+          setIndiceAtalhoAtivo(0);
+        } else {
+          setMenuSlashNivel("follow-up");
+          setMenuSlashAberto(true);
+        }
+        return;
+      }
+
+      if (acao.tipo === "fechar") {
+        event.preventDefault();
+        setMenuSlashAberto(false);
+        setMenuSlashNivel("fechado");
+        setMenuFechadoManualParaTexto(texto);
       }
       return;
     }
 
-    if (acao.tipo === "fechar") {
-      event.preventDefault();
-      setAtalhosAbertos(false);
+    if (menuSlashNivel === "atalhos") {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (texto === "/") {
+          setMenuSlashNivel("raiz");
+          setIndiceMenuRaizAtivo(0);
+        } else {
+          setMenuSlashAberto(false);
+          setMenuSlashNivel("fechado");
+          setMenuFechadoManualParaTexto(texto);
+        }
+        return;
+      }
+
+      const acao = resolverAcaoAtalhoTeclado({
+        atalhosAbertos: menuSlashAberto,
+        quantidadeAtalhos: atalhosFiltrados.length,
+        indiceAtual: indiceAtalhoAtivo,
+        input: { key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey },
+      });
+
+      if (acao.tipo === "navegar") {
+        event.preventDefault();
+        setIndiceAtalhoAtivo(acao.indice);
+        return;
+      }
+
+      if (acao.tipo === "aplicar") {
+        event.preventDefault();
+        const alvo = atalhosFiltrados[indiceAtalhoAtivo] ?? atalhosFiltrados[0];
+        if (alvo) aplicarAtalho(alvo);
+        return;
+      }
+
+      if (acao.tipo === "enviar") {
+        event.preventDefault();
+        void handleSubmit();
+        return;
+      }
+
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (texto === "/") {
+          setMenuSlashNivel("raiz");
+          setIndiceMenuRaizAtivo(0);
+        } else {
+          setMenuSlashAberto(false);
+          setMenuSlashNivel("fechado");
+          setMenuFechadoManualParaTexto(texto);
+        }
+      }
       return;
     }
+
+    if (menuSlashNivel === "follow-up") {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        if (texto === "/") {
+          setMenuSlashNivel("raiz");
+          setIndiceMenuRaizAtivo(0);
+        } else {
+          setMenuSlashAberto(false);
+          setMenuSlashNivel("fechado");
+          setMenuFechadoManualParaTexto(texto);
+        }
+      }
+      return;
+    }
+
+    const acao = resolverAcaoAtalhoTeclado({
+      atalhosAbertos: false,
+      quantidadeAtalhos: 0,
+      indiceAtual: 0,
+      input: { key: event.key, ctrlKey: event.ctrlKey, metaKey: event.metaKey, shiftKey: event.shiftKey },
+    });
 
     if (acao.tipo === "enviar") {
       event.preventDefault();
@@ -246,29 +353,9 @@ export function ChatMessageComposer({
     <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.94),rgba(12,12,14,1))] px-2.5 py-2.5 md:px-3">
       <div className="mx-auto w-full max-w-5xl rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-subtle)] px-2.5 py-2">
-          <ComposerToggle
-            active={agendar}
-            label={agendar ? "Agendando" : "Agendar"}
-            icon={<CalendarClock className="h-3.5 w-3.5" />}
-            onClick={() => setAgendar((current) => !current)}
-          />
-          {agendadas.length > 0 ? (
-            <ComposerToggle
-              active={agendadasAbertas}
-              label={`Agendadas ${agendadas.length}`}
-              icon={<Clock3 className="h-3.5 w-3.5" />}
-              onClick={() => setAgendadasAbertas((current) => !current)}
-              expanded={agendadasAbertas}
-            />
-          ) : null}
-          {agendar ? (
-            <input
-              type="datetime-local"
-              value={agendadoPara}
-              onChange={(e) => setAgendadoPara(e.target.value)}
-              className="h-9 rounded-xl border border-[var(--border-subtle)] bg-transparent px-3 text-[11px] text-[var(--text-primary)]"
-            />
-          ) : null}
+          <ComposerToggle active={agendar} label={agendar ? "Agendando" : "Agendar"} icon={<CalendarClock className="h-3.5 w-3.5" />} onClick={() => setAgendar((current) => !current)} />
+          {agendadas.length > 0 ? <ComposerToggle active={agendadasAbertas} label={`Agendadas ${agendadas.length}`} icon={<Clock3 className="h-3.5 w-3.5" />} onClick={() => setAgendadasAbertas((current) => !current)} expanded={agendadasAbertas} /> : null}
+          {agendar ? <input type="datetime-local" value={agendadoPara} onChange={(e) => setAgendadoPara(e.target.value)} className="h-9 rounded-xl border border-[var(--border-subtle)] bg-transparent px-3 text-[11px] text-[var(--text-primary)]" /> : null}
           <div className="ml-auto hidden text-[10px] text-[var(--text-tertiary)] md:block">Enter envia, Shift+Enter quebra linha</div>
         </div>
 
@@ -288,11 +375,7 @@ export function ChatMessageComposer({
                         type="button"
                         onClick={() => {
                           void cancelScheduledMessage(item.id).catch((err) => {
-                            addToast({
-                              type: "error",
-                              title: "Erro ao cancelar agendamento",
-                              description: err instanceof Error ? err.message : "Tente novamente.",
-                            });
+                            addToast({ type: "error", title: "Erro ao cancelar agendamento", description: err instanceof Error ? err.message : "Tente novamente." });
                           });
                         }}
                         className="rounded-full border border-[var(--border-subtle)] p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]"
@@ -318,42 +401,110 @@ export function ChatMessageComposer({
             rows={1}
             className="max-h-28 min-h-[2.5rem] flex-1 resize-none bg-transparent px-2 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
           />
-          {atalhosAbertos ? (
+
+          {menuSlashAberto ? (
             <div className="absolute bottom-[calc(100%+0.5rem)] left-2.5 right-16 z-20 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-1.5 shadow-[var(--shadow-md)]">
-              <div className="mb-1 px-2 text-[10px] text-[var(--text-tertiary)]">
-                Digite <span className="font-semibold">/</span>, navegue com ↑ ↓ (ou Ctrl/Cmd+J/K) e confirme com Enter/Tab
-              </div>
-              <div className="max-h-52 overflow-y-auto">
-                {atalhosFiltrados.map((atalho, index) => (
-                  <button
-                    key={atalho.id}
-                    type="button"
-                    onClick={() => aplicarAtalho(atalho)}
-                    className={cn(
-                      "flex w-full items-start gap-2 rounded-xl px-2 py-2 text-left transition-colors",
-                      indiceAtalhoAtivo === index
-                        ? "bg-[var(--brand-soft)] text-[var(--text-primary)]"
-                        : "hover:bg-[color:rgba(255,255,255,0.04)]",
+              {menuSlashNivel === "raiz" ? (
+                <div className="space-y-1">
+                  <button type="button" onClick={() => { setMenuSlashNivel("atalhos"); setIndiceAtalhoAtivo(0); }} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 0 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[color:rgba(255,255,255,0.04)]")}>Acoes rapidas</button>
+                  <button type="button" onClick={() => setMenuSlashNivel("follow-up")} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 1 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[color:rgba(255,255,255,0.04)]")}>Cadencia de follow-ups</button>
+                </div>
+              ) : null}
+
+              {menuSlashNivel === "atalhos" ? (
+                <div>
+                  <div className="mb-2 flex items-center justify-between gap-2 px-2 text-[10px] text-[var(--text-tertiary)]">
+                    <button type="button" onClick={() => { setMenuSlashNivel("raiz"); setIndiceMenuRaizAtivo(0); }} className="inline-flex items-center gap-1 rounded-full border border-[var(--border-subtle)] px-2 py-1 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
+                      <ArrowLeft className="h-3 w-3" /> Voltar
+                    </button>
+                    <span>{queryAtalho ? `/${queryAtalho}` : "/"}</span>
+                  </div>
+                  <div className="max-h-52 overflow-y-auto">
+                    {atalhosFiltrados.length > 0 ? (
+                      atalhosFiltrados.map((atalho, index) => (
+                        <button
+                          key={atalho.id}
+                          type="button"
+                          onClick={() => aplicarAtalho(atalho)}
+                          className={cn(
+                            "flex w-full items-start gap-2 rounded-xl px-2 py-2 text-left transition-colors",
+                            indiceAtalhoAtivo === index ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "hover:bg-[color:rgba(255,255,255,0.04)]",
+                          )}
+                        >
+                          <span className="mt-0.5 rounded-md border border-[var(--border-subtle)] bg-black/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--brand)]">/{atalho.slug}</span>
+                          <span className="min-w-0">
+                            <span className="block truncate text-[12px] font-medium text-[var(--text-primary)]">{atalho.nome}</span>
+                            <span className="block truncate text-[11px] text-[var(--text-secondary)]">{atalho.conteudo}</span>
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-2 py-3 text-xs text-[var(--text-secondary)]">Nenhum atalho encontrado.</div>
                     )}
-                  >
-                    <span className="mt-0.5 rounded-md border border-[var(--border-subtle)] bg-black/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--brand)]">
-                      /{atalho.slug}
-                    </span>
-                    <span className="min-w-0">
-                      <span className="block truncate text-[12px] font-medium text-[var(--text-primary)]">{atalho.nome}</span>
-                      <span className="block truncate text-[11px] text-[var(--text-secondary)]">{atalho.conteudo}</span>
-                    </span>
-                  </button>
-                ))}
-              </div>
+                  </div>
+                </div>
+              ) : null}
+
+              {menuSlashNivel === "follow-up" ? (
+                <div className="space-y-2 rounded-xl border border-[var(--border-subtle)] p-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="text-xs font-medium text-[var(--text-primary)]">Cadencia de follow-ups</div>
+                      <div className="text-[10px] text-[var(--text-tertiary)]">{followUpContext?.atualizadoHa ?? "sem atualizacao"}</div>
+                    </div>
+                    <Badge variant={followUpContext?.statusUi.variant ?? "secondary"} size="sm" dot>{followUpContext?.statusUi.label ?? (followUpOperacional ? "Carregando" : "Indisponivel")}</Badge>
+                  </div>
+
+                  {!followUpOperacional ? (
+                    <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Disponivel apenas para conversas WhatsApp.</div>
+                  ) : followUpContext ? (
+                    <>
+                      <div className="flex items-center gap-2">
+                        <Button type="button" size="sm" variant="outline" onClick={followUpContext.onAtualizarContexto} className="h-8" disabled={followUpContext.carregandoFollowUp}>
+                          <RefreshCw className={cn("mr-1 h-3.5 w-3.5", followUpContext.carregandoFollowUp && "animate-spin")} />Atualizar
+                        </Button>
+                        {followUpContext.followUp?.status === "ATIVO" ? <Button type="button" size="sm" onClick={followUpContext.onPausar} className="h-8" disabled={followUpContext.salvandoFollowUp || followUpContext.carregandoFollowUp}>Pausar</Button> : null}
+                      </div>
+
+                      {!followUpContext.followUp ? (
+                        <div className="space-y-2">
+                          <Select value={followUpContext.templateSelecionado} onValueChange={followUpContext.onTemplateSelecionadoChange}>
+                            <SelectTrigger className="h-8" disabled={followUpContext.salvandoFollowUp || followUpContext.carregandoFollowUp}>
+                              <SelectValue placeholder="Selecione uma cadencia" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {followUpContext.templates.map((template) => (
+                                <SelectItem key={template.id} value={template.id}>{template.nome}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          {!followUpContext.possuiTemplatesAtivos ? <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Nenhuma cadencia ativa encontrada.</div> : null}
+                          <Button type="button" size="sm" disabled={!followUpContext.podeAtivarFollowUp || !followUpContext.templateSelecionado || followUpContext.salvandoFollowUp} onClick={followUpContext.onAtivarCadencia} className="h-8">Ativar cadencia</Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 text-[11px] text-[var(--text-secondary)]">
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"><span>Cadencia</span><span className="truncate font-medium text-[var(--text-primary)]">{followUpContext.followUp.template.nome}</span></div>
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"><span>Etapa atual</span><span className="font-medium text-[var(--text-primary)]">Mensagem {Math.max(1, followUpContext.followUp.etapaAtual)}</span></div>
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"><span>Ciclo</span><span className="font-medium text-[var(--text-primary)]">{followUpContext.followUp.cicloAtual}</span></div>
+                          <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"><span>Proximo disparo</span><span className="text-right font-medium text-[var(--text-primary)]">{followUpContext.followUp.proximoDisparoEm ? new Date(followUpContext.followUp.proximoDisparoEm).toLocaleString("pt-BR") : "Sem agendamento"}{followUpContext.tempoAteProximoDisparo ? <span className="block text-[10px] text-[var(--text-secondary)]">{followUpContext.tempoAteProximoDisparo}</span> : null}</span></div>
+                          {followUpContext.followUp.ultimaRespostaEm ? <div className="flex items-center justify-between gap-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2"><span>Ultima resposta</span><span className="font-medium text-[var(--text-primary)]">{new Date(followUpContext.followUp.ultimaRespostaEm).toLocaleString("pt-BR")}</span></div> : null}
+                          <div className="flex flex-wrap gap-2 pt-1">
+                            {followUpContext.followUp.status === "PAUSADO" ? <Button variant="outline" size="sm" disabled={followUpContext.salvandoFollowUp || followUpContext.carregandoFollowUp} onClick={followUpContext.onRetomar}>Retomar</Button> : null}
+                            {followUpContext.followUp.status !== "ENCERRADO" ? <Button variant="ghost" size="sm" disabled={followUpContext.salvandoFollowUp || followUpContext.carregandoFollowUp} onClick={followUpContext.onEncerrar}>Encerrar</Button> : null}
+                            {followUpContext.followUp.status === "ENCERRADO" ? <Button variant="outline" size="sm" disabled={followUpContext.salvandoFollowUp || followUpContext.carregandoFollowUp} onClick={followUpContext.onReativar}>Reativar cadencia</Button> : null}
+                          </div>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-[11px] text-[var(--text-secondary)]">Carregando contexto de follow-up...</div>
+                  )}
+                </div>
+              ) : null}
             </div>
           ) : null}
-          <Button
-            type="submit"
-            size="icon"
-            disabled={enviando || !texto.trim() || (agendar && !agendadoPara)}
-            className="h-10 w-10 rounded-[14px] bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
-          >
+
+          <Button type="submit" size="icon" disabled={enviando || !texto.trim() || (agendar && !agendadoPara)} className="h-10 w-10 rounded-[14px] bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
             {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

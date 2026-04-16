@@ -5,7 +5,6 @@ import { criarAssinaturaSse } from "@/lib/api/whatsapp.shared";
 import type { ChatUnificado } from "../types";
 
 const LIMITE_PAGINA = 10;
-const CHAT_LIST_CACHE_KEY = "chat:list:root";
 const CHAT_LIST_FETCH_TIMEOUT_MS = 25_000;
 
 function ordenarChatsPorTimestamp(chats: ChatUnificado[]) {
@@ -50,33 +49,6 @@ export function useChatData(busca?: string) {
     chatsRef.current = chats;
   }, [chats]);
 
-  const salvarCacheLocal = useCallback((snapshot: { chats: ChatUnificado[]; total: number; temMais: boolean; pagina: number }) => {
-    if (typeof window === "undefined" || busca?.trim()) return;
-    window.sessionStorage.setItem(CHAT_LIST_CACHE_KEY, JSON.stringify(snapshot));
-  }, [busca]);
-
-  const hidratarDoCache = useCallback(() => {
-    if (typeof window === "undefined" || busca?.trim()) return false;
-
-    const raw = window.sessionStorage.getItem(CHAT_LIST_CACHE_KEY);
-    if (!raw) return false;
-
-    try {
-      const snapshot = JSON.parse(raw) as { chats?: ChatUnificado[]; total?: number; temMais?: boolean; pagina?: number };
-      if (!Array.isArray(snapshot.chats)) return false;
-      setChats(snapshot.chats);
-      setTotal(snapshot.total ?? snapshot.chats.length);
-      setTemMais(snapshot.temMais ?? false);
-      setPagina(snapshot.pagina ?? 1);
-      setUltimoSyncEm(Date.now());
-      setCarregando(false);
-      return true;
-    } catch {
-      window.sessionStorage.removeItem(CHAT_LIST_CACHE_KEY);
-      return false;
-    }
-  }, [busca]);
-
   const fetchPagina = useCallback(async (pag: number, termoBusca?: string) => {
     const controller = new AbortController();
     const timeout = window.setTimeout(() => controller.abort(), CHAT_LIST_FETCH_TIMEOUT_MS);
@@ -106,12 +78,6 @@ export function useChatData(busca?: string) {
       setTemMais(data.temMais ?? false);
       setErro(null);
       setUltimoSyncEm(Date.now());
-      salvarCacheLocal({
-        chats: pag === 1 ? chatsRecebidos : mesclarChats(chatsRef.current, chatsRecebidos, false),
-        total: data.total ?? 0,
-        temMais: data.temMais ?? false,
-        pagina: data.pagina ?? 1,
-      });
     } catch (err) {
       if (err instanceof Error && err.name === "AbortError") {
         setErro("A busca de conversas excedeu o tempo limite. Tente novamente.");
@@ -122,7 +88,7 @@ export function useChatData(busca?: string) {
       window.clearTimeout(timeout);
       setCarregando(false);
     }
-  }, [salvarCacheLocal]);
+  }, []);
 
   const carregarMais = useCallback(() => {
     if (!temMais || carregando) return;
@@ -137,22 +103,15 @@ export function useChatData(busca?: string) {
         const proximos = atual.map((chat) =>
           chat.instanceName === instanceName && chat.remoteJid === remoteJid ? updater(chat) : chat,
         );
-        salvarCacheLocal({ chats: proximos, total, temMais, pagina });
         return proximos;
       });
     },
-    [pagina, salvarCacheLocal, temMais, total],
+    [],
   );
 
   useEffect(() => {
-    const tinhaCache = hidratarDoCache();
-
     // Quando há busca, substituir base (não mesclar) para evitar resultados duplicados
     const substituirBase = !!busca && busca.trim().length > 0;
-
-    if (tinhaCache) {
-      setCarregando(false);
-    }
 
     void fetchPagina(1, busca).then(() => {
       if (substituirBase) {
@@ -167,12 +126,6 @@ export function useChatData(busca?: string) {
           const chatsRecebidos = snapshot.chats ?? [];
           setChats((atual) => {
             const proximos = mesclarChats(atual, chatsRecebidos, substituirBase);
-            salvarCacheLocal({
-              chats: proximos,
-              total: snapshot.total ?? 0,
-              temMais: snapshot.temMais ?? false,
-              pagina: 1,
-            });
             return proximos;
           });
           setTotal(snapshot.total ?? 0);
@@ -192,7 +145,7 @@ export function useChatData(busca?: string) {
     return () => {
       unsubscribe();
     };
-  }, [busca, fetchPagina, hidratarDoCache, salvarCacheLocal]);
+  }, [busca, fetchPagina]);
 
   return {
     chats,

@@ -8,68 +8,9 @@ import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 import { prisma } from "@/lib/prisma";
 import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
+import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
-
-function extrairTelefoneDeRemoteJid(remoteJid: string): string {
-  return remoteJid.replace(/@.*/, "").replace(/\D/g, "");
-}
-
-function ehLid(remoteJid: string): boolean {
-  return remoteJid.includes("@lid");
-}
-
-async function resolverLidParaTelefone(instanceName: string, remoteJid: string): Promise<string | null> {
-  try {
-    const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
-    const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
-
-    const resposta = await fetch(`${EVOLUTION_API_URL}/chat/getMessages/${instanceName}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: EVOLUTION_API_KEY,
-      },
-      body: JSON.stringify({
-        where: { remoteJid },
-        limit: 1,
-      }),
-    });
-
-    if (!resposta.ok) {
-      console.warn("[Chat] Falha ao resolver LID - Evolution retornou erro", {
-        instanceName,
-        remoteJid,
-        status: resposta.status,
-      });
-      return null;
-    }
-
-    const json = await resposta.json().catch(() => null);
-    if (!json || !Array.isArray(json) || json.length === 0) {
-      console.warn("[Chat] LID resolvedor - sem mensagens encontradas", { instanceName, remoteJid });
-      return null;
-    }
-
-    const primeiraMensagem = json[0];
-    const jidReal = primeiraMensagem?.key?.remoteJidAlt ?? primeiraMensagem?.key?.remoteJid;
-    if (!jidReal) {
-      console.warn("[Chat] LID resolvedor - sem remoteJidAlt na mensagem", { instanceName, remoteJid });
-      return null;
-    }
-
-    const telefone = extrairTelefoneDeRemoteJid(jidReal);
-    console.log("[Chat] LID resuelto para telefone", { remoteJid, telefone });
-    return telefone;
-  } catch (error) {
-    console.error("[Chat] Erro ao resolver LID", {
-      instanceName,
-      remoteJid,
-      erro: error instanceof Error ? error.message : String(error),
-    });
-    return null;
-  }
-}
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
@@ -86,10 +27,8 @@ function logChat(evento: string, detalhes?: Record<string, unknown>) {
 
 async function verificarAcessoConversa(
   sessao: SessaoToken,
-  instanceName: string,
-  remoteJid: string,
+  telefone: string,
 ): Promise<boolean> {
-  const telefone = extrairTelefoneDeRemoteJid(remoteJid);
   if (!telefone) return false;
 
   const whereLeads = await whereLeadsPorPerfil(sessao);
@@ -119,6 +58,7 @@ export async function GET(request: NextRequest) {
   const validacao = esquemaChatUnificadoMessagesQuery.safeParse({
     instanceName: searchParams.get("instanceName") ?? undefined,
     remoteJid: searchParams.get("remoteJid") ?? undefined,
+    page: searchParams.get("page") ?? undefined,
     limite: searchParams.get("limite") ?? undefined,
   });
 
@@ -126,9 +66,20 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ erro: mensagemErroValidacao(validacao.error) }, { status: 400 });
   }
 
-  const { instanceName, remoteJid, limite } = validacao.data;
+  const { instanceName, remoteJid, page, limite } = validacao.data;
 
-  const acessoPermitido = await verificarAcessoConversa(auth.sessao, instanceName, remoteJid);
+  const destinoWhatsapp = ehInstagram(instanceName)
+    ? null
+    : await resolverDestinoConversaWhatsapp(instanceName, remoteJid);
+
+  if (!ehInstagram(instanceName) && !destinoWhatsapp) {
+    return NextResponse.json({ erro: "Nao foi possivel resolver a conversa informada." }, { status: 400 });
+  }
+
+  const acessoPermitido = await verificarAcessoConversa(
+    auth.sessao,
+    destinoWhatsapp?.telefone ?? extrairTelefoneDeRemoteJid(remoteJid),
+  );
   if (!acessoPermitido) {
     return NextResponse.json({ erro: "Sem permissao para acessar esta conversa." }, { status: 403 });
   }
@@ -177,9 +128,9 @@ export async function GET(request: NextRequest) {
   }
 
   const result = await obterSnapshotCacheado({
-    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${remoteJid}:${limite}`,
+    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${destinoWhatsapp?.lookupRemoteJid ?? remoteJid}:${page}:${limite}`,
     ttlMs: CHAT_MESSAGES_TTL_MS,
-    loader: () => buscarMensagensPorContato(instanceName, remoteJid, 1, limite),
+    loader: () => buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite),
   });
 
   return NextResponse.json({ messages: result.messages, hasMore: result.hasMore });
@@ -196,7 +147,21 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ erro: mensagemErroValidacao(validacao.error) }, { status: 400 });
   }
 
-  const acessoPermitido = await verificarAcessoConversa(auth.sessao, validacao.data.instanceName, validacao.data.remoteJid);
+  const destinoWhatsapp = ehInstagram(validacao.data.instanceName)
+    ? null
+    : await resolverDestinoConversaWhatsapp(validacao.data.instanceName, validacao.data.remoteJid);
+
+  if (!ehInstagram(validacao.data.instanceName) && !destinoWhatsapp) {
+    return NextResponse.json(
+      { erro: "Nao foi possivel resolver a conversa informada. Tente novamente mais tarde." },
+      { status: 400 },
+    );
+  }
+
+  const acessoPermitido = await verificarAcessoConversa(
+    auth.sessao,
+    destinoWhatsapp?.telefone ?? extrairTelefoneDeRemoteJid(validacao.data.remoteJid),
+  );
   if (!acessoPermitido) {
     return NextResponse.json({ erro: "Sem permissao para acessar esta conversa." }, { status: 403 });
   }
@@ -220,32 +185,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  let telefone = extrairTelefoneDeRemoteJid(validacao.data.remoteJid);
+  const telefone = destinoWhatsapp?.telefone ?? extrairTelefoneDeRemoteJid(validacao.data.remoteJid);
 
   if (!telefone) {
     return NextResponse.json({ erro: "remoteJid invalido." }, { status: 400 });
-  }
-
-  if (ehLid(validacao.data.remoteJid)) {
-    console.log("[Chat] Detectado LID, resolvendo para telefone real", {
-      remoteJid: validacao.data.remoteJid,
-      instanceName: validacao.data.instanceName,
-    });
-
-    const telefoneResolvido = await resolverLidParaTelefone(
-      validacao.data.instanceName,
-      validacao.data.remoteJid,
-    );
-
-    if (!telefoneResolvido) {
-      return NextResponse.json(
-        { erro: "Nao foi possivel resolver o LID para telefone. Tente novamente mais tarde." },
-        { status: 400 },
-      );
-    }
-
-    telefone = telefoneResolvido;
-    console.log("[Chat] LID resuelto", { telefone });
   }
 
   try {

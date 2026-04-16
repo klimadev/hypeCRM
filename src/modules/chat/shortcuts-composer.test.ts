@@ -3,9 +3,12 @@ import type { ChatShortcut } from "@/lib/api/chat-shortcuts";
 import {
   filtrarOrdenarAtalhos,
   LIMITE_HISTORICO_ATALHOS,
+  obterEstadoSlashMenu,
+  obterOpcoesSlashMenu,
   normalizarMapaUsosAtalho,
   obterQueryAtalho,
   registrarUsoRecenteAtalho,
+  resolverAcaoSlashMenuRaizTeclado,
   resolverAcaoAtalhoTeclado,
 } from "@/modules/chat/shortcuts-composer";
 
@@ -63,6 +66,27 @@ describe("obterQueryAtalho", () => {
 
     // Assert
     expect(query).toBe("");
+  });
+});
+
+describe("slash menu", () => {
+  it("abre o menu raiz apenas com barra isolada", () => {
+    expect(obterEstadoSlashMenu("/")).toBe("raiz");
+    expect(obterEstadoSlashMenu("/abc")).toBe("atalhos");
+    expect(obterEstadoSlashMenu("/abc def")).toBe("fechado");
+  });
+
+  it("expõe duas opcoes no menu raiz", () => {
+    expect(obterOpcoesSlashMenu("raiz")).toEqual(["atalhos", "follow-up"]);
+  });
+
+  it("navega e confirma as opcoes do menu raiz", () => {
+    const base = { menuAberto: true, quantidadeOpcoes: 2, indiceAtual: 0 };
+
+    expect(resolverAcaoSlashMenuRaizTeclado({ ...base, input: { key: "ArrowDown" } })).toEqual({ tipo: "navegar", indice: 1 });
+    expect(resolverAcaoSlashMenuRaizTeclado({ ...base, input: { key: "k", metaKey: true } })).toEqual({ tipo: "navegar", indice: 1 });
+    expect(resolverAcaoSlashMenuRaizTeclado({ ...base, input: { key: "Enter" } })).toEqual({ tipo: "selecionar" });
+    expect(resolverAcaoSlashMenuRaizTeclado({ ...base, input: { key: "Escape" } })).toEqual({ tipo: "fechar" });
   });
 });
 

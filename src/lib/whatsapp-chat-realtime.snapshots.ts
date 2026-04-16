@@ -15,14 +15,12 @@ import {
   type InstanciaResolvida,
 } from "@/lib/whatsapp-chat";
 import type { ConversasResponse } from "@/modules/whatsapp/types";
-import { type MensagensSnapshot, obterEstadoGlobalRealtime } from "./whatsapp-chat-realtime.state";
+import { type MensagensSnapshot } from "./whatsapp-chat-realtime.state";
 import {
   criarWhereLeadMensagensRealtime,
   mapearConversaResumoRealtime,
   normalizarLimiteConversasRealtime,
 } from "./whatsapp-chat-realtime.utils";
-
-const CHAT_SYNC_TTL_MS = 30_000;
 
 type SnapshotParamsLead = {
   tipo: "lead";
@@ -54,7 +52,7 @@ async function sincronizarMensagensSemLead(params: {
         create: {
           id: `msg-${msg.messageId.slice(0, 20)}-${Date.now()}`,
           id_empresa: params.idEmpresa,
-          id_lead: "sem-lead",
+          id_lead: null,
           id_whatsapp_instancia: params.idInstancia || "temp",
           mensagem_id: msg.messageId,
           remote_jid: msg.remoteJid,
@@ -116,20 +114,7 @@ export async function obterSnapshotMensagens(
     throw new Error(remoteJidInfo.erro);
   }
 
-  const cacheKey = `${sessao.id_empresa}:${instancia.id}:${leadId || phoneNumber}`;
-  const estado = obterEstadoGlobalRealtime();
-  const agora = Date.now();
-  const cache = estado.chatCache.get(cacheKey);
-
-  if (cache?.promise) {
-    return cache.promise;
-  }
-
-  if (cache?.snapshot && cache.expiresAt > agora) {
-    return cache.snapshot;
-  }
-
-  const promise = (async () => {
+  return await (async () => {
     const whereLead = criarWhereLeadMensagensRealtime(leadId, phoneNumber);
 
     const [mensagensCache, unreadCount] = await Promise.all([
@@ -203,36 +188,8 @@ export async function obterSnapshotMensagens(
       unreadCount: mensagensAtualizadas.length > 0 ? unreadAtualizado : unreadCount,
     };
 
-    estado.chatCache.set(cacheKey, {
-      promise: null,
-      snapshot,
-      expiresAt: Date.now() + CHAT_SYNC_TTL_MS,
-    });
-
     return snapshot;
   })();
-
-  estado.chatCache.set(cacheKey, {
-    promise,
-    snapshot: cache?.snapshot ?? null,
-    expiresAt: agora + CHAT_SYNC_TTL_MS,
-  });
-
-  try {
-    return await promise;
-  } catch (error) {
-    estado.chatCache.delete(cacheKey);
-    throw error;
-  } finally {
-    const atualizado = estado.chatCache.get(cacheKey);
-    if (atualizado?.promise === promise) {
-      estado.chatCache.set(cacheKey, {
-        promise: null,
-        snapshot: atualizado.snapshot,
-        expiresAt: atualizado.expiresAt,
-      });
-    }
-  }
 }
 
 export async function obterSnapshotConversas(
