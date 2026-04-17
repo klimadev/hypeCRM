@@ -3,16 +3,11 @@ import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { criarRespostaSse } from "@/lib/whatsapp-chat-realtime.sse";
 import type { ChatMessagesStreamParams } from "@/lib/whatsapp-chat-realtime.state";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
-import { obterSnapshotMensagensPersistente } from "@/lib/chat-messages-persistence";
 import { listarMensagensInstagramPorEmpresa } from "@/lib/integracoes/instagram-inbox";
-import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 import { prisma } from "@/lib/prisma";
 import type { SessaoToken } from "@/lib/tipos";
 import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
-
-const CHAT_MESSAGES_TTL_MS = 5_000;
-const CHAT_PERSISTENCE_FIRST = process.env.CHAT_PERSISTENCE_FIRST !== "0";
 
 function ehInstagram(instanceName: string) {
   return instanceName === "instagram";
@@ -84,9 +79,10 @@ export async function GET(request: NextRequest) {
 
   const lookupRemoteJid = destinoWhatsapp?.lookupRemoteJid ?? remoteJid;
   const chave = `messages:${auth.sessao.id_empresa}:${instanceName}:${lookupRemoteJid}`;
+  const ctx = criarContextoChat({ idEmpresa: auth.sessao.id_empresa, instanceName, remoteJid, telefone: destinoWhatsapp?.telefone, limite });
 
-  chatLogger.log("STREAM_MENSAGENS_REQ", criarContextoChat({ idEmpresa: auth.sessao.id_empresa, instanceName, remoteJid, telefone: destinoWhatsapp?.telefone, limite }), {
-    raw: { instanceName, remoteJid, limite, persistenceFirst: CHAT_PERSISTENCE_FIRST },
+  chatLogger.log("STREAM_MENSAGENS_REQ", ctx, {
+    raw: { instanceName, remoteJid, limite, strategy: "evolution-api-first" },
     rawCompleto: {
       etapa: "entrada_stream",
       request: {
@@ -101,9 +97,6 @@ export async function GET(request: NextRequest) {
         lookupRemoteJid,
         destinoWhatsapp,
       },
-      flags: {
-        CHAT_PERSISTENCE_FIRST,
-      },
     },
   });
 
@@ -113,11 +106,7 @@ export async function GET(request: NextRequest) {
     pollMs: 10000,
     carregarSnapshot: async () => {
       if (ehInstagram(instanceName)) {
-        const mensagensIg = await obterSnapshotCacheado({
-          key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:instagram:${remoteJid}:${limite}`,
-          ttlMs: CHAT_MESSAGES_TTL_MS,
-          loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
-        });
+        const mensagensIg = await listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite);
 
         return {
           messages: mensagensIg.map((msg) => ({
@@ -138,29 +127,13 @@ export async function GET(request: NextRequest) {
         };
       }
 
-      const result = await obterSnapshotCacheado({
-          key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${lookupRemoteJid}:${limite}:${CHAT_PERSISTENCE_FIRST ? "pf" : "legacy"}`,
-          ttlMs: CHAT_MESSAGES_TTL_MS,
-          loader: () => {
-            if (CHAT_PERSISTENCE_FIRST) {
-              return obterSnapshotMensagensPersistente({
-                idEmpresa: auth.sessao.id_empresa,
-                instanceName,
-                remoteJid: lookupRemoteJid,
-                page: 1,
-                limite,
-              });
-            }
-
-            return buscarMensagensPorContato(instanceName, lookupRemoteJid, 1, limite);
-          },
-        });
-      chatLogger.log("STREAM_MENSAGENS_SNAPSHOT_OK", criarContextoChat({ idEmpresa: auth.sessao.id_empresa, instanceName, remoteJid, telefone: destinoWhatsapp?.telefone, limite }), {
+      const result = await buscarMensagensPorContato(instanceName, lookupRemoteJid, 1, limite);
+      chatLogger.log("STREAM_MENSAGENS_SNAPSHOT_OK", ctx, {
         duracaoMs: Date.now() - startedAt,
         normalizado: { total: result.messages.length, hasMore: result.hasMore },
         normalizadoCompleto: {
           etapa: "carregar_snapshot",
-          cacheKey: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${lookupRemoteJid}:${limite}:${CHAT_PERSISTENCE_FIRST ? "pf" : "legacy"}`,
+          strategy: "evolution-api-first",
           response: {
             total: result.messages.length,
             hasMore: result.hasMore,

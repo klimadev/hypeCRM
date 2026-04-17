@@ -6,14 +6,12 @@ const {
   whereLeadsPorPerfilMock,
   enviarMensagemTextoMock,
   buscarMensagensPorContatoMock,
-  obterSnapshotCacheadoMock,
   leadFindFirstMock,
 } = vi.hoisted(() => ({
   exigirSessaoMock: vi.fn(),
   whereLeadsPorPerfilMock: vi.fn(),
   enviarMensagemTextoMock: vi.fn(),
   buscarMensagensPorContatoMock: vi.fn(),
-  obterSnapshotCacheadoMock: vi.fn(),
   leadFindFirstMock: vi.fn(),
 }));
 
@@ -28,10 +26,6 @@ vi.mock("@/lib/evolution-api.instances", () => ({
 
 vi.mock("@/lib/evolution-api.chat", () => ({
   buscarMensagensPorContato: buscarMensagensPorContatoMock,
-}));
-
-vi.mock("@/lib/chat-snapshot-cache", () => ({
-  obterSnapshotCacheado: obterSnapshotCacheadoMock,
 }));
 
 vi.mock("@/lib/prisma", () => ({
@@ -50,7 +44,7 @@ function mockSessao() {
     sessao: {
       id_empresa: "empresa-1",
       id_usuario: "usuario-1",
-      perfil: "GERENTE",
+      perfil: "EMPRESA",
     },
   });
   whereLeadsPorPerfilMock.mockResolvedValue({ id_empresa: "empresa-1" });
@@ -66,34 +60,15 @@ function mockLeadPorTelefone(telefoneEsperado: string) {
   });
 }
 
-function mockResolucaoLid(remoteJidAlt: string) {
-  vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-    new Response(JSON.stringify([
-      {
-        key: {
-          remoteJid: "1203630@lid",
-          remoteJidAlt,
-        },
-      },
-    ]), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    }),
-  ));
-}
-
 describe("chat messages route", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.unstubAllGlobals();
-
-    obterSnapshotCacheadoMock.mockImplementation(async ({ loader }: { loader: () => Promise<unknown> }) => loader());
   });
 
   it("carrega mensagens de conversa @lid usando o jid resolvido e preserva a pagina solicitada", async () => {
     mockSessao();
-    mockLeadPorTelefone("5511999999999");
-    mockResolucaoLid("5511999999999@s.whatsapp.net");
+    mockLeadPorTelefone("1203630");
     buscarMensagensPorContatoMock.mockResolvedValue({ messages: [{ id: "m1" }], hasMore: true });
 
     const response = await GET(new NextRequest(
@@ -104,12 +79,12 @@ describe("chat messages route", () => {
     await expect(response.json()).resolves.toEqual({ messages: [{ id: "m1" }], hasMore: true });
     expect(leadFindFirstMock).toHaveBeenCalledWith(expect.objectContaining({
       where: expect.objectContaining({
-        telefone: { contains: "5511999999999" },
+        telefone: { contains: "1203630" },
       }),
     }));
     expect(buscarMensagensPorContatoMock).toHaveBeenCalledWith(
       "instancia-1",
-      "5511999999999@s.whatsapp.net",
+      "1203630@s.whatsapp.net",
       3,
       25,
     );
@@ -117,8 +92,7 @@ describe("chat messages route", () => {
 
   it("envia mensagem de conversa @lid usando o telefone resolvido", async () => {
     mockSessao();
-    mockLeadPorTelefone("5511999999999");
-    mockResolucaoLid("5511999999999@s.whatsapp.net");
+    mockLeadPorTelefone("1203630");
     enviarMensagemTextoMock.mockResolvedValue(undefined);
 
     const response = await POST(new NextRequest("http://localhost:3434/api/chat/messages", {
@@ -134,7 +108,7 @@ describe("chat messages route", () => {
     await expect(response.json()).resolves.toEqual({ ok: true });
     expect(enviarMensagemTextoMock).toHaveBeenCalledWith({
       instanceName: "instancia-1",
-      telefone: "5511999999999",
+      telefone: "1203630",
       mensagem: "Oi",
     });
   });

@@ -5,6 +5,7 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
+import { normalizarRemoteJidCanonico } from "./chat-remote-jid";
 import { chatLogger, criarContextoChat } from "./chat-logger";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
@@ -192,6 +193,26 @@ export async function buscarConversasEvolution(
   page: number = 1,
   offset: number = 30,
 ): Promise<EvolutionConversa[]> {
+  const ctx = criarContextoChat({ instanceName, busca: termo, pagina: page, limite: offset });
+  chatLogger.log("EVOLUTION_FIND_CHATS_REQ", ctx, {
+    raw: { termo, page, offset },
+    rawCompleto: {
+      path: `/chat/findMessages/${instanceName}`,
+      method: "POST",
+      body: {
+        where: {
+          key: {
+            remoteJid: termo,
+            remoteJidAlt: termo,
+            senderPn: termo,
+          },
+          pushName: termo,
+        },
+        page,
+        offset,
+      },
+    },
+  });
   const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
     headers,
@@ -223,6 +244,20 @@ export async function buscarConversasEvolution(
       }>;
     };
   };
+
+  chatLogger.log("EVOLUTION_FIND_CHATS_RAW_RESPONSE", ctx, {
+    rawResponse: {
+      status: resposta.status,
+      ok: resposta.ok,
+      totalRegistrosBrutos: json.messages?.records?.length ?? 0,
+      totalPaginas: json.messages?.pages ?? null,
+    },
+    rawResponseCompleta: {
+      status: resposta.status,
+      statusText: resposta.statusText,
+      response: json,
+    },
+  });
 
   return agruparConversasPorBuscaEvolution(json.messages?.records ?? []);
 }
@@ -397,6 +432,17 @@ export async function buscarMensagensPorContato(
   const totalPaginas = json.messages?.pages ?? 1;
   const hasMore = pagina < totalPaginas;
 
+  const amostra = registros.slice(0, 5).map((msg, index) => ({
+    index,
+    id: msg.key?.id ?? null,
+    fromMe: msg.key?.fromMe ?? null,
+    remoteJid: msg.key?.remoteJid ?? null,
+    remoteJidAlt: msg.key?.remoteJidAlt ?? null,
+    lastMessageRemoteJidAlt: msg.lastMessage?.key?.remoteJidAlt ?? null,
+    pushName: msg.pushName ?? null,
+    messageTimestamp: msg.messageTimestamp ?? null,
+  }));
+
   chatLogger.log("EVOLUTION_FIND_MESSAGES_RAW_RESPONSE", ctx, {
     duracaoMs: Date.now() - startedAt,
     rawResponse: {
@@ -416,6 +462,9 @@ export async function buscarMensagensPorContato(
       },
       request: payload,
       response: json,
+    },
+    meta: {
+      amostra,
     },
   });
 
@@ -499,6 +548,32 @@ export async function buscarMensagensPorContato(
         kind = msgType || "unknown";
       }
 
+      if (remoteJid.includes("@lid") || remoteJidAlt?.includes("@lid")) {
+        chatLogger.log("EVOLUTION_FIND_MESSAGES_LID_TRACE", ctx, {
+          raw: {
+            id: msg.key?.id ?? null,
+            fromMe,
+            remoteJid,
+            remoteJidAlt,
+            lastMessageRemoteJidAlt: msg.lastMessage?.key?.remoteJidAlt ?? null,
+            pushName,
+            messageTimestamp: timestamp,
+          },
+          rawCompleto: {
+            message: msg,
+            interpretacao: {
+              remoteJid,
+              remoteJidAlt,
+              fromMe,
+              pushName,
+              kind,
+              text,
+              hasMedia,
+            },
+          },
+        });
+      }
+
       return {
         id: msg.key?.id ?? `${remoteJid}-${timestamp}`,
         remoteJid,
@@ -535,7 +610,7 @@ export async function buscarPushNamePorTelefone(
   remoteJid: string,
   remoteJidAlt?: string | null
 ): Promise<string | null> {
-  const jidParaBusca = remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : remoteJid;
+  const jidParaBusca = normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid);
 
   const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
@@ -561,6 +636,17 @@ export async function buscarPushNamePorTelefone(
   const registros = json.messages?.records ?? [];
 
   for (const msg of registros) {
+    if (msg.key?.fromMe === false) {
+      chatLogger.log("EVOLUTION_PUSHNAME_TRACE", criarContextoChat({ instanceName }), {
+        raw: {
+          fromMe: msg.key?.fromMe,
+          remoteJid: msg.key?.remoteJid ?? null,
+          remoteJidAlt: msg.key?.remoteJidAlt ?? null,
+          pushName: msg.pushName ?? null,
+          messageTimestamp: msg.messageTimestamp ?? null,
+        },
+      });
+    }
     if (msg.key?.fromMe === false && msg.pushName && msg.pushName.trim().length > 0) {
       const pushName = msg.pushName.trim();
       return pushName;

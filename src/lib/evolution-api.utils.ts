@@ -1,4 +1,5 @@
 import { normalizarStatusInstanciaWhatsapp } from "@/lib/whatsapp-instancia-status";
+import { normalizarRemoteJidCanonico } from "./chat-remote-jid";
 import type {
   EvolutionConnectionState,
   EvolutionContato,
@@ -81,7 +82,7 @@ export function mapearContatoEvolution(chat: EvolutionConversaEntrada): Evolutio
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
 
   return {
-    id: remoteJidAlt ?? remoteJid,
+    id: normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid),
     nome: pushName,
     pushName,
     remoteJidAlt,
@@ -113,7 +114,7 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
     : undefined;
 
   return {
-    remoteJid,
+    remoteJid: normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid),
     remoteJidAlt: remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : null,
     pushName: pushName ?? null,
     isGroup,
@@ -147,7 +148,7 @@ export function agruparConversasPorBuscaEvolution(
     const remoteJidAlt = msg.key?.remoteJidAlt ?? null;
     const pushName = msg.pushName ?? null;
     const messageTimestamp = msg.messageTimestamp ?? 0;
-    const chaveConversa = remoteJid;
+    const chaveConversa = normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid);
     const existente = conversasAgrupadas.get(chaveConversa);
 
     if (!existente || messageTimestamp > existente.ultimaMensagemTimestamp) {

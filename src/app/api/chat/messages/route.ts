@@ -2,18 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
-import { obterSnapshotMensagensPersistente } from "@/lib/chat-messages-persistence";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
-import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
 import { prisma } from "@/lib/prisma";
 import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
 import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
-
-const CHAT_MESSAGES_TTL_MS = 5_000;
-const CHAT_PERSISTENCE_FIRST = process.env.CHAT_PERSISTENCE_FIRST !== "0";
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
@@ -61,6 +56,24 @@ export async function GET(request: NextRequest) {
   }
 
   const { instanceName, remoteJid, page, limite } = validacao.data;
+  const ctx = criarContextoChat({ idEmpresa: auth.sessao.id_empresa, instanceName, remoteJid, pagina: page, limite });
+
+  chatLogger.log("CARREGAR_MENSAGENS_REQ", ctx, {
+    raw: { instanceName, remoteJid, page, limite, strategy: "evolution-api-first" },
+    rawCompleto: {
+      entrada: {
+        instanceName,
+        remoteJid,
+        page,
+        limite,
+      },
+      usuario: {
+        idEmpresa: auth.sessao.id_empresa,
+        idUsuario: auth.sessao.id_usuario,
+        perfil: auth.sessao.perfil,
+      },
+    },
+  });
 
   const destinoWhatsapp = ehInstagram(instanceName)
     ? null
@@ -80,14 +93,9 @@ export async function GET(request: NextRequest) {
 
   if (ehInstagram(instanceName)) {
     try {
-      const ctx = criarContextoChat({ instanceName, remoteJid, limite });
       chatLogger.log("CARREGAR_MENSAGENS_INSTAGRAM_REQ", ctx);
 
-      const mensagensIg = await obterSnapshotCacheado({
-        key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:instagram:${remoteJid}:${limite}`,
-        ttlMs: CHAT_MESSAGES_TTL_MS,
-        loader: () => listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite),
-      });
+      const mensagensIg = await listarMensagensInstagramPorEmpresa(auth.sessao.id_empresa, remoteJid, limite);
       const messages = mensagensIg.map((msg: { id: string; text: string | null; created_at: string; from_name: string | null; from_me: boolean; attachments?: Array<{ type: string; url: string | null }> }) => ({
         id: msg.id,
         remoteJid,
@@ -115,21 +123,16 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const result = await obterSnapshotCacheado({
-    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${destinoWhatsapp?.lookupRemoteJid ?? remoteJid}:${page}:${limite}:${CHAT_PERSISTENCE_FIRST ? "pf" : "legacy"}`,
-    ttlMs: CHAT_MESSAGES_TTL_MS,
-    loader: () => {
-      if (CHAT_PERSISTENCE_FIRST) {
-        return obterSnapshotMensagensPersistente({
-          idEmpresa: auth.sessao.id_empresa,
-          instanceName,
-          remoteJid: destinoWhatsapp?.lookupRemoteJid ?? remoteJid,
-          page,
-          limite,
-        });
-      }
+  const result = await buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite);
 
-      return buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite);
+  chatLogger.log("CARREGAR_MENSAGENS_OK", ctx, {
+    normalizado: { total: result.messages.length, hasMore: result.hasMore },
+    normalizadoCompleto: {
+      snapshot: {
+        primeiraMensagemId: result.messages[0]?.id ?? null,
+        ultimaMensagemId: result.messages[result.messages.length - 1]?.id ?? null,
+        lookupRemoteJid: destinoWhatsapp?.lookupRemoteJid ?? remoteJid,
+      },
     },
   });
 

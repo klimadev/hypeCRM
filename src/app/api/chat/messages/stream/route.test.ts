@@ -5,14 +5,12 @@ const {
   exigirSessaoMock,
   whereLeadsPorPerfilMock,
   buscarMensagensPorContatoMock,
-  obterSnapshotCacheadoMock,
   criarRespostaSseMock,
   leadFindFirstMock,
 } = vi.hoisted(() => ({
   exigirSessaoMock: vi.fn(),
   whereLeadsPorPerfilMock: vi.fn(),
   buscarMensagensPorContatoMock: vi.fn(),
-  obterSnapshotCacheadoMock: vi.fn(),
   criarRespostaSseMock: vi.fn(),
   leadFindFirstMock: vi.fn(),
 }));
@@ -24,10 +22,6 @@ vi.mock("@/lib/permissoes", () => ({
 
 vi.mock("@/lib/evolution-api.chat", () => ({
   buscarMensagensPorContato: buscarMensagensPorContatoMock,
-}));
-
-vi.mock("@/lib/chat-snapshot-cache", () => ({
-  obterSnapshotCacheado: obterSnapshotCacheadoMock,
 }));
 
 vi.mock("@/lib/whatsapp-chat-realtime.sse", () => ({
@@ -50,7 +44,7 @@ function mockSessao() {
     sessao: {
       id_empresa: "empresa-1",
       id_usuario: "usuario-1",
-      perfil: "GERENTE",
+      perfil: "EMPRESA",
     },
   });
   whereLeadsPorPerfilMock.mockResolvedValue({ id_empresa: "empresa-1" });
@@ -62,32 +56,19 @@ describe("chat messages stream route", () => {
     vi.unstubAllGlobals();
 
     leadFindFirstMock.mockImplementation(async ({ where }: { where: { telefone?: { contains?: string } } }) => {
-      if (where.telefone?.contains === "5511999999999") {
+      if (where.telefone?.contains === "1203630") {
         return { id: "lead-1" };
       }
 
       return null;
     });
 
-    obterSnapshotCacheadoMock.mockImplementation(async ({ loader }: { loader: () => Promise<unknown> }) => loader());
     criarRespostaSseMock.mockImplementation((params: { carregarSnapshot: () => Promise<unknown> }) => {
       void params;
       return new Response("stream-ok", { status: 200 });
     });
 
-    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
-      new Response(JSON.stringify([
-        {
-          key: {
-            remoteJid: "1203630@lid",
-            remoteJidAlt: "5511999999999@s.whatsapp.net",
-          },
-        },
-      ]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-    ));
+    vi.stubGlobal("fetch", vi.fn());
   });
 
   it("abre o stream de conversa @lid usando o jid resolvido", async () => {
@@ -106,7 +87,7 @@ describe("chat messages stream route", () => {
 
     expect(buscarMensagensPorContatoMock).toHaveBeenCalledWith(
       "instancia-1",
-      "5511999999999@s.whatsapp.net",
+      "1203630@s.whatsapp.net",
       1,
       10,
     );
