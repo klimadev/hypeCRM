@@ -4,6 +4,7 @@ import { unificarChatsComLeads } from "@/lib/chat-unificado";
 import { listarChatsWhatsappPersistidos } from "@/lib/chat-whatsapp-persistence";
 import { serverError } from "@/lib/api/http";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
+import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
 
 const CHAT_LIST_TTL_MS = 30_000;
 const CHAT_PERSISTENCE_FIRST = process.env.CHAT_PERSISTENCE_FIRST !== "0";
@@ -20,14 +21,12 @@ export async function GET(request: NextRequest) {
     const limite = parseInt(searchParams.get("limite") ?? "50", 10);
     const busca = searchParams.get("busca") ?? undefined;
 
-    console.info("[Chat] Listando conversas...", {
-      empresaId: auth.sessao.id_empresa,
-      pagina,
-      limite,
-      temBusca: !!busca,
-    });
+    chatLogger.log("LISTAR_CONVERSAS_REQ", criarContextoChat({ idEmpresa: auth.sessao.id_empresa, pagina, limite, busca }));
 
     const cacheKey = `chat:list:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${auth.sessao.id_pdv ?? ""}:${pagina}:${limite}:${busca?.trim() ?? ""}`;
+
+    chatLogger.log("LISTAR_CONVERSAS_REQ", criarContextoChat({ pagina, limite, busca }));
+
     const resultado = await obterSnapshotCacheado({
       key: cacheKey,
       ttlMs: CHAT_LIST_TTL_MS,
@@ -71,12 +70,13 @@ export async function GET(request: NextRequest) {
     }
 
     const semUltimaMensagem = chatsFinais.filter((chat) => !chat.ultimaMensagem).length;
-    console.info("[Chat] Conversas carregadas", {
-      pagina,
-      retornadas: chatsFinais.length,
-      total: totalFinal,
-      semUltimaMensagem,
-      fonte: persistido?.chats.length ? "persistido" : "evolution",
+    chatLogger.log("LISTAR_CONVERSAS_OK", criarContextoChat({ idEmpresa: auth.sessao.id_empresa, pagina, limite, busca, telefone: chatsFinais[0]?.telefone }), {
+      normalizado: {
+        retornadas: chatsFinais.length,
+        total: totalFinal,
+        semUltimaMensagem,
+        fonte: persistido?.chats.length ? "persistido" : "evolution",
+      },
     });
 
     return NextResponse.json({
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
       temMais: temMaisFinal,
     });
   } catch (error) {
-    console.error("[Chat] Erro ao listar conversas", error);
+    chatLogger.erro("LISTAR_CONVERSAS_ERRO", criarContextoChat({ idEmpresa: auth.sessao.id_empresa }), error);
     return serverError("Erro ao carregar chats.");
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
 import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
+import { obterSnapshotMensagensPersistente } from "@/lib/chat-messages-persistence";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
 import { obterSnapshotCacheado } from "@/lib/chat-snapshot-cache";
@@ -9,20 +10,13 @@ import { prisma } from "@/lib/prisma";
 import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
 import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
+import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
 
 const CHAT_MESSAGES_TTL_MS = 5_000;
+const CHAT_PERSISTENCE_FIRST = process.env.CHAT_PERSISTENCE_FIRST !== "0";
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
-}
-
-function logChat(evento: string, detalhes?: Record<string, unknown>) {
-  if (detalhes) {
-    console.info(`[Chat] ${evento}`, detalhes);
-    return;
-  }
-
-  console.info(`[Chat] ${evento}`);
 }
 
 async function verificarAcessoConversa(
@@ -86,11 +80,8 @@ export async function GET(request: NextRequest) {
 
   if (ehInstagram(instanceName)) {
     try {
-      logChat("Carregando mensagens da conversa do Instagram", {
-        instanceName,
-        remoteJid,
-        limite,
-      });
+      const ctx = criarContextoChat({ instanceName, remoteJid, limite });
+      chatLogger.log("CARREGAR_MENSAGENS_INSTAGRAM_REQ", ctx);
 
       const mensagensIg = await obterSnapshotCacheado({
         key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:instagram:${remoteJid}:${limite}`,
@@ -112,14 +103,11 @@ export async function GET(request: NextRequest) {
         error: null,
       }));
 
-      logChat("Mensagens do Instagram carregadas", {
-        remoteJid,
-        total: messages.length,
-      });
+      chatLogger.log("CARREGAR_MENSAGENS_INSTAGRAM_OK", ctx, { normalizado: { total: messages.length } });
 
       return NextResponse.json({ messages, hasMore: false });
     } catch (error) {
-      console.error(`[Chat] Erro ao carregar conversa do Instagram ${remoteJid}`, error);
+      chatLogger.erro("CARREGAR_MENSAGENS_INSTAGRAM_ERRO", criarContextoChat({ instanceName, remoteJid }), error);
       return NextResponse.json(
         { erro: error instanceof Error ? error.message : "Erro ao carregar mensagens do Instagram." },
         { status: 500 },
@@ -128,9 +116,21 @@ export async function GET(request: NextRequest) {
   }
 
   const result = await obterSnapshotCacheado({
-    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${destinoWhatsapp?.lookupRemoteJid ?? remoteJid}:${page}:${limite}`,
+    key: `chat:messages:${auth.sessao.id_empresa}:${auth.sessao.perfil}:${auth.sessao.id_usuario}:${instanceName}:${destinoWhatsapp?.lookupRemoteJid ?? remoteJid}:${page}:${limite}:${CHAT_PERSISTENCE_FIRST ? "pf" : "legacy"}`,
     ttlMs: CHAT_MESSAGES_TTL_MS,
-    loader: () => buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite),
+    loader: () => {
+      if (CHAT_PERSISTENCE_FIRST) {
+        return obterSnapshotMensagensPersistente({
+          idEmpresa: auth.sessao.id_empresa,
+          instanceName,
+          remoteJid: destinoWhatsapp?.lookupRemoteJid ?? remoteJid,
+          page,
+          limite,
+        });
+      }
+
+      return buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite);
+    },
   });
 
   return NextResponse.json({ messages: result.messages, hasMore: result.hasMore });
@@ -168,10 +168,7 @@ export async function POST(request: NextRequest) {
 
   if (ehInstagram(validacao.data.instanceName)) {
     try {
-      logChat("Enviando mensagem no Instagram", {
-        instanceName: validacao.data.instanceName,
-        remoteJid: validacao.data.remoteJid,
-      });
+      chatLogger.log("ENVIAR_MENSAGEM_INSTAGRAM", criarContextoChat({ instanceName: validacao.data.instanceName, remoteJid: validacao.data.remoteJid }));
 
       const resultado = await enviarMensagemInstagram(
         auth.sessao.id_empresa,
@@ -192,17 +189,14 @@ export async function POST(request: NextRequest) {
   }
 
   try {
+    chatLogger.log("ENVIAR_MENSAGEM_EVOLUTION_REQ", criarContextoChat({ instanceName: validacao.data.instanceName, telefone }));
     await enviarMensagemTexto({
       instanceName: validacao.data.instanceName,
       telefone,
       mensagem: validacao.data.text,
     });
   } catch (error) {
-    console.error("[Chat] Erro ao enviar mensagem via Evolution", {
-      instanceName: validacao.data.instanceName,
-      telefone,
-      erro: error instanceof Error ? error.message : String(error),
-    });
+    chatLogger.erro("ENVIAR_MENSAGEM_EVOLUTION_ERRO", criarContextoChat({ instanceName: validacao.data.instanceName, telefone }), error);
 
     return NextResponse.json(
       { erro: error instanceof Error ? error.message : "Erro ao enviar mensagem." },

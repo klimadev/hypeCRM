@@ -37,6 +37,8 @@ export async function upsertMensagensNoBanco(
       status: true,
       tipo: true,
       conteudo: true,
+      remote_jid_alt: true,
+      push_name: true,
       erro: true,
       payload_json: true,
     },
@@ -53,9 +55,11 @@ export async function upsertMensagensNoBanco(
       id_whatsapp_instancia: params.idWhatsappInstancia,
       mensagem_id: mensagem.messageId,
       remote_jid: mensagem.remoteJid,
+      remote_jid_alt: mensagem.remoteJidAlt,
       from_me: mensagem.fromMe,
       tipo: mensagem.kind,
       conteudo: mensagem.text,
+      push_name: mensagem.pushName,
       status: mensagem.status,
       timestamp: mensagem.timestamp,
       erro: mensagem.error,
@@ -75,6 +79,8 @@ export async function upsertMensagensNoBanco(
     const precisaAtualizar =
       existente.tipo !== mensagem.kind ||
       (existente.conteudo ?? "") !== mensagem.text ||
+      existente.remote_jid_alt !== mensagem.remoteJidAlt ||
+      existente.push_name !== mensagem.pushName ||
       existente.status !== statusFinal ||
       (existente.erro ?? null) !== mensagem.error ||
       (existente.payload_json ?? null) !== mensagem.payloadJson;
@@ -86,6 +92,8 @@ export async function upsertMensagensNoBanco(
       data: {
         tipo: mensagem.kind,
         conteudo: mensagem.text,
+        remote_jid_alt: mensagem.remoteJidAlt,
+        push_name: mensagem.pushName,
         status: statusFinal,
         erro: mensagem.error,
         payload_json: mensagem.payloadJson,

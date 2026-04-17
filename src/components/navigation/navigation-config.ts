@@ -49,6 +49,7 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
         { href: "/produtos", label: "Produtos", descricao: getItemDescricao("Produtos"), icon: Package },
         { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid, tourTarget: TOUR_TARGETS.sidebarNegocios },
         { href: "/chat", label: "Chat", descricao: getItemDescricao("Chat"), icon: MessageSquare },
+        
         ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards }] : []),
         ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target, tourTarget: TOUR_TARGETS.sidebarEquipe }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
       ],

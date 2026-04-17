@@ -7,6 +7,12 @@ export function criarWhereLeadMensagensRealtime(leadId: string, phoneNumber: str
     : { remote_jid: { contains: phoneNumber.replace(/\D/g, "") } };
 }
 
+export function normalizarLeadIdChat2(leadId: string) {
+  const valor = leadId.trim();
+  if (!valor) return "";
+  return valor.startsWith("novo-") ? valor.slice(5) : valor;
+}
+
 export function normalizarLimiteConversasRealtime(limite?: number) {
   return Math.min(limite ?? 30, 50);
 }
@@ -82,7 +88,7 @@ export function mapearConversaResumoRealtime(params: {
 
   if (lead) {
     return {
-      leadId: lead.id,
+      leadId: normalizarLeadIdChat2(lead.id),
       leadNome: conversa.pushName?.trim() || lead.nome,
       leadTelefone: lead.telefone,
       leadOrigem: (lead.origem ?? "SINCRONIZACAO_WHATSAPP") as ConversaResumo["leadOrigem"],
@@ -99,7 +105,7 @@ export function mapearConversaResumoRealtime(params: {
   }
 
   return {
-    leadId: `novo-${telefoneSemFormato}`,
+    leadId: telefoneSemFormato,
     leadNome: conversa.pushName?.trim() || telefoneSemFormato,
     leadTelefone: telefoneSemFormato,
     leadOrigem: "SINCRONIZACAO_WHATSAPP",
