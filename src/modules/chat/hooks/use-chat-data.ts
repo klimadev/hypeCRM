@@ -36,6 +36,7 @@ export function useChatData(busca?: string) {
   const [chats, setChats] = useState<ChatUnificado[]>([]);
   // Keep the first render deterministic across SSR and hydration.
   const [carregando, setCarregando] = useState(true);
+  const [atualizandoInbox, setAtualizandoInbox] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sseConectado, setSseConectado] = useState(false);
   const [ultimoSyncEm, setUltimoSyncEm] = useState<number | null>(null);
@@ -54,6 +55,9 @@ export function useChatData(busca?: string) {
     const timeout = window.setTimeout(() => controller.abort(), CHAT_LIST_FETCH_TIMEOUT_MS);
 
     try {
+      if (pag === 1) {
+        setAtualizandoInbox(true);
+      }
       if (pag === 1 && chatsRef.current.length === 0) {
         setCarregando(true);
       }
@@ -86,6 +90,9 @@ export function useChatData(busca?: string) {
       }
     } finally {
       window.clearTimeout(timeout);
+      if (pag === 1) {
+        setAtualizandoInbox(false);
+      }
       setCarregando(false);
     }
   }, []);
@@ -150,6 +157,7 @@ export function useChatData(busca?: string) {
   return {
     chats,
     carregando,
+    atualizandoInbox,
     erro,
     sseConectado,
     ultimoSyncEm,

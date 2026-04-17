@@ -9,6 +9,7 @@ import type {
   UseChatModuleReturn,
   OrphanRegistrarLeadParams,
   OrphanCriarNegocioParams,
+  ChatCategoriaContagens,
 } from "../types";
 import { atualizarLeadContato } from "@/lib/api/leads";
 import { listarInstanciasWhatsapp } from "@/lib/api/whatsapp.instances";
@@ -18,12 +19,25 @@ import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABORADOR"; idUsuario: string }): UseChatModuleReturn {
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
-  const { chats, carregando, erro, sseConectado, ultimoSyncEm, recarregar, carregarMais, temMais, total, atualizarChatLocal } = useChatData(buscaDebounced);
+  const {
+    chats,
+    carregando,
+    atualizandoInbox,
+    erro,
+    sseConectado,
+    ultimoSyncEm,
+    recarregar,
+    carregarMais,
+    temMais,
+    total,
+    atualizarChatLocal,
+  } = useChatData(buscaDebounced);
   const { addToast } = useToast();
   const [chatSelecionado, setChatSelecionado] = useState<ChatUnificado | null>(null);
   const [filtroOrigem, setFiltroOrigem] = useState<"todos" | "anuncio" | "whatsapp" | "manual">("todos");
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
   const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
+  const [filtroCategoria, setFiltroCategoria] = useState<"todas" | "em_aberto" | "nao_lidas" | "sem_negocio" | "com_negocio">("todas");
   const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
   const [instanciasWhatsapp, setInstanciasWhatsapp] = useState<WhatsappInstancia[]>([]);
   const ultimoChatMarcadoRef = useRef<string | null>(null);
@@ -61,6 +75,48 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     });
   }, [atualizarChatLocal, chatSelecionado]);
 
+  const negocioEstaAberto = useCallback((chat: ChatUnificado) => {
+    const status = chat.leadMatch?.negocio?.status?.toLowerCase().trim();
+    if (!status) {
+      return !chat.leadMatch?.id_negocio;
+    }
+
+    if (
+      status.includes("ganho") ||
+      status.includes("perdid") ||
+      status.includes("fechad") ||
+      status.includes("cancel") ||
+      status.includes("conclu")
+    ) {
+      return false;
+    }
+
+    return true;
+  }, []);
+
+  const categoriaContagens = useMemo<ChatCategoriaContagens>(() => {
+    return chats.reduce(
+      (acc, chat) => {
+        if (chat.unreadCount > 0) {
+          acc.nao_lidas += 1;
+        }
+
+        if (chat.leadMatch?.id_negocio) {
+          acc.com_negocio += 1;
+        } else {
+          acc.sem_negocio += 1;
+        }
+
+        if (negocioEstaAberto(chat)) {
+          acc.em_aberto += 1;
+        }
+
+        return acc;
+      },
+      { em_aberto: 0, nao_lidas: 0, sem_negocio: 0, com_negocio: 0 },
+    );
+  }, [chats, negocioEstaAberto]);
+
   const chatsFiltrados = useMemo(() => {
     const termo = busca.trim().toLowerCase();
 
@@ -79,6 +135,22 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
       }
 
       if (filtroCanal !== "todos" && chat.canal !== filtroCanal) {
+        return false;
+      }
+
+      if (filtroCategoria === "nao_lidas" && chat.unreadCount <= 0) {
+        return false;
+      }
+
+      if (filtroCategoria === "sem_negocio" && chat.leadMatch?.id_negocio) {
+        return false;
+      }
+
+      if (filtroCategoria === "com_negocio" && !chat.leadMatch?.id_negocio) {
+        return false;
+      }
+
+      if (filtroCategoria === "em_aberto" && !negocioEstaAberto(chat)) {
         return false;
       }
 
@@ -116,7 +188,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
         statusNegocio.toLowerCase().includes(termo)
       );
     });
-  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal, filtroInstancia]);
+  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal, filtroCategoria, filtroInstancia, negocioEstaAberto]);
 
   const chatsOrdenados = useMemo(() => {
     return [...chatsFiltrados].sort((a, b) => {
@@ -301,6 +373,9 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     setFiltroFila,
     filtroCanal,
     setFiltroCanal,
+    filtroCategoria,
+    setFiltroCategoria,
+    categoriaContagens,
     filtroInstancia,
     setFiltroInstancia,
     onRegistrarComoLead,
@@ -309,5 +384,6 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
     onIniciarNovoChat,
     selecionarInstancia,
     instanciasWhatsapp,
+    recarregandoInbox: atualizandoInbox,
   };
 }

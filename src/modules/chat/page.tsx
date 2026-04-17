@@ -53,11 +53,16 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             setFiltroFila={vm.setFiltroFila}
             filtroCanal={vm.filtroCanal}
             setFiltroCanal={vm.setFiltroCanal}
+            filtroCategoria={vm.filtroCategoria}
+            setFiltroCategoria={vm.setFiltroCategoria}
+            categoriaContagens={vm.categoriaContagens}
             temMais={vm.temMais}
             carregarMais={vm.carregarMais}
             total={vm.total}
             onIniciarNovoChat={vm.onIniciarNovoChat}
             instanciasWhatsapp={vm.instanciasWhatsapp}
+            recarregar={vm.recarregar}
+            recarregandoInbox={vm.recarregandoInbox}
             filtrosDockAberto={filtrosDockAberto}
             onAlternarFiltrosDock={() => setFiltrosDockAberto((current) => !current)}
           />

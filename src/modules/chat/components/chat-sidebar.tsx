@@ -1,13 +1,14 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, MessageCircle, ChevronDown, Activity, Inbox, Plus } from "lucide-react";
+import { Search, MessageCircle, ChevronDown, Activity, Inbox, Plus, RotateCw, MailOpen, Briefcase, BriefcaseBusiness } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
 import { ChatNewChatDialog } from "./chat-new-chat-dialog";
 import { ChatFiltersContent } from "./chat-filters-content";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import type { ChatUnificado } from "../types";
+import { Tooltip } from "@/components/ui/tooltip";
+import type { ChatCategoriaContagens, ChatCategoriaInbox, ChatUnificado } from "../types";
 import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 
 type ChatSidebarProps = {
@@ -30,11 +31,16 @@ type ChatSidebarProps = {
   setFiltroFila: (filtro: "todas" | "sem_dono" | "sem_negocio") => void;
   filtroCanal: "todos" | "whatsapp" | "instagram";
   setFiltroCanal: (filtro: "todos" | "whatsapp" | "instagram") => void;
+  filtroCategoria: ChatCategoriaInbox;
+  setFiltroCategoria: (categoria: ChatCategoriaInbox) => void;
+  categoriaContagens: ChatCategoriaContagens;
   temMais: boolean;
   carregarMais: () => void;
   total: number;
   onIniciarNovoChat: (params: { telefone: string; instanceName: string }) => Promise<void>;
   instanciasWhatsapp: WhatsappInstancia[];
+  recarregar: () => Promise<void>;
+  recarregandoInbox: boolean;
   filtrosDockAberto?: boolean;
   onAlternarFiltrosDock?: () => void;
 };
@@ -59,20 +65,37 @@ export function ChatSidebar({
   setFiltroFila,
   filtroCanal,
   setFiltroCanal,
+  filtroCategoria,
+  setFiltroCategoria,
+  categoriaContagens,
   temMais,
   carregarMais,
   total,
   onIniciarNovoChat,
   instanciasWhatsapp,
+  recarregar,
+  recarregandoInbox,
   filtrosDockAberto,
   onAlternarFiltrosDock,
 }: ChatSidebarProps) {
   const [filtrosMobileAbertos, setFiltrosMobileAbertos] = useState(false);
   const [novoChatOpen, setNovoChatOpen] = useState(false);
   const filtrosAtivos = useMemo(
-    () => Number(filtroOrigem !== "todos") + Number(filtroFila !== "todas") + Number(filtroCanal !== "todos"),
-    [filtroCanal, filtroFila, filtroOrigem],
+    () => Number(filtroOrigem !== "todos") + Number(filtroFila !== "todas") + Number(filtroCanal !== "todos") + Number(filtroCategoria !== "todas"),
+    [filtroCanal, filtroCategoria, filtroFila, filtroOrigem],
   );
+
+  const categoriasRapidas: Array<{
+    id: Exclude<ChatCategoriaInbox, "todas">;
+    label: string;
+    count: number;
+    icon: typeof Inbox;
+  }> = [
+    { id: "em_aberto", label: "Em aberto", count: categoriaContagens.em_aberto, icon: Inbox },
+    { id: "nao_lidas", label: "Não lidas", count: categoriaContagens.nao_lidas, icon: MailOpen },
+    { id: "sem_negocio", label: "Sem negócio", count: categoriaContagens.sem_negocio, icon: Briefcase },
+    { id: "com_negocio", label: "Com negócio", count: categoriaContagens.com_negocio, icon: BriefcaseBusiness },
+  ];
   const ultimoSyncLabel = ultimoSyncEm
     ? new Date(ultimoSyncEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
     : "--:--";
@@ -99,6 +122,17 @@ export function ChatSidebar({
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Tooltip content={`Atualizar inbox (${ultimoSyncLabel})`}>
+              <button
+                type="button"
+                onClick={() => void recarregar()}
+                disabled={recarregandoInbox || carregando}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                aria-label="Atualizar inbox"
+              >
+                <RotateCw className={cn("h-3.5 w-3.5", recarregandoInbox && "animate-spin")} />
+              </button>
+            </Tooltip>
             <span
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium",
@@ -168,6 +202,40 @@ export function ChatSidebar({
               <ChevronDown className="h-3.5 w-3.5" />
             </button>
           </>
+        </div>
+
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+          {categoriasRapidas.map((categoria) => {
+            const Icon = categoria.icon;
+            const ativo = filtroCategoria === categoria.id;
+
+            return (
+              <Tooltip
+                key={categoria.id}
+                content={
+                  <>
+                    <div>{categoria.label}</div>
+                    <div className="text-[10px] text-[var(--text-secondary)]">{categoria.count} conversa(s)</div>
+                  </>
+                }
+              >
+                <button
+                  type="button"
+                  onClick={() => setFiltroCategoria(ativo ? "todas" : categoria.id)}
+                  className={cn(
+                    "group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors",
+                    ativo
+                      ? "border-[color:rgba(139,92,246,0.28)] bg-[var(--brand-soft)] text-[var(--brand)]"
+                      : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
+                  )}
+                  aria-label={`${categoria.label}: ${categoria.count}`}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  <span className="min-w-4 text-center text-[10px] font-semibold">{categoria.count}</span>
+                </button>
+              </Tooltip>
+            );
+          })}
         </div>
       </div>
 

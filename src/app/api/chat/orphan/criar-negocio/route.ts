@@ -13,6 +13,7 @@ const esquemaCriarNegocio = z.object({
   nome: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres.").optional(),
   id_pdv: z.string().trim().optional(),
   id_funcionario: z.string().trim().optional(),
+  id_funil: z.string().trim().optional(),
   id_estagio: z.string().trim().optional(),
   id_lead: z.string().trim().optional(),
 });
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
     return validacao.response;
   }
 
-  const { telefone, nome, id_pdv, id_funcionario, id_estagio, id_lead } = validacao.data;
+  const { telefone, nome, id_pdv, id_funcionario, id_funil, id_estagio, id_lead } = validacao.data;
 
   const whereLeads = await whereLeadsPorPerfil(auth.sessao);
   const leadExistente = id_lead
@@ -126,6 +127,10 @@ export async function POST(request: NextRequest) {
 
   if (!estagioSelecionado) {
     return badRequest("Estagio invalido.");
+  }
+
+  if (id_funil && estagioSelecionado.id_funil !== id_funil) {
+    return badRequest("A etapa selecionada nao pertence ao pipeline informado.");
   }
 
   try {

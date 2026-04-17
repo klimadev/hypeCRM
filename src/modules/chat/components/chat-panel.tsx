@@ -308,6 +308,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
         telefone={chat.telefone}
         nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""}
         perfil={perfil}
+        tipoAcao="registrar_lead"
         onSubmit={(params) => {
           void onRegistrarLead(params);
           setDialogOpen(null);
@@ -325,6 +326,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
         telefone={chat.telefone}
         nomeInicial={chat.pushName && chat.pushName !== "Você" ? chat.pushName : ""}
         perfil={perfil}
+        tipoAcao="criar_negocio"
         onSubmit={(params) => {
           void onCriarNegocio({ ...params, id_lead: chat.leadMatch?.id });
           setDialogOpen(null);

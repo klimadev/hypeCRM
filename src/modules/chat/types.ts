@@ -63,8 +63,18 @@ export type OrphanCriarNegocioParams = {
   nome?: string;
   id_pdv?: string;
   id_funcionario?: string;
+  id_funil?: string;
   id_estagio?: string;
   id_lead?: string;
+};
+
+export type ChatCategoriaInbox = "todas" | "em_aberto" | "nao_lidas" | "sem_negocio" | "com_negocio";
+
+export type ChatCategoriaContagens = {
+  em_aberto: number;
+  nao_lidas: number;
+  sem_negocio: number;
+  com_negocio: number;
 };
 
 export type UseChatModuleReturn = {
@@ -79,10 +89,14 @@ export type UseChatModuleReturn = {
   setFiltroFila: (filtro: "todas" | "sem_dono" | "sem_negocio") => void;
   filtroCanal: "todos" | "whatsapp" | "instagram";
   setFiltroCanal: (filtro: "todos" | "whatsapp" | "instagram") => void;
+  filtroCategoria: ChatCategoriaInbox;
+  setFiltroCategoria: (categoria: ChatCategoriaInbox) => void;
+  categoriaContagens: ChatCategoriaContagens;
   /** Filtro por instância específica (para chats duplicados entre instâncias) */
   filtroInstancia: string | null;
   setFiltroInstancia: (instancia: string | null) => void;
   carregando: boolean;
+  recarregandoInbox: boolean;
   erro: string | null;
   sseConectado: boolean;
   ultimoSyncEm: number | null;
