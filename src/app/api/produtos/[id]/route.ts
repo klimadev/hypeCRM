@@ -19,12 +19,15 @@ export async function GET(request: NextRequest, { params }: Params) {
 
   const produto = await prisma.produto.findFirst({
     where: { id, id_empresa: auth.sessao.id_empresa },
-    include: {
-      LeadProduto: {
-        select: { id: true, id_lead: true, criado_em: true },
-        orderBy: { criado_em: "desc" },
-        take: 10,
-      },
+    select: {
+      id: true,
+      id_empresa: true,
+      nome: true,
+      slug: true,
+      descricao: true,
+      ativo: true,
+      criado_em: true,
+      atualizado_em: true,
     },
   });
 
@@ -66,22 +69,25 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     nome?: string;
     descricao?: string | null;
     ativo?: boolean;
-    schema_layout?: string;
   } = {};
 
   if (dados.nome !== undefined) data.nome = dados.nome;
   if (dados.descricao !== undefined) data.descricao = dados.descricao ?? null;
   if (dados.ativo !== undefined) data.ativo = dados.ativo;
-  if (dados.schema_layout !== undefined) {
-    data.schema_layout = JSON.stringify({
-      versao: dados.schema_layout.versao,
-      campos: [...dados.schema_layout.campos].sort((a, b) => a.ordem - b.ordem),
-    });
-  }
 
   const produto = await prisma.produto.update({
     where: { id },
     data,
+    select: {
+      id: true,
+      id_empresa: true,
+      nome: true,
+      slug: true,
+      descricao: true,
+      ativo: true,
+      criado_em: true,
+      atualizado_em: true,
+    },
   });
 
   if (!produto) {
@@ -89,4 +95,39 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   return ok({ produto });
+}
+
+export async function DELETE(request: NextRequest, { params }: Params) {
+  const auth = await exigirSessao(request);
+  if (auth.erro) {
+    return auth.erro;
+  }
+
+  const { id } = await params;
+  const produto = await prisma.produto.findFirst({
+    where: { id, id_empresa: auth.sessao.id_empresa },
+    select: { id: true },
+  });
+
+  if (!produto) {
+    return notFound("Produto nao encontrado.");
+  }
+
+  await prisma.$transaction([
+    prisma.negocio.updateMany({
+      where: { id_empresa: auth.sessao.id_empresa, id_produto_principal: id },
+      data: { id_produto_principal: null },
+    }),
+    prisma.leadProduto.deleteMany({
+      where: { id_empresa: auth.sessao.id_empresa, id_produto: id },
+    }),
+    prisma.negocioProduto.deleteMany({
+      where: { id_empresa: auth.sessao.id_empresa, id_produto: id },
+    }),
+    prisma.produto.delete({
+      where: { id },
+    }),
+  ]);
+
+  return ok({ ok: true });
 }

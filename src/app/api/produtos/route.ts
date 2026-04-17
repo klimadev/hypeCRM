@@ -42,6 +42,16 @@ export async function GET(request: NextRequest) {
 
   const produtos = await prisma.produto.findMany({
     where: { id_empresa: auth.sessao.id_empresa },
+    select: {
+      id: true,
+      id_empresa: true,
+      nome: true,
+      slug: true,
+      descricao: true,
+      ativo: true,
+      criado_em: true,
+      atualizado_em: true,
+    },
     orderBy: [{ ativo: "desc" }, { nome: "asc" }],
   });
 
@@ -67,11 +77,6 @@ export async function POST(request: NextRequest) {
   const dados = validacao.data;
   const slug = await gerarSlugDisponivel(auth.sessao.id_empresa, dados.nome);
 
-  const schemaLayout = JSON.stringify({
-    versao: dados.schema_layout.versao,
-    campos: [...dados.schema_layout.campos].sort((a, b) => a.ordem - b.ordem),
-  });
-
   const produto = await prisma.produto.create({
     data: {
       id: randomUUID(),
@@ -80,7 +85,17 @@ export async function POST(request: NextRequest) {
       slug,
       descricao: dados.descricao ?? null,
       ativo: dados.ativo ?? true,
-      schema_layout: schemaLayout,
+      schema_layout: "{}",
+    },
+    select: {
+      id: true,
+      id_empresa: true,
+      nome: true,
+      slug: true,
+      descricao: true,
+      ativo: true,
+      criado_em: true,
+      atualizado_em: true,
     },
   });
 

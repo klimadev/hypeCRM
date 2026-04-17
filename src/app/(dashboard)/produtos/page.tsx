@@ -1,10 +1,9 @@
+import { redirect } from "next/navigation";
 import { ModuloProdutos } from "@/modules/produtos";
 import { obterSessaoNoServidor } from "@/lib/autenticacao";
 import type { Produto } from "@/lib/api/produtos";
 import { prisma } from "@/lib/prisma";
 import { podeVerEquipe } from "@/lib/permissoes";
-import { redirect } from "next/navigation";
-import type { ProdutosPageInitialState } from "@/modules/produtos/types";
 
 function serializarProduto(produto: {
   id: string;
@@ -13,7 +12,6 @@ function serializarProduto(produto: {
   slug: string;
   descricao: string | null;
   ativo: boolean;
-  schema_layout: string;
   criado_em: Date;
   atualizado_em: Date;
 }): Produto {
@@ -26,36 +24,23 @@ function serializarProduto(produto: {
 
 export default async function PaginaProdutos() {
   const sessao = await obterSessaoNoServidor();
+  if (!sessao) return null;
+  if (!podeVerEquipe(sessao)) redirect("/kanban");
 
-  if (!sessao) {
-    return null;
-  }
-
-  if (!podeVerEquipe(sessao)) {
-    redirect("/kanban");
-  }
-
-  const estadoInicial: ProdutosPageInitialState = await (prisma as typeof prisma & {
-    produto: {
-      findMany: typeof prisma.$queryRaw extends (...args: never[]) => unknown
-        ? (args: {
-            where: { id_empresa: string };
-            orderBy: Array<{ ativo: "desc" } | { nome: "asc" }>;
-          }) => Promise<import("@/lib/api/produtos").Produto[]>
-        : never;
-    };
-  }).produto.findMany({
+  const resultado = await prisma.produto.findMany({
     where: { id_empresa: sessao.id_empresa },
+    select: {
+      id: true,
+      id_empresa: true,
+      nome: true,
+      slug: true,
+      descricao: true,
+      ativo: true,
+      criado_em: true,
+      atualizado_em: true,
+    },
     orderBy: [{ ativo: "desc" }, { nome: "asc" }],
-  }).then((produtos) => ({
-    produtos: produtos.map(serializarProduto),
-    erroInicial: null,
-    falhaCarregamentoInicial: false,
-  })).catch(() => ({
-    produtos: [],
-    erroInicial: "Nao foi possivel carregar os produtos internos.",
-    falhaCarregamentoInicial: true,
-  }));
+  }).then((items) => ({ produtos: items.map(serializarProduto), erro: null as string | null })).catch(() => ({ produtos: [] as Produto[], erro: "Nao foi possivel carregar o catalogo." }));
 
-  return <ModuloProdutos estadoInicial={estadoInicial} />;
+  return <ModuloProdutos produtosIniciais={resultado.produtos} erroInicial={resultado.erro} />;
 }
