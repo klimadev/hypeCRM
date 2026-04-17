@@ -91,7 +91,7 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
 
   return (
     <div className="space-y-3 md:hidden">
-      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))] p-3 shadow-[var(--shadow-sm)]">
+      <div className="rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface)] p-3 shadow-[var(--shadow-sm)]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Kanban comercial</p>
@@ -153,7 +153,7 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
             className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-9 pr-10 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-[var(--focus-ring)]"
           />
           {busca ? (
-            <button type="button" onClick={() => setBusca("")} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.05)] text-[var(--text-secondary)]">
+            <button type="button" onClick={() => setBusca("")} className="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
               <X className="h-3.5 w-3.5" />
             </button>
           ) : null}
@@ -165,10 +165,10 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
               key={kpi.id}
               className={cn(
                 "rounded-[20px] border p-3 shadow-[var(--shadow-sm)]",
-                kpi.destaque === "brand" && "border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.12)]",
-                kpi.destaque === "success" && "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)]",
-                kpi.destaque === "warning" && "border-[color:rgba(245,158,11,0.22)] bg-[color:rgba(245,158,11,0.1)]",
-                kpi.destaque === "info" && "border-[color:rgba(56,189,248,0.22)] bg-[color:rgba(56,189,248,0.1)]",
+                kpi.destaque === "brand" && "border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[var(--brand-soft)]",
+                kpi.destaque === "success" && "border-[color-mix(in_srgb,var(--success)_26%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)]",
+                kpi.destaque === "warning" && "border-[color-mix(in_srgb,var(--warning)_26%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)]",
+                kpi.destaque === "info" && "border-[color-mix(in_srgb,var(--info)_26%,transparent)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)]",
               )}
             >
               <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{kpi.label}</p>
@@ -187,7 +187,7 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
               className={cn(
                 "inline-flex h-10 shrink-0 items-center rounded-full border px-4 text-sm font-medium transition-colors",
                 filtroRapidoKanbanAtivo({ tipo: filtroRapido.id, filtros, modoFocoPendencias })
-                  ? "border-[color:rgba(139,92,246,0.3)] bg-[color:rgba(139,92,246,0.16)] text-[var(--text-primary)]"
+                  ? "border-[color-mix(in_srgb,var(--brand)_34%,transparent)] bg-[var(--brand-soft)] text-[var(--text-primary)]"
                   : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]",
               )}
             >
@@ -230,7 +230,7 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
               variant={modoFocoPendencias ? "default" : "outline"}
               size="sm"
               onClick={() => setModoFocoPendencias(!modoFocoPendencias)}
-              className={cn("h-11 rounded-[18px] px-3 text-sm font-medium shadow-none", modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[color:#fb7185]" : "border-[var(--border-subtle)]")}
+              className={cn("h-11 rounded-[18px] px-3 text-sm font-medium shadow-none", modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[var(--danger-strong)]" : "border-[var(--border-subtle)]")}
               title={modoFocoPendencias ? "Mostrar todos os negócios" : "Mostrar apenas negócios com pendências"}
             >
               <Gauge className="h-4 w-4" />
@@ -243,7 +243,7 @@ export function KanbanHeaderMobile(props: KanbanHeaderMobileProps) {
               onClick={() => void onToggleNotificacoes()}
               className={cn(
                 "h-11 rounded-[18px] border-[var(--border-subtle)] px-3 text-sm font-medium shadow-none",
-                notificacoesAtivadas ? "border-[color:rgba(59,130,246,0.28)] bg-[color:rgba(59,130,246,0.14)] text-[color:#dbeafe]" : "",
+                notificacoesAtivadas ? "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]" : "",
               )}
               title={notificacoesAtivadas ? "Notificações ativadas - clique para desativar" : "Ativar notificações de novas pendências"}
             >

@@ -49,7 +49,7 @@ export function LeadDetailsRemoveDialog({
             </div>
 
             {quantidadeLeadsRelacionados > 0 ? (
-              <div className="flex items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[var(--text-primary)]">Remover leads vinculados</p>
                   <p className="text-xs text-[var(--text-secondary)]">{descricaoRemocao}</p>
@@ -57,7 +57,7 @@ export function LeadDetailsRemoveDialog({
                 <Switch checked={removerLeadsVinculados} onCheckedChange={setRemoverLeadsVinculados} disabled={removendoNegocio} />
               </div>
             ) : (
-              <p className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-3 text-sm text-[var(--text-secondary)]">
+              <p className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3 text-sm text-[var(--text-secondary)]">
                 Este negócio não possui leads vinculados ativos.
               </p>
             )}

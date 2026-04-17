@@ -39,8 +39,8 @@ function KpiCard({
   return (
     <Card
       className={destaque
-        ? "relative overflow-hidden border-[color:rgba(139,92,246,0.24)] bg-[linear-gradient(180deg,rgba(28,20,43,0.95),rgba(12,12,14,0.94))]"
-        : "border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))]"
+        ? "relative overflow-hidden border-[color:color-mix(in_oklab,var(--danger)_34%,var(--border-subtle)_66%)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--danger)_12%,transparent_88%),transparent_52%),var(--surface)]"
+        : "border-[var(--border-subtle)] bg-[var(--surface)]"
       }
     >
       <CardContent className="flex items-center justify-between gap-4 p-4 md:p-5">
@@ -49,7 +49,7 @@ function KpiCard({
           <p className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{valor}</p>
           <p className="text-sm text-[var(--text-secondary)]">{descricao}</p>
         </div>
-        <span className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:rgba(139,92,246,0.24)] bg-[color:rgba(139,92,246,0.12)] text-[var(--brand)]">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:color-mix(in_oklab,var(--brand)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--brand)_16%,var(--surface-elevated)_84%)] text-[var(--brand)]">
           {icone}
         </span>
       </CardContent>
@@ -167,7 +167,7 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
       <InlineStatusAlert variant="success" message={feedbackSucesso} icon={<CheckCircle2 className="h-4 w-4" />} />
       
       {dadosConexao && (
-        <Card className="border-[var(--brand)] bg-[linear-gradient(180deg,rgba(139,92,246,0.08),rgba(139,92,246,0.02))]">
+        <Card className="border-[color:color-mix(in_oklab,var(--brand)_36%,var(--border-subtle)_64%)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--brand)_12%,transparent_88%),transparent_58%),var(--surface)]">
           <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[var(--brand)]/20">

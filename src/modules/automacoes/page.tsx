@@ -253,7 +253,7 @@ export function ModuloAutomacoes() {
       spacing="md"
       className="flex h-[calc(100dvh-6.25rem)] min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-1.5rem)] xl:h-[calc(100dvh-2rem)]"
     >
-      <section className="relative flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[0_20px_60px_-42px_rgba(0,0,0,0.92)]">
+      <section className="relative flex min-h-0 flex-1 overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-lg)]">
         <Tabs value={activeView} onValueChange={(value) => setActiveView(value as "canvas" | "logs")} className="flex min-h-0 flex-1 flex-col p-3 sm:p-4">
           <TabsList className="w-fit">
             <TabsTrigger value="canvas">Canvas</TabsTrigger>
@@ -352,7 +352,7 @@ export function ModuloAutomacoes() {
 
         {!hasNodes ? (
           <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
-            <div className="pointer-events-auto flex w-full max-w-sm items-center justify-between gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[color:rgba(12,12,14,0.9)] px-4 py-3 backdrop-blur-md">
+            <div className="pointer-events-auto flex w-full max-w-sm items-center justify-between gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-overlay)] px-4 py-3 backdrop-blur-md">
               <div>
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Comece pelo gatilho</p>
                 <p className="text-xs text-[var(--text-secondary)]">Crie o nó Lead criado para iniciar o fluxo.</p>

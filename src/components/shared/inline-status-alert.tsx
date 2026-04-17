@@ -10,17 +10,17 @@ type InlineStatusAlertProps = {
 };
 
 const variantStyles = {
-  error: "border-rose-200/60 bg-rose-50/50 text-rose-700",
-  success: "border-emerald-200/60 bg-emerald-50/50 text-emerald-700",
-  warning: "border-amber-200/60 bg-amber-50/50 text-amber-700",
-  info: "border-blue-200/60 bg-blue-50/50 text-blue-700",
+  error: "border-[var(--danger)]/30 bg-[var(--danger)]/8 text-[var(--danger)]",
+  success: "border-[var(--success)]/30 bg-[var(--success)]/8 text-[var(--success)]",
+  warning: "border-[var(--warning)]/30 bg-[var(--warning)]/8 text-[var(--warning)]",
+  info: "border-[var(--info)]/30 bg-[var(--info)]/8 text-[var(--info)]",
 };
 
 const iconStyles = {
-  error: "bg-rose-100 text-rose-600",
-  success: "bg-emerald-100 text-emerald-600",
-  warning: "bg-amber-100 text-amber-600",
-  info: "bg-blue-100 text-blue-600",
+  error: "bg-[var(--danger)]/15 text-[var(--danger)]",
+  success: "bg-[var(--success)]/15 text-[var(--success)]",
+  warning: "bg-[var(--warning)]/15 text-[var(--warning)]",
+  info: "bg-[var(--info)]/15 text-[var(--info)]",
 };
 
 function variantIcon(variant: InlineStatusAlertProps["variant"]) {

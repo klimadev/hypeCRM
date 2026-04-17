@@ -38,9 +38,9 @@ export function EquipeMobileList({ vm }: EquipeMobileListProps) {
           type="checkbox"
           checked={todosDaPaginaSelecionados}
           onChange={(e) => vm.alternarSelecaoPagina(e.target.checked)}
-          className="h-4 w-4 rounded border-slate-300 text-slate-600 focus:ring-slate-400"
+          className="h-4 w-4 rounded border-[var(--border-strong)] text-[var(--brand)] focus:ring-[var(--brand-ring)]"
         />
-        <span className="text-sm text-slate-500">Selecionar todos</span>
+        <span className="text-sm text-[var(--text-tertiary)]">Selecionar todos</span>
       </div>
       
       {vm.funcionarios.map((funcionario) => {

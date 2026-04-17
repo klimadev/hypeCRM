@@ -12,8 +12,8 @@ type Props = {
 export function WhatsappMessageList({ messages, loading, onRetry }: Props) {
   if (!loading && messages.length === 0) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-6 py-10 text-center text-[var(--text-secondary)]">
-        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[rgba(139,92,246,0.18)] bg-[var(--brand-soft)]">
+      <div className="flex h-full flex-col items-center justify-center gap-3 rounded-[var(--radius-card)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-6 py-10 text-center text-[var(--text-secondary)]">
+        <div className="flex h-16 w-16 items-center justify-center rounded-full border border-[var(--brand)] bg-[var(--brand-soft)]">
           <MessageCircleMore className="h-8 w-8 text-[var(--brand)]" />
         </div>
         <p className="text-sm font-medium text-[var(--text-primary)]">Nenhuma mensagem ainda</p>
@@ -31,7 +31,7 @@ export function WhatsappMessageList({ messages, loading, onRetry }: Props) {
       {itens.map((item) =>
         item.type === "separator" ? (
           <div key={item.key} className="flex items-center justify-center py-2">
-            <span className="rounded-full border border-[var(--border-subtle)] bg-[color:rgba(12,12,14,0.86)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)]">
+            <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)] shadow-[var(--shadow-sm)]">
               {item.label}
             </span>
           </div>

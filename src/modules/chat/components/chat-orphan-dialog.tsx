@@ -77,12 +77,18 @@ export function ChatOrphanDialog({
       .sort((a, b) => a.ordem - b.ordem);
   }, [estagios, pipelineSelecionado]);
 
+  const estagioSelecionadoAtual = useMemo(() => {
+    if (!precisaSelecionarPipeline) {
+      return "";
+    }
+    if (estagiosDoPipeline.some((estagio) => estagio.id === estagioSelecionado)) {
+      return estagioSelecionado;
+    }
+    return estagiosDoPipeline[0]?.id ?? "";
+  }, [estagioSelecionado, estagiosDoPipeline, precisaSelecionarPipeline]);
+
   useEffect(() => {
     if (!open) {
-      setNome(nomeInicial);
-      setErroDados(null);
-      setPipelineSelecionado("");
-      setEstagioSelecionado("");
       return;
     }
 
@@ -141,27 +147,14 @@ export function ChatOrphanDialog({
     return () => {
       ativo = false;
     };
-  }, [open, nomeInicial, precisaSelecionarPipeline]);
+  }, [open, precisaSelecionarPipeline]);
 
-  useEffect(() => {
-    if (!precisaSelecionarPipeline || !pipelineSelecionado) {
-      return;
-    }
-
-    const etapas = estagios
-      .filter((estagio) => estagio.id_funil === pipelineSelecionado)
-      .sort((a, b) => a.ordem - b.ordem);
-
-    if (!etapas.some((estagio) => estagio.id === estagioSelecionado)) {
-      setEstagioSelecionado(etapas[0]?.id ?? "");
-    }
-  }, [estagioSelecionado, estagios, pipelineSelecionado, precisaSelecionarPipeline]);
-
-  const submitDisabled = precisaSelecionarPipeline && (carregandoDados || !pipelineSelecionado || !estagioSelecionado);
+  const submitDisabled =
+    precisaSelecionarPipeline && (carregandoDados || !pipelineSelecionado || !estagioSelecionadoAtual);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent key={`${String(open)}-${nomeInicial}-${tipoAcao}`}>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
           <DialogDescription>{description}</DialogDescription>
@@ -210,7 +203,7 @@ export function ChatOrphanDialog({
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[var(--text-secondary)]">Etapa inicial</label>
                 <Select
-                  value={estagioSelecionado}
+                  value={estagioSelecionadoAtual}
                   onValueChange={setEstagioSelecionado}
                   disabled={carregandoDados || !pipelineSelecionado || estagiosDoPipeline.length === 0}
                 >
@@ -255,7 +248,7 @@ export function ChatOrphanDialog({
                 telefone,
                 nome: nome.trim() || undefined,
                 id_funil: precisaSelecionarPipeline ? pipelineSelecionado : undefined,
-                id_estagio: precisaSelecionarPipeline ? estagioSelecionado : undefined,
+                id_estagio: precisaSelecionarPipeline ? estagioSelecionadoAtual : undefined,
               })
             }
           >

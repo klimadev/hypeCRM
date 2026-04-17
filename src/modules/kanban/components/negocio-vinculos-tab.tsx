@@ -71,21 +71,21 @@ export function NegocioVinculosTab({
               Selecione os leads que pertencem a este negócio. Vínculos existentes serão transferidos se o lead estiver em outro negócio.
             </p>
           </div>
-          <span className="rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
+          <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-1 text-[11px] text-[var(--text-secondary)]">
             {selecionados.length} selecionado{selecionados.length === 1 ? "" : "s"}
           </span>
         </div>
 
         <div className="mt-3 flex flex-wrap gap-2">
           {leadPrincipal ? (
-            <span className="inline-flex items-center gap-2 rounded-full border border-[color:rgba(139,92,246,0.28)] bg-[var(--brand-soft)] px-3 py-1 text-xs text-[var(--text-primary)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[color-mix(in_srgb,var(--brand)_30%,transparent)] bg-[var(--brand-soft)] px-3 py-1 text-xs text-[var(--text-primary)]">
               <Users className="h-3.5 w-3.5" />
               Principal: {leadPrincipal.nome}
             </span>
           ) : null}
 
           {contatosAtuais.length > 1 ? (
-            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-1 text-xs text-[var(--text-secondary)]">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1 text-xs text-[var(--text-secondary)]">
               <Users className="h-3.5 w-3.5" />
               {contatosAtuais.length} leads atualmente vinculados
             </span>
@@ -134,7 +134,7 @@ export function NegocioVinculosTab({
                   className={cn(
                     "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-3 text-left transition-colors",
                     selecionado
-                      ? "border-[color:rgba(139,92,246,0.36)] bg-[color:rgba(139,92,246,0.12)] text-[var(--text-primary)]"
+                      ? "border-[color-mix(in_srgb,var(--brand)_36%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] text-[var(--text-primary)]"
                       : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",
                   )}
                 >
@@ -146,11 +146,11 @@ export function NegocioVinculosTab({
 
                   <div className="flex flex-col items-end gap-1 text-[11px]">
                     {vinculadoEmOutroNegocio ? (
-                      <span className="rounded-full border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] px-2 py-0.5 text-[color:#fde68a]">
+                        <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_32%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-2 py-0.5 text-[var(--warning)]">
                         Em outro negócio
                       </span>
                     ) : lead.id_negocio === negocioSelecionado.id ? (
-                      <span className="rounded-full border border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.12)] px-2 py-0.5 text-[color:#a7f3d0]">
+                        <span className="rounded-full border border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] px-2 py-0.5 text-[var(--success)]">
                         Vinculado aqui
                       </span>
                     ) : null}
@@ -160,7 +160,7 @@ export function NegocioVinculosTab({
                         "rounded-full px-2 py-0.5",
                         selecionado
                           ? "bg-[var(--brand-soft)] text-[var(--text-primary)]"
-                          : "bg-[color:rgba(255,255,255,0.04)] text-[var(--text-tertiary)]",
+                          : "bg-[var(--surface-soft)] text-[var(--text-tertiary)]",
                       )}
                     >
                       {selecionado ? "Selecionado" : "Adicionar"}
@@ -174,7 +174,7 @@ export function NegocioVinculosTab({
       </div>
 
       {erroVinculos ? (
-        <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm text-[color:#fecdd3]">
+        <div className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {erroVinculos}
@@ -190,7 +190,7 @@ export function NegocioVinculosTab({
           type="button"
           onClick={() => void salvar()}
           disabled={salvandoVinculos}
-          className="bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
+          className="bg-[var(--brand)] text-[var(--primary-foreground)] hover:bg-[var(--brand-strong)]"
         >
           {salvandoVinculos ? (
             <span className="inline-flex items-center gap-2">

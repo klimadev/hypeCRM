@@ -10,28 +10,28 @@ type EquipePaginationProps = {
 
 export function EquipePagination({ vm }: EquipePaginationProps) {
   return (
-    <div className="flex items-center justify-between rounded-xl border border-slate-200/70 bg-slate-50/80 px-4 py-3">
-      <p className="text-sm font-medium text-slate-500">{vm.carregandoLista ? "Atualizando registros..." : `${vm.paginacao.total} registros no resultado atual.`}</p>
+    <div className="flex items-center justify-between rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-3">
+      <p className="text-sm font-medium text-[var(--text-tertiary)]">{vm.carregandoLista ? "Atualizando registros..." : `${vm.paginacao.total} registros no resultado atual.`}</p>
       
       <div className="flex items-center gap-2">
         <Button
           variant="outline"
           size="sm"
-          className="h-8 rounded-lg border-slate-200"
+          className="h-8 rounded-lg border-[var(--border-subtle)]"
           disabled={vm.paginacao.pagina <= 1}
           onClick={() => vm.atualizarParametrosUrl({ pagina: String(vm.paginacao.pagina - 1) })}
         >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         
-        <span className="text-sm text-slate-600">
+        <span className="text-sm text-[var(--text-secondary)]">
           {vm.paginacao.pagina} / {vm.paginacao.total_paginas}
         </span>
         
         <Button
           variant="outline"
           size="sm"
-          className="h-8 rounded-lg border-slate-200"
+          className="h-8 rounded-lg border-[var(--border-subtle)]"
           disabled={vm.paginacao.pagina >= vm.paginacao.total_paginas}
           onClick={() => vm.atualizarParametrosUrl({ pagina: String(vm.paginacao.pagina + 1) })}
         >

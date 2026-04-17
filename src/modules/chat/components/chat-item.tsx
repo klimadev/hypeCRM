@@ -68,7 +68,7 @@ export function ChatItem({ chat, isSelected, onClick }: ChatItemProps) {
             "flex h-10 w-10 shrink-0 items-center justify-center rounded-full border text-[12px] font-semibold",
             chat.semMatch
               ? "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]"
-              : "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.08)] text-emerald-400",
+              : "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.08)] text-[var(--success)]",
           )}
         >
           {chat.semMatch ? (

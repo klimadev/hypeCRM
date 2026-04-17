@@ -51,7 +51,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         descricao: dataFechamento
           ? `Negócio ganho em ${dataFechamento}.`
           : "Negócio marcado como ganho.",
-        classe: "border-[color:rgba(16,185,129,0.28)] bg-[color:rgba(16,185,129,0.08)] text-[color:#6ee7b7]",
+        classe: "border-[color-mix(in_srgb,var(--success)_32%,transparent)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]",
       };
     }
 
@@ -62,7 +62,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         descricao: motivo
           ? `Negócio perdido. Motivo: ${motivo}`
           : "Negócio marcado como perdido.",
-        classe: "border-[color:rgba(244,63,94,0.28)] bg-[color:rgba(244,63,94,0.08)] text-[color:#fda4af]",
+        classe: "border-[color-mix(in_srgb,var(--danger)_32%,transparent)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] text-[var(--danger)]",
       };
     }
 
@@ -71,7 +71,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
       descricao: negocioSelecionado.data_abertura
         ? `Aberto desde ${new Date(negocioSelecionado.data_abertura).toLocaleDateString("pt-BR")}.`
         : "Siga preenchendo os dados e conduzindo o negócio no funil.",
-      classe: "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]",
+      classe: "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]",
     };
   })();
 
@@ -91,7 +91,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
             {contatoPrincipal.origem ? <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{contatoPrincipal.origem}</p> : null}
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+          <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
             <Link2 className="mt-0.5 h-4 w-4 text-[var(--text-tertiary)]" />
             <span>Este negócio ainda não tem um contato principal vinculado.</span>
           </div>
@@ -104,7 +104,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
               {contatosVinculados.map((contato) => (
                 <span
                   key={contato.id}
-                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-1 text-xs text-[var(--text-secondary)]"
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-1 text-xs text-[var(--text-secondary)]"
                 >
                   <Phone className="h-3 w-3" />
                   {contato.nome}
@@ -122,7 +122,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         <div className="mt-3 space-y-2">
           <label className="text-sm font-medium text-[var(--text-secondary)]">Valor estimado</label>
           <Input
-            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
+            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
             inputMode="numeric"
             value={aplicaMascaraMoedaBr(String(Math.round(negocioSelecionado.valor_oportunidade * 100)))}
             onChange={(e) => onMudarNegocio({ ...negocioSelecionado, valor_oportunidade: converteMoedaBrParaNumero(e.target.value) })}
@@ -132,7 +132,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         <div className="mt-3 space-y-2">
           <label className="text-sm font-medium text-[var(--text-secondary)]">Observações comerciais</label>
           <Textarea
-            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-primary)]"
+            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
             value={negocioSelecionado.observacoes ?? ""}
             onChange={(e) => onMudarNegocio({ ...negocioSelecionado, observacoes: e.target.value })}
           />
@@ -142,7 +142,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
           <div className="mt-3 space-y-2">
             <label className="text-sm font-medium text-[var(--text-secondary)]">Responsável comercial</label>
             <Select value={negocioSelecionado.id_funcionario} onValueChange={(id_funcionario) => onMudarNegocio({ ...negocioSelecionado, id_funcionario })}>
-              <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)]">
+              <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
               <SelectContent>
@@ -157,7 +157,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         ) : null}
 
         {erroDetalhesNegocio ? (
-          <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
+          <p className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm font-medium text-[var(--danger)]">
             <span className="inline-flex items-center gap-1">
               <AlertCircle className="h-4 w-4" />
               {erroDetalhesNegocio}
@@ -166,7 +166,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         ) : null}
 
         {temAlteracoes ? (
-          <ActionButton className="w-full rounded-xl bg-emerald-600 text-sm font-medium hover:bg-emerald-700" onClick={() => void onSalvar()} disabled={salvando} loading={salvando} loadingText="Salvando alterações...">
+          <ActionButton className="w-full rounded-xl bg-[var(--success)] text-[var(--primary-foreground)] text-sm font-medium hover:brightness-110" onClick={() => void onSalvar()} disabled={salvando} loading={salvando} loadingText="Salvando alterações...">
             Salvar alterações
           </ActionButton>
         ) : null}

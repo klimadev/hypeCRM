@@ -92,21 +92,23 @@ const nodeTypes = {
   workflow: memo(function WorkflowNodeCard({ data, dragging }: NodeProps<Node<FlowNodeData, "workflow">>) {
     const [manualPhoneDraft, setManualPhoneDraft] = useState("");
     const meta = WORKFLOW_KIND_META[data.model.kind];
-    const continuationBorder = data.hasOutgoing ? "rgba(56,189,248,0.28)" : "rgba(56,189,248,0.45)";
+    const continuationBorder = data.hasOutgoing
+      ? "color-mix(in_srgb,var(--info)_28%,transparent)"
+      : "color-mix(in_srgb,var(--info)_45%,transparent)";
     const manualPhones = data.model.config.manualPhones ?? [];
     return (
       <div
-        className="relative rounded-[22px] border bg-[rgba(16,16,19,0.98)] p-4 transition-[border-color,box-shadow,opacity] duration-150 ease-[var(--ease-productive)]"
+        className="relative rounded-[22px] border bg-[var(--surface)] p-4 transition-[border-color,box-shadow,opacity] duration-150 ease-[var(--ease-productive)]"
         data-interactive
         style={{
           width: NODE_SIZE.width,
           minHeight: NODE_SIZE.height,
-          borderColor: data.isFocused ? meta.color : "rgba(255,255,255,0.08)",
+          borderColor: data.isFocused ? meta.color : "var(--border-subtle)",
           boxShadow: dragging
-            ? `0 24px 54px -30px ${meta.soft}, 0 14px 34px rgba(0,0,0,0.42)`
+            ? `0 24px 54px -30px ${meta.soft}, var(--shadow-md)`
             : data.isFocused
               ? `0 0 0 1px ${meta.soft}`
-              : "0 10px 24px rgba(0,0,0,0.22)",
+              : "var(--shadow-sm)",
           opacity: dragging ? 0.96 : 1,
           transform: dragging ? "scale(1.02)" : "scale(1)",
           animation: data.entering ? "fadeIn 180ms var(--ease-productive), scaleIn 220ms var(--ease-snappy)" : undefined,
@@ -126,7 +128,7 @@ const nodeTypes = {
         <button
           type="button"
           aria-label="Excluir nó"
-          className="nodrag nopan absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[color:rgba(255,255,255,0.14)] bg-[color:rgba(12,12,14,0.9)] text-xs text-[var(--text-secondary)] opacity-0 transition-all duration-150 hover:border-[color:rgba(248,113,113,0.8)] hover:text-[color:rgba(248,113,113,0.95)] group-hover:opacity-100"
+          className="nodrag nopan absolute right-3 top-3 inline-flex h-6 w-6 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-xs text-[var(--text-secondary)] opacity-0 transition-all duration-150 hover:border-[color-mix(in_srgb,var(--danger)_56%,transparent)] hover:text-[var(--danger)] group-hover:opacity-100"
           style={{ opacity: data.isFocused ? 1 : undefined }}
           onClick={(event) => {
             event.stopPropagation();
@@ -137,7 +139,7 @@ const nodeTypes = {
         </button>
 
         {data.isFocused ? (
-          <div className="nodrag nopan mt-3 grid gap-2 rounded-[12px] border border-[var(--border-subtle)] bg-[color:rgba(9,9,11,0.82)] p-2.5">
+          <div className="nodrag nopan mt-3 grid gap-2 rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-2.5">
             {data.model.kind === "gatilho" ? <p className="text-xs text-[var(--text-secondary)]">Sem configurações para este gatilho.</p> : null}
 
             {data.model.kind === "acao" ? (
@@ -164,7 +166,7 @@ const nodeTypes = {
                   </SelectContent>
                 </Select>
 
-                <div className="flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-2.5 py-2">
+                <div className="flex items-center justify-between gap-2 rounded-[10px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-2">
                   <span className="text-[11px] text-[var(--text-secondary)]">Usar telefone do lead criado</span>
                   <Switch
                     checked={data.model.config.sendToLeadPhone !== false}
@@ -199,7 +201,7 @@ const nodeTypes = {
                         <button
                           key={phone}
                           type="button"
-                          className="inline-flex items-center gap-1 rounded-full border border-[color:rgba(56,189,248,0.32)] bg-[color:rgba(56,189,248,0.1)] px-2 py-0.5 text-[10px] text-[#a5f3fc]"
+                          className="inline-flex items-center gap-1 rounded-full border border-[color-mix(in_srgb,var(--info)_36%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] px-2 py-0.5 text-[10px] text-[var(--info)]"
                           onClick={() => data.onConfigChange(data.model.id, { manualPhones: manualPhones.filter((item) => item !== phone) })}
                           title="Remover número"
                         >
@@ -219,14 +221,14 @@ const nodeTypes = {
 
         {data.isFocused ? (
           <div className="pointer-events-none absolute -right-[92px] top-1/2 flex -translate-y-1/2 items-center">
-            <div className="h-px w-11 bg-[linear-gradient(90deg,rgba(56,189,248,0.52),rgba(56,189,248,0.08))]" />
+            <div className="h-px w-11 bg-[linear-gradient(90deg,color-mix(in_srgb,var(--info)_52%,transparent),color-mix(in_srgb,var(--info)_8%,transparent))]" />
             <button
               type="button"
               onClick={(event) => {
                 event.stopPropagation();
                   data.onAddNext(data.model.id, "default");
                 }}
-              className="animate-scale-in pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[color:rgba(12,12,14,0.96)] text-[18px] font-semibold leading-none text-[#67e8f9] shadow-[0_10px_28px_-14px_rgba(6,182,212,0.9)] transition-all duration-150 hover:scale-[1.04] hover:border-[color:rgba(56,189,248,0.75)] hover:text-[#a5f3fc]"
+              className="animate-scale-in pointer-events-auto inline-flex h-8 w-8 items-center justify-center rounded-full border bg-[var(--surface-elevated)] text-[18px] font-semibold leading-none text-[var(--info)] shadow-[var(--shadow-sm)] transition-all duration-150 hover:scale-[1.04] hover:border-[color-mix(in_srgb,var(--info)_75%,transparent)] hover:text-[var(--info-alt)]"
               style={{ borderColor: continuationBorder }}
               aria-label="Adicionar proximo nó"
             >
@@ -239,7 +241,7 @@ const nodeTypes = {
           type="target"
           id="input"
           position={Position.Left}
-          className="!h-3.5 !w-3.5 !border-2 !bg-[#09090b]"
+          className="!h-3.5 !w-3.5 !border-2 !bg-[var(--canvas)]"
           style={{ borderColor: meta.color }}
         />
         <Handle
@@ -265,10 +267,10 @@ const edgeTypes = {
       targetPosition: props.targetPosition,
     });
     const stroke = props.data?.selected
-      ? "rgba(56,189,248,0.95)"
+      ? "var(--info)"
       : props.data?.fromSelectedNode
-        ? "rgba(56,189,248,0.82)"
-        : "rgba(161,161,170,0.88)";
+        ? "color-mix(in_srgb,var(--info)_82%,var(--text-secondary))"
+        : "var(--text-secondary)";
 
     return (
       <>
@@ -284,7 +286,7 @@ const edgeTypes = {
             >
               <button
                 type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:rgba(255,255,255,0.16)] bg-[color:rgba(12,12,14,0.96)] text-xs text-[var(--text-secondary)] transition hover:border-[color:rgba(56,189,248,0.8)] hover:text-[color:rgba(103,232,249,0.95)]"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-xs text-[var(--text-secondary)] transition hover:border-[color-mix(in_srgb,var(--info)_72%,transparent)] hover:text-[var(--info)]"
                 aria-label="Inserir nó na conexão"
                 onMouseDown={(event) => {
                   event.stopPropagation();
@@ -298,7 +300,7 @@ const edgeTypes = {
               </button>
               <button
                 type="button"
-                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[color:rgba(255,255,255,0.16)] bg-[color:rgba(12,12,14,0.96)] text-xs text-[var(--text-secondary)] transition hover:border-[color:rgba(248,113,113,0.8)] hover:text-[color:rgba(248,113,113,0.95)]"
+                className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-xs text-[var(--text-secondary)] transition hover:border-[color-mix(in_srgb,var(--danger)_72%,transparent)] hover:text-[var(--danger)]"
                 aria-label="Excluir conexão"
                 onMouseDown={(event) => {
                   event.stopPropagation();
@@ -413,7 +415,7 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
         targetHandle: "input",
         type: "workflow",
         animated: false,
-        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "rgba(161,161,170,0.92)" },
+        markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "var(--text-secondary)" },
         data: {
           selected: edge.id === selectedEdgeId,
           fromSelectedNode: edge.source === selectedNodeId,
@@ -466,8 +468,8 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
   }, [nodes.length, reactFlow]);
 
   return (
-    <div className="automation-flow-shell relative flex min-h-0 flex-1 overflow-hidden rounded-[24px] bg-[#0a0a0c]">
-      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_0%,rgba(255,255,255,0.04),transparent_35%)]" />
+    <div className="automation-flow-shell relative flex min-h-0 flex-1 overflow-hidden rounded-[24px] bg-[var(--surface)]">
+      <div className="pointer-events-none absolute inset-0 z-0 bg-[radial-gradient(circle_at_50%_0%,color-mix(in_srgb,var(--text-primary)_6%,transparent),transparent_35%)]" />
       <ReactFlow
         nodes={flowNodes}
         edges={flowEdges}
@@ -479,7 +481,7 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
         fitViewOptions={{ padding: 0.28 }}
         defaultEdgeOptions={{
           type: "smoothstep",
-          markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "rgba(161,161,170,0.92)" },
+          markerEnd: { type: MarkerType.ArrowClosed, width: 16, height: 16, color: "var(--text-secondary)" },
         }}
         onNodeClick={handleNodeClick}
         onNodesChange={handleNodesChange}
@@ -499,7 +501,7 @@ function BuilderCanvasInner(props: BuilderCanvasProps) {
         }}
         className="h-full min-h-[44rem] w-full"
       >
-        <Background color="rgba(255,255,255,0.05)" gap={22} />
+        <Background color="color-mix(in_srgb,var(--text-secondary)_20%,transparent)" gap={22} />
         <Controls showInteractive={false} position="bottom-right" className="opacity-80" />
       </ReactFlow>
     </div>

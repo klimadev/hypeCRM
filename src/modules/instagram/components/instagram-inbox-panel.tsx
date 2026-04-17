@@ -41,7 +41,7 @@ export function InstagramInboxPanel() {
   const hasConversation = vm.selectedConversationId && vm.conversations.length > 0;
 
   return (
-    <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))]">
+    <Card className="border-[var(--border-subtle)] bg-[var(--surface)]">
       <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0 pb-3">
         <div>
           <CardTitle className="text-base">Inbox Instagram (polling)</CardTitle>
@@ -86,7 +86,7 @@ export function InstagramInboxPanel() {
                     className={cn(
                       "w-full rounded-2xl border px-3 py-2 text-left transition-colors",
                       active
-                        ? "border-[color:rgba(139,92,246,0.28)] bg-[var(--brand-soft)]"
+                        ? "border-[color:color-mix(in_oklab,var(--brand)_34%,var(--border-subtle)_66%)] bg-[var(--brand-soft)]"
                         : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] hover:border-[var(--border-strong)]",
                     )}
                   >
@@ -124,7 +124,7 @@ export function InstagramInboxPanel() {
             ) : (
               <div className="space-y-3">
                 {vm.messages.map((message) => (
-                  <div key={message.id} className={cn("max-w-[85%] rounded-2xl border px-3 py-2 text-sm", message.from_me ? "ml-auto border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)]" : "border-[var(--border-subtle)] bg-[var(--surface)]")}>
+                  <div key={message.id} className={cn("max-w-[85%] rounded-2xl border px-3 py-2 text-sm", message.from_me ? "ml-auto border-[color:color-mix(in_oklab,var(--brand)_30%,var(--border-subtle)_70%)] bg-[var(--brand-soft)]" : "border-[var(--border-subtle)] bg-[var(--surface)]")}>
                     {!message.from_me && message.from_name ? (
                       <p className="mb-1 text-[10px] font-medium text-[var(--text-tertiary)]">{message.from_name}</p>
                     ) : null}

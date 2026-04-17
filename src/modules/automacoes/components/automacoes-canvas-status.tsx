@@ -20,7 +20,7 @@ export function AutomacoesCanvasStatus({
   validationMessage,
 }: AutomacoesCanvasStatusProps) {
   return (
-    <div className="pointer-events-auto rounded-[18px] border border-[var(--border-subtle)] bg-[color:rgba(12,12,14,0.86)] px-3.5 py-2.5 backdrop-blur-md">
+    <div className="pointer-events-auto rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-overlay)] px-3.5 py-2.5 backdrop-blur-md">
       <div className="flex items-center gap-2">
         <Badge variant="info" size="sm" dot>
           Fluxo
@@ -44,9 +44,9 @@ export function AutomacoesCanvasStatus({
       {selectedNodeLabel ? <p className="mt-1 text-sm font-medium text-[var(--text-primary)]">{selectedNodeLabel}</p> : null}
       {selectedEdgeText ? <p className="mt-1 text-xs text-[var(--text-secondary)]">{selectedEdgeText}</p> : null}
       {validationMessage ? (
-        <p className="mt-1 text-xs text-[color:rgba(248,113,113,0.92)]">{validationMessage}</p>
+        <p className="mt-1 text-xs text-[var(--danger)]">{validationMessage}</p>
       ) : (
-        <p className="mt-1 text-xs text-[color:rgba(74,222,128,0.9)]">Fluxo visual consistente.</p>
+        <p className="mt-1 text-xs text-[var(--success)]">Fluxo visual consistente.</p>
       )}
     </div>
   );

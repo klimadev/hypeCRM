@@ -350,7 +350,7 @@ export function ChatMessageComposer({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.94),rgba(12,12,14,1))] px-2.5 py-2.5 md:px-3">
+    <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-2.5 md:px-3">
       <div className="mx-auto w-full max-w-5xl rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
         <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-subtle)] px-2.5 py-2">
           <ComposerToggle active={agendar} label={agendar ? "Agendando" : "Agendar"} icon={<CalendarClock className="h-3.5 w-3.5" />} onClick={() => setAgendar((current) => !current)} />
@@ -363,7 +363,7 @@ export function ChatMessageComposer({
           <div className="border-b border-[var(--border-subtle)] px-2.5 py-2.5 text-xs text-[var(--text-secondary)]">
             <div className="space-y-2">
               {agendadas.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-black/10 px-3 py-2">
+                <div key={item.id} className="flex items-center justify-between gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2">
                   <div className="min-w-0">
                     <div className="truncate text-[var(--text-primary)]">{item.conteudo}</div>
                     <div>{new Date(item.agendadoPara).toLocaleString("pt-BR")}</div>
@@ -406,8 +406,8 @@ export function ChatMessageComposer({
             <div className="absolute bottom-[calc(100%+0.5rem)] left-2.5 right-16 z-20 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-1.5 shadow-[var(--shadow-md)]">
               {menuSlashNivel === "raiz" ? (
                 <div className="space-y-1">
-                  <button type="button" onClick={() => { setMenuSlashNivel("atalhos"); setIndiceAtalhoAtivo(0); }} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 0 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[color:rgba(255,255,255,0.04)]")}>Acoes rapidas</button>
-                  <button type="button" onClick={() => setMenuSlashNivel("follow-up")} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 1 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[color:rgba(255,255,255,0.04)]")}>Cadencia de follow-ups</button>
+                  <button type="button" onClick={() => { setMenuSlashNivel("atalhos"); setIndiceAtalhoAtivo(0); }} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 0 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--surface-soft)]")}>Acoes rapidas</button>
+                  <button type="button" onClick={() => setMenuSlashNivel("follow-up")} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 1 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--surface-soft)]")}>Cadencia de follow-ups</button>
                 </div>
               ) : null}
 
@@ -428,10 +428,10 @@ export function ChatMessageComposer({
                           onClick={() => aplicarAtalho(atalho)}
                           className={cn(
                             "flex w-full items-start gap-2 rounded-xl px-2 py-2 text-left transition-colors",
-                            indiceAtalhoAtivo === index ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "hover:bg-[color:rgba(255,255,255,0.04)]",
+                            indiceAtalhoAtivo === index ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "hover:bg-[var(--surface-soft)]",
                           )}
                         >
-                          <span className="mt-0.5 rounded-md border border-[var(--border-subtle)] bg-black/10 px-1.5 py-0.5 font-mono text-[10px] text-[var(--brand)]">/{atalho.slug}</span>
+                          <span className="mt-0.5 rounded-md border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--brand)]">/{atalho.slug}</span>
                           <span className="min-w-0">
                             <span className="block truncate text-[12px] font-medium text-[var(--text-primary)]">{atalho.nome}</span>
                             <span className="block truncate text-[11px] text-[var(--text-secondary)]">{atalho.conteudo}</span>
@@ -456,7 +456,7 @@ export function ChatMessageComposer({
                   </div>
 
                   {!followUpOperacional ? (
-                    <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Disponivel apenas para conversas WhatsApp.</div>
+                    <div className="rounded-xl border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Disponivel apenas para conversas WhatsApp.</div>
                   ) : followUpContext ? (
                     <>
                       <div className="flex items-center gap-2">
@@ -478,7 +478,7 @@ export function ChatMessageComposer({
                               ))}
                             </SelectContent>
                           </Select>
-                          {!followUpContext.possuiTemplatesAtivos ? <div className="rounded-xl border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.1)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Nenhuma cadencia ativa encontrada.</div> : null}
+                          {!followUpContext.possuiTemplatesAtivos ? <div className="rounded-xl border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-[11px] text-[var(--text-primary)]">Nenhuma cadencia ativa encontrada.</div> : null}
                           <Button type="button" size="sm" disabled={!followUpContext.podeAtivarFollowUp || !followUpContext.templateSelecionado || followUpContext.salvandoFollowUp} onClick={followUpContext.onAtivarCadencia} className="h-8">Ativar cadencia</Button>
                         </div>
                       ) : (

@@ -243,7 +243,7 @@ function AudioMessage({ leadId, messageId }: { leadId: string; messageId: string
         <button
           type="button"
           onClick={togglePlay}
-          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-white transition-colors hover:bg-[var(--brand-strong)]"
+          className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-[var(--brand)] text-[var(--primary-foreground)] transition-colors hover:bg-[var(--brand-strong)]"
         >
           {playing ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 pl-0.5" />}
         </button>
@@ -343,7 +343,7 @@ export function WhatsappMessageBubble({ message, onRetry }: Props) {
       <div
         className={`max-w-[80%] border px-3 py-2 text-[13px] leading-6 shadow-[var(--shadow-sm)] ${
           outgoing
-            ? "border-[color:rgba(139,92,246,0.22)] bg-[linear-gradient(180deg,rgba(139,92,246,0.16),rgba(139,92,246,0.12))] rounded-br-none"
+            ? "border-[var(--brand)] bg-[var(--brand-soft)] rounded-br-none"
             : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] rounded-bl-none"
         } ${isDeleted ? "opacity-50" : ""}`}
         style={{
@@ -375,7 +375,7 @@ export function WhatsappMessageBubble({ message, onRetry }: Props) {
           {message.status === "ERROR" ? (
             <button
               type="button"
-              className="inline-flex items-center gap-1 font-medium text-[var(--danger)] transition-colors hover:text-[color:#fb7185]"
+              className="inline-flex items-center gap-1 font-medium text-[var(--danger)] transition-colors hover:brightness-110"
               onClick={() => onRetry?.(message)}
             >
               <RotateCcw className="h-3 w-3" />

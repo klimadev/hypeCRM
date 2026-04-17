@@ -46,7 +46,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
+          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
           disabled={disabled}
         >
           <Smile className="h-5 w-5" />
@@ -55,7 +55,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           variant="ghost"
           size="icon"
-          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
+          className="h-9 w-9 rounded-full text-[var(--text-tertiary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
           disabled={disabled}
         >
           <Paperclip className="h-5 w-5" />
@@ -88,7 +88,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="button"
           size="icon"
           disabled={disabled}
-          className="h-10 w-10 rounded-full text-[var(--text-tertiary)] hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)]"
+          className="h-10 w-10 rounded-full text-[var(--text-tertiary)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]"
         >
           <Mic className="h-5 w-5" />
         </Button>

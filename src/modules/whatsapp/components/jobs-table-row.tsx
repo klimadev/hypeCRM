@@ -39,18 +39,18 @@ function ErrorTooltip(props: {
 
   return (
     <div className="mt-0.5">
-      <button type="button" onClick={() => setExpanded((atual) => !atual)} className="flex items-center gap-1 text-xs text-[var(--danger)] transition-colors hover:text-[color:#fb7185]">
+      <button type="button" onClick={() => setExpanded((atual) => !atual)} className="flex items-center gap-1 text-xs text-[var(--danger)] transition-colors hover:brightness-110">
         <AlertCircle className="h-3 w-3" />
         Erro: Ver motivo
         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
       {expanded ? (
-        <div className="mt-2 rounded-[var(--radius-control)] border border-[rgba(244,63,94,0.22)] bg-[rgba(244,63,94,0.1)] p-3 text-left">
+        <div className="mt-2 rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] p-3 text-left">
           <div className="space-y-1">
             <p className="font-semibold text-[var(--danger)]">Erro: {erroCodigo || "Desconhecido"}</p>
             {erroCategoria ? <p className="text-xs text-[var(--text-secondary)]">Categoria: {erroCategoria}</p> : null}
             <p className="text-xs text-[var(--text-secondary)]">{erroDetalhe || erroOriginal}</p>
-            {acaoRecomendada ? <p className="mt-1 border-t border-[rgba(244,63,94,0.16)] pt-1 text-xs font-medium text-[var(--success)]">{acaoRecomendada}</p> : null}
+            {acaoRecomendada ? <p className="mt-1 border-t border-[color-mix(in_srgb,var(--danger)_20%,transparent)] pt-1 text-xs font-medium text-[var(--success)]">{acaoRecomendada}</p> : null}
           </div>
         </div>
       ) : null}
@@ -124,7 +124,7 @@ export function JobsTableRow({ job, podeRetry, retrying, onRetry }: JobsTableRow
           <span>#{job.id.slice(0, 6)}</span>
           {job.tentativas > 0 ? <span className="text-[var(--warning)]" title={`${job.tentativas} tentativas`}>({job.tentativas})</span> : null}
           {job.status === "FALHA" && podeRetry ? (
-            <button type="button" onClick={() => onRetry(job.id)} disabled={retrying} className="ml-2 inline-flex items-center gap-1 rounded-full border border-[rgba(244,63,94,0.22)] bg-[rgba(244,63,94,0.1)] px-2 py-0.5 text-[var(--danger)] transition-colors hover:bg-[rgba(244,63,94,0.16)] disabled:opacity-50" title="Tentar novamente">
+            <button type="button" onClick={() => onRetry(job.id)} disabled={retrying} className="ml-2 inline-flex items-center gap-1 rounded-full border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-2 py-0.5 text-[var(--danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_16%,transparent)] disabled:opacity-50" title="Tentar novamente">
               {retrying ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
               Retry
             </button>

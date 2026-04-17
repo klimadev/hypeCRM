@@ -50,11 +50,11 @@ export function ModuloWhatsapp() {
       <InlineStatusAlert variant="success" message={sucesso} icon={<CheckCircle2 className="h-5 w-5" />} className="animate-fade-in" />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))] shadow-[var(--shadow-sm)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.18),transparent_50%),radial-gradient(circle_at_bottom_right,rgba(34,211,238,0.12),transparent_55%)]" />
+        <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--success)_18%,transparent),transparent_50%),radial-gradient(circle_at_bottom_right,color-mix(in_srgb,var(--info-alt)_12%,transparent),transparent_55%)]" />
           <CardContent className="relative flex items-center justify-between p-[18px] md:p-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[rgba(16,185,129,0.22)] bg-[rgba(16,185,129,0.14)] text-[var(--success)] shadow-[0_16px_36px_-24px_rgba(16,185,129,0.7)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] shadow-[var(--shadow-sm)]">
                 <Wifi className="h-6 w-6" />
               </div>
               <div>
@@ -77,7 +77,7 @@ export function ModuloWhatsapp() {
               <Input
                 className={`h-11 pr-4 transition-all ${
                   focused
-                    ? "border-[rgba(16,185,129,0.36)] shadow-[0_0_0_4px_rgba(16,185,129,0.16)]"
+                    ? "border-[var(--success)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--success)_20%,transparent)]"
                     : ""
                 }`}
                 placeholder="Ex: WhatsApp vendas, suporte..."
@@ -90,7 +90,7 @@ export function ModuloWhatsapp() {
               />
             </div>
             <Button 
-              className="bg-[var(--success)] text-[#09090b] shadow-[0_18px_45px_-24px_rgba(16,185,129,0.9)] hover:bg-[color-mix(in_srgb,var(--success)_90%,white)]"
+              className="bg-[var(--success)] text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:brightness-110"
               disabled={!nomeInstancia.trim() || vm.carregando}
             >
               {vm.carregando ? (

@@ -11,10 +11,10 @@ const icones: Record<RecebimentosKpi["tom"], ComponentType<{ className?: string 
 };
 
 const gradientes = {
-  emerald: "border-[color:rgba(16,185,129,0.18)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))]",
-  blue: "border-[color:rgba(56,189,248,0.18)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))]",
-  rose: "border-[color:rgba(244,63,94,0.18)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))]",
-  amber: "border-[color:rgba(245,158,11,0.18)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))]",
+  emerald: "border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[var(--surface)]",
+  blue: "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[var(--surface)]",
+  rose: "border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)]",
+  amber: "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[var(--surface)]",
 };
 
 type RecebimentosKpisProps = {
@@ -39,7 +39,7 @@ export function RecebimentosKpis({ itens, carregando }: RecebimentosKpisProps) {
         const Icone = icones[item.tom];
         return (
           <article key={item.id} className={cn("relative overflow-hidden rounded-[16px] border p-4 shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]", gradientes[item.tom])}>
-            <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[color:rgba(139,92,246,0.12)] blur-2xl" />
+            <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[color-mix(in_srgb,var(--brand)_16%,transparent)] blur-2xl" />
             <div className="relative flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{item.rotulo}</p>

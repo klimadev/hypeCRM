@@ -13,9 +13,9 @@ type PendenciaBadgeProps = {
 };
 
 const coresGravidade: Record<PendenciaGravidade, string> = {
-  critica: "bg-red-500",
-  alerta: "bg-amber-500",
-  info: "bg-blue-500",
+  critica: "bg-[var(--danger)]",
+  alerta: "bg-[var(--warning)]",
+  info: "bg-[var(--info)]",
 };
 
 export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, className }: PendenciaBadgeProps) {
@@ -44,13 +44,13 @@ export function PendenciaBadge({ resumo, tamanho = "sm", modoExpansivo = false, 
         </div>
         <div className="flex flex-wrap gap-2 text-xs">
           {resumo.porGravidade.critica > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-red-700">
+            <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] px-2 py-0.5 text-[var(--danger)]">
               <AlertTriangle className="h-3 w-3" />
               {resumo.porGravidade.critica} crítica{resumo.porGravidade.critica !== 1 ? "s" : ""}
             </span>
           )}
           {resumo.porGravidade.alerta > 0 && (
-            <span className="flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+            <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] px-2 py-0.5 text-[var(--warning)]">
               <Clock className="h-3 w-3" />
               {resumo.porGravidade.alerta} alerta{resumo.porGravidade.alerta !== 1 ? "s" : ""}
             </span>
@@ -78,11 +78,11 @@ export function getClasseBordaGravidade(gravidade?: PendenciaGravidade): string 
   if (!gravidade) return "";
   switch (gravidade) {
     case "critica":
-      return "border-l-4 border-l-red-500";
+      return "border-l-4 border-l-[var(--danger)]";
     case "alerta":
-      return "border-l-4 border-l-amber-500";
+      return "border-l-4 border-l-[var(--warning)]";
     case "info":
-      return "border-l-4 border-l-blue-500";
+      return "border-l-4 border-l-[var(--info)]";
   }
 }
 

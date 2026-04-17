@@ -141,8 +141,8 @@ function QuickMetric({
       className={cn(
         "rounded-[12px] border px-2 py-1.5",
         accent === "info"
-          ? "border-[color:rgba(56,189,248,0.16)] bg-[color:rgba(56,189,248,0.08)]"
-          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)]",
+          ? "border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_10%,transparent)]"
+          : "border-[var(--border-subtle)] bg-[var(--surface-soft)]",
       )}
     >
       <div className="flex items-center gap-1 text-[9px] uppercase tracking-[0.14em] text-[var(--text-tertiary)]">
@@ -179,11 +179,11 @@ function FilterPill({ label, active, tone = "secondary", onClick }: FilterPillPr
         "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
         active
           ? tone === "success"
-            ? "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.14)] text-[var(--success)]"
+            ? "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]"
             : tone === "info"
-              ? "border-[color:rgba(56,189,248,0.24)] bg-[color:rgba(56,189,248,0.14)] text-[var(--info)]"
+              ? "border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]"
               : "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-primary)]"
-          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.01)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
+          : "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
       )}
     >
       {label}

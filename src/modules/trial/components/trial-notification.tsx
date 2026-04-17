@@ -15,33 +15,33 @@ function calcularVariante(dados: { trial_ativo: boolean; trial_expirado: boolean
 
 const estilosVariante = {
   informativo: {
-    container: "border-[color:rgba(56,189,248,0.2)] bg-[linear-gradient(135deg,rgba(12,12,14,0.98),rgba(17,17,19,0.96))]",
-    icone: "border-[color:rgba(56,189,248,0.2)] bg-[color:rgba(56,189,248,0.12)] text-[var(--info)]",
-    badge: "border-[color:rgba(56,189,248,0.2)] bg-[color:rgba(56,189,248,0.12)] text-[var(--info)]",
+    container: "border-[color:color-mix(in_oklab,var(--info)_30%,var(--border-subtle)_70%)] bg-[var(--surface)]",
+    icone: "border-[color:color-mix(in_oklab,var(--info)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--info)_14%,var(--surface-elevated)_86%)] text-[var(--info)]",
+    badge: "border-[color:color-mix(in_oklab,var(--info)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--info)_14%,var(--surface-elevated)_86%)] text-[var(--info)]",
     IconeComponent: Clock,
   },
   atencao: {
-    container: "border-[color:rgba(245,158,11,0.2)] bg-[linear-gradient(135deg,rgba(12,12,14,0.98),rgba(17,17,19,0.96))]",
-    icone: "border-[color:rgba(245,158,11,0.2)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]",
-    badge: "border-[color:rgba(245,158,11,0.2)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]",
+    container: "border-[color:color-mix(in_oklab,var(--warning)_30%,var(--border-subtle)_70%)] bg-[var(--surface)]",
+    icone: "border-[color:color-mix(in_oklab,var(--warning)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--warning)_14%,var(--surface-elevated)_86%)] text-[var(--warning)]",
+    badge: "border-[color:color-mix(in_oklab,var(--warning)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--warning)_14%,var(--surface-elevated)_86%)] text-[var(--warning)]",
     IconeComponent: AlertTriangle,
   },
   critico: {
-    container: "border-[color:rgba(244,63,94,0.24)] bg-[linear-gradient(135deg,rgba(12,12,14,0.98),rgba(17,17,19,0.96))]",
-    icone: "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]",
-    badge: "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]",
+    container: "border-[color:color-mix(in_oklab,var(--danger)_34%,var(--border-subtle)_66%)] bg-[var(--surface)]",
+    icone: "border-[color:color-mix(in_oklab,var(--danger)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--danger)_14%,var(--surface-elevated)_86%)] text-[var(--danger)]",
+    badge: "border-[color:color-mix(in_oklab,var(--danger)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--danger)_14%,var(--surface-elevated)_86%)] text-[var(--danger)]",
     IconeComponent: AlertCircle,
   },
   expirado: {
-    container: "border-[color:rgba(244,63,94,0.3)] bg-[linear-gradient(135deg,rgba(12,12,14,0.98),rgba(17,17,19,0.96))]",
-    icone: "border-[color:rgba(244,63,94,0.3)] bg-[color:rgba(244,63,94,0.14)] text-[var(--danger)]",
-    badge: "border-[color:rgba(244,63,94,0.3)] bg-[color:rgba(244,63,94,0.14)] text-[var(--danger)]",
+    container: "border-[color:color-mix(in_oklab,var(--danger)_40%,var(--border-subtle)_60%)] bg-[var(--surface)]",
+    icone: "border-[color:color-mix(in_oklab,var(--danger)_34%,var(--border-subtle)_66%)] bg-[color:color-mix(in_oklab,var(--danger)_18%,var(--surface-elevated)_82%)] text-[var(--danger)]",
+    badge: "border-[color:color-mix(in_oklab,var(--danger)_34%,var(--border-subtle)_66%)] bg-[color:color-mix(in_oklab,var(--danger)_18%,var(--surface-elevated)_82%)] text-[var(--danger)]",
     IconeComponent: AlertCircle,
   },
   ativo: {
-    container: "border-[color:rgba(16,185,129,0.2)] bg-[linear-gradient(135deg,rgba(12,12,14,0.98),rgba(17,17,19,0.96))]",
-    icone: "border-[color:rgba(16,185,129,0.2)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)]",
-    badge: "border-[color:rgba(16,185,129,0.2)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)]",
+    container: "border-[color:color-mix(in_oklab,var(--success)_30%,var(--border-subtle)_70%)] bg-[var(--surface)]",
+    icone: "border-[color:color-mix(in_oklab,var(--success)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--success)_14%,var(--surface-elevated)_86%)] text-[var(--success)]",
+    badge: "border-[color:color-mix(in_oklab,var(--success)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--success)_14%,var(--surface-elevated)_86%)] text-[var(--success)]",
     IconeComponent: CheckCircle2,
   },
 } as const;
@@ -101,7 +101,7 @@ export function TrialNotification() {
               href="https://hypecrm.com.br"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-control)] bg-[var(--brand)] px-3 text-xs font-medium text-white shadow-[var(--shadow-sm)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-[var(--brand-strong)] hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] active:scale-[0.98]"
+              className="inline-flex h-9 items-center gap-2 rounded-[var(--radius-control)] bg-[var(--brand)] px-3 text-xs font-medium text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:bg-[var(--brand-strong)] hover:shadow-[var(--shadow-md)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)] active:scale-[0.98]"
             >
               <Sparkles className="h-3.5 w-3.5" />
               Fazer upgrade
@@ -111,7 +111,7 @@ export function TrialNotification() {
               type="button"
               aria-label="Fechar notificação do trial"
               onClick={() => setOculto(true)}
-              className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.04)] text-[var(--text-tertiary)] transition-colors duration-[var(--duration-fast)] hover:bg-[color:rgba(255,255,255,0.08)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-tertiary)] transition-colors duration-[var(--duration-fast)] hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--brand)] focus-visible:ring-offset-2 focus-visible:ring-offset-[var(--surface)]"
             >
               <X className="h-4 w-4" />
             </button>

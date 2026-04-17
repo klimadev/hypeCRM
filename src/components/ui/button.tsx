@@ -4,18 +4,18 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
-  "inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-[var(--radius-control)] border border-transparent text-sm font-medium text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:border-[var(--border-focus)] focus-visible:shadow-[var(--focus-ring)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-[var(--border-subtle)] disabled:bg-[color:rgba(255,255,255,0.04)] disabled:text-[var(--text-disabled)] disabled:shadow-none disabled:translate-y-0 disabled:scale-100",
+  "inline-flex min-h-12 items-center justify-center whitespace-nowrap rounded-[var(--radius-control)] border border-transparent text-sm font-medium text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] transition-all duration-150 ease-out focus-visible:outline-none focus-visible:border-[var(--border-focus)] focus-visible:shadow-[var(--focus-ring)] disabled:pointer-events-none disabled:cursor-not-allowed disabled:border-[var(--border-subtle)] disabled:bg-[var(--surface-soft)] disabled:text-[var(--text-disabled)] disabled:shadow-none disabled:translate-y-0 disabled:scale-100",
   {
     variants: {
       variant: {
         default:
           "border-[color:var(--brand-strong)] bg-[var(--brand)] text-[var(--primary-foreground)] shadow-[var(--shadow-glow)] hover:bg-[var(--brand-strong)] hover:translate-y-[-1px] hover:scale-[1.02] active:scale-[0.98] active:translate-y-0",
         secondary:
-          "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[color:rgba(255,255,255,0.08)] hover:translate-y-[-1px]",
+          "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft-hover)] hover:translate-y-[-1px]",
         outline:
-          "border-[var(--border-strong)] bg-[color:rgba(12,12,14,0.72)] text-[var(--text-secondary)] shadow-none hover:border-[var(--border-focus)] hover:bg-[color:rgba(255,255,255,0.04)] hover:text-[var(--text-primary)] hover:translate-y-[-1px]",
+          "border-[var(--border-strong)] bg-[var(--surface)] text-[var(--text-secondary)] shadow-none hover:border-[var(--border-focus)] hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] hover:translate-y-[-1px]",
         ghost:
-          "bg-transparent text-[var(--text-secondary)] shadow-none hover:bg-[color:rgba(255,255,255,0.05)] hover:text-[var(--text-primary)] hover:translate-y-[-1px]",
+          "bg-transparent text-[var(--text-secondary)] shadow-none hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)] hover:translate-y-[-1px]",
         destructive:
           "border-[color:rgba(244,63,94,0.4)] bg-[color:rgba(244,63,94,0.16)] text-[color:#ffe4ea] shadow-none hover:border-[color:rgba(244,63,94,0.58)] hover:bg-[color:rgba(244,63,94,0.24)] hover:translate-y-[-1px]",
         success:

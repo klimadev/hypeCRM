@@ -210,7 +210,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
   return (
     <>
       <div className="flex h-full min-h-0 flex-1 flex-col bg-[var(--surface)]">
-        <header className="shrink-0 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.04),transparent)] px-3 py-2.5 md:px-4">
+        <header className="shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2.5 md:px-4">
           <div className="flex flex-wrap items-start gap-2.5 lg:items-center">
             {onVoltar ? (
               <button type="button" onClick={onVoltar} className="rounded-xl p-2 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] md:hidden">
@@ -218,7 +218,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
               </button>
             ) : null}
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
               {chat.semMatch ? <MessageCircle className="h-4 w-4" /> : nome.charAt(0).toUpperCase()}
             </div>
 

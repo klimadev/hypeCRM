@@ -58,13 +58,13 @@ export function NodeCreationDialog(props: NodeCreationDialogProps) {
       />
 
       <div
-        className="relative z-10 w-full max-w-xl overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(9,9,11,1))] shadow-[0_32px_90px_-42px_rgba(0,0,0,0.96)]"
+        className="relative z-10 w-full max-w-xl overflow-hidden rounded-[28px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-overlay)]"
         style={{ animation: "slideUp 220ms var(--ease-productive), scaleIn 260ms var(--ease-snappy)" }}
       >
         <button
           type="button"
           onClick={() => onOpenChange(false)}
-          className="absolute right-4 top-4 rounded-[calc(var(--radius-control)-2px)] p-1 text-[var(--text-tertiary)] transition-colors hover:bg-[color:rgba(255,255,255,0.06)] hover:text-[var(--text-primary)]"
+          className="absolute right-4 top-4 rounded-[calc(var(--radius-control)-2px)] p-1 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)]"
           aria-label="Fechar"
         >
           <X className="h-4 w-4" />
@@ -90,8 +90,10 @@ export function NodeCreationDialog(props: NodeCreationDialogProps) {
                 onClick={() => setSelectedId(option.id)}
                 className="rounded-[16px] border px-4 py-4 text-left transition-all duration-150"
                 style={{
-                  borderColor: active ? meta.color : "rgba(255,255,255,0.08)",
-                  background: active ? `linear-gradient(180deg, ${meta.soft}, rgba(255,255,255,0.015))` : "rgba(255,255,255,0.018)",
+                  borderColor: active ? meta.color : "var(--border-subtle)",
+                  background: active
+                    ? `linear-gradient(180deg, ${meta.soft}, color-mix(in_srgb,var(--surface-elevated)_70%,transparent))`
+                    : "var(--surface-soft)",
                   boxShadow: active ? `0 16px 40px -36px ${meta.soft}` : "none",
                   animation: `slideUp 200ms var(--ease-productive) ${Math.min(index * 35, 210)}ms both`,
                 }}
@@ -107,7 +109,7 @@ export function NodeCreationDialog(props: NodeCreationDialogProps) {
                   <span
                     className="mt-1 h-4 w-4 rounded-full border"
                     style={{
-                      borderColor: active ? meta.color : "rgba(255,255,255,0.14)",
+                      borderColor: active ? meta.color : "var(--border-subtle)",
                       backgroundColor: active ? meta.color : "transparent",
                       boxShadow: active ? `0 0 0 4px ${meta.soft}` : "none",
                     }}

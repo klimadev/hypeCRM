@@ -16,16 +16,16 @@ function ParcelasResumo({ parcelas }: { parcelas: { valor: number; status: strin
   const progresso = total > 0 ? (pago / total) * 100 : 0;
 
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4">
+    <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
       <div className="mb-2 flex items-center justify-between text-sm">
         <span className="text-[var(--text-secondary)]">Progresso</span>
         <span className="font-semibold text-[var(--text-primary)]">
           {parcelas.filter((p) => p.status === "PAGO").length}/{parcelas.length} parcelas
         </span>
       </div>
-      <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-[color:rgba(255,255,255,0.06)]">
+      <div className="mb-3 h-2 w-full overflow-hidden rounded-full bg-[var(--surface-soft-strong)]">
         <div
-          className="h-full rounded-full bg-emerald-500 transition-all duration-500"
+          className="h-full rounded-full bg-[var(--success)] transition-all duration-500"
           style={{ width: `${progresso}%` }}
         />
       </div>
@@ -94,7 +94,7 @@ export function NegocioParcelasTab({ negocioId }: NegocioParcelasTabProps) {
       )}
 
       {vm.error ? (
-        <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm text-[color:#fecdd3]">
+        <div className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {vm.error}

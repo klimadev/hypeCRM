@@ -57,7 +57,7 @@ export function JobsTable({ resumo, jobs, carregando, erro, onRetryJob }: JobsTa
       <JobsTableHeader filtro={filter} counts={filterCounts} resumoAgendados={resumo.pendentes + resumo.processando} onFiltroChange={setFilter} />
 
       {erro ? (
-        <div className="mx-4 mt-3 rounded-[var(--radius-control)] border border-[rgba(244,63,94,0.22)] bg-[rgba(244,63,94,0.1)] px-3 py-2">
+        <div className="mx-4 mt-3 rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2">
           <p className="text-xs text-[var(--danger)]">{erro}</p>
         </div>
       ) : null}
@@ -65,7 +65,7 @@ export function JobsTable({ resumo, jobs, carregando, erro, onRetryJob }: JobsTa
       <div className="max-h-[400px] overflow-auto">
         <Table>
           <TableHeader className="sticky top-0 bg-[var(--surface-elevated)]">
-            <TableRow className="hover:bg-[color:rgba(255,255,255,0.03)]">
+            <TableRow className="hover:bg-[var(--surface-soft)]">
               <TableHead className="w-[100px]">Status</TableHead>
               <TableHead className="w-[80px]">ID</TableHead>
               <TableHead>Lead</TableHead>
@@ -95,12 +95,12 @@ export function JobsTable({ resumo, jobs, carregando, erro, onRetryJob }: JobsTa
       </div>
 
       {filteredJobs.length > 0 ? (
-        <div className="flex items-center justify-between border-t border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-4 py-2">
+        <div className="flex items-center justify-between border-t border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-2">
           <span className="text-xs text-[var(--text-secondary)]">
             Mostrando <strong>{filteredJobs.length}</strong> de <strong>{jobs.length}</strong> jobs
           </span>
           {filterCounts.falhas > 0 && filter !== "falhas" ? (
-            <button type="button" onClick={() => setFilter("falhas")} className="text-xs text-[var(--danger)] transition-colors hover:text-[color:#fb7185]">
+            <button type="button" onClick={() => setFilter("falhas")} className="text-xs text-[var(--danger)] transition-colors hover:brightness-110">
               {filterCounts.falhas} {filterCounts.falhas === 1 ? "job falhou" : "jobs falharam"}
             </button>
           ) : null}

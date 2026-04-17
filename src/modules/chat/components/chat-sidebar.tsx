@@ -102,7 +102,7 @@ export function ChatSidebar({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--surface)]">
-      <div className="flex shrink-0 flex-col gap-2.5 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.06),transparent)] px-3 py-2.5">
+      <div className="flex shrink-0 flex-col gap-2.5 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2.5">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
@@ -112,7 +112,7 @@ export function ChatSidebar({
             <div className="mt-1 flex items-center gap-2">
               <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">Conversas</h2>
               {total > 0 ? (
-                <span className="rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
+                <span className="rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
                   {chats.length}
                 </span>
               ) : null}
@@ -137,10 +137,10 @@ export function ChatSidebar({
               className={cn(
                 "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium",
                 erro
-                  ? "border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]"
+                  ? "border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]"
                   : sseConectado
-                    ? "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)] text-[var(--success)]"
-                    : "border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]",
+                    ? "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
+                    : "border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]",
               )}
             >
               <span className="h-1.5 w-1.5 rounded-full bg-current" />
@@ -225,7 +225,7 @@ export function ChatSidebar({
                   className={cn(
                     "group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors",
                     ativo
-                      ? "border-[color:rgba(139,92,246,0.28)] bg-[var(--brand-soft)] text-[var(--brand)]"
+                      ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
                       : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
                   )}
                   aria-label={`${categoria.label}: ${categoria.count}`}

@@ -52,7 +52,7 @@ export function KanbanPipelineCatalog({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))] p-4 shadow-[var(--shadow-sm)] md:p-6">
+      <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] md:p-6">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Kanban</p>
@@ -88,7 +88,7 @@ export function KanbanPipelineCatalog({
               key={pipeline.id}
               className={
                 estaSelecionada
-                  ? "border-[color:rgba(139,92,246,0.5)] bg-[color:rgba(139,92,246,0.08)]"
+                  ? "border-[color-mix(in_srgb,var(--brand)_50%,transparent)] bg-[color-mix(in_srgb,var(--brand)_10%,transparent)]"
                   : "bg-[var(--surface)]"
               }
             >
@@ -102,7 +102,7 @@ export function KanbanPipelineCatalog({
                   </div>
                   <div className="flex items-center gap-1">
                     {pipeline.padrao ? (
-                      <span className="inline-flex rounded-full border border-[color:rgba(139,92,246,0.4)] bg-[color:rgba(139,92,246,0.18)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[color:#ddd6fe]">
+                      <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--brand)_45%,transparent)] bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand)]">
                         Padrão
                       </span>
                     ) : null}
@@ -126,7 +126,7 @@ export function KanbanPipelineCatalog({
 
                 <Button
                   size="sm"
-                  className="w-full rounded-xl bg-[var(--surface-elevated)] text-sm font-medium"
+                  className="w-full rounded-xl bg-[var(--surface-elevated)] text-[var(--text-primary)] text-sm font-medium hover:bg-[var(--surface-soft-hover)]"
                   onClick={() => onOpenPipeline(pipeline.id)}
                 >
                   <Play className="mr-2 h-4 w-4" />

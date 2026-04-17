@@ -82,9 +82,9 @@ export function KanbanNegocioCardContent({
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide",
-                origem.tone === "anuncio" && "bg-[color:rgba(139,92,246,0.12)] text-[color:#c4b5fd]",
-                origem.tone === "whatsapp" && "bg-[color:rgba(16,185,129,0.12)] text-[color:#6ee7b7]",
-                origem.tone === "manual" && "bg-[color:rgba(56,189,248,0.12)] text-[color:#7dd3fc]",
+                origem.tone === "anuncio" && "bg-[var(--brand-soft)] text-[var(--brand)]",
+                origem.tone === "whatsapp" && "bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]",
+                origem.tone === "manual" && "bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]",
               )}
             >
               {origem.tone === "anuncio" && <Megaphone className="h-3 w-3" />}
@@ -95,7 +95,7 @@ export function KanbanNegocioCardContent({
           )}
 
           {diasParados > 3 && estagio.tipo !== "GANHO" && estagio.tipo !== "PERDIDO" && (
-            <span className="inline-flex items-center gap-1 rounded-md bg-[color:rgba(245,158,11,0.12)] px-1.5 py-0.5 text-[10px] font-medium text-[color:#fcd34d]">
+            <span className="inline-flex items-center gap-1 rounded-md bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] px-1.5 py-0.5 text-[10px] font-medium text-[var(--warning)]">
               <Clock className="h-3 w-3" />
               {obterRotuloTempoParado(diasParados)}
             </span>
@@ -105,9 +105,9 @@ export function KanbanNegocioCardContent({
             <span
               className={cn(
                 "inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium",
-                pendencias.gravidadeMaxima === "critica" && "bg-[color:rgba(244,63,94,0.12)] text-[color:#fda4af]",
-                pendencias.gravidadeMaxima === "alerta" && "bg-[color:rgba(245,158,11,0.12)] text-[color:#fcd34d]",
-                pendencias.gravidadeMaxima === "info" && "bg-[color:rgba(56,189,248,0.12)] text-[color:#7dd3fc]",
+                pendencias.gravidadeMaxima === "critica" && "bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)]",
+                pendencias.gravidadeMaxima === "alerta" && "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]",
+                pendencias.gravidadeMaxima === "info" && "bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]",
               )}
             >
               <AlertTriangle className="h-3 w-3" />

@@ -77,7 +77,7 @@ export function StageModal({
             <TypeSelector value={tipo} onChange={setTipo} disabled={carregando} />
           </div>
 
-          {erro && <p className="text-sm text-rose-500">{erro}</p>}
+          {erro && <p className="text-sm text-[var(--danger)]">{erro}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button

@@ -85,7 +85,7 @@ export function ChatDetailsPanel({ chat, onVoltar, onRegistrarLead, onCriarNegoc
             </button>
           ) : null}
           <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[color:rgba(16,185,129,0.2)] bg-[color:rgba(16,185,129,0.08)]">
-            <span className="text-sm font-medium text-emerald-400">{nome.charAt(0).toUpperCase()}</span>
+            <span className="text-sm font-medium text-[var(--success)]">{nome.charAt(0).toUpperCase()}</span>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">

@@ -46,9 +46,9 @@ export function ChatMessagesPanel({ instanceName, remoteJid, chatContext, follow
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
       {!sseConectado ? (
-        <div className="flex items-center justify-center gap-2 border-b border-[var(--border-subtle)] bg-amber-500/10 px-4 py-1">
-          <Loader2 className="h-3 w-3 animate-spin text-amber-400" />
-          <span className="text-[11px] text-amber-400">Reconectando tempo real...</span>
+        <div className="flex items-center justify-center gap-2 border-b border-[var(--border-subtle)] bg-[var(--warning)]/10 px-4 py-1">
+          <Loader2 className="h-3 w-3 animate-spin text-[var(--warning)]" />
+          <span className="text-[11px] text-[var(--warning)]">Reconectando tempo real...</span>
         </div>
       ) : null}
 

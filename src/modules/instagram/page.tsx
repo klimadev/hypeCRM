@@ -51,8 +51,8 @@ type KpiCardProps = {
 function KpiCard({ titulo, valor, descricao, destaque = false, icone }: KpiCardProps) {
   return (
     <Card className={cn(
-      "border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.92))]",
-      destaque && "border-[color:rgba(139,92,246,0.24)] bg-[linear-gradient(180deg,rgba(28,20,43,0.95),rgba(12,12,14,0.94))]",
+      "border-[var(--border-subtle)] bg-[var(--surface)]",
+      destaque && "relative overflow-hidden border-[color:color-mix(in_oklab,var(--brand)_34%,var(--border-subtle)_66%)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--brand)_12%,transparent_88%),transparent_52%),var(--surface)]",
     )}>
       <CardContent className="flex items-center justify-between gap-4 p-4 md:p-5">
         <div className="space-y-1">
@@ -60,7 +60,7 @@ function KpiCard({ titulo, valor, descricao, destaque = false, icone }: KpiCardP
           <p className="text-xl font-semibold tracking-tight text-[var(--text-primary)] md:text-2xl">{valor}</p>
           <p className="text-sm text-[var(--text-secondary)]">{descricao}</p>
         </div>
-        <span className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:rgba(139,92,246,0.24)] bg-[color:rgba(139,92,246,0.12)] text-[var(--brand)]">
+        <span className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:color-mix(in_oklab,var(--brand)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--brand)_16%,var(--surface-elevated)_84%)] text-[var(--brand)]">
           {icone}
         </span>
       </CardContent>
@@ -168,7 +168,7 @@ export function ModuloInstagram({ perfil }: ModuloInstagramProps) {
                 Use a mesma conta profissional que deve ficar vinculada a esta empresa. Ao concluir o login, o CRM salva os dados da conta conectada e mostra o perfil logo abaixo.
               </div>
 
-              <div className="flex flex-col gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(28,20,43,0.95),rgba(12,12,14,0.94))] p-4 md:flex-row md:items-center md:justify-between">
+              <div className="flex flex-col gap-3 rounded-[16px] border border-[color:color-mix(in_oklab,var(--brand)_30%,var(--border-subtle)_70%)] bg-[radial-gradient(circle_at_top_right,color-mix(in_oklab,var(--brand)_12%,transparent_88%),transparent_58%),var(--surface)] p-4 md:flex-row md:items-center md:justify-between">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-[var(--text-primary)]">Fluxo oficial do Instagram Business Login</p>
                   <p className="text-sm text-[var(--text-secondary)]">O redirecionamento usa o callback configurado em `app.hypecrm.com.br`.</p>
@@ -183,7 +183,7 @@ export function ModuloInstagram({ perfil }: ModuloInstagramProps) {
             </CardContent>
           </Card>
 
-          <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]">
+          <Card className="border-[var(--border-subtle)] bg-[var(--surface)]">
             <CardHeader>
               <CardTitle className="text-base">Conta conectada</CardTitle>
               <CardDescription>Assim que o OAuth concluir, a conta aparece aqui com o identificador salvo para esta empresa.</CardDescription>
@@ -206,7 +206,7 @@ export function ModuloInstagram({ perfil }: ModuloInstagramProps) {
                     <div key={conta.id} className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                         <div className="flex gap-3">
-                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] border border-[var(--border-subtle)] bg-[color:rgba(139,92,246,0.16)] text-sm font-semibold text-[var(--text-primary)]">
+                          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-[16px] border border-[var(--border-subtle)] bg-[color:color-mix(in_oklab,var(--brand)_16%,var(--surface-elevated)_84%)] text-sm font-semibold text-[var(--text-primary)]">
                             {conta.profile_picture_url ? (
                               // eslint-disable-next-line @next/next/no-img-element
                               <img src={conta.profile_picture_url} alt={conta.nome} className="h-full w-full object-cover" />
@@ -260,7 +260,7 @@ export function ModuloInstagram({ perfil }: ModuloInstagramProps) {
         </div>
 
         <div className="space-y-4">
-          <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.94))]">
+          <Card className="border-[var(--border-subtle)] bg-[var(--surface)]">
             <CardHeader>
               <CardTitle className="text-base">O que acontece na conexao</CardTitle>
               <CardDescription>Esse fluxo salva a conta conectada seguindo o callback oficial da Meta.</CardDescription>

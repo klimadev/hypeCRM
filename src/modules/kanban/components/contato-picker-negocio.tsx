@@ -43,7 +43,7 @@ export function ContatoPickerNegocio({ contatos, carregando, selecionados, setSe
                 className={cn(
                   "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-2 text-left transition-colors",
                   selecionado
-                    ? "border-[color:rgba(139,92,246,0.36)] bg-[color:rgba(139,92,246,0.12)] text-[var(--text-primary)]"
+                    ? "border-[color-mix(in_srgb,var(--brand)_38%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-[var(--text-primary)]"
                     : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",
                 )}
               >
@@ -53,11 +53,11 @@ export function ContatoPickerNegocio({ contatos, carregando, selecionados, setSe
                 </div>
                 <div className="flex flex-col items-end gap-1 text-[11px]">
                   {contato.id_negocio ? (
-                    <span className="rounded-full border border-[color:rgba(245,158,11,0.28)] bg-[color:rgba(245,158,11,0.12)] px-2 py-0.5 text-[color:#fde68a]">
+                    <span className="rounded-full border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] px-2 py-0.5 text-[var(--warning)]">
                       Em outro negócio
                     </span>
                   ) : null}
-                  <span className={cn("rounded-full px-2 py-0.5", selecionado ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "bg-[color:rgba(255,255,255,0.04)] text-[var(--text-tertiary)]")}>
+                  <span className={cn("rounded-full px-2 py-0.5", selecionado ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "bg-[var(--surface-soft)] text-[var(--text-tertiary)]")}>
                     {selecionado ? "Selecionado" : "Adicionar"}
                   </span>
                 </div>

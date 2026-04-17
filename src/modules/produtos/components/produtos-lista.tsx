@@ -19,23 +19,23 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
             <CardHeader className="space-y-6 p-6 sm:p-8">
               <div className="flex items-start justify-between gap-4">
                 <div className="space-y-4">
-                  <div className="h-4 w-32 animate-pulse rounded-full bg-[color:rgba(255,255,255,0.06)]" />
-                  <div className="h-7 w-52 animate-pulse rounded-full bg-[color:rgba(255,255,255,0.06)]" />
+                  <div className="h-4 w-32 animate-pulse rounded-full bg-[var(--shimmer-card-a)]" />
+                  <div className="h-7 w-52 animate-pulse rounded-full bg-[var(--shimmer-card-a)]" />
                 </div>
-                <div className="h-11 w-24 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.06)]" />
+                <div className="h-11 w-24 animate-pulse rounded-[16px] bg-[var(--shimmer-card-a)]" />
               </div>
-              <div className="h-20 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.04)]" />
+              <div className="h-20 animate-pulse rounded-[16px] bg-[var(--shimmer-card-a)]" />
             </CardHeader>
             <CardContent className="space-y-5 p-6 pt-0 sm:p-8 sm:pt-0">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="h-24 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.04)]" />
-                <div className="h-24 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.04)]" />
-                <div className="h-24 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.04)]" />
+                <div className="h-24 animate-pulse rounded-[16px] bg-[var(--shimmer-card-a)]" />
+                <div className="h-24 animate-pulse rounded-[16px] bg-[var(--shimmer-card-a)]" />
+                <div className="h-24 animate-pulse rounded-[16px] bg-[var(--shimmer-card-a)]" />
               </div>
               <div className="space-y-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-5">
-                <div className="h-12 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.05)]" />
-                <div className="h-12 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.05)]" />
-                <div className="h-12 animate-pulse rounded-[16px] bg-[color:rgba(255,255,255,0.05)]" />
+                <div className="h-12 animate-pulse rounded-[16px] bg-[var(--shimmer-card-b)]" />
+                <div className="h-12 animate-pulse rounded-[16px] bg-[var(--shimmer-card-b)]" />
+                <div className="h-12 animate-pulse rounded-[16px] bg-[var(--shimmer-card-b)]" />
               </div>
             </CardContent>
           </Card>
@@ -46,16 +46,16 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
 
   if (vm.falhaCarregamentoInicial) {
     return (
-      <Card className="overflow-hidden rounded-[24px] border border-[color:rgba(244,63,94,0.2)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.98))] shadow-[var(--shadow-md)]">
+      <Card className="overflow-hidden rounded-[24px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
         <CardContent className="flex flex-col items-center gap-5 px-6 py-14 text-center sm:px-10">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[20px] border border-[color:rgba(244,63,94,0.2)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)] shadow-[var(--shadow-sm)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[20px] border border-[color-mix(in_srgb,var(--danger)_30%,transparent)] bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)] shadow-[var(--shadow-sm)]">
             <CircleOff className="h-8 w-8" />
           </div>
           <div className="space-y-2">
             <h3 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">Nao foi possivel carregar o catalogo</h3>
             <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">Tente atualizar a lista antes de criar ou editar templates.</p>
           </div>
-          <Button onClick={() => void vm.recarregar()} className="h-12 rounded-[16px] bg-[var(--brand)] px-6 text-white hover:bg-[var(--brand-strong)]">
+          <Button onClick={() => void vm.recarregar()} className="h-12 rounded-[16px] bg-[var(--brand)] px-6 text-[var(--primary-foreground)] hover:bg-[var(--brand-strong)]">
             Tentar novamente
           </Button>
         </CardContent>
@@ -65,16 +65,16 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
 
   if (vm.produtos.length === 0) {
     return (
-      <Card className="overflow-hidden rounded-[24px] border-dashed border-[var(--border-strong)] bg-[radial-gradient(circle_at_top,_rgba(139,92,246,0.16),_transparent_26%),linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] shadow-[var(--shadow-sm)]">
+      <Card className="overflow-hidden rounded-[24px] border-dashed border-[var(--border-strong)] bg-[radial-gradient(circle_at_top,color-mix(in_srgb,var(--brand)_14%,transparent),transparent_26%),var(--surface)] shadow-[var(--shadow-sm)]">
         <CardContent className="flex flex-col items-center gap-5 px-6 py-16 text-center sm:px-10">
-          <div className="flex h-20 w-20 items-center justify-center rounded-[20px] border border-[color:rgba(16,185,129,0.2)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)] shadow-[var(--shadow-sm)]">
+          <div className="flex h-20 w-20 items-center justify-center rounded-[20px] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] shadow-[var(--shadow-sm)]">
             <Sparkles className="h-8 w-8" />
           </div>
           <div className="space-y-2">
             <h3 className="text-2xl font-semibold tracking-tight text-[var(--text-primary)] sm:text-3xl">Crie o primeiro template de produto</h3>
             <p className="max-w-xl text-sm leading-6 text-[var(--text-secondary)] sm:text-base">Monte o formulario e use no lead.</p>
           </div>
-          <Button onClick={vm.abrirCriacao} className="h-12 rounded-[16px] bg-[var(--brand)] px-6 text-white hover:bg-[var(--brand-strong)]">
+          <Button onClick={vm.abrirCriacao} className="h-12 rounded-[16px] bg-[var(--brand)] px-6 text-[var(--primary-foreground)] hover:bg-[var(--brand-strong)]">
             <Files className="mr-2 h-4 w-4" />
             Criar primeiro produto
           </Button>
@@ -116,7 +116,7 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
                 : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:shadow-[var(--shadow-sm)]",
             )}
           >
-            <CardHeader className="space-y-4 border-b border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01))] p-5 sm:p-6">
+            <CardHeader className="space-y-4 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] p-5 sm:p-6">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -125,7 +125,7 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
                     {camposObrigatorios > 0 ? <Badge variant="secondary">{camposObrigatorios} obrigatorios</Badge> : null}
                   </div>
                   <CardTitle className="flex items-start gap-3 text-[var(--text-primary)]">
-                    <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[14px] border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)] ring-1 ring-[color:rgba(16,185,129,0.12)]">
+                    <div className="mt-0.5 flex h-10 w-10 items-center justify-center rounded-[14px] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] ring-1 ring-[color-mix(in_srgb,var(--success)_20%,transparent)]">
                       <Rows3 className="h-4.5 w-4.5" />
                     </div>
                     <div className="space-y-2">
@@ -200,9 +200,9 @@ export function ProdutosLista({ vm }: ProdutosListaProps) {
 
               <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[var(--border-subtle)] pt-3">
                 <div className="flex flex-wrap gap-2 text-xs text-[var(--text-secondary)]">
-                <span className="rounded-full border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)] px-3 py-1 text-[var(--success)]">Interno</span>
+                <span className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] px-3 py-1 text-[var(--success)]">Interno</span>
                 <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-1">Lead</span>
-                <span className="rounded-full border border-[color:rgba(56,189,248,0.18)] bg-[color:rgba(56,189,248,0.12)] px-3 py-1 text-[var(--info)]">Dinamico</span>
+                <span className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] px-3 py-1 text-[var(--info)]">Dinamico</span>
                 </div>
                 <Button type="button" variant="ghost" size="sm" onClick={() => vm.abrirEdicao(produto)} className="rounded-xl px-3 text-[var(--text-secondary)] hover:text-[var(--text-primary)]">
                   Abrir painel

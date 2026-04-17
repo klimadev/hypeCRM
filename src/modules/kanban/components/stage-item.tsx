@@ -65,7 +65,7 @@ export function StageItem({
         <button
           type="button"
           onClick={onDelete}
-          className="rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-rose-500"
+          className="rounded-lg p-1.5 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--danger)]"
         >
           <Trash2 className="h-4 w-4" />
         </button>

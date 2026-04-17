@@ -16,10 +16,10 @@ type AgendaWidgetProps = {
 
 export function AgendaWidget({ bookings, carregando, erro, hrefIntegracao, rotuloAcao }: AgendaWidgetProps) {
   return (
-    <Card className="overflow-hidden border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.96),rgba(12,12,14,0.96))]">
+    <Card className="overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)]">
       <CardHeader className="flex flex-row items-start justify-between gap-3 pb-4">
         <CardTitle className="flex items-center gap-2 text-base text-[var(--text-primary)]">
-          <span className="flex h-8 w-8 items-center justify-center rounded-[12px] border border-[color:rgba(56,189,248,0.2)] bg-[linear-gradient(135deg,rgba(56,189,248,0.14),rgba(255,255,255,0.03))] text-[var(--info)]">
+          <span className="flex h-8 w-8 items-center justify-center rounded-[12px] border border-[color:color-mix(in_oklab,var(--info)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--info)_16%,var(--surface-elevated)_84%)] text-[var(--info)]">
             <Calendar className="h-4 w-4" />
           </span>
           Proximas reunioes
@@ -40,7 +40,7 @@ export function AgendaWidget({ bookings, carregando, erro, hrefIntegracao, rotul
             Carregando agenda...
           </div>
         ) : erro ? (
-          <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.22)] bg-[color:rgba(244,63,94,0.12)] px-3 py-2 text-sm text-[var(--danger)]">{erro}</p>
+          <p className="rounded-[var(--radius-control)] border border-[color:color-mix(in_oklab,var(--danger)_30%,var(--border-subtle)_70%)] bg-[color:color-mix(in_oklab,var(--danger)_12%,var(--surface-elevated)_88%)] px-3 py-2 text-sm text-[var(--danger)]">{erro}</p>
         ) : bookings.length === 0 ? (
           <p className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
             Nenhuma reuniao encontrada.
@@ -77,7 +77,7 @@ export function AgendaWidget({ bookings, carregando, erro, hrefIntegracao, rotul
                       href={booking.meetingUrl}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded-full border border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.08)] px-2.5 py-1 text-xs font-medium text-[var(--brand)] hover:border-[color:rgba(139,92,246,0.36)] hover:bg-[color:rgba(139,92,246,0.14)] hover:text-[var(--brand-strong)]"
+                      className="inline-flex items-center gap-1 rounded-full border border-[color:color-mix(in_oklab,var(--brand)_28%,var(--border-subtle)_72%)] bg-[color:color-mix(in_oklab,var(--brand)_10%,var(--surface-elevated)_90%)] px-2.5 py-1 text-xs font-medium text-[var(--brand)] hover:border-[color:color-mix(in_oklab,var(--brand)_42%,var(--border-subtle)_58%)] hover:bg-[color:color-mix(in_oklab,var(--brand)_16%,var(--surface-elevated)_84%)] hover:text-[var(--brand-strong)]"
                     >
                       <Video className="h-3.5 w-3.5" />
                       Abrir

@@ -15,13 +15,13 @@ type NodeKindMeta = {
 
 export const WORKFLOW_KIND_META: Record<WorkflowNodeKind, NodeKindMeta> = {
   gatilho: {
-    color: "#8b5cf6",
-    soft: "rgba(139,92,246,0.16)",
+    color: "var(--brand)",
+    soft: "color-mix(in_srgb,var(--brand)_18%,transparent)",
     label: "Gatilho",
   },
   acao: {
-    color: "#06b6d4",
-    soft: "rgba(6,182,212,0.16)",
+    color: "var(--info-alt)",
+    soft: "color-mix(in_srgb,var(--info-alt)_18%,transparent)",
     label: "Ação",
   },
 };

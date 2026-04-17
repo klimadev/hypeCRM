@@ -5,12 +5,12 @@ import type { Funcionario } from "../types";
 import { getCargoLabelFuncionario, getIndiceCorAvatarFuncionario, getIniciaisFuncionario } from "./funcionario-editar-drawer.utils";
 
 const coresAvatar = [
-  "bg-gradient-to-br from-emerald-400 to-cyan-500",
-  "bg-gradient-to-br from-violet-400 to-fuchsia-500",
-  "bg-gradient-to-br from-amber-400 to-orange-500",
-  "bg-gradient-to-br from-rose-400 to-pink-500",
-  "bg-gradient-to-br from-sky-400 to-blue-500",
-  "bg-gradient-to-br from-lime-400 to-green-500",
+  "bg-gradient-to-br from-emerald-400 to-cyan-500 dark:from-emerald-500 dark:to-cyan-600",
+  "bg-gradient-to-br from-violet-400 to-fuchsia-500 dark:from-violet-500 dark:to-fuchsia-600",
+  "bg-gradient-to-br from-amber-400 to-orange-500 dark:from-amber-500 dark:to-orange-600",
+  "bg-gradient-to-br from-rose-400 to-pink-500 dark:from-rose-500 dark:to-pink-600",
+  "bg-gradient-to-br from-sky-400 to-blue-500 dark:from-sky-500 dark:to-blue-600",
+  "bg-gradient-to-br from-lime-400 to-green-500 dark:from-lime-500 dark:to-green-600",
 ];
 
 function StatusBadge({ ativo }: { ativo: boolean }) {

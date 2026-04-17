@@ -17,7 +17,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Conectado",
       labelShort: "Online",
       labelDetailed: "Sincronizado e Pronto",
-      className: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      className: "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]",
       icon: "connected",
     };
   }
@@ -27,7 +27,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Escaneie o QR Code",
       labelShort: "QR",
       labelDetailed: "Aguardando Conexão",
-      className: "bg-amber-50 text-amber-700 border-amber-200",
+      className: "border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]",
       icon: "qrcode",
     };
   }
@@ -37,7 +37,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Carregando...",
       labelShort: "Carregando",
       labelDetailed: "Inicializando",
-      className: "bg-blue-50 text-blue-700 border-blue-200",
+      className: "border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]",
       icon: "loading",
     };
   }
@@ -47,7 +47,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Desconectado",
       labelShort: "Offline",
       labelDetailed: "Desconectado",
-      className: "bg-[rgba(255,255,255,0.05)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
+      className: "bg-[var(--surface-soft)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
       icon: "disconnected",
     };
   }
@@ -56,7 +56,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
     label: "Erro",
     labelShort: "Erro",
     labelDetailed: "Erro de Conexão",
-    className: "bg-rose-50 text-rose-700 border-rose-200",
+    className: "border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]",
     icon: "error",
   };
 }

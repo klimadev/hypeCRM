@@ -53,8 +53,8 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
         <div className={cn(
           "overflow-hidden rounded-2xl border shadow-2xl transition-all duration-300",
           expandido 
-            ? "border-blue-300 bg-white" 
-            : "border-blue-200/60 bg-blue-50/95 backdrop-blur-sm"
+            ? "border-[var(--brand)] bg-[var(--surface)]" 
+            : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] backdrop-blur-sm"
         )}>
           {/* Barra compacta */}
           <div 
@@ -62,11 +62,11 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
             onClick={() => setExpandido(!expandido)}
           >
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
-                <Check className="h-4 w-4 text-blue-600" />
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[var(--brand-soft)]">
+                <Check className="h-4 w-4 text-[var(--brand)]" />
               </div>
-              <p className="text-sm font-medium text-slate-700">
-                <span className="font-semibold text-blue-600">{vm.idsSelecionados.length}</span> selecionados
+              <p className="text-sm font-medium text-[var(--text-primary)]">
+                <span className="font-semibold text-[var(--brand)]">{vm.idsSelecionados.length}</span> selecionados
               </p>
             </div>
             
@@ -74,7 +74,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
               {expandido ? null : (
                 <Button 
                   size="sm" 
-                  className="rounded-lg bg-slate-800 font-medium text-white hover:bg-slate-700"
+                  className="rounded-lg bg-[var(--surface-elevated)] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-soft-hover)]"
                   onClick={(e) => { e.stopPropagation(); handleExecutarAcao(); }}
                   disabled={vm.executandoLote}
                 >
@@ -82,7 +82,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
                 </Button>
               )}
               <button 
-                className="flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                className="flex h-7 w-7 items-center justify-center rounded-md text-[var(--text-tertiary)] hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)]"
                 onClick={(e) => { e.stopPropagation(); vm.alternarSelecaoPagina(false); }}
               >
                 <X className="h-4 w-4" />
@@ -92,13 +92,13 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
 
           {/* Painel expandido com mais opções */}
           <div className={cn(
-            "border-t border-slate-100 transition-all duration-300",
+            "border-t border-[var(--border-subtle)] transition-all duration-300",
             expandido ? "max-h-96 opacity-100" : "max-h-0 opacity-0"
           )}>
             <div className="space-y-3 p-4">
               <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                 <Select value={vm.acaoLote} onValueChange={(valor) => vm.setAcaoLote(valor as "ATIVAR" | "INATIVAR" | "ALTERAR_CARGO" | "ALTERAR_PDV")}>
-                  <SelectTrigger className="h-10 w-full sm:w-[180px] rounded-xl border-slate-300 bg-white text-sm font-medium">
+                  <SelectTrigger className="h-10 w-full sm:w-[180px] rounded-xl border-[var(--border-strong)] bg-[var(--surface)] text-sm font-medium">
                     <SelectValue placeholder="Ação" />
                   </SelectTrigger>
                   <SelectContent>
@@ -111,7 +111,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
 
                 <Button 
                   size="sm" 
-                  className="w-full rounded-xl bg-slate-800 font-medium text-white hover:bg-slate-700 sm:w-auto"
+                  className="w-full rounded-xl bg-[var(--surface-elevated)] font-medium text-[var(--text-primary)] hover:bg-[var(--surface-soft-hover)] sm:w-auto"
                   onClick={handleExecutarAcao} 
                   disabled={vm.executandoLote}
                 >
@@ -121,7 +121,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
 
               {vm.acaoLote === "ALTERAR_CARGO" ? (
                 <Select value={vm.cargoLote} onValueChange={vm.setCargoLote}>
-                  <SelectTrigger className="h-10 w-full rounded-xl border-slate-300 bg-white text-sm">
+                  <SelectTrigger className="h-10 w-full rounded-xl border-[var(--border-strong)] bg-[var(--surface)] text-sm">
                     <SelectValue placeholder="Novo cargo" />
                   </SelectTrigger>
                   <SelectContent>
@@ -134,7 +134,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
 
               {vm.acaoLote === "ALTERAR_PDV" ? (
                 <Select value={vm.pdvLote} onValueChange={vm.setPdvLote}>
-                  <SelectTrigger className="h-10 w-full rounded-xl border-slate-300 bg-white text-sm">
+                  <SelectTrigger className="h-10 w-full rounded-xl border-[var(--border-strong)] bg-[var(--surface)] text-sm">
                     <SelectValue placeholder="Novo PDV" />
                   </SelectTrigger>
                   <SelectContent>
@@ -150,7 +150,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
               {vm.acaoLote === "INATIVAR" ? (
                 <div className="grid gap-2 sm:grid-cols-2">
                   <Select value={vm.destinoInativacaoLote} onValueChange={vm.setDestinoInativacaoLote}>
-                    <SelectTrigger className="h-10 rounded-xl border-slate-300 bg-white text-sm">
+                    <SelectTrigger className="h-10 rounded-xl border-[var(--border-strong)] bg-[var(--surface)] text-sm">
                       <SelectValue placeholder="Destino para reatribuição" />
                     </SelectTrigger>
                     <SelectContent>
@@ -158,7 +158,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
                         <SelectItem key={funcionario.id} value={funcionario.id}>
                           <div className="flex flex-col">
                             <span className="font-medium">{funcionario.nome}</span>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-[var(--text-tertiary)]">
                               {funcionario.cargo} • {funcionario.pdv?.nome}
                             </span>
                           </div>
@@ -168,7 +168,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
                   </Select>
 
                   <Input
-                    className="h-10 rounded-xl border-slate-300 bg-white"
+                    className="h-10 rounded-xl border-[var(--border-strong)] bg-[var(--surface)]"
                     placeholder="Observação (opcional)"
                     value={vm.observacaoLote}
                     onChange={(e) => vm.setObservacaoLote(e.target.value)}
@@ -176,8 +176,8 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
                 </div>
               ) : null}
 
-              {vm.erroLote ? <p className="text-sm font-medium text-rose-600">{vm.erroLote}</p> : null}
-              {vm.resultadoLote ? <p className="text-sm text-slate-600">Atualizados: {vm.resultadoLote.atualizados} de {vm.resultadoLote.processados}.</p> : null}
+              {vm.erroLote ? <p className="text-sm font-medium text-[var(--danger)]">{vm.erroLote}</p> : null}
+              {vm.resultadoLote ? <p className="text-sm text-[var(--text-secondary)]">Atualizados: {vm.resultadoLote.atualizados} de {vm.resultadoLote.processados}.</p> : null}
             </div>
           </div>
         </div>
@@ -188,7 +188,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-amber-500" />
+              <AlertTriangle className="h-5 w-5 text-[var(--warning)]" />
               Confirmar ação em lote
             </DialogTitle>
             <DialogDescription>
@@ -196,7 +196,7 @@ export function EquipeBulkActions({ vm }: EquipeBulkActionsProps) {
             </DialogDescription>
           </DialogHeader>
           <div className="py-2">
-            <p className="text-sm text-slate-600">
+            <p className="text-sm text-[var(--text-secondary)]">
               Os colaboradores selecionados serão inativados e seus dados serão reassignados ao destino selecionado.
               Esta ação pode ser desfeita manualmente posteriormente.
             </p>

@@ -136,14 +136,14 @@ export function NegocioProdutosTab({ negocioId }: NegocioProdutosTabProps) {
           <h3 className="text-sm font-semibold text-[var(--text-primary)]">Produtos vinculados ao negócio</h3>
           <p className="text-xs text-[var(--text-secondary)]">Anexe templates internos com valores próprios desta negociação.</p>
         </div>
-        <Button type="button" onClick={abrirDialog} className="bg-emerald-600 text-white hover:bg-emerald-700">
+        <Button type="button" onClick={abrirDialog} className="bg-[var(--success)] text-[var(--primary-foreground)] hover:brightness-110">
           <PackagePlus className="mr-2 h-4 w-4" />
           Anexar produto
         </Button>
       </div>
 
       {produtosNegocio.length === 0 ? (
-        <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] p-4 text-sm text-[var(--text-secondary)]">
+        <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4 text-sm text-[var(--text-secondary)]">
           Nenhum produto anexado a este negócio.
         </div>
       ) : (
@@ -159,7 +159,7 @@ export function NegocioProdutosTab({ negocioId }: NegocioProdutosTabProps) {
                     {item.observacoes ? <p className="text-sm text-[var(--text-secondary)]">{item.observacoes}</p> : null}
                   </div>
                   <Button type="button" variant="outline" size="icon" onClick={() => void remover(item.id)} disabled={removendoId === item.id}>
-                    {removendoId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-rose-600" />}
+                    {removendoId === item.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4 text-[var(--danger)]" />}
                   </Button>
                 </div>
 
@@ -171,7 +171,7 @@ export function NegocioProdutosTab({ negocioId }: NegocioProdutosTabProps) {
       )}
 
       {erro ? (
-            <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm text-[color:#fecdd3]">
+            <div className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {erro}
@@ -221,7 +221,7 @@ export function NegocioProdutosTab({ negocioId }: NegocioProdutosTabProps) {
             <Button type="button" variant="outline" onClick={() => setDialogAberto(false)}>
               Cancelar
             </Button>
-            <Button type="button" onClick={() => void salvar()} disabled={salvando || !produtoSelecionado} className="bg-emerald-600 text-white hover:bg-emerald-700">
+            <Button type="button" onClick={() => void salvar()} disabled={salvando || !produtoSelecionado} className="bg-[var(--success)] text-[var(--primary-foreground)] hover:brightness-110">
               {salvando ? (
                 <span className="inline-flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />

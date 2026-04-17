@@ -43,7 +43,7 @@ export function ModuloIntegracoes() {
         ]}
       />
 
-      <Card className="border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))] shadow-[var(--shadow-sm)]">
+      <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
         <CardContent className="flex flex-col gap-3 p-4 md:flex-row md:items-center md:justify-between md:p-[18px]">
           <div className="space-y-1">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Como funciona</p>
@@ -62,10 +62,10 @@ export function ModuloIntegracoes() {
           const ConteudoCard = (
             <Card
               className={cn(
-                "h-full overflow-hidden border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]",
+                "h-full overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)]",
                 estaDisponivel
                   ? "focus-within:border-[var(--border-focus)] focus-within:shadow-[var(--focus-ring)] group-focus-visible:border-[var(--border-focus)] group-focus-visible:shadow-[var(--focus-ring)]"
-                  : "border-[color:rgba(245,158,11,0.2)] bg-[linear-gradient(180deg,rgba(28,20,8,0.5),rgba(12,12,14,0.94))]",
+                  : "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,var(--surface))]",
               )}
             >
               <CardHeader className="space-y-4 p-5">
@@ -80,10 +80,10 @@ export function ModuloIntegracoes() {
                   </div>
                   <span
                     className={cn(
-                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border shadow-[0_18px_40px_-28px_rgba(56,189,248,0.65)]",
+                      "flex h-11 w-11 shrink-0 items-center justify-center rounded-[16px] border",
                       estaDisponivel
-                        ? "border-[color:rgba(56,189,248,0.24)] bg-[color:rgba(56,189,248,0.12)] text-[var(--info)]"
-                        : "border-[color:rgba(245,158,11,0.24)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)] shadow-[0_18px_40px_-28px_rgba(245,158,11,0.45)]",
+                        ? "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]"
+                        : "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]",
                     )}
                   >
                     {integracao.slug === "instagram" ? (

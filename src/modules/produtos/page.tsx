@@ -38,14 +38,14 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
       />
 
       <div className="grid gap-3 xl:grid-cols-[minmax(0,1.3fr)_minmax(320px,0.86fr)]">
-        <Card className="overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(135deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96))] shadow-[var(--shadow-md)]">
+        <Card className="overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
           <CardContent className="flex flex-col gap-4 p-5 sm:p-6">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
               <div className="space-y-2">
                 <div className="flex flex-wrap gap-2 text-sm text-[var(--text-secondary)]">
-                  <span className="rounded-full border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)] px-3 py-1.5 text-[var(--success)]">Basico</span>
+                  <span className="rounded-full border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] px-3 py-1.5 text-[var(--success)]">Basico</span>
                   <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-1.5 text-[var(--text-secondary)]">Campos</span>
-                  <span className="rounded-full border border-[color:rgba(56,189,248,0.18)] bg-[color:rgba(56,189,248,0.12)] px-3 py-1.5 text-[var(--info)]">Revisao</span>
+                  <span className="rounded-full border border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] px-3 py-1.5 text-[var(--info)]">Revisao</span>
                 </div>
                 <p className="text-sm leading-6 text-[var(--text-secondary)]">Catalogo simples, edicao em tela dedicada e preview em tempo real.</p>
               </div>
@@ -67,10 +67,10 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
           </CardContent>
         </Card>
 
-        <Card className="overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[linear-gradient(160deg,rgba(17,17,19,0.98),rgba(12,12,14,0.96),rgba(17,17,19,0.98))] shadow-[var(--shadow-md)]">
+        <Card className="overflow-hidden rounded-[24px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
           <CardContent className="grid gap-4 p-5 sm:grid-cols-3 sm:p-6 xl:grid-cols-1">
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color-mix(in_srgb,var(--success)_30%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]">
                 <Boxes className="h-4.5 w-4.5" />
               </div>
               <div>
@@ -79,7 +79,7 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color:rgba(56,189,248,0.18)] bg-[color:rgba(56,189,248,0.12)] text-[var(--info)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-[16px] border border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)]">
                 <PackageCheck className="h-4.5 w-4.5" />
               </div>
               <div>
@@ -96,7 +96,7 @@ export function ModuloProdutos({ estadoInicial }: ModuloProdutosProps) {
         </Card>
       </div>
 
-      {vm.erro ? <div className="rounded-[16px] border border-[color:rgba(244,63,94,0.22)] bg-[color:rgba(244,63,94,0.12)] p-3 text-sm text-[color:#ffb4c2]">{vm.erro}</div> : null}
+      {vm.erro ? <div className="rounded-[16px] border border-[color-mix(in_srgb,var(--danger)_34%,transparent)] bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] p-3 text-sm text-[var(--danger)]">{vm.erro}</div> : null}
 
       <ProdutosLista vm={vm} />
     </ModulePageShell>

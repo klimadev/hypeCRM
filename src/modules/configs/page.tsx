@@ -9,6 +9,7 @@ import { InlineStatusAlert } from "@/components/shared/inline-status-alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { ThemeToggleRow } from "@/components/theme-toggle";
 import { useToast } from "@/components/ui/toast";
 import {
   atualizarAtalhoChat,
@@ -354,6 +355,7 @@ export function ModuloConfigs() {
         )}
       />
       <InlineStatusAlert variant="error" message={vm.erro} />
+      <ThemeToggleRow />
 
       <section className="grid min-h-0 grid-cols-1 gap-4 lg:grid-cols-[1.1fr_1fr]">
         <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
@@ -380,7 +382,7 @@ export function ModuloConfigs() {
               <p className="text-xs text-[var(--text-secondary)]">Nenhum atalho criado ainda.</p>
             ) : null}
             {atalhos.map((atalho) => (
-              <div key={atalho.id} className="rounded-xl border border-[var(--border-subtle)] bg-black/10 px-3 py-2">
+              <div key={atalho.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2">
                 <div className="flex items-start justify-between gap-2">
                   <button type="button" className="min-w-0 text-left" onClick={() => iniciarEdicao(atalho)}>
                     <p className="truncate text-sm font-medium text-[var(--text-primary)]">/{atalho.slug} · {atalho.nome}</p>
@@ -436,7 +438,7 @@ export function ModuloConfigs() {
             </Button>
           </div>
 
-          <div className="mt-4 rounded-xl border border-[var(--border-subtle)] bg-black/10 p-3">
+          <div className="mt-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-3">
             <p className="mb-2 text-[11px] font-medium text-[var(--text-primary)]">Variáveis disponíveis</p>
             <div className="flex flex-wrap gap-1.5">
               {VARIAVEIS_PRONTAS.map((variavel) => (
@@ -474,7 +476,7 @@ export function ModuloConfigs() {
               <p className="text-xs text-[var(--text-secondary)]">Nenhuma cadencia criada ainda.</p>
             ) : null}
             {templates.map((template) => (
-              <div key={template.id} className="rounded-xl border border-[var(--border-subtle)] bg-black/10 px-3 py-2">
+              <div key={template.id} className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2">
                 <div className="flex items-start justify-between gap-2">
                   <button type="button" className="min-w-0 text-left" onClick={() => iniciarEdicaoTemplate(template)}>
                     <p className="truncate text-sm font-medium text-[var(--text-primary)]">{template.nome}</p>
@@ -506,7 +508,7 @@ export function ModuloConfigs() {
             <Input value={formCadencia.nome} onChange={(event) => setFormCadencia((prev) => ({ ...prev, nome: event.target.value }))} placeholder="Nome da cadencia" />
             <Input value={formCadencia.descricao} onChange={(event) => setFormCadencia((prev) => ({ ...prev, descricao: event.target.value }))} placeholder="Descricao (opcional)" />
 
-            <div className="space-y-2 rounded-xl border border-[var(--border-subtle)] bg-black/10 p-3">
+            <div className="space-y-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-3">
               <div className="flex items-center justify-between gap-2">
                 <p className="text-xs font-medium text-[var(--text-primary)]">Passos da cadencia</p>
                 <Button type="button" variant="outline" size="sm" onClick={adicionarEtapaCadencia} className="h-7 rounded-lg px-2">

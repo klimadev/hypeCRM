@@ -50,7 +50,7 @@ export function AutomacoesCanvasToolbar({
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   return (
-    <div className="pointer-events-auto flex items-center gap-2 rounded-[18px] border border-[var(--border-subtle)] bg-[color:rgba(12,12,14,0.86)] p-2 backdrop-blur-md">
+    <div className="pointer-events-auto flex items-center gap-2 rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-overlay)] p-2 backdrop-blur-md">
       {hasNodes && canAddStep ? (
         <Button type="button" size="sm" variant="outline" onClick={onOpenStepDialog}>
           <Plus className="mr-2 h-4 w-4" />

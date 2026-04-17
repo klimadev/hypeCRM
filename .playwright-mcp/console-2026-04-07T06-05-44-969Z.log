@@ -1,8 +1,0 @@
-[    2661ms] [VERBOSE] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o @ http://127.0.0.1:3434/login:0
-[ 1350082ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3434/api/pendencias:0
-[ 1350161ms] [ERROR] Erro de rede ao buscar pendências: TypeError: Failed to fetch
-    at s (http://127.0.0.1:3434/_next/static/chunks/7de4cfc23145dcd6.js:5:10278)
-    at http://127.0.0.1:3434/_next/static/chunks/7de4cfc23145dcd6.js:5:14758 @ http://127.0.0.1:3434/_next/static/chunks/7de4cfc23145dcd6.js:4
-[ 1350323ms] [ERROR] Erro ao buscar pendências: Erro de conexão. Verifique sua internet. @ http://127.0.0.1:3434/_next/static/chunks/7de4cfc23145dcd6.js:4
-[ 1350685ms] [ERROR] Failed to load resource: net::ERR_INCOMPLETE_CHUNKED_ENCODING @ http://127.0.0.1:3434/api/chat/stream:0
-[ 1359039ms] [ERROR] Failed to load resource: net::ERR_CONNECTION_REFUSED @ http://127.0.0.1:3434/api/chat/stream:0

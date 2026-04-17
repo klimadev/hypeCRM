@@ -202,7 +202,7 @@ async function ResumoKpiGrid({ leadsPromise }: { leadsPromise: Promise<LeadResum
                 <CardTitle className="text-sm font-semibold tracking-tight text-[var(--text-secondary)]">{card.titulo}</CardTitle>
                 <p className="text-[28px] font-semibold tracking-tight text-[var(--text-primary)]">{card.valor}</p>
               </div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] shadow-[var(--shadow-sm)]">
+              <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
                 <Icone className={`h-4.5 w-4.5 ${card.tone}`} />
               </div>
             </CardHeader>
@@ -269,13 +269,13 @@ async function ResumoAgenda({ calComPromise }: { calComPromise: Promise<number> 
   if (!resumoAgenda.temConexaoAtiva) {
     return (
       <div>
-        <Card className="h-full border-dashed border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(17,17,19,0.98),rgba(12,12,14,0.94))]">
+        <Card className="h-full border-dashed border-[var(--border-subtle)] bg-[var(--surface)]">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
               <CardTitle>{resumoAgenda.titulo}</CardTitle>
               <p className="mt-1 text-sm text-[var(--text-secondary)]">{resumoAgenda.descricao}</p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.12)]">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color-mix(in_srgb,var(--brand)_28%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)]">
               <CalendarClock className="h-4.5 w-4.5 text-[var(--brand)]" />
             </div>
           </CardHeader>
@@ -300,7 +300,7 @@ async function ResumoAgenda({ calComPromise }: { calComPromise: Promise<number> 
             <CardTitle>{resumoAgenda.titulo}</CardTitle>
             <p className="mt-1 text-sm text-[var(--text-secondary)]">{resumoAgenda.descricao}</p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)]">
+          <div className="flex h-10 w-10 items-center justify-center rounded-[16px] border border-[color-mix(in_srgb,var(--success)_28%,transparent)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)]">
             <CalendarClock className="h-4.5 w-4.5 text-[var(--success)]" />
           </div>
         </CardHeader>

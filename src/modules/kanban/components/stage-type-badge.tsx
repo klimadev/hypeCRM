@@ -10,9 +10,9 @@ interface StageTypeBadgeProps {
 }
 
 const CORES_DEFAULT = {
-  bg: "bg-zinc-500/20",
-  text: "text-zinc-400",
-  border: "border-zinc-500/40",
+  bg: "bg-[var(--surface-soft)]",
+  text: "text-[var(--text-secondary)]",
+  border: "border-[var(--border-strong)]",
   label: "Indefinido",
 };
 

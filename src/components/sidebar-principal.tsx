@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { BotaoSair } from "@/components/botao-sair";
+import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 import { usePendenciasGlobais } from "@/modules/kanban/hooks/use-pendencias-globais";
 import type { DadosUsuarioLogado } from "@/lib/autenticacao";
@@ -29,7 +30,7 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
     <aside className="fixed inset-y-0 left-0 z-30 hidden w-[4.5rem] shrink-0 border-r border-[var(--border-subtle)] bg-[var(--canvas)] lg:block">
       <div className="flex h-full flex-col items-center px-1.5 py-2.5">
         <div className="flex h-11 w-11 items-center justify-center rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-          <div className="relative h-9 w-9 overflow-hidden rounded-[13px] border border-white/10 bg-[var(--surface-elevated)]">
+          <div className="relative h-9 w-9 overflow-hidden rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
             <Image src="/logo.png" alt="HYPE CRM" fill className="object-cover" />
           </div>
         </div>
@@ -47,10 +48,11 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
             size="icon"
             title={`${nomeExibicao} • ${cargoExibicao}`}
             aria-label={`${nomeExibicao}, ${cargoExibicao}`}
-            className="h-10 w-10 rounded-full border-[color:rgba(139,92,246,0.3)] bg-[linear-gradient(135deg,rgba(139,92,246,0.9),rgba(34,211,238,0.7))] text-[10px] font-semibold uppercase text-[#09090b] shadow-[0_12px_24px_-10px_rgba(139,92,246,0.6)] hover:bg-[linear-gradient(135deg,rgba(139,92,246,0.95),rgba(34,211,238,0.76))]"
+            className="h-10 w-10 rounded-full border-[var(--brand)] bg-[linear-gradient(135deg,var(--brand),var(--info-alt))] text-[10px] font-semibold uppercase text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:brightness-105"
           >
             {iniciaisNome}
           </Button>
+          <ThemeToggleIcon />
           <BotaoSair
             apenasIcone
             className={cn(

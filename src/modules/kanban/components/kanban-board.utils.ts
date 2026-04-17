@@ -58,15 +58,15 @@ export function obterEstilosTextoColuna(estagio: Estagio): Record<string, string
 
 export function obterTintColunaKanban(estagio: Estagio): string {
   if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") {
-    return "bg-[color:rgba(16,185,129,0.04)]";
+    return "bg-[color-mix(in_srgb,var(--success)_8%,transparent)]";
   }
 
   if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") {
-    return "bg-[color:rgba(255,255,255,0.02)]";
+    return "bg-[var(--surface-soft)]";
   }
 
   if (estagio.nome === "Pré Aprovação") {
-    return "bg-[color:rgba(245,158,11,0.04)]";
+    return "bg-[color-mix(in_srgb,var(--warning)_8%,transparent)]";
   }
 
   return "";
@@ -75,15 +75,15 @@ export function obterTintColunaKanban(estagio: Estagio): string {
 export function obterSinalVisualNegocioKanban(estagio: Estagio): SinalVisualNegocioKanban {
   if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") {
     return {
-      circle: "h-2 w-2 rounded-full bg-emerald-500",
-      border: "border-l-2 border-l-emerald-500",
+      circle: "h-2 w-2 rounded-full bg-[var(--success)]",
+      border: "border-l-2 border-l-[var(--success)]",
     };
   }
 
   if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") {
     return {
-      circle: "h-2 w-2 rounded-full bg-zinc-500",
-      border: "border-l-2 border-l-zinc-500",
+      circle: "h-2 w-2 rounded-full bg-[var(--text-tertiary)]",
+      border: "border-l-2 border-l-[var(--text-tertiary)]",
     };
   }
 
@@ -120,8 +120,8 @@ export function obterBadgeOrigemKanban(origem?: OrigemContato | null): BadgeOrig
 }
 
 export function obterClasseIndicadorEtapaKanban(estagio: Estagio) {
-  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") return "bg-emerald-500";
-  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") return "bg-zinc-500";
-  if ((estagio.tipo === "ABERTO" || estagio.tipo === "") && estagio.nome === "Pré Aprovação") return "bg-amber-400";
-  return "bg-blue-400";
+  if (estagio.tipo === "GANHO" || estagio.tipo === "SUCCESS") return "bg-[var(--success)]";
+  if (estagio.tipo === "PERDIDO" || estagio.tipo === "FALHA") return "bg-[var(--text-tertiary)]";
+  if ((estagio.tipo === "ABERTO" || estagio.tipo === "") && estagio.nome === "Pré Aprovação") return "bg-[var(--warning)]";
+  return "bg-[var(--info)]";
 }

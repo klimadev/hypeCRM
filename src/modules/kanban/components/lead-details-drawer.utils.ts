@@ -116,13 +116,13 @@ export function criarStatusSalvarNegocio(params: CriarStatusSalvarParams): Statu
 export function criarClasseStatusSalvar(tom: StatusSalvarDrawer["tom"]) {
   switch (tom) {
     case "erro":
-      return "text-rose-200";
+      return "text-[var(--danger)]";
     case "loading":
     case "alerta":
-      return "text-amber-100";
+      return "text-[var(--warning)]";
     case "sucesso":
     default:
-      return "text-emerald-100";
+      return "text-[var(--success)]";
   }
 }
 

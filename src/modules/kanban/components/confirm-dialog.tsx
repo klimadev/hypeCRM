@@ -42,14 +42,14 @@ export function ConfirmDialog({
   const destrutivo = modo === "destrutivo";
 
   return createPortal(
-      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4">
+      <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[color-mix(in_srgb,var(--canvas)_72%,black)] p-4">
       <div className="w-full max-w-md animate-in zoom-in-95 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6 shadow-[var(--shadow-overlay)]">
         {icone ? (
           <div className="mb-4 flex items-center justify-center">
             <div
               className={cn(
                 "flex h-12 w-12 items-center justify-center rounded-full",
-                destrutivo ? "bg-[color:rgba(244,63,94,0.14)] text-[var(--danger)]" : "bg-[color:rgba(255,255,255,0.06)] text-[var(--text-secondary)]",
+                destrutivo ? "bg-[color-mix(in_srgb,var(--danger)_14%,transparent)] text-[var(--danger)]" : "bg-[var(--surface-soft)] text-[var(--text-secondary)]",
               )}
             >
               {icone}
@@ -61,7 +61,7 @@ export function ConfirmDialog({
         <div className="mb-6 text-center text-sm text-[var(--text-secondary)]">{descricao}</div>
 
         {erro ? (
-          <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] px-3 py-2 text-sm text-[color:#fecdd3]">
+          <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-sm text-[var(--danger)]">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{erro}</span>
           </div>

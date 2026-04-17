@@ -43,7 +43,7 @@ export function KanbanBoardMobile({
                 <TabsTrigger
                   key={estagio.id}
                   value={estagio.id}
-                  className="min-h-9 shrink-0 rounded-full border border-[var(--border-subtle)] px-3 text-[12px] font-medium text-[var(--text-secondary)] transition-colors duration-150 data-[state=active]:border-[color:rgba(139,92,246,0.4)] data-[state=active]:bg-[color:rgba(139,92,246,0.12)] data-[state=active]:text-[var(--text-primary)]"
+                  className="min-h-9 shrink-0 rounded-full border border-[var(--border-subtle)] px-3 text-[12px] font-medium text-[var(--text-secondary)] transition-colors duration-150 data-[state=active]:border-[color-mix(in_srgb,var(--brand)_42%,transparent)] data-[state=active]:bg-[var(--brand-soft)] data-[state=active]:text-[var(--text-primary)]"
                 >
                   <span className="flex items-center gap-1.5">
                     {estagio.nome}

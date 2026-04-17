@@ -146,7 +146,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
                 className="h-9 w-48 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-9 pr-3 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:outline-none focus:ring-[var(--focus-ring)]"
               />
               {busca ? (
-                <button onClick={() => setBusca("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.05)] p-0.5 hover:bg-[color:rgba(255,255,255,0.08)]">
+                <button onClick={() => setBusca("")} className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-0.5 hover:bg-[var(--surface-soft-hover)]">
                   <X className="h-3 w-3 text-[var(--text-secondary)]" />
                 </button>
               ) : null}
@@ -182,7 +182,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
             ) : null}
 
             <Select value={filtros.origem} onValueChange={(v) => setFiltros({ ...filtros, origem: v as KanbanFilters["origem"] })}>
-              <SelectTrigger className={cn("h-9 w-40 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium", filtros.origem !== "todos" ? "border-[color:rgba(139,92,246,0.4)] bg-[color:rgba(139,92,246,0.14)] text-[color:#ddd6fe]" : "text-[var(--text-secondary)]")}>
+              <SelectTrigger className={cn("h-9 w-40 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium", filtros.origem !== "todos" ? "border-[color-mix(in_srgb,var(--brand)_42%,transparent)] bg-[var(--brand-soft)] text-[var(--brand)]" : "text-[var(--text-secondary)]")}>
                 <div className="flex items-center gap-1.5">
                   {filtros.origem === "ANUNCIO_CTWA" ? <Megaphone className="h-3.5 w-3.5" /> : null}
                   {filtros.origem === "SINCRONIZACAO_WHATSAPP" ? <MessageCircle className="h-3.5 w-3.5" /> : null}
@@ -191,33 +191,33 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
                 </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todos"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-zinc-400" /> Todas as origens</span></SelectItem>
-                <SelectItem value="ANUNCIO_CTWA"><span className="flex items-center gap-2"><Megaphone className="h-3.5 w-3.5 text-purple-500" /> Anúncio</span></SelectItem>
-                <SelectItem value="SINCRONIZACAO_WHATSAPP"><span className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5 text-emerald-500" /> WhatsApp</span></SelectItem>
-                <SelectItem value="MANUAL"><span className="flex items-center gap-2"><PenLine className="h-3.5 w-3.5 text-blue-500" /> Manual</span></SelectItem>
+                <SelectItem value="todos"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--text-tertiary)]" /> Todas as origens</span></SelectItem>
+                <SelectItem value="ANUNCIO_CTWA"><span className="flex items-center gap-2"><Megaphone className="h-3.5 w-3.5 text-[var(--brand)]" /> Anúncio</span></SelectItem>
+                <SelectItem value="SINCRONIZACAO_WHATSAPP"><span className="flex items-center gap-2"><MessageCircle className="h-3.5 w-3.5 text-[var(--success)]" /> WhatsApp</span></SelectItem>
+                <SelectItem value="MANUAL"><span className="flex items-center gap-2"><PenLine className="h-3.5 w-3.5 text-[var(--info)]" /> Manual</span></SelectItem>
               </SelectContent>
             </Select>
 
-            {resumoPendencias ? <div className="flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.04)] px-3 py-2"><PendenciaBadge resumo={resumoPendencias} tamanho="md" modoExpansivo /></div> : null}
+            {resumoPendencias ? <div className="flex items-center gap-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2"><PendenciaBadge resumo={resumoPendencias} tamanho="md" modoExpansivo /></div> : null}
 
-            <Button variant={modoFocoPendencias ? "default" : "outline"} size="sm" onClick={() => setModoFocoPendencias(!modoFocoPendencias)} className={cn("rounded-xl text-sm font-medium", modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[color:#fb7185]" : "border-[var(--border-subtle)]")} title={modoFocoPendencias ? "Mostrar todos os negócios" : "Mostrar apenas negócios com pendências"}>
+            <Button variant={modoFocoPendencias ? "default" : "outline"} size="sm" onClick={() => setModoFocoPendencias(!modoFocoPendencias)} className={cn("rounded-xl text-sm font-medium", modoFocoPendencias ? "bg-[var(--danger)] hover:bg-[var(--danger-strong)]" : "border-[var(--border-subtle)]")} title={modoFocoPendencias ? "Mostrar todos os negócios" : "Mostrar apenas negócios com pendências"}>
               <Gauge className="mr-2 h-4 w-4" />
               {modoFocoPendencias ? "Mostrando urgências" : "Apenas urgências"}
             </Button>
 
-            <Button variant="outline" size="sm" onClick={() => void onToggleNotificacoes()} className={cn("rounded-xl text-sm font-medium", notificacoesAtivadas ? "border-blue-300 bg-blue-50 text-blue-700 hover:bg-blue-100" : "border-[var(--border-subtle)]")} title={notificacoesAtivadas ? "Notificações ativadas - clique para desativar" : "Ativar notificações de novas pendências"}>
+            <Button variant="outline" size="sm" onClick={() => void onToggleNotificacoes()} className={cn("rounded-xl text-sm font-medium", notificacoesAtivadas ? "border-[color-mix(in_srgb,var(--info)_30%,transparent)] bg-[color-mix(in_srgb,var(--info)_14%,transparent)] text-[var(--info)] hover:bg-[color-mix(in_srgb,var(--info)_20%,transparent)]" : "border-[var(--border-subtle)]")} title={notificacoesAtivadas ? "Notificações ativadas - clique para desativar" : "Ativar notificações de novas pendências"}>
               {notificacoesAtivadas ? <Bell className="h-4 w-4" /> : <BellOff className="h-4 w-4" />}
             </Button>
 
-            <div className="flex items-center gap-1 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 py-1.5">
+            <div className="flex items-center gap-1 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2 py-1.5">
               <div className="flex items-center gap-1">
                 <Filter className="h-3.5 w-3.5 text-[var(--text-tertiary)]" />
                 <Select value={filtros.status} onValueChange={(v) => setFiltros({ ...filtros, status: v as KanbanFilters["status"] })}>
                   <SelectTrigger className="h-8 w-36 border-0 bg-transparent text-sm font-medium text-[var(--text-secondary)] focus:ring-0"><SelectValue placeholder="Pendência" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todos"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-zinc-400" /> Todos</span></SelectItem>
-                    <SelectItem value="com_pendencia"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /> Com pendência</span></SelectItem>
-                    <SelectItem value="sem_pendencia"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-emerald-500" /> Sem pendência</span></SelectItem>
+                    <SelectItem value="todos"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--text-tertiary)]" /> Todos</span></SelectItem>
+                    <SelectItem value="com_pendencia"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--warning)]" /> Com pendência</span></SelectItem>
+                    <SelectItem value="sem_pendencia"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--success)]" /> Sem pendência</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -228,15 +228,15 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
                 <Select value={filtros.gravidade} onValueChange={(v) => setFiltros({ ...filtros, gravidade: v as KanbanFilters["gravidade"] })}>
                   <SelectTrigger className="h-8 w-28 border-0 bg-transparent text-sm font-medium text-[var(--text-secondary)] focus:ring-0"><SelectValue placeholder="Nível" /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todas"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-zinc-400" /> Todos</span></SelectItem>
-                    <SelectItem value="critica"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-rose-500" /> Crítico</span></SelectItem>
-                    <SelectItem value="alerta"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-amber-500" /> Alerta</span></SelectItem>
+                    <SelectItem value="todas"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--text-tertiary)]" /> Todos</span></SelectItem>
+                    <SelectItem value="critica"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--danger)]" /> Crítico</span></SelectItem>
+                    <SelectItem value="alerta"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-[var(--warning)]" /> Alerta</span></SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               {filtrosAtivos ? (
-                <button onClick={limparFiltros} className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-[color:rgba(255,255,255,0.06)] text-[var(--text-secondary)] transition-colors hover:bg-[color:rgba(255,255,255,0.1)]" title="Limpar filtros">
+                <button onClick={limparFiltros} className="ml-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface-soft)] text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-soft-hover)]" title="Limpar filtros">
                   <X className="h-3.5 w-3.5" />
                 </button>
               ) : null}
@@ -263,7 +263,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
               funcionarios={funcionarios}
               estagios={estagios}
               erroNovoNegocio={erroNovoNegocio}
-              trigger={<Button className="w-full rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 font-medium text-white shadow-md transition-all duration-200 hover:from-emerald-600 hover:to-emerald-700 hover:shadow-lg md:w-auto" title="Atalho: Alt+N"><svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>Novo negócio</Button>}
+              trigger={<Button className="w-full rounded-xl bg-[var(--success)] font-medium text-[var(--success-contrast)] shadow-md transition-all duration-200 hover:bg-[var(--success-strong)] hover:shadow-lg md:w-auto" title="Atalho: Alt+N"><svg className="mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>Novo negócio</Button>}
             />
 
             <ActionButton
@@ -293,7 +293,7 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
                 className={cn(
                   "inline-flex h-10 items-center rounded-full border px-4 text-sm font-medium transition-colors",
                   filtroRapidoKanbanAtivo({ tipo: filtroRapido.id, filtros, modoFocoPendencias })
-                    ? "border-[color:rgba(139,92,246,0.3)] bg-[color:rgba(139,92,246,0.16)] text-[var(--text-primary)]"
+                    ? "border-[color-mix(in_srgb,var(--brand)_34%,transparent)] bg-[var(--brand-soft)] text-[var(--text-primary)]"
                     : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",
                 )}
               >
@@ -308,10 +308,10 @@ export function KanbanHeaderDesktop(props: KanbanHeaderDesktopProps) {
                 key={kpi.id}
                 className={cn(
                   "rounded-[18px] border bg-[var(--surface-elevated)] p-4",
-                  kpi.destaque === "brand" && "border-[color:rgba(139,92,246,0.22)] bg-[color:rgba(139,92,246,0.12)]",
-                  kpi.destaque === "success" && "border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.1)]",
-                  kpi.destaque === "warning" && "border-[color:rgba(245,158,11,0.22)] bg-[color:rgba(245,158,11,0.1)]",
-                  kpi.destaque === "info" && "border-[color:rgba(56,189,248,0.22)] bg-[color:rgba(56,189,248,0.1)]",
+                  kpi.destaque === "brand" && "border-[color-mix(in_srgb,var(--brand)_26%,transparent)] bg-[var(--brand-soft)]",
+                  kpi.destaque === "success" && "border-[color-mix(in_srgb,var(--success)_26%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)]",
+                  kpi.destaque === "warning" && "border-[color-mix(in_srgb,var(--warning)_26%,transparent)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)]",
+                  kpi.destaque === "info" && "border-[color-mix(in_srgb,var(--info)_26%,transparent)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)]",
                 )}
               >
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">{kpi.label}</p>

@@ -29,7 +29,7 @@ export function PerdaDialog({
 
         <form className="space-y-3" onSubmit={onConfirmarPerda}>
           <Textarea
-            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
+            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
             value={motivoPerda}
             onChange={(e) => setMotivoPerda(e.target.value)}
             placeholder="Descreva o motivo da perda..."

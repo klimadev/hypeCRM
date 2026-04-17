@@ -23,8 +23,8 @@ function FilterPill({
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
         active
-          ? "border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] text-[var(--text-primary)] shadow-[0_16px_40px_-28px_rgba(139,92,246,0.65)]"
-          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] text-[var(--text-secondary)] hover:-translate-y-px hover:border-[var(--border-strong)] hover:bg-[color:rgba(255,255,255,0.06)] hover:text-[var(--text-primary)]",
+          ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--text-primary)] shadow-[var(--shadow-sm)]"
+          : "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:-translate-y-px hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)]",
       )}
     >
       {icon}
@@ -32,7 +32,7 @@ function FilterPill({
       <span
         className={cn(
           "ml-0.5 rounded-full px-1.5 py-0.5 text-[10px] font-semibold",
-          active ? "bg-[color:rgba(255,255,255,0.08)] text-[var(--text-primary)]" : "bg-[color:rgba(255,255,255,0.04)] text-[var(--text-secondary)]",
+          active ? "bg-[var(--surface-soft-hover)] text-[var(--text-primary)]" : "bg-[var(--surface-soft)] text-[var(--text-secondary)]",
         )}
       >
         {count}
@@ -50,9 +50,9 @@ type JobsTableHeaderProps = {
 
 export function JobsTableHeader({ filtro, counts, resumoAgendados, onFiltroChange }: JobsTableHeaderProps) {
   return (
-    <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-4 py-3">
+    <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-[rgba(56,189,248,0.18)] bg-[rgba(56,189,248,0.12)] text-[var(--info)] shadow-[0_16px_36px_-24px_rgba(56,189,248,0.7)]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] shadow-[var(--shadow-sm)]">
           <TimerReset className="h-5 w-5" />
         </div>
         <div>

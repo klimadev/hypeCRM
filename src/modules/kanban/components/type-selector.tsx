@@ -20,9 +20,9 @@ interface TypeSelectorProps {
 const TIPOS: TipoEstagio[] = ["ABERTO", "PROGRESSO", "SUCCESS", "FALHA"];
 
 const CORES_DEFAULT = {
-  bg: "bg-zinc-500/20",
-  text: "text-zinc-400",
-  border: "border-zinc-500/40",
+  bg: "bg-[var(--surface-soft)]",
+  text: "text-[var(--text-secondary)]",
+  border: "border-[var(--border-strong)]",
   label: "Indefinido",
 };
 
@@ -33,9 +33,7 @@ export function TypeSelector({ value, onChange, disabled }: TypeSelectorProps) {
       onValueChange={(val) => onChange(val as TipoEstagio)}
       disabled={disabled}
     >
-      <SelectTrigger
-        className={`w-full ${CORES_ESTAGIO[value]?.bg ?? CORES_DEFAULT.bg} border-zinc-500/40`}
-      >
+      <SelectTrigger className={`w-full ${CORES_ESTAGIO[value]?.bg ?? CORES_DEFAULT.bg} ${CORES_ESTAGIO[value]?.border ?? CORES_DEFAULT.border}`}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -45,10 +43,10 @@ export function TypeSelector({ value, onChange, disabled }: TypeSelectorProps) {
               <span
                 className={cn(
                   "h-2 w-2 rounded-full",
-                  tipo === "ABERTO" && "bg-zinc-500",
-                  tipo === "PROGRESSO" && "bg-blue-500",
-                  tipo === "SUCCESS" && "bg-emerald-500",
-                  tipo === "FALHA" && "bg-rose-500"
+                  tipo === "ABERTO" && "bg-[var(--text-tertiary)]",
+                  tipo === "PROGRESSO" && "bg-[var(--info)]",
+                  tipo === "SUCCESS" && "bg-[var(--success)]",
+                  tipo === "FALHA" && "bg-[var(--danger)]"
                 )}
               />
               {CORES_ESTAGIO[tipo]?.label ?? CORES_DEFAULT.label}

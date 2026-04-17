@@ -26,7 +26,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
       spacing="md"
       className="flex h-[calc(100dvh-6.25rem)] min-h-0 flex-col overflow-hidden lg:h-[calc(100dvh-1.5rem)] xl:h-[calc(100dvh-2rem)]"
     >
-      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(12,12,14,0.98),rgba(9,9,11,1))] shadow-[0_18px_60px_rgba(0,0,0,0.24)]">
+      <div className="flex min-h-0 flex-1 overflow-hidden rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-md)]">
         <aside
           className={cn(
             "h-full min-h-0 w-full shrink-0 overflow-hidden md:w-[18rem] xl:w-[19.5rem] 2xl:w-[21rem]",
@@ -109,7 +109,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
           ) : (
             <div className="hidden h-full items-center justify-center p-8 text-center md:flex">
               <div className="max-w-md space-y-4">
-                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.12),rgba(255,255,255,0.03))]">
+                <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[var(--brand-soft)]">
                   <MessageCircle className="h-6 w-6 text-[var(--text-tertiary)]" />
                 </div>
                 <p className="text-lg font-semibold tracking-tight text-[var(--text-primary)]">
