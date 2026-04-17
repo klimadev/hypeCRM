@@ -1,15 +1,25 @@
 "use client";
 
+import { useMemo, useState } from "react";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { MessageCircle } from "lucide-react";
 import { useChatModule } from "./hooks/use-chat-module";
 import { ChatSidebar } from "./components/chat-sidebar";
 import { ChatPanel } from "./components/chat-panel";
+import { ChatFiltersContent } from "./components/chat-filters-content";
 import type { Props } from "./types";
 import { cn } from "@/lib/utils";
 
 export function ModuloChat({ perfil, idUsuario }: Props) {
   const vm = useChatModule({ perfil, idUsuario });
+  const [filtrosDockAberto, setFiltrosDockAberto] = useState(false);
+  const filtrosAtivos = useMemo(
+    () => Number(vm.filtroOrigem !== "todos") + Number(vm.filtroFila !== "todas") + Number(vm.filtroCanal !== "todos"),
+    [vm.filtroCanal, vm.filtroFila, vm.filtroOrigem],
+  );
+  const ultimoSyncLabel = vm.ultimoSyncEm
+    ? new Date(vm.ultimoSyncEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
+    : "--:--";
 
   return (
     <ModulePageShell
@@ -48,8 +58,37 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             total={vm.total}
             onIniciarNovoChat={vm.onIniciarNovoChat}
             instanciasWhatsapp={vm.instanciasWhatsapp}
+            filtrosDockAberto={filtrosDockAberto}
+            onAlternarFiltrosDock={() => setFiltrosDockAberto((current) => !current)}
           />
         </aside>
+
+        <div
+          className={cn(
+            "hidden min-h-0 shrink-0 overflow-hidden border-l border-[var(--border-subtle)] transition-[width,opacity] duration-200 ease-[var(--ease-productive)] md:block",
+            filtrosDockAberto ? "w-[360px] opacity-100" : "w-0 opacity-0",
+          )}
+          aria-hidden={!filtrosDockAberto}
+        >
+          {filtrosDockAberto ? (
+            <ChatFiltersContent
+              filtroOrigem={vm.filtroOrigem}
+              setFiltroOrigem={vm.setFiltroOrigem}
+              filtroFila={vm.filtroFila}
+              setFiltroFila={vm.setFiltroFila}
+              filtroCanal={vm.filtroCanal}
+              setFiltroCanal={vm.setFiltroCanal}
+              totalOrphans={vm.totalOrphans}
+              totalSemDono={vm.totalSemDono}
+              totalSemNegocio={vm.totalSemNegocio}
+              sseConectado={vm.sseConectado}
+              ultimoSyncLabel={ultimoSyncLabel}
+              erro={vm.erro}
+              filtrosAtivos={filtrosAtivos}
+              onFechar={() => setFiltrosDockAberto(false)}
+            />
+          ) : null}
+        </div>
 
         <section className="flex h-full min-h-0 min-w-0 flex-1 overflow-hidden bg-[var(--surface)]/90 backdrop-blur-sm md:border-l md:border-[var(--border-subtle)]">
           {vm.chatSelecionado ? (

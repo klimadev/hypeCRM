@@ -1,10 +1,12 @@
 "use client";
 
-import { useMemo, useState, type ReactNode } from "react";
-import { Search, MessageCircle, ChevronDown, Activity, Inbox, Sparkles, Plus } from "lucide-react";
+import { useMemo, useState } from "react";
+import { Search, MessageCircle, ChevronDown, Activity, Inbox, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
 import { ChatNewChatDialog } from "./chat-new-chat-dialog";
+import { ChatFiltersContent } from "./chat-filters-content";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import type { ChatUnificado } from "../types";
 import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 
@@ -33,6 +35,8 @@ type ChatSidebarProps = {
   total: number;
   onIniciarNovoChat: (params: { telefone: string; instanceName: string }) => Promise<void>;
   instanciasWhatsapp: WhatsappInstancia[];
+  filtrosDockAberto?: boolean;
+  onAlternarFiltrosDock?: () => void;
 };
 
 export function ChatSidebar({
@@ -60,8 +64,10 @@ export function ChatSidebar({
   total,
   onIniciarNovoChat,
   instanciasWhatsapp,
+  filtrosDockAberto,
+  onAlternarFiltrosDock,
 }: ChatSidebarProps) {
-  const [controlesAbertos, setControlesAbertos] = useState(false);
+  const [filtrosMobileAbertos, setFiltrosMobileAbertos] = useState(false);
   const [novoChatOpen, setNovoChatOpen] = useState(false);
   const filtrosAtivos = useMemo(
     () => Number(filtroOrigem !== "todos") + Number(filtroFila !== "todas") + Number(filtroCanal !== "todos"),
@@ -129,67 +135,40 @@ export function ChatSidebar({
             />
           </div>
 
-          <button
-            type="button"
-            onClick={() => setControlesAbertos((current) => !current)}
-            aria-expanded={controlesAbertos}
-            className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]"
-          >
-            <Activity className="h-3.5 w-3.5" />
-            Filtros
-            {filtrosAtivos > 0 ? (
-              <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
-                {filtrosAtivos}
-              </span>
-            ) : null}
-            <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", controlesAbertos && "rotate-180")} />
-          </button>
-        </div>
-
-        {controlesAbertos ? (
-          <div className="space-y-3 rounded-[18px] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] p-3">
-            <div className="grid grid-cols-3 gap-2">
-              <QuickMetric label="Novos" value={String(totalOrphans)} icon={<Sparkles className="h-3 w-3" />} />
-              <QuickMetric label="Sem dono" value={String(totalSemDono)} />
-              <QuickMetric label="Sem negócio" value={String(totalSemNegocio)} accent="info" />
-            </div>
-
-            <div className="space-y-2">
-              <FilterGroup label="Origem">
-                <FilterPill label="Todos" active={filtroOrigem === "todos"} onClick={() => setFiltroOrigem("todos")} />
-                <FilterPill label="Anúncio" active={filtroOrigem === "anuncio"} tone="info" onClick={() => setFiltroOrigem("anuncio")} />
-                <FilterPill label="WhatsApp" active={filtroOrigem === "whatsapp"} tone="success" onClick={() => setFiltroOrigem("whatsapp")} />
-                <FilterPill label="Manual" active={filtroOrigem === "manual"} tone="secondary" onClick={() => setFiltroOrigem("manual")} />
-              </FilterGroup>
-
-              <FilterGroup label="Fila">
-                <FilterPill label="Fila limpa" active={filtroFila === "todas"} onClick={() => setFiltroFila("todas")} />
-                <FilterPill label={`Sem dono ${totalSemDono}`} active={filtroFila === "sem_dono"} tone="secondary" onClick={() => setFiltroFila("sem_dono")} />
-                <FilterPill label={`Sem negócio ${totalSemNegocio}`} active={filtroFila === "sem_negocio"} tone="info" onClick={() => setFiltroFila("sem_negocio")} />
-              </FilterGroup>
-
-              <FilterGroup label="Canal">
-                <FilterPill label="Todos canais" active={filtroCanal === "todos"} onClick={() => setFiltroCanal("todos")} />
-                <FilterPill label="Instagram" active={filtroCanal === "instagram"} tone="secondary" onClick={() => setFiltroCanal("instagram")} />
-                <FilterPill label="WhatsApp" active={filtroCanal === "whatsapp"} tone="success" onClick={() => setFiltroCanal("whatsapp")} />
-              </FilterGroup>
-            </div>
-
-            <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-[11px] text-[var(--text-secondary)]">
-              <div className="flex items-center justify-between gap-3">
-                <span>Saúde da sincronização</span>
-                <span className={cn("font-medium", sseConectado ? "text-[var(--success)]" : "text-[var(--warning)]")}>
-                  {sseConectado ? "Online" : "Reconnecting"}
+          <>
+            <button
+              type="button"
+              onClick={onAlternarFiltrosDock}
+              aria-expanded={Boolean(filtrosDockAberto)}
+              className="hidden h-10 shrink-0 items-center gap-2 rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:inline-flex"
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Filtros
+              {filtrosAtivos > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
+                  {filtrosAtivos}
                 </span>
-              </div>
-              <div className="mt-1 flex items-center justify-between gap-3">
-                <span>Último sync</span>
-                <span className="font-medium text-[var(--text-primary)]">{ultimoSyncLabel}</span>
-              </div>
-              {erro ? <p className="mt-1 text-[var(--danger)]">{erro}</p> : null}
-            </div>
-          </div>
-        ) : null}
+              ) : null}
+              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtrosDockAberto && "rotate-180")} />
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setFiltrosMobileAbertos(true)}
+              aria-expanded={filtrosMobileAbertos}
+              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:hidden"
+            >
+              <Activity className="h-3.5 w-3.5" />
+              Filtros
+              {filtrosAtivos > 0 ? (
+                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
+                  {filtrosAtivos}
+                </span>
+              ) : null}
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+          </>
+        </div>
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-1.5 pt-1.5">
@@ -245,72 +224,32 @@ export function ChatSidebar({
         instancias={instanciasWhatsapp}
         onSubmit={onIniciarNovoChat}
       />
+
+      <Sheet open={filtrosMobileAbertos} onOpenChange={setFiltrosMobileAbertos}>
+        <SheetContent side="right" className="w-full max-w-sm p-0 md:hidden">
+          <SheetHeader className="border-b border-[var(--border-subtle)] bg-[var(--surface)]">
+            <SheetTitle>Filtros</SheetTitle>
+          </SheetHeader>
+          <div className="h-[calc(100dvh-5rem)] min-h-0">
+            <ChatFiltersContent
+              filtroOrigem={filtroOrigem}
+              setFiltroOrigem={setFiltroOrigem}
+              filtroFila={filtroFila}
+              setFiltroFila={setFiltroFila}
+              filtroCanal={filtroCanal}
+              setFiltroCanal={setFiltroCanal}
+              totalOrphans={totalOrphans}
+              totalSemDono={totalSemDono}
+              totalSemNegocio={totalSemNegocio}
+              sseConectado={sseConectado}
+              ultimoSyncLabel={ultimoSyncLabel}
+              erro={erro}
+              filtrosAtivos={filtrosAtivos}
+              onFechar={() => setFiltrosMobileAbertos(false)}
+            />
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>
-  );
-}
-
-function QuickMetric({
-  label,
-  value,
-  accent = "secondary",
-  icon,
-}: {
-  label: string;
-  value: string;
-  accent?: "info" | "secondary";
-  icon?: ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-[14px] border px-2 py-1.5",
-        accent === "info"
-          ? "border-[color:rgba(56,189,248,0.16)] bg-[color:rgba(56,189,248,0.08)]"
-          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)]",
-      )}
-    >
-      <div className="flex items-center gap-1 text-[9px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">
-        {icon}
-        {label}
-      </div>
-      <div className="mt-1 text-[13px] font-semibold text-[var(--text-primary)]">{value}</div>
-    </div>
-  );
-}
-
-function FilterGroup({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="space-y-1.5">
-      <div className="text-[10px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{label}</div>
-      <div className="flex flex-wrap items-center gap-1.5">{children}</div>
-    </div>
-  );
-}
-
-type FilterPillProps = {
-  label: string;
-  active: boolean;
-  tone?: "info" | "success" | "secondary";
-  onClick: () => void;
-};
-
-function FilterPill({ label, active, tone = "secondary", onClick }: FilterPillProps) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={cn(
-        "rounded-full border px-2.5 py-1 text-[10px] font-medium transition-colors",
-        active
-          ? tone === "success"
-            ? "border-[color:rgba(16,185,129,0.24)] bg-[color:rgba(16,185,129,0.14)] text-[var(--success)]"
-            : tone === "info"
-              ? "border-[color:rgba(56,189,248,0.24)] bg-[color:rgba(56,189,248,0.14)] text-[var(--info)]"
-              : "border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-primary)]"
-          : "border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.01)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
-      )}
-    >
-      {label}
-    </button>
   );
 }
