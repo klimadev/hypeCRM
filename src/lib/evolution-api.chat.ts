@@ -5,6 +5,7 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
+import { chatLogger, criarContextoChat } from "./chat-logger";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
@@ -39,6 +40,8 @@ async function fetchEvolution(path: string, init: RequestInit) {
 }
 
 export async function buscarContatos(instanceName: string): Promise<EvolutionContato[]> {
+  const ctx = criarContextoChat({ instanceName });
+  chatLogger.log("EVOLUTION_FIND_CHATS_REQ", ctx, { raw: { path: `/chat/findChats/${instanceName}` } });
   const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
@@ -47,6 +50,7 @@ export async function buscarContatos(instanceName: string): Promise<EvolutionCon
 
   if (!resposta.ok) {
     const erro = await lerJsonErro(resposta);
+    chatLogger.erro("EVOLUTION_FIND_CHATS_ERRO", ctx, erro, { rawResponse: erro });
     throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
   }
 
@@ -58,10 +62,14 @@ export async function buscarContatos(instanceName: string): Promise<EvolutionCon
     lastMessage?: { key?: { remoteJidAlt?: string }; pushName?: string };
   }>;
 
-  return json.map(mapearContatoEvolution).filter((item): item is EvolutionContato => item !== null);
+  const resultado = json.map(mapearContatoEvolution).filter((item): item is EvolutionContato => item !== null);
+  chatLogger.log("EVOLUTION_FIND_CHATS_OK", ctx, { normalizado: { total: resultado.length } });
+  return resultado;
 }
 
 export async function buscarConversas(instanceName: string): Promise<EvolutionConversa[]> {
+  const ctx = criarContextoChat({ instanceName });
+  chatLogger.log("EVOLUTION_FIND_CHATS_REQ", ctx, { raw: { path: `/chat/findChats/${instanceName}` } });
   const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
@@ -70,6 +78,7 @@ export async function buscarConversas(instanceName: string): Promise<EvolutionCo
 
   if (!resposta.ok) {
     const erro = await lerJsonErro(resposta);
+    chatLogger.erro("EVOLUTION_FIND_CHATS_ERRO", ctx, erro, { rawResponse: erro });
     throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
   }
 
@@ -103,7 +112,9 @@ export async function buscarConversas(instanceName: string): Promise<EvolutionCo
     return mapped;
   });
 
-  return mapped.filter((item): item is EvolutionConversa => item !== null);
+  const resultado = mapped.filter((item): item is EvolutionConversa => item !== null);
+  chatLogger.log("EVOLUTION_FIND_CHATS_OK", ctx, { normalizado: { total: resultado.length } });
+  return resultado;
 }
 
 export type ConversasPaginadoResult = {
@@ -116,6 +127,8 @@ export async function buscarConversasPaginado(
   pagina: number = 1,
   limite: number = 100,
 ): Promise<ConversasPaginadoResult> {
+  const ctx = criarContextoChat({ instanceName, pagina, limite });
+  chatLogger.log("EVOLUTION_FIND_CHATS_PAGINADO_REQ", ctx, { raw: { path: `/chat/findChats/${instanceName}`, take: limite, skip: (pagina - 1) * limite } });
   const resposta = await fetchEvolution(`/chat/findChats/${instanceName}`, {
     method: "POST",
     headers,
@@ -127,6 +140,7 @@ export async function buscarConversasPaginado(
 
   if (!resposta.ok) {
     const erro = await lerJsonErro(resposta);
+    chatLogger.erro("EVOLUTION_FIND_CHATS_PAGINADO_ERRO", ctx, erro, { rawResponse: erro });
     throw new Error(erro.message ?? "Erro ao buscar conversas na Evolution");
   }
 
@@ -164,10 +178,12 @@ export async function buscarConversasPaginado(
     return mapped;
   });
 
-  return {
+  const resultado = {
     conversas: mapped.filter((item): item is EvolutionConversa => item !== null),
     temMais,
   };
+  chatLogger.log("EVOLUTION_FIND_CHATS_PAGINADO_OK", ctx, { normalizado: { total: resultado.conversas.length, temMais: resultado.temMais } });
+  return resultado;
 }
 
 export async function buscarConversasEvolution(
@@ -228,6 +244,7 @@ export async function buscarMensagens(
 
     if (!resposta.ok) {
       const erro = await lerJsonErro(resposta);
+      chatLogger.erro("EVOLUTION_FIND_MESSAGES_ERRO", criarContextoChat({ instanceName, pagina, limite: limitePorPagina }), erro, { rawResponse: erro });
       throw new Error(erro.message ?? "Erro ao buscar mensagens na Evolution");
     }
 
@@ -310,7 +327,26 @@ export async function buscarMensagensPorContato(
   remoteJid: string,
   pagina: number = 1,
   limite: number = 50,
-): Promise<{ messages: Array<{ id: string; remoteJid: string; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+): Promise<{ messages: Array<{ id: string; remoteJid: string; remoteJidAlt: string | null; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+  const startedAt = Date.now();
+  const ctx = criarContextoChat({ instanceName, remoteJid, pagina, limite });
+  const payload = {
+    where: {
+      key: { remoteJid, remoteJidAlt: remoteJid },
+    },
+    page: pagina,
+    offset: limite,
+  };
+
+  chatLogger.log("EVOLUTION_FIND_MESSAGES_REQ", ctx, {
+    raw: payload,
+    rawCompleto: {
+      path: `/chat/findMessages/${instanceName}`,
+      method: "POST",
+      headers: { "Content-Type": "application/json", apikey: EVOLUTION_API_KEY ? "[MASKED]" : "" },
+      body: payload,
+    },
+  });
   type MensagemRaw = {
     key?: { id?: string; remoteJid?: string; remoteJidAlt?: string; fromMe?: boolean };
     lastMessage?: { key?: { remoteJidAlt?: string } };
@@ -340,17 +376,12 @@ export async function buscarMensagensPorContato(
   const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
     method: "POST",
     headers,
-    body: JSON.stringify({
-      where: {
-        key: { remoteJid, remoteJidAlt: remoteJid },
-      },
-      page: pagina,
-      offset: limite,
-    }),
+    body: JSON.stringify(payload),
   });
 
   if (!resposta.ok) {
     const erro = await lerJsonErro(resposta);
+    chatLogger.erro("EVOLUTION_FIND_MESSAGES_ERRO", ctx, erro, { rawResponse: erro });
     throw new Error(erro.message ?? "Erro ao buscar mensagens na Evolution");
   }
 
@@ -366,6 +397,28 @@ export async function buscarMensagensPorContato(
   const totalPaginas = json.messages?.pages ?? 1;
   const hasMore = pagina < totalPaginas;
 
+  chatLogger.log("EVOLUTION_FIND_MESSAGES_RAW_RESPONSE", ctx, {
+    duracaoMs: Date.now() - startedAt,
+    rawResponse: {
+      status: resposta.status,
+      ok: resposta.ok,
+      totalRegistrosBrutos: registros.length,
+      totalPaginas,
+      hasMore,
+      totalInformado: json.messages?.total ?? null,
+    },
+    rawResponseCompleta: {
+      status: resposta.status,
+      statusText: resposta.statusText,
+      headers: {
+        contentType: resposta.headers.get("content-type"),
+        contentLength: resposta.headers.get("content-length"),
+      },
+      request: payload,
+      response: json,
+    },
+  });
+
   const mensagens = registros
     .filter((msg) => {
       const msgRemoteJid = msg.key?.remoteJid ?? "";
@@ -373,6 +426,7 @@ export async function buscarMensagensPorContato(
     })
     .map((msg) => {
       const remoteJid = msg.key?.remoteJid ?? "";
+      const remoteJidAlt = msg.key?.remoteJidAlt ?? msg.lastMessage?.key?.remoteJidAlt ?? null;
       const fromMe = msg.key?.fromMe ?? false;
       const timestamp = msg.messageTimestamp ?? 0;
       const pushName = msg.pushName ?? null;
@@ -448,6 +502,7 @@ export async function buscarMensagensPorContato(
       return {
         id: msg.key?.id ?? `${remoteJid}-${timestamp}`,
         remoteJid,
+        remoteJidAlt,
         fromMe,
         text,
         kind,
@@ -459,7 +514,20 @@ export async function buscarMensagensPorContato(
       };
     });
 
-  return { messages: mensagens, hasMore };
+  const resultado = { messages: mensagens, hasMore };
+  chatLogger.log("EVOLUTION_FIND_MESSAGES_OK", ctx, {
+    duracaoMs: Date.now() - startedAt,
+    normalizado: { total: mensagens.length, hasMore },
+    normalizadoCompleto: {
+      filtragem: {
+        totalBruto: registros.length,
+        totalNormalizado: mensagens.length,
+        removidasPorGrupoOuStatus: Math.max(registros.length - mensagens.length, 0),
+      },
+      previewIds: mensagens.slice(0, 10).map((msg) => msg.id),
+    },
+  });
+  return resultado;
 }
 
 export async function buscarPushNamePorTelefone(

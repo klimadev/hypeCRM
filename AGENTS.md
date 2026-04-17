@@ -1,220 +1,133 @@
-# AGENTS.md - Directrices para Agentes de Codificación
+# AGENTS.md - hypeCRM
 
-> **⚠️ IMPORTANTE:** Carregue a skill `napkin` no início de cada sessão usando o comando `/napkin` ou `skill napkin` para ter acesso ao runbook do projeto.
+## Fluxo de trabalho
 
-## Visión General
+1. Fazer TODAS as edições/criações de arquivos em paralelo (uma única resposta)
+2. Executar `npm run pm2:prod` para validar e fazer build
 
-CRM HYPE - app multi-tenant Next.js 16 (App Router) para seguros y productos financieros. Stack: React 19, TypeScript, Prisma, Tailwind CSS 4, Shadcn UI/Radix.
+**Nunca execute `pm2:prod` no meio de múltiplas edições — só no final.**
 
----
+## Build/Validation (PROIBIDO lint/typecheck)
 
-## 1. Comandos de Desarrollo
+**NAO use `lint` ou `typecheck`**. O comando correto para validar e fazer build:
 
 ```bash
-# Desarrollo
-pnpm dev              # Dev server en puerto 3434
-pnpm build           # Build producción
-pnpm start           # Servidor production
-
-# Base de datos
-pnpm db:generate     # Generar cliente Prisma
-pnpm db:migrate:deploy  # Aplicar migraciones
-pnpm db:migrate:status  # Ver estado migraciones
-pnpm seed            # Ejecutar seed
-
-# Validación (OBLIGATORIO después de editar)
-pnpm lint; pnpm typecheck; pnpm build
-
-# Deploy em produção (PM2)
-pnpm build && pm2 restart hypecrm-web-prod
+npm run pm2:prod
 ```
 
-### Ejecutar un solo test
+Este comando executa `build && node scripts/pm2-mode.cjs prod`.
+
+## Servidor de desenvolvimento
+
 ```bash
-pnpm vitest run src/lib/__tests__/validacoes.test.ts  # Por archivo
-pnpm vitest run --grep "nome da função"                # Por nombre
-pnpm vitest src/lib/__tests__/validacoes.test.ts       # Modo watch
+pnpm dev
+# Acessar: http://localhost:3434
 ```
 
-### PM2 + SQLite
-Si `db:migrate:deploy` falla con "database is locked":
+## Testes
+
 ```bash
-pm2 stop hypecrm-web-prod
-pnpm db:migrate:deploy
-pm2 start hypecrm-web-prod
+pnpm test              # uma vez
+pnpm test:watch        # modo watch
 ```
-- Para reiniciar o servidor no ambiente local/PM2, use o fluxo completo: `pnpm build && pm2 restart hypecrm-web-prod`.
-- **SEMPRE** execute build E restart juntos - o código antigo continua em memória no PM2 mesmo após build bem-sucedido.
 
-### Layout de Altura
-- Em módulos full-height dentro do dashboard, `fillHeight` sozinho pode colapsar sob `main` fora de `lg`; use altura explícita em viewport quando o canvas precisar ocupar a tela inteira.
-- Para canvases/boards como `automacoes`, siga o padrão de `chat`/`kanban` com `h-[calc(100dvh-...)]` no shell do módulo e `min-h-0` em todos os wrappers intermediários.
+## Banco de dados
 
-### Playwright autenticado
-- Para validar fluxos protegidos no Playwright, reutilize uma sessão existente em vez de testar deslogado.
-- Conta padrão para reprodução autenticada neste projeto: `limawebvision@gmail.com`.
-- Se não houver sessão exportada pronta, gere/injete o cookie `hype_sessao` correspondente a essa empresa antes de abrir a rota protegida.
+```bash
+pnpm db:generate       # atualiza Prisma Client
+pnpm db:migrate:deploy # aplica migracoes
+pnpm db:migrate:status # status
+pnpm seed              # popula dados iniciais
+```
 
----
+## PM2 (producao/VPS)
 
-## 2. Estilo de Código
+```bash
+npm run pm2:dev       # sobe web-dev
+npm run pm2:prod      # build + web-prod (obrigatorio antes de deploy)
+npm run pm2:restart    # reinicia prod
+npm run pm2:logs:web:prod
+npm run pm2:list
+```
 
-### Imports
+## Credenciais de seed
+
+- Empresa: `empresa.demo@hypecrm.com` / `123456`
+- Gerente: `gerente.demo@hypecrm.com` / `123456`
+
+## Convencoes
+
+- Portas: dev `3434`, prod configuravel via `PM2_PROD_PORT`
+- Banco local: `prisma/dev.db` (SQLite)
+- Package manager: `pnpm` (nao use npm Yarn)
+
+## Estrutura principal
+
+```
+src/app/           # Next.js App Router
+src/components/ui # Componentes base (shadcn/radix)
+src/lib/           # Utilitarios
+src/modules/       # Dominio (MVVM)
+prisma/            # Schema e migrations
+```
+
+## Arquivo .env minimo
+
+```env
+DATABASE_URL="file:./dev.db"
+JWT_SECRET="troque-por-um-segredo-forte"
+```
+
+## Debugging: Log Instrumentation (Caixa Preta Forense)
+
+Quando problemas de runtime não aparecem no stacktrace:
+
+1. **Adicionar logging estruturado nos pontos de fronteira**
+   - Entry/Exit de funções críticas (APIs, sync, persistence)
+   - Request e response RAW (sem truncar)
+   - Contexto completo (instanceName, remoteJid, telefone, empresa)
+   - Duração de cada etapa
+
+2. **Executar e capturar novos logs**
+   ```bash
+   pm2 logs hypecrm-web-prod --nostream --lines 2000
+   # ou
+   pm2 logs hypecrm-web-prod
+   ```
+
+3. **Rastrear o ponto de falha pelo log**
+   - Onde a etapa PARA de logar (primeiro ponto sem continuidade)
+   - O log antes do ponto de falha mostra o estado que originou o erro
+
+4. **Confirmar com query direta no banco quando necessário**
+   - Ex: verificar status de instância (`open` vs `ATIVO`)
+
+### Exemplo real: chat sem mensagens
+
+- Sintoma: chat abre mas não carrega mensagens
+- Caminho de execução: stream → sync → snapshot → Evolution API → DB
+- Log mostrou: `CHAT_PERSIST_SYNC_INSTANCIA_ERRO` (instância não encontrada)
+- Query banco revelou: instância com status `open`, não `ATIVO`
+- Filtro no código exigia `status: "ATIVO"` mas Evolution retorna `open`
+- Correção: `status: { in: ["ATIVO", "open", "connecting"] }`
+
+### Logger estruturado usado neste projeto
+
+Arquivo: `src/lib/chat-logger.ts`
 ```typescript
-// ✅ Orden: Externos → @/lib → Locales → Tipos
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
-import { useEquipeModule } from '@/modules/equipe/hooks/use-equipe';
-import type { TipoPerfil } from '@/modules/equipe/types';
-```
-- Use `@/` para rutas desde `src/`
-- Evite imports barrel (`index.ts`)
-
-### Naming Conventions
-| Elemento | Convención | Ejemplo |
-|----------|------------|---------|
-| Componentes React | PascalCase | `LeadCard.tsx` |
-| Hooks | camelCase + `use` | `use-equipe.ts` |
-| Utilitários | camelCase | `aplica-mascara-telefone.ts` |
-| Constantes | UPPER_SNAKE_CASE | `DIAS_ESTAGIO_PARADO` |
-| Funciones/Vars | camelCase | `calcularPendencias` |
-| Rutas API | kebab-case | `lead/[id]/route.ts` |
-
-### TypeScript
-- **Sin `any`** sin justificación
-- `type` para tipos simples, `interface` para objetos extensibles
-- Evite tipos redundantes: `const name = "test"`
-
-```typescript
-interface Lead { id: string; nome: string; etapa: EtapaLead; }
-type EtapaLead = 'novo' | 'contato' | 'proposta' | 'fechado';
+chatLogger.log("ACAO", contexto, {
+  raw: { /* payload resumido */ },
+  rawCompleto: { /* payload completo sem truncar */ },
+  normalizado: { /* resposta normalizada resumida */ },
+  normalizadoCompleto: { /* resposta completa */ },
+  duracaoMs: 123,
+  meta: { /* metadados extras */ }
+});
 ```
 
-### Manejo de Errores
-- Valide payloads con Zod de `src/lib/validacoes.ts`
-- Retorne errores structurados:
+Uso:
+- `CHAT_PERSIST_SYNC_REQ/OK/ERRO` - sincronização de mensagens com Evolution
+- `EVOLUTION_FIND_MESSAGES_REQ/RAW_RESPONSE/OK` - busca de mensagens na API
+- `CHAT_PERSIST_SNAPSHOT_OK/ERRO` - consulta no banco local
 
-```typescript
-export async function POST(request: Request) {
-  const validacao = EsquemaLead.safeParse(await request.json());
-  if (!validacao.success) {
-    return NextResponse.json({ erro: mensagemErroValidacao(validacao.error) }, { status: 400 });
-  }
-  // ... lógica
-}
-```
-
-### MVVM Pattern
-- `page.tsx` → componente presentacional
-- `hooks/use-*.ts` → ViewModel (estados, efectos, API)
-- `components/` → componentes visuales
-- `types.ts` → tipajes del módulo
-
-### API Routes
-- Siempre verifique sesión: `await exigirSessao(request)`
-- Use transacciones (`prisma.$transaction`) para mutaciones multi-tabla
-- Soft deletes: `ativo: false` o `deleted_at`
-
----
-
-## 3. Design System
-
-### Colores (Dark Premium Theme)
-```
-canvas=#09090b, surface=#0c0c0e, surface-elevated=#111113
-border-subtle=rgba(255,255,255,0.08), border-strong=#3f3f46
-text-primary=#fafafa, text-secondary=#a1a1aa
-brand=#8b5cf6, success=#10b981, danger=#f43f5e
-```
-
-### Reglas UI
-- Use `cn()` de `@/lib/utils` para clases condicionales
-- Evolua componentes de `src/components/ui/` (Shadcn/Radix)
-- No cree button/input/select/dialog desde cero
-- Focus ring obligatorio
-- Motion: hover 120-160ms, modal 180-220ms
-
----
-
-## 4. Estructura del Proyecto
-```
-src/
-├── app/              # Next.js App Router
-├── components/ui/    # Shadcn base components
-├── lib/
-│   ├── validacoes.ts # Esquemas Zod
-│   └── utils.ts      # cn(), helpers
-└── modules/[modulo]/
-    ├── page.tsx, hooks/, components/, types.ts
-```
-
----
-
-## 5. Reglas de Negocio
-- **WhatsApp:** Use chaves de idempotência
-- **Pendências:** Calculadas "on the fly" (`src/lib/pendencias-dinamicas.ts`)
-- **Teléfonos:** `aplicaMascaraTelefoneBr` (display), `normalizarTelefoneParaWhatsapp` (API)
-- **Moneda:** `aplicaMascaraMoedaBr`
-
----
-
-## 6. Git Commits
-Conventional commits con emoji:
-- `feat:` ✨ nueva funcionalidad
-- `fix:` 🐛 bugfix
-- `refactor:` ♻️ refactorización
-- `docs:` 📝 documentación
-- `chore:` 🔧 tooling, config
-- `test:` ✅ tests
-
-Formato: `<emoji> <tipo>: <descripción>`
-
----
-
-## 7. Debugging de Bugs
-
-### Metodologia Sistemática
-Quando um bug for reportado, **NÃO tente soluções aleatórias**. Em vez disso:
-
-1. **Identifique o fluxo completo**: frontend → API → banco
-2. **Injete logs estruturados** com prefixo identificável (ex: `[META-TEST]`)
-3. **Monitore os logs no PM2**: `tail -100 ~/.pm2/logs/hypecrm-web-prod-out.log`
-4. **Analise o caminho crítico**: auth → validação → query → resposta
-5. **Identifique a causa raiz**, não o sintoma
-
-### Exemplo de logs injetados
-```typescript
-console.log("[META-TEST] === INICIANDO TESTE DE CONEXÃO ===");
-console.log("[META-TEST] Auth result:", { erro: auth.erro, perfil: auth.sessao?.perfil });
-console.log("[META-TEST] Config encontrada:", JSON.stringify(config, null, 2));
-```
-
-### Build e Deploy
-Após qualquer alteração em código de produção:
-1. Execute `pnpm build` e verifique se passou
-2. **NÃO basta apenas fazer build** - o código antigo ainda está em memória no PM2
-3. Execute `pm2 restart hypecrm-web-prod` para aplicar as mudanças
-4. Verifique nos logs se as alterações foram carregadas
-
-Fluxo completo: `pnpm build && pm2 restart hypecrm-web-prod`
-
----
-
-## 8. Aprendizados Recentes
-
-### Kanban catálogo
-- Não forçar retorno para pipeline padrão apenas por abrir `/kanban` ou clicar em **Voltar ao catálogo**.
-- Regra de navegação:
-  - `/kanban` sem `pipelineId`/`id_funil` deve renderizar catálogo.
-  - Selecionar funil via catálogo passa `pipelineId` na URL.
-  - Botão **Voltar ao catálogo** remove `pipelineId` e mantém catálogo ativo.
-
-### Meta CAPI - Teste de conexão
-- O botão "Testar conexão" deve funcionar **independentemente** de a integração estar ativa.
-- Valide apenas `pixel_id` e `access_token`, não exija `ativo: true`.
-- Retorne mensagem clara indicando se o envio automático está ativo ou não.
-
----
-
-*Última actualización: Abril 2026*
+Sempre usar os logs forenses antes de propor hipóteses. O log é a verdade.
