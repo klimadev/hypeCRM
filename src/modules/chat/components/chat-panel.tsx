@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Briefcase, CheckCircle2, MessageCircle, Phone, UserPlus } from "lucide-react";
+import { ArrowLeft, Briefcase, CheckCircle2, MessageCircle, Phone, UserPlus, MailOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
@@ -18,6 +18,8 @@ import {
   type FollowUpConversa,
   type FollowUpTemplate,
 } from "@/lib/api/chat-follow-up";
+import { marcarMensagensComoLidas } from "@/lib/api/whatsapp.chat";
+import { buildWhatsappViewedKey, markMessagesAsViewed } from "@/lib/chat-local-view-state";
 
 function obterApresentacaoStatusFollowUp(followUp: FollowUpConversa | null) {
   if (!followUp) return { variant: "secondary" as const, label: "Desativado" };
@@ -73,6 +75,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
   const [salvandoFollowUp, setSalvandoFollowUp] = useState(false);
   const [carregandoFollowUp, setCarregandoFollowUp] = useState(false);
   const [ultimaAtualizacaoFollowUp, setUltimaAtualizacaoFollowUp] = useState<Date | null>(null);
+  const [marcandoLido, setMarcandoLido] = useState(false);
   const { addToast } = useToast();
 
   const nome = obterNomeChat(chat);
@@ -96,6 +99,23 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
     setCarregandoFollowUp(false);
     setSalvandoFollowUp(false);
   }, [chat.instanceName, chat.remoteJid, chat.canal, chat.leadMatch?.id, podeOperarFollowUp]);
+
+  const handleMarkAsRead = useCallback(async () => {
+    if (chat.canal !== "whatsapp" || chat.unreadCount <= 0 || marcandoLido) return;
+    setMarcandoLido(true);
+    try {
+      const resultado = await marcarMensagensComoLidas(chat.instanceName, chat.remoteJid);
+      if (resultado.ok) {
+        const viewedKey = buildWhatsappViewedKey(chat.instanceName, chat.remoteJid);
+        markMessagesAsViewed(viewedKey, []);
+        addToast({ type: "success", title: "Mensagens marcadas como lidas" });
+      } else {
+        addToast({ type: "error", title: "Erro ao marcar como lido", description: resultado.erro });
+      }
+    } finally {
+      setMarcandoLido(false);
+    }
+  }, [addToast, chat.canal, chat.instanceName, chat.remoteJid, chat.unreadCount, marcandoLido]);
 
   const carregarContextoFollowUp = useCallback(async (mostrarErro = false) => {
     if (!podeOperarFollowUp) return;
@@ -263,6 +283,12 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
                   <span>Transferir</span>
                 </Button>
               ) : null}
+              {chat.canal === "whatsapp" && chat.unreadCount > 0 && (
+                <Button variant="outline" size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={handleMarkAsRead} disabled={marcandoLido}>
+                  <MailOpen className="h-4 w-4" />
+                  <span>{marcandoLido ? "Marcando..." : "Marcar como lido"}</span>
+                </Button>
+              )}
             </div>
           </div>
         </header>

@@ -155,19 +155,22 @@ export async function enviarMensagemWhatsapp(payload: {
   };
 }
 
-export async function marcarMensagensComoLidas(leadId: string): Promise<ResultadoApi<{ unreadCount: number }>> {
+export async function marcarMensagensComoLidas(
+  instanceName: string,
+  remoteJid: string,
+): Promise<ResultadoApi<{ marked: number }>> {
   const resposta = await fetch("/api/whatsapp/chat/mark-read", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leadId }),
+    body: JSON.stringify({ instanceName, remoteJid }),
   });
-  const json = await lerJsonSeguro<{ unreadCount?: number } & ApiErro>(resposta);
+  const json = await lerJsonSeguro<{ marked?: number; ok?: boolean } & ApiErro>(resposta);
 
   if (!resposta.ok) {
     return { ok: false, erro: json.erro ?? "Erro ao marcar mensagens como lidas." };
   }
 
-  return { ok: true, dados: { unreadCount: json.unreadCount ?? 0 } };
+  return { ok: true, dados: { marked: json.marked ?? 0 } };
 }
 
 export async function buscarMediaWhatsapp(

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, FileText, Loader2, MessageSquare, Volume2 } from "lucide-react";
+import { AlertCircle, Check, CheckCheck, Clock3, FileText, Loader2, MessageSquare, Volume2 } from "lucide-react";
 import NextImage from "next/image";
 import { cn } from "@/lib/utils";
 import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
@@ -46,10 +46,14 @@ function getKindIcon(kind: string): string {
   return icons[kind] ?? "";
 }
 
-function statusLabel(msg: UnifiedChatMessage) {
-  if (msg.error || msg.status === "ERROR") return "Falhou";
-  if (msg.optimistic || msg.status === "PENDING") return "Enviando";
-  return "Enviado";
+function statusIcon(msg: UnifiedChatMessage) {
+  if (msg.error || msg.status === "ERROR") {
+    return <span title="Falhou"><AlertCircle className="h-3 w-3 text-[var(--danger)]" /></span>;
+  }
+  if (msg.optimistic || msg.status === "PENDING") {
+    return <span title="Enviando"><Clock3 className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
+  }
+  return <span title="Enviado"><Check className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
 }
 
 function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
@@ -156,11 +160,24 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   );
 }
 
+const IMAGE_PLACEHOLDER_REGEX = /^(📷 ?)?(Imagem)$/i;
+const VIDEO_PLACEHOLDER_REGEX = /^(🎥 ?)?(Vídeo)$/i;
+
+function textoEGatewayReal(msg: UnifiedChatMessage): boolean {
+  if (!msg.text) return false;
+  const texto = msg.text.trim();
+  if (msg.kind === "imageMessage") return !IMAGE_PLACEHOLDER_REGEX.test(texto);
+  if (msg.kind === "videoMessage") return !VIDEO_PLACEHOLDER_REGEX.test(texto);
+  return Boolean(msg.text);
+}
+
 function MessageBubble({ instanceName, msg }: { instanceName: string; msg: UnifiedChatMessage }) {
   const isFromMe = msg.fromMe;
   const kindIcon = getKindIcon(msg.kind);
   const isProtocol = msg.kind === "protocolMessage";
-  const hasBodyText = Boolean(msg.text) && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage";
+  const hasMediaCaption = msg.kind === "imageMessage" && textoEGatewayReal(msg);
+  const hasBodyText =
+    Boolean(msg.text) && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage";
 
   if (isProtocol) return null;
 
@@ -180,6 +197,10 @@ function MessageBubble({ instanceName, msg }: { instanceName: string; msg: Unifi
 
         {msg.hasMedia ? <MediaPreview instanceName={instanceName} message={msg} /> : null}
 
+        {hasMediaCaption ? (
+          <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed mt-2">{msg.text}</p>
+        ) : null}
+
         {hasBodyText ? (
           <p className={cn("whitespace-pre-wrap break-words text-[13px] leading-relaxed", msg.hasMedia ? "mt-2" : "")}>{kindIcon && !msg.hasMedia ? `${kindIcon} ` : ""}{msg.text}</p>
         ) : null}
@@ -187,7 +208,7 @@ function MessageBubble({ instanceName, msg }: { instanceName: string; msg: Unifi
         {!hasBodyText && kindIcon && !msg.hasMedia ? <p className="text-[13px] leading-relaxed">{kindIcon}</p> : null}
 
         <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px] text-[var(--text-tertiary)]">
-          {isFromMe ? <span>{statusLabel(msg)}</span> : null}
+          {isFromMe ? statusIcon(msg) : null}
           <span>{formatarHora(msg.timestamp)}</span>
         </div>
       </div>

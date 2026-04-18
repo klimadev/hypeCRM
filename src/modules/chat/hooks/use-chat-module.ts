@@ -38,42 +38,8 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const [filtroFila, setFiltroFila] = useState<"todas" | "sem_dono" | "sem_negocio">("todas");
   const [filtroCanal, setFiltroCanal] = useState<"todos" | "whatsapp" | "instagram">("todos");
   const [filtroCategoria, setFiltroCategoria] = useState<"todas" | "em_aberto" | "nao_lidas" | "sem_negocio" | "com_negocio">("todas");
-  const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
+const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
   const [instanciasWhatsapp, setInstanciasWhatsapp] = useState<WhatsappInstancia[]>([]);
-  const ultimoChatMarcadoRef = useRef<string | null>(null);
-
-  useEffect(() => {
-    const timeout = window.setTimeout(() => {
-      setBuscaDebounced(busca);
-    }, 250);
-
-    return () => {
-      window.clearTimeout(timeout);
-    };
-  }, [busca]);
-
-  useEffect(() => {
-    const leadId = chatSelecionado?.leadMatch?.id;
-    if (!leadId) return;
-    if (chatSelecionado?.canal === "instagram") return;
-
-    const chave = `${chatSelecionado.instanceName}:${chatSelecionado.remoteJid}`;
-    if (ultimoChatMarcadoRef.current === chave) return;
-    ultimoChatMarcadoRef.current = chave;
-
-    void fetch("/api/whatsapp/chat/mark-read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leadId }),
-    }).then(async (res) => {
-      if (res.ok) {
-        atualizarChatLocal(chatSelecionado.instanceName, chatSelecionado.remoteJid, (chat) => ({
-          ...chat,
-          unreadCount: 0,
-        }));
-      }
-    });
-  }, [atualizarChatLocal, chatSelecionado]);
 
   const negocioEstaAberto = useCallback((chat: ChatUnificado) => {
     const status = chat.leadMatch?.negocio?.status?.toLowerCase().trim();

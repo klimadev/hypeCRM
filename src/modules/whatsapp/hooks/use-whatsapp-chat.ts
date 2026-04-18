@@ -298,11 +298,6 @@ export function useWhatsappChat({ leadId, contatoId, enabled, markReadEnabled, p
     };
   }, [enabled, fetchMessages, pollMs, resolvedLeadId, stopPolling]);
 
-  useEffect(() => {
-    if (!markReadEnabled || unreadCount <= 0) return;
-    void markRead();
-  }, [markReadEnabled, unreadCount, markRead]);
-
   const canSend = useMemo(
     () => enabled && Boolean(resolvedLeadId) && connectionStatus === "online",
     [connectionStatus, enabled, resolvedLeadId],
