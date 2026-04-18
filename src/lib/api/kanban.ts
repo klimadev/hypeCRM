@@ -38,6 +38,7 @@ export type PayloadAtualizarNegocioKanban = {
   observacoes_comerciais: Lead["observacoes"];
   valor_estimado: number;
   id_funcionario: Lead["id_funcionario"];
+  id_produto_principal?: Lead["id_produto_principal"];
 };
 
 export type PayloadRedistribuirEmAtendimentoKanban = {
@@ -85,6 +86,7 @@ type ApiNegocioKanban = {
   id_funil: string;
   id_estagio: string;
   id_funcionario: string;
+  id_produto_principal?: string | null;
   id_pdv?: string | null;
   titulo: string;
   valor_estimado: number;
@@ -122,6 +124,7 @@ function mapearNegocioParaCard(negocio: ApiNegocioKanban): Lead {
     id_funil: negocio.id_funil,
     id_estagio: negocio.id_estagio,
     id_funcionario: negocio.id_funcionario,
+    id_produto_principal: negocio.id_produto_principal ?? null,
     nome: negocio.titulo,
     telefone: leadPrincipalEfetivo?.telefone ?? "",
     valor_oportunidade: negocio.valor_estimado,

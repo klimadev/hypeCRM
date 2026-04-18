@@ -23,6 +23,8 @@ type LeadDetailsDrawerTabsProps = {
   setTemAlteracoes: (value: boolean) => void;
   tabAtiva: string;
   setTabAtiva: (tab: string) => void;
+  produtosDisponiveis: Array<{ id: string; nome: string; ativo: boolean }>;
+  carregandoProdutosDisponiveis: boolean;
   leadsDisponiveis: ApiLeadContato[];
   carregandoLeadsDisponiveis: boolean;
   salvandoVinculos: boolean;
@@ -47,6 +49,8 @@ export function LeadDetailsDrawerTabs(props: LeadDetailsDrawerTabsProps) {
     setTemAlteracoes,
     tabAtiva,
     setTabAtiva,
+    produtosDisponiveis,
+    carregandoProdutosDisponiveis,
     leadsDisponiveis,
     carregandoLeadsDisponiveis,
     salvandoVinculos,
@@ -105,6 +109,8 @@ export function LeadDetailsDrawerTabs(props: LeadDetailsDrawerTabsProps) {
           onSalvar={onSalvar}
           temAlteracoes={temAlteracoes}
           setTemAlteracoes={setTemAlteracoes}
+          produtosDisponiveis={produtosDisponiveis}
+          carregandoProdutosDisponiveis={carregandoProdutosDisponiveis}
         />
       </TabsContent>
 

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { Dispatch, SetStateAction } from "react";
 import { atualizarNegocioKanban } from "@/lib/api/kanban";
 import { listarLeadsApi, type ApiLeadContato } from "@/lib/api/leads";
+import { listarProdutos, type Produto } from "@/lib/api/produtos";
 import {
   atualizarVinculosNegocio as atualizarVinculosNegocioApi,
   converterNegocioResumoParaCard,
@@ -28,6 +29,8 @@ export function useKanbanDetalhesNegocio({
   const [salvo, setSalvo] = useState(false);
   const [salvandoAutomaticamente, setSalvandoAutomaticamente] = useState(false);
   const [ultimaAtualizacaoSalvaEm, setUltimaAtualizacaoSalvaEm] = useState<Date | null>(null);
+  const [produtosDisponiveis, setProdutosDisponiveis] = useState<Produto[]>([]);
+  const [carregandoProdutosDisponiveis, setCarregandoProdutosDisponiveis] = useState(false);
   const [leadsDisponiveis, setLeadsDisponiveis] = useState<ApiLeadContato[]>([]);
   const [carregandoLeadsDisponiveis, setCarregandoLeadsDisponiveis] = useState(false);
   const [salvandoVinculos, setSalvandoVinculos] = useState(false);
@@ -56,6 +59,7 @@ export function useKanbanDetalhesNegocio({
           observacoes_comerciais: negocio.observacoes,
           valor_estimado: Number(negocio.valor_oportunidade),
           id_funcionario: negocio.id_funcionario,
+          id_produto_principal: negocio.id_produto_principal ?? null,
         });
 
         if (!resposta.ok) {
@@ -131,6 +135,35 @@ export function useKanbanDetalhesNegocio({
       setCarregandoLeadsDisponiveis(false);
     }
   }, [negocioSelecionado]);
+
+  const carregarProdutosDisponiveis = useCallback(async () => {
+    setCarregandoProdutosDisponiveis(true);
+
+    try {
+      const resultado = await listarProdutos();
+
+      if (!resultado.ok) {
+        setProdutosDisponiveis([]);
+        addToast({
+          type: "error",
+          title: "Produtos indisponíveis",
+          description: resultado.erro,
+        });
+        return;
+      }
+
+      setProdutosDisponiveis(resultado.dados.produtos);
+    } catch {
+      setProdutosDisponiveis([]);
+      addToast({
+        type: "error",
+        title: "Produtos indisponíveis",
+        description: "Erro ao carregar produtos disponíveis.",
+      });
+    } finally {
+      setCarregandoProdutosDisponiveis(false);
+    }
+  }, [addToast]);
 
   const atualizarVinculosNegocio = useCallback(
     async (leadIds: string[]) => {
@@ -233,13 +266,15 @@ export function useKanbanDetalhesNegocio({
   useEffect(() => {
     if (negocioSelecionado) {
       void carregarLeadsDisponiveis();
+      void carregarProdutosDisponiveis();
       return;
     }
 
+    setProdutosDisponiveis([]);
     setLeadsDisponiveis([]);
     setErroVinculos(null);
     cancelarAutoSave();
-  }, [carregarLeadsDisponiveis, cancelarAutoSave, negocioSelecionado]);
+  }, [carregarLeadsDisponiveis, carregarProdutosDisponiveis, cancelarAutoSave, negocioSelecionado]);
 
   const statusSalvamentoDetalhes = useMemo<StatusSalvamentoDetalhesNegocio>(() => {
     if (erroDetalhesNegocio) return "erro";
@@ -261,6 +296,8 @@ export function useKanbanDetalhesNegocio({
     statusSalvamentoDetalhes,
     salvarDetalhesNegocio,
     aoMudarNegocio,
+    produtosDisponiveis,
+    carregandoProdutosDisponiveis,
     leadsDisponiveis,
     carregandoLeadsDisponiveis,
     salvandoVinculos,

@@ -33,6 +33,8 @@ type NegocioDetailsDrawerProps = {
   erroDetalhesNegocio: string | null;
   setErroDetalhesNegocio: (erro: string | null) => void;
   onSalvarDetalhesNegocio: (negocio: Lead) => Promise<void>;
+  produtosDisponiveis: Array<{ id: string; nome: string; ativo: boolean }>;
+  carregandoProdutosDisponiveis: boolean;
   leadsDisponiveis: ApiLeadContato[];
   carregandoLeadsDisponiveis: boolean;
   salvandoVinculos: boolean;
@@ -61,6 +63,8 @@ export function NegocioDetailsDrawer(props: NegocioDetailsDrawerProps) {
     erroDetalhesNegocio,
     setErroDetalhesNegocio,
     onSalvarDetalhesNegocio,
+    produtosDisponiveis,
+    carregandoProdutosDisponiveis,
     leadsDisponiveis,
     carregandoLeadsDisponiveis,
     salvandoVinculos,
@@ -209,6 +213,8 @@ export function NegocioDetailsDrawer(props: NegocioDetailsDrawerProps) {
             setTemAlteracoes={setTemAlteracoes}
             tabAtiva={tabAtiva}
             setTabAtiva={setTabAtiva}
+            produtosDisponiveis={produtosDisponiveis}
+            carregandoProdutosDisponiveis={carregandoProdutosDisponiveis}
             leadsDisponiveis={leadsDisponiveis}
             carregandoLeadsDisponiveis={carregandoLeadsDisponiveis}
             salvandoVinculos={salvandoVinculos}

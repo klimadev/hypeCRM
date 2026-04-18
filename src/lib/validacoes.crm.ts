@@ -153,6 +153,7 @@ export const esquemaAtualizarNegocio = z
     titulo: z.string().trim().min(2, "Titulo do negocio deve ter ao menos 2 caracteres.").optional(),
     id_estagio: z.string().trim().min(1, "Estagio obrigatorio.").optional(),
     id_funil: z.string().trim().min(1, "Funil obrigatorio.").optional(),
+    id_produto_principal: z.string().trim().min(1, "Produto obrigatorio.").nullable().optional(),
     status: z.enum(["ABERTO", "GANHO", "PERDIDO"]).optional(),
   })
   .refine(
@@ -166,6 +167,7 @@ export const esquemaAtualizarNegocio = z
       dados.titulo !== undefined ||
       dados.id_estagio !== undefined ||
       dados.id_funil !== undefined ||
+      dados.id_produto_principal !== undefined ||
       dados.status !== undefined,
     {
       message: "Informe ao menos um campo para atualizar.",

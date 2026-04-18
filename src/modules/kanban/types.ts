@@ -116,6 +116,7 @@ export type Lead = {
   id_funil?: string;
   id_estagio: string;
   id_funcionario: string;
+  id_produto_principal?: string | null;
   nome: string;
   telefone: string;
   valor_oportunidade: number;
@@ -237,6 +238,12 @@ export type UseKanbanModuleReturn = {
   setErroDetalhesNegocio: (erro: string | null) => void;
   salvarDetalhesNegocio: (negocio: Lead) => Promise<void>;
   setNegocioSelecionado: (negocio: Lead | null) => void;
+  produtosDisponiveis: Array<{
+    id: string;
+    nome: string;
+    ativo: boolean;
+  }>;
+  carregandoProdutosDisponiveis: boolean;
   leadsDisponiveis: Array<{
     id: string;
     id_negocio?: string | null;

@@ -81,6 +81,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     }
   }
 
+  if (dados.id_produto_principal !== undefined && dados.id_produto_principal !== null) {
+    const produto = await prisma.produto.findFirst({
+      where: {
+        id: dados.id_produto_principal,
+        id_empresa: auth.sessao.id_empresa,
+      },
+      select: { id: true },
+    });
+
+    if (!produto) {
+      return badRequest("Produto invalido.");
+    }
+  }
+
   try {
     const atualizado = await atualizarNegocio({
       idEmpresa: auth.sessao.id_empresa,
@@ -93,6 +107,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
       idFuncionario: dados.id_funcionario,
       idFunil: dados.id_funil,
       idEstagio: dados.id_estagio,
+      idProdutoPrincipal: dados.id_produto_principal,
       status: dados.status,
       observacoesComerciais: dados.observacoes_comerciais,
     });

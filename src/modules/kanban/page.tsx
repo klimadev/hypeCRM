@@ -283,6 +283,8 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
         erroDetalhesNegocio={vm.erroDetalhesNegocio}
         setErroDetalhesNegocio={vm.setErroDetalhesNegocio}
         onSalvarDetalhesNegocio={vm.salvarDetalhesNegocio}
+        produtosDisponiveis={vm.produtosDisponiveis}
+        carregandoProdutosDisponiveis={vm.carregandoProdutosDisponiveis}
         leadsDisponiveis={vm.leadsDisponiveis}
         carregandoLeadsDisponiveis={vm.carregandoLeadsDisponiveis}
         salvandoVinculos={vm.salvandoVinculos}

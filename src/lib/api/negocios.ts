@@ -37,6 +37,7 @@ export type ApiNegocioResumo = {
   id_funil: string;
   id_estagio: string;
   id_funcionario: string;
+  id_produto_principal?: string | null;
   titulo: string;
   valor_estimado: number;
   valor_fechado?: number | null;
@@ -79,6 +80,7 @@ export function converterNegocioResumoParaCard(negocio: ApiNegocioResumo): Lead 
     id_funil: negocio.id_funil,
     id_estagio: negocio.id_estagio,
     id_funcionario: negocio.id_funcionario,
+    id_produto_principal: negocio.id_produto_principal ?? null,
     nome: negocio.titulo,
     telefone: leadPrincipal?.telefone ?? "",
     valor_oportunidade: leadPrincipal?.valor_oportunidade ?? negocio.valor_estimado,

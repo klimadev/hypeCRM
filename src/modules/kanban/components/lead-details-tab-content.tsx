@@ -8,6 +8,8 @@ import { aplicaMascaraMoedaBr, converteMoedaBrParaNumero } from "@/lib/utils";
 import type { Estagio, Funcionario, Lead, PendenciaDinamica } from "../types";
 import { ActionButton } from "./action-button";
 
+const SEM_PRODUTO_VALUE = "__sem_produto__";
+
 type NegocioDetailsTabContentProps = {
   negocioSelecionado: Lead;
   perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
@@ -21,6 +23,8 @@ type NegocioDetailsTabContentProps = {
   onSalvar: () => Promise<void>;
   temAlteracoes: boolean;
   setTemAlteracoes: (value: boolean) => void;
+  produtosDisponiveis: Array<{ id: string; nome: string; ativo: boolean }>;
+  carregandoProdutosDisponiveis: boolean;
 };
 
 export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
@@ -34,6 +38,8 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
     onMudarNegocio,
     onSalvar,
     temAlteracoes,
+    produtosDisponiveis,
+    carregandoProdutosDisponiveis,
   } = props;
 
   void estagios;
@@ -155,6 +161,32 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
             </Select>
           </div>
         ) : null}
+
+        <div className="mt-3 space-y-2">
+          <label className="text-sm font-medium text-[var(--text-secondary)]">Produto vinculado</label>
+          <Select
+            value={negocioSelecionado.id_produto_principal ?? SEM_PRODUTO_VALUE}
+            onValueChange={(idProduto) => onMudarNegocio({
+              ...negocioSelecionado,
+              id_produto_principal: idProduto === SEM_PRODUTO_VALUE ? null : idProduto,
+            })}
+          >
+            <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
+              <SelectValue placeholder={carregandoProdutosDisponiveis ? "Carregando produtos..." : "Selecione o produto"} />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SEM_PRODUTO_VALUE}>Nenhum produto vinculado</SelectItem>
+              {produtosDisponiveis.map((produto) => (
+                <SelectItem key={produto.id} value={produto.id}>
+                  {produto.nome}{produto.ativo ? "" : " (inativo)"}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {!carregandoProdutosDisponiveis && produtosDisponiveis.length === 0 ? (
+            <p className="text-xs text-[var(--text-tertiary)]">Cadastre um produto para vinculá-lo a este negócio.</p>
+          ) : null}
+        </div>
 
         {erroDetalhesNegocio ? (
           <p className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm font-medium text-[var(--danger)]">

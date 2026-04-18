@@ -34,6 +34,7 @@ export function construirCamposAtualizacaoNegocio(params: {
   idFuncionario?: string;
   idFunil?: string;
   idEstagio?: string;
+  idProdutoPrincipal?: string | null;
   status?: TipoStatusNegocio;
   observacoesComerciais?: string | null;
 }) {
@@ -46,6 +47,7 @@ export function construirCamposAtualizacaoNegocio(params: {
     ...(params.idFuncionario !== undefined ? { id_funcionario: params.idFuncionario } : {}),
     ...(params.idFunil !== undefined ? { id_funil: params.idFunil } : {}),
     ...(params.idEstagio !== undefined ? { id_estagio: params.idEstagio } : {}),
+    ...(params.idProdutoPrincipal !== undefined ? { id_produto_principal: params.idProdutoPrincipal } : {}),
     ...(params.status !== undefined ? { status: params.status } : {}),
     ...(params.observacoesComerciais !== undefined
       ? { observacoes_comerciais: params.observacoesComerciais?.trim() ?? null }

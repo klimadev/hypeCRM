@@ -158,6 +158,7 @@ export async function atualizarNegocio(params: {
   idFuncionario?: string;
   idFunil?: string;
   idEstagio?: string;
+  idProdutoPrincipal?: string | null;
   status?: "ABERTO" | "GANHO" | "PERDIDO";
   observacoesComerciais?: string | null;
 }) {
@@ -207,6 +208,20 @@ export async function atualizarNegocio(params: {
 
     if (!funcionario) {
       throw new Error("Funcionario invalido.");
+    }
+  }
+
+  if (params.idProdutoPrincipal !== undefined && params.idProdutoPrincipal !== null) {
+    const produto = await prisma.produto.findFirst({
+      where: {
+        id: params.idProdutoPrincipal,
+        id_empresa: params.idEmpresa,
+      },
+      select: { id: true },
+    });
+
+    if (!produto) {
+      throw new Error("Produto invalido.");
     }
   }
 
