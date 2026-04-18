@@ -1,5 +1,5 @@
 import { normalizarStatusInstanciaWhatsapp } from "@/lib/whatsapp-instancia-status";
-import { normalizarRemoteJidCanonico } from "./chat-remote-jid";
+import { normalizarRemoteJidCanonico, extrairLookupParaMensagens } from "./chat-remote-jid";
 import type {
   EvolutionConnectionState,
   EvolutionContato,
@@ -60,6 +60,9 @@ type EvolutionConversaEntrada = {
   remoteJidAlt?: string | null;
   pushName?: string | null;
   isGroup?: boolean;
+  unreadCount?: number;
+  updatedAt?: number;
+  messageTimestamp?: number;
   lastMessage?: {
     key?: {
       remoteJid?: string;
@@ -69,6 +72,7 @@ type EvolutionConversaEntrada = {
     pushName?: string;
     kind?: string;
     text?: string;
+    messageTimestamp?: number;
     message?: Record<string, unknown>;
   };
 };
@@ -95,9 +99,20 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
   if (!remoteJid || remoteJid.includes("@g.us")) return null;
 
   const remoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
-
   const pushName = chat.pushName ?? chat.lastMessage?.pushName ?? null;
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
+
+  const rawRemoteJid = chat.remoteJid ?? "";
+  const rawRemoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
+  const lookupRemoteJid = extrairLookupParaMensagens(rawRemoteJid, rawRemoteJidAlt);
+
+  const unreadCount = typeof chat.unreadCount === "number" ? chat.unreadCount : 0;
+  const updatedAt = typeof chat.updatedAt === "number" ? chat.updatedAt : undefined;
+  const messageTimestamp = typeof chat.messageTimestamp === "number" ? chat.messageTimestamp : undefined;
+
+  const lastMessageTimestamp = chat.lastMessage?.messageTimestamp ?? 0;
+  const activityTimestamp =
+    messageTimestamp ?? lastMessageTimestamp ?? (updatedAt ? Math.floor(updatedAt / 1000) : 0);
 
   const lastMessage = chat.lastMessage
     ? {
@@ -119,6 +134,10 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
     pushName: pushName ?? null,
     isGroup,
     lastMessage,
+    lookupRemoteJid,
+    unreadCount,
+    updatedAt,
+    activityTimestamp,
   };
 }
 

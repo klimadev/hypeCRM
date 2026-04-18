@@ -5,7 +5,9 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
-import { normalizarRemoteJidCanonico } from "./chat-remote-jid";
+import { normalizarRemoteJidCanonico, extrairLookupParaMensagens } from "./chat-remote-jid";
+import { mapearStatusMensagem } from "./whatsapp-chat.normalization";
+import { normalizarTimestampParaIso } from "./whatsapp-utils";
 import { chatLogger, criarContextoChat } from "./chat-logger";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
@@ -242,6 +244,7 @@ export async function buscarConversasEvolution(
         pushName?: string | null;
         messageTimestamp?: number;
       }>;
+      pages?: number;
     };
   };
 
@@ -362,7 +365,7 @@ export async function buscarMensagensPorContato(
   remoteJid: string,
   pagina: number = 1,
   limite: number = 50,
-): Promise<{ messages: Array<{ id: string; remoteJid: string; remoteJidAlt: string | null; fromMe: boolean; text: string; kind: string; timestamp: number; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+): Promise<{ messages: Array<{ id: string; remoteJid: string; remoteJidAlt: string | null; fromMe: boolean; text: string; kind: string; timestamp: number; timestampIso: string; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
   const startedAt = Date.now();
   const ctx = criarContextoChat({ instanceName, remoteJid, pagina, limite });
   const payload = {
@@ -478,6 +481,7 @@ export async function buscarMensagensPorContato(
       const remoteJidAlt = msg.key?.remoteJidAlt ?? msg.lastMessage?.key?.remoteJidAlt ?? null;
       const fromMe = msg.key?.fromMe ?? false;
       const timestamp = msg.messageTimestamp ?? 0;
+      const timestampIso = normalizarTimestampParaIso(timestamp);
       const pushName = msg.pushName ?? null;
       const msgType = msg.messageType ?? "";
 
@@ -548,6 +552,11 @@ export async function buscarMensagensPorContato(
         kind = msgType || "unknown";
       }
 
+      const rawStatus = (msg as Record<string, unknown>).status;
+      const messageUpdate = (msg as Record<string, unknown>).MessageUpdate;
+      const resolvedStatus = rawStatus ?? messageUpdate;
+      const status = mapearStatusMensagem(resolvedStatus, fromMe);
+
       if (remoteJid.includes("@lid") || remoteJidAlt?.includes("@lid")) {
         chatLogger.log("EVOLUTION_FIND_MESSAGES_LID_TRACE", ctx, {
           raw: {
@@ -569,6 +578,7 @@ export async function buscarMensagensPorContato(
               kind,
               text,
               hasMedia,
+              status,
             },
           },
         });
@@ -582,8 +592,9 @@ export async function buscarMensagensPorContato(
         text,
         kind,
         timestamp,
+        timestampIso,
         pushName,
-        status: "DELIVERED",
+        status,
         hasMedia,
         mediaUrl,
       };
@@ -630,7 +641,7 @@ export async function buscarPushNamePorTelefone(
   }
 
   const json = (await resposta.json().catch(() => ({}))) as {
-    messages?: { records?: Array<{ key?: { fromMe?: boolean }; pushName?: string | null }> };
+    messages?: { records?: Array<{ key?: { fromMe?: boolean; remoteJid?: string; remoteJidAlt?: string }; pushName?: string | null; messageTimestamp?: number }> };
   };
 
   const registros = json.messages?.records ?? [];

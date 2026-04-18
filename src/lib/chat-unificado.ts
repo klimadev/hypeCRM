@@ -148,8 +148,11 @@ function extrairConteudoMensagem(lastMessage: {
   return fallback[lastMessage.kind ?? ""] ?? "Mensagem";
 }
 
-function extrairTimestamp(conv: { messageTimestamp?: number }): number {
-  return conv.messageTimestamp ?? 0;
+function extrairTimestamp(conv: { messageTimestamp?: number; activityTimestamp?: number; updatedAt?: number }): number {
+  const messageTs = conv.messageTimestamp ?? 0;
+  const activityTs = conv.activityTimestamp ?? 0;
+  const updatedAtTs = conv.updatedAt ? Math.floor(conv.updatedAt / 1000) : 0;
+  return messageTs || activityTs || updatedAtTs;
 }
 
 /**
@@ -406,6 +409,8 @@ export async function unificarChatsComLeads({
 
         const existente = mapaPorTelefone.get(telefone);
         const timestampMsg = extrairTimestamp(conv);
+        const unreadRemoto = conv.unreadCount ?? 0;
+        const activityTimestamp = conv.activityTimestamp ?? timestampMsg;
 
         // Se já existe, adicionar esta instância à lista de instâncias
         if (existente) {
@@ -415,15 +420,18 @@ export async function unificarChatsComLeads({
             ultimaMensagemTimestamp: timestampMsg,
           });
           existente.isDuplicado = existente.instancias.length > 1;
+          existente.unreadCount += unreadRemoto;
           // Atualizar última mensagem se for mais recente
-          if (timestampMsg && (!existente.ultimaMensagem?.timestamp || timestampMsg > existente.ultimaMensagem.timestamp)) {
+          if (activityTimestamp && (!existente.ultimaMensagem?.timestamp || activityTimestamp > existente.ultimaMensagem.timestamp)) {
             existente.ultimaMensagem = conv.lastMessage
               ? {
                   conteudo: extrairConteudoMensagem(conv.lastMessage),
                   fromMe: conv.lastMessage.key?.fromMe ?? false,
-                  timestamp: timestampMsg,
+                  timestamp: activityTimestamp,
                 }
               : null;
+            existente.instanceName = inst.instanceName;
+            existente.remoteJid = conv.remoteJid;
           }
           continue;
         }
@@ -437,12 +445,12 @@ export async function unificarChatsComLeads({
           pushName: conv.pushName ?? null,
           isGroup: false,
           canal: "whatsapp",
-          unreadCount: 0,
+          unreadCount: unreadRemoto,
           ultimaMensagem: conv.lastMessage
             ? {
                 conteudo: extrairConteudoMensagem(conv.lastMessage),
                 fromMe: conv.lastMessage.key?.fromMe ?? false,
-                timestamp: timestampMsg,
+                timestamp: activityTimestamp,
               }
             : null,
           instancias: [
@@ -507,6 +515,8 @@ export async function unificarChatsComLeads({
         const jidParaTelefone = selecionarJidParaTelefone(conv.remoteJid, conv.remoteJidAlt);
         const telefone = extrairTelefoneDeRemoteJid(jidParaTelefone);
         const timestampMsg = extrairTimestamp(conv);
+        const unreadRemoto = conv.unreadCount ?? 0;
+        const activityTimestamp = conv.activityTimestamp ?? timestampMsg;
 
         const existente = mapaPorTelefone.get(telefone);
 
@@ -518,14 +528,15 @@ export async function unificarChatsComLeads({
             ultimaMensagemTimestamp: timestampMsg,
           });
           existente.isDuplicado = existente.instancias.length > 1;
+          existente.unreadCount += unreadRemoto;
 
           // Atualizar última mensagem se for mais recente
-          if (timestampMsg && (!existente.ultimaMensagem?.timestamp || timestampMsg > existente.ultimaMensagem.timestamp)) {
+          if (activityTimestamp && (!existente.ultimaMensagem?.timestamp || activityTimestamp > existente.ultimaMensagem.timestamp)) {
             existente.ultimaMensagem = conv.lastMessage
               ? {
                   conteudo: extrairConteudoMensagem(conv.lastMessage),
                   fromMe: conv.lastMessage.key?.fromMe ?? false,
-                  timestamp: timestampMsg,
+                  timestamp: activityTimestamp,
                 }
               : null;
             existente.instanceName = inst.instanceName;
@@ -543,12 +554,12 @@ export async function unificarChatsComLeads({
           pushName: conv.pushName ?? null,
           isGroup: false,
           canal: "whatsapp",
-          unreadCount: 0,
+          unreadCount: unreadRemoto,
           ultimaMensagem: conv.lastMessage
             ? {
                 conteudo: extrairConteudoMensagem(conv.lastMessage),
                 fromMe: conv.lastMessage.key?.fromMe ?? false,
-                timestamp: timestampMsg,
+                timestamp: activityTimestamp,
               }
             : null,
           instancias: [
@@ -758,7 +769,6 @@ export async function unificarChatsComLeads({
   }
 
   for (const chat of todasOrdenadas) {
-    chat.unreadCount = chat.leadMatch?.id ? unreadPorLead.get(chat.leadMatch.id) ?? 0 : 0;
     if (chat.leadMatch?.id_negocio) {
       const negocio = negociosPorId.get(chat.leadMatch.id_negocio) ?? null;
       if (chat.leadMatch) {

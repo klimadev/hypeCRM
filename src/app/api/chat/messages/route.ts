@@ -7,7 +7,7 @@ import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUn
 import { prisma } from "@/lib/prisma";
 import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
-import { extrairTelefoneDeRemoteJid, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
+import { extrairTelefoneDeRemoteJid, extrairLookupParaMensagens, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
 
 function ehInstagram(instanceName: string): boolean {
@@ -123,7 +123,8 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  const result = await buscarMensagensPorContato(instanceName, destinoWhatsapp?.lookupRemoteJid ?? remoteJid, page, limite);
+  const lookupRemoteJid = extrairLookupParaMensagens(remoteJid, destinoWhatsapp?.lookupRemoteJid ?? null);
+  const result = await buscarMensagensPorContato(instanceName, lookupRemoteJid, page, limite);
 
   chatLogger.log("CARREGAR_MENSAGENS_OK", ctx, {
     normalizado: { total: result.messages.length, hasMore: result.hasMore },

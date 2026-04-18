@@ -40,6 +40,10 @@ export type EvolutionConversa = {
   pushName: string | null;
   isGroup: boolean;
   messageTimestamp?: number;
+  lookupRemoteJid?: string;
+  unreadCount?: number;
+  updatedAt?: number;
+  activityTimestamp?: number;
   lastMessage?: {
     key: {
       remoteJid: string;
