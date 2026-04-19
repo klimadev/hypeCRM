@@ -1,11 +1,47 @@
 # AGENTS.md - hypeCRM
 
+## Design Principles (OBRIGATÓRIO)
+
+Siga estas práticas de design automaticamente — não спрашивайте:
+
+### Fundamentos (Norman, Apple, Dieter Rams)
+
+- **Affordance**: Elementos devem mostrar como usá-los. Botões parecem clicáveis, campos parecem editáveis.
+- ** affordances perceptivas imediatas**: Cor, forma, posição, movimento. Se precisa explicar, falhou.
+- **Feedback instantâneo**: Toda ação tem resposta visual <100ms.
+- **Less is more**: Remove o que não é essencial. Espaço negativo é recurso.
+- **Icon first**: Preferir ícone + label curto. Ícone alone só se universal (✓, +, −, ←).
+- **Convenção sobre configuração**: Padrões visuais consistentesevitam customização desnecessária.
+
+### UI/UX Principles
+
+- Dark premium operacional
+- Bordas sutis (1px), superfícies grafite (#1a1a1a), brilho localizado
+- Densidade alta com respiro suficiente para toque (min 44px touch targets)
+- Tipografia menor e mais densa que marketing (14px base, não 16px)
+- Dock inferior não corta em safe area mobile
+- Kanban legível em telas pequenas (scroll horizontal se necessário)
+- Prioridade visual por tamanho, não cor apenas
+
+### Clean Code Principles
+
+- Sem comentários (a menos que spec exija)
+- Nomes descritivos: `funilTotals` não `data`, `carregarMensagens` não `fetch`
+- Extrair funções > 30 linhas
+- Props interfaces nomeadas: `ChatListProps` não `Props`
+- Arquivos < 200 linhas
+- Uma responsabilidade por componente
+
+---
+
 ## Fluxo de trabalho
 
 1. Fazer TODAS as edições/criações de arquivos em paralelo (uma única resposta)
 2. Executar `npm run pm2:prod` para validar e fazer build
 
 **Nunca execute `pm2:prod` no meio de múltiplas edições — só no final.**
+
+---
 
 ## Build/Validation (PROIBIDO lint/typecheck)
 
@@ -17,6 +53,8 @@ npm run pm2:prod
 
 Este comando executa `build && node scripts/pm2-mode.cjs prod`.
 
+---
+
 ## Servidor de desenvolvimento
 
 ```bash
@@ -24,12 +62,16 @@ pnpm dev
 # Acessar: http://localhost:3434
 ```
 
+---
+
 ## Testes
 
 ```bash
 pnpm test              # uma vez
 pnpm test:watch        # modo watch
 ```
+
+---
 
 ## Banco de dados
 
@@ -39,6 +81,8 @@ pnpm db:migrate:deploy # aplica migracoes
 pnpm db:migrate:status # status
 pnpm seed              # popula dados iniciais
 ```
+
+---
 
 ## PM2 (producao/VPS)
 
@@ -50,16 +94,22 @@ npm run pm2:logs:web:prod
 npm run pm2:list
 ```
 
+---
+
 ## Credenciais de seed
 
 - Empresa: `empresa.demo@hypecrm.com` / `123456`
 - Gerente: `gerente.demo@hypecrm.com` / `123456`
 
-## Convencoes
+---
+
+## Convenções
 
 - Portas: dev `3434`, prod configuravel via `PM2_PROD_PORT`
 - Banco local: `prisma/dev.db` (SQLite)
 - Package manager: `pnpm` (nao use npm Yarn)
+
+---
 
 ## Estrutura principal
 
@@ -71,12 +121,16 @@ src/modules/       # Dominio (MVVM)
 prisma/            # Schema e migrations
 ```
 
-## Arquivo .env minimo
+---
+
+## Arquivo .env mínimo
 
 ```env
 DATABASE_URL="file:./dev.db"
 JWT_SECRET="troque-por-um-segredo-forte"
 ```
+
+---
 
 ## Debugging: Log Instrumentation (Caixa Preta Forense)
 
