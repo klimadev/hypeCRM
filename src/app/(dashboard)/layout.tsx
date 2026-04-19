@@ -32,12 +32,14 @@ export default async function LayoutDashboard({
     <ProvidersWrapper sessao={sessao}>
       <TrialBlocker />
       <TrialNotification />
-      <div className="min-h-[100dvh] overflow-x-hidden bg-[var(--canvas)] lg:flex lg:items-stretch">
+      <div className="dashboard-shell min-h-[100dvh] overflow-x-hidden bg-[var(--canvas)] lg:flex lg:items-stretch">
         <SidebarPrincipal sessao={sessao} dadosUsuario={dadosUsuario} />
-        <main className="min-h-0 min-w-0 flex-1 px-2.5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-2.5 lg:flex lg:h-full lg:flex-col lg:min-h-0 lg:px-3 lg:pb-3 lg:pt-3 lg:pl-[5rem] xl:px-4 xl:pb-4 xl:pt-4 xl:pl-[5.5rem]">
-          <DashboardErrorBoundary>
-            {children}
-          </DashboardErrorBoundary>
+        <main className="dashboard-shell__content min-h-0 min-w-0 flex-1 px-2.5 pb-[calc(5.5rem+env(safe-area-inset-bottom))] pt-2.5 lg:flex lg:h-full lg:flex-col lg:min-h-0 lg:px-3 lg:pb-3 lg:pt-3 lg:pl-[calc(var(--sidebar-dock-offset)+var(--sidebar-dock-collapsed-width)+1rem)] xl:px-4 xl:pb-4 xl:pt-4 xl:pl-[calc(var(--sidebar-dock-offset)+var(--sidebar-dock-collapsed-width)+1.5rem)]">
+          <div className="dashboard-shell__viewport min-h-0 flex-1">
+            <DashboardErrorBoundary>
+              {children}
+            </DashboardErrorBoundary>
+          </div>
         </main>
         <MobileBottomDock perfil={sessao.perfil} />
       </div>
