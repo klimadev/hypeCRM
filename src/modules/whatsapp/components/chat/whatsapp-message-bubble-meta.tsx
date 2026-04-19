@@ -10,13 +10,25 @@ export function formatTimeWhatsappMessageBubble(timestamp: number) {
   });
 }
 
-export function ReceiptIconWhatsappMessageBubble({ message }: { message: WhatsappChatMessage }) {
-  if (!message.fromMe) return null;
-  if (message.status === "PENDING") return <Clock3 className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "SENT") return <Check className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "DELIVERED") return <CheckCheck className="h-3 w-3 text-[var(--text-tertiary)]" />;
-  if (message.status === "READ") return <CheckCheck className="h-3 w-3 text-[var(--brand)]" />;
-  if (message.status === "PLAYED") return <Volume2 className="h-3 w-3 text-[var(--info-alt)]" />;
-  if (message.status === "DELETED") return <Trash2 className="h-3 w-3 text-[var(--text-tertiary)]" />;
+export function ReceiptIconWhatsappMessageBubble({ message, size = "default" }: { message: WhatsappChatMessage; size?: "sm" | "default" }) {
+  const iconClass = size === "sm" ? "h-2.5 w-2.5" : "h-3 w-3";
+  const textClass = size === "sm" ? "text-[9px]" : "text-[var(--text-tertiary)]";
+
+  if (!message.fromMe) {
+    if (message.status === "PENDING") return <Clock3 className={`${iconClass} text-[var(--text-tertiary)]`} />;
+    if (message.status === "SENT") return <span className={textClass}>Enviada</span>;
+    if (message.status === "DELIVERED") return <Check className={`${iconClass} text-[var(--text-tertiary)]`} />;
+    if (message.status === "READ") return <CheckCheck className={`${iconClass} text-[var(--success)]`} />;
+    if (message.status === "PLAYED") return <Volume2 className={`${iconClass} text-[var(--info-alt)]`} />;
+    if (message.status === "DELETED") return <Trash2 className={`${iconClass} text-[var(--text-tertiary)]`} />;
+    return null;
+  }
+
+  if (message.status === "PENDING") return <Clock3 className={`${iconClass} text-[var(--text-tertiary)]`} />;
+  if (message.status === "SENT") return <Check className={`${iconClass} text-[var(--text-tertiary)]`} />;
+  if (message.status === "DELIVERED") return <CheckCheck className={`${iconClass} text-[var(--text-tertiary)]`} />;
+  if (message.status === "READ") return <CheckCheck className={`${iconClass} text-[var(--brand)]`} />;
+  if (message.status === "PLAYED") return <Volume2 className={`${iconClass} text-[var(--info-alt)]`} />;
+  if (message.status === "DELETED") return <Trash2 className={`${iconClass} text-[var(--text-tertiary)]`} />;
   return null;
 }

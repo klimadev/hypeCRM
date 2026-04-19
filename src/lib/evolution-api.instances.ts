@@ -222,6 +222,16 @@ type EnviarMensagemTextoParams = {
   mensagem: string;
 };
 
+type EnviarMidiaParams = {
+  instanceName: string;
+  telefone: string;
+  media: string;
+  mimetype: string;
+  fileName: string;
+  mediaType: "image" | "document" | "sticker";
+  caption?: string;
+};
+
 export async function enviarMensagemTexto(params: EnviarMensagemTextoParams): Promise<void> {
   const numeroNormalizado = normalizarTelefoneParaWhatsapp(params.telefone);
   if (!numeroNormalizado.valido || !numeroNormalizado.waNumber) {
@@ -245,6 +255,56 @@ export async function enviarMensagemTexto(params: EnviarMensagemTextoParams): Pr
         : typeof erro.error === "string"
           ? erro.error
           : "Erro ao enviar mensagem WhatsApp";
+    throw new Error(
+      `${mensagemErro} (status=${resposta.status}, instancia=${params.instanceName}, numero=${mascararTelefoneParaLog(numeroNormalizado.waNumber)})`,
+    );
+  }
+}
+
+function limparBase64(media: string): string {
+  return media.replace(/^data:[^;]+;base64,/, "").replace(/\s+/g, "");
+}
+
+export async function enviarMidiaWhatsapp(params: EnviarMidiaParams): Promise<void> {
+  const numeroNormalizado = normalizarTelefoneParaWhatsapp(params.telefone);
+  if (!numeroNormalizado.valido || !numeroNormalizado.waNumber) {
+    throw new Error(numeroNormalizado.motivoErro ?? "Telefone invalido para envio WhatsApp.");
+  }
+
+  const url =
+    params.mediaType === "sticker"
+      ? `${EVOLUTION_API_URL}/message/sendSticker/${params.instanceName}`
+      : `${EVOLUTION_API_URL}/message/sendMedia/${params.instanceName}`;
+
+  const body =
+    params.mediaType === "sticker"
+      ? {
+          number: `+${numeroNormalizado.waNumber}`,
+          sticker: limparBase64(params.media),
+        }
+      : {
+          number: `+${numeroNormalizado.waNumber}`,
+          mediatype: params.mediaType,
+          mimetype: params.mimetype,
+          media: limparBase64(params.media),
+          fileName: params.fileName,
+          caption: params.caption?.trim() || undefined,
+        };
+
+  const resposta = await fetch(url, {
+    method: "POST",
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!resposta.ok) {
+    const erro = await resposta.json().catch(() => ({}));
+    const mensagemErro =
+      typeof erro.message === "string"
+        ? erro.message
+        : typeof erro.error === "string"
+          ? erro.error
+          : "Erro ao enviar midia WhatsApp";
     throw new Error(
       `${mensagemErro} (status=${resposta.status}, instancia=${params.instanceName}, numero=${mascararTelefoneParaLog(numeroNormalizado.waNumber)})`,
     );

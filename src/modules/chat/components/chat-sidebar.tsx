@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, MessageCircle, ChevronDown, Activity, Inbox, Plus, RotateCw, MailOpen, Briefcase, BriefcaseBusiness } from "lucide-react";
+import { Search, MessageCircle, ChevronDown, Activity, Plus, RotateCw, Inbox, MailOpen, Briefcase, CheckCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
 import { ChatNewChatDialog } from "./chat-new-chat-dialog";
@@ -89,12 +89,12 @@ export function ChatSidebar({
     id: Exclude<ChatCategoriaInbox, "todas">;
     label: string;
     count: number;
-    icon: typeof Inbox;
+    icon: React.ElementType;
   }> = [
     { id: "em_aberto", label: "Em aberto", count: categoriaContagens.em_aberto, icon: Inbox },
     { id: "nao_lidas", label: "Não lidas", count: categoriaContagens.nao_lidas, icon: MailOpen },
     { id: "sem_negocio", label: "Sem negócio", count: categoriaContagens.sem_negocio, icon: Briefcase },
-    { id: "com_negocio", label: "Com negócio", count: categoriaContagens.com_negocio, icon: BriefcaseBusiness },
+    { id: "com_negocio", label: "Com negócio", count: categoriaContagens.com_negocio, icon: CheckCircle },
   ];
   const ultimoSyncLabel = ultimoSyncEm
     ? new Date(ultimoSyncEm).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })
@@ -102,70 +102,52 @@ export function ChatSidebar({
 
   return (
     <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-[var(--surface)]">
-      <div className="flex shrink-0 flex-col gap-2.5 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2.5">
-        <div className="flex items-start justify-between gap-3">
+      <div className="flex shrink-0 flex-col gap-2 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-2">
+        <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
-            <div className="inline-flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[var(--text-tertiary)]">
-              <Inbox className="h-3.5 w-3.5" />
-              Inbox
+            <div className="flex items-center gap-2">
+              <h2 className="text-[14px] font-medium text-[var(--text-primary)]">Conversas</h2>
+              {total > 0 ? <span className="text-[11px] text-[var(--text-tertiary)]">{total}</span> : null}
             </div>
-            <div className="mt-1 flex items-center gap-2">
-              <h2 className="text-[15px] font-semibold tracking-tight text-[var(--text-primary)]">Conversas</h2>
-              {total > 0 ? (
-                <span className="rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
-                  {chats.length}
-                </span>
-              ) : null}
+            <div className={cn("mt-0.5 inline-flex items-center gap-1.5 text-[10px]", erro ? "text-[var(--danger)]" : sseConectado ? "text-[var(--text-tertiary)]" : "text-[var(--warning)]")}>
+              <span className="h-1.5 w-1.5 rounded-full bg-current" />
+              <span>{erro ? "Erro na sincronização" : sseConectado ? `Atualizado ${ultimoSyncLabel}` : `Sincronizando ${ultimoSyncLabel}`}</span>
             </div>
-            <p className="mt-0.5 text-[11px] text-[var(--text-secondary)]">
-              {total} ativos, {totalMatched} no CRM e {totalOrphans} novos.
-            </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <Tooltip content={`Atualizar inbox (${ultimoSyncLabel})`}>
               <button
                 type="button"
                 onClick={() => void recarregar()}
                 disabled={recarregandoInbox || carregando}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
                 aria-label="Atualizar inbox"
               >
                 <RotateCw className={cn("h-3.5 w-3.5", recarregandoInbox && "animate-spin")} />
               </button>
             </Tooltip>
-            <span
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-2 py-1 text-[10px] font-medium",
-                erro
-                  ? "border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]"
-                  : sseConectado
-                    ? "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]"
-                    : "border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]",
-              )}
-            >
-              <span className="h-1.5 w-1.5 rounded-full bg-current" />
-              {erro ? "Erro" : sseConectado ? "Online" : "Sync"}
-            </span>
-            <button
-              type="button"
-              onClick={() => setNovoChatOpen(true)}
-              className="inline-flex items-center gap-1.5 rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] px-2.5 py-1 text-[10px] font-medium text-[var(--brand)] transition-colors hover:bg-[var(--brand)] hover:text-white"
-            >
-              <Plus className="h-3 w-3" />
-              Nova conversa
-            </button>
+            <Tooltip content="Nova conversa">
+              <button
+                type="button"
+                onClick={() => setNovoChatOpen(true)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]"
+                aria-label="Nova conversa"
+              >
+                <Plus className="h-3.5 w-3.5" />
+              </button>
+            </Tooltip>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <div className="relative min-w-0 flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--text-tertiary)]" />
             <input
               type="text"
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              placeholder="Buscar nome, telefone ou negócio"
-              className="h-10 w-full rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-10 pr-4 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-colors focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
+              placeholder="Buscar conversa"
+              className="h-9 w-full rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] pl-10 pr-4 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] transition-colors focus:border-[var(--brand)] focus:outline-none focus:ring-1 focus:ring-[var(--brand)]"
             />
           </div>
 
@@ -174,37 +156,35 @@ export function ChatSidebar({
               type="button"
               onClick={onAlternarFiltrosDock}
               aria-expanded={Boolean(filtrosDockAberto)}
-              className="hidden h-10 shrink-0 items-center gap-2 rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:inline-flex"
+              className="relative hidden h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:inline-flex"
             >
               <Activity className="h-3.5 w-3.5" />
-              Filtros
               {filtrosAtivos > 0 ? (
-                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
+                <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-[var(--brand)] px-1 py-0.5 text-[9px] font-semibold text-white">
                   {filtrosAtivos}
                 </span>
               ) : null}
-              <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", filtrosDockAberto && "rotate-180")} />
+              <ChevronDown className={cn("absolute bottom-1 right-1 h-3 w-3 transition-transform", filtrosDockAberto && "rotate-180")} />
             </button>
 
             <button
               type="button"
               onClick={() => setFiltrosMobileAbertos(true)}
               aria-expanded={filtrosMobileAbertos}
-              className="inline-flex h-10 shrink-0 items-center gap-2 rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-xs font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:hidden"
+              className="relative inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)] md:hidden"
             >
               <Activity className="h-3.5 w-3.5" />
-              Filtros
               {filtrosAtivos > 0 ? (
-                <span className="inline-flex min-w-5 items-center justify-center rounded-full bg-[var(--brand-soft)] px-1.5 py-0.5 text-[10px] font-semibold text-[var(--brand)]">
+                <span className="absolute -right-1 -top-1 inline-flex min-w-4 items-center justify-center rounded-full bg-[var(--brand)] px-1 py-0.5 text-[9px] font-semibold text-white">
                   {filtrosAtivos}
                 </span>
               ) : null}
-              <ChevronDown className="h-3.5 w-3.5" />
+              <ChevronDown className="absolute bottom-1 right-1 h-3 w-3" />
             </button>
           </>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+        <div className="flex items-center gap-1 overflow-x-auto pb-0.5">
           {categoriasRapidas.map((categoria) => {
             const Icon = categoria.icon;
             const ativo = filtroCategoria === categoria.id;
@@ -223,15 +203,26 @@ export function ChatSidebar({
                   type="button"
                   onClick={() => setFiltroCategoria(ativo ? "todas" : categoria.id)}
                   className={cn(
-                    "group inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-2.5 text-[11px] font-medium transition-colors",
+                    "group relative inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border transition-colors",
                     ativo
                       ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--brand)]"
-                      : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]",
+                      : "border-[var(--border-subtle)] bg-transparent text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]",
                   )}
                   aria-label={`${categoria.label}: ${categoria.count}`}
                 >
-                  <Icon className="h-3.5 w-3.5" />
-                  <span className="min-w-4 text-center text-[10px] font-semibold">{categoria.count}</span>
+                  <Icon className="h-4 w-4" />
+                  {categoria.count > 0 ? (
+                    <span
+                      className={cn(
+                        "absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border px-1 text-[9px] font-semibold",
+                        ativo
+                          ? "border-[var(--brand)] bg-[var(--brand)] text-white"
+                          : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]",
+                      )}
+                    >
+                      {categoria.count > 99 ? "99+" : categoria.count}
+                    </span>
+                  ) : null}
                 </button>
               </Tooltip>
             );
@@ -239,13 +230,13 @@ export function ChatSidebar({
         </div>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-1.5 pt-1.5">
+      <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-1.5 pb-1.5 pt-1">
         {carregando ? (
           <div className="space-y-2">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="h-14 animate-pulse rounded-[18px] bg-[var(--surface-elevated)]"
+                className="h-16 animate-pulse rounded-2xl bg-[var(--surface-elevated)]"
               />
             ))}
           </div>

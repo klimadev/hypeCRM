@@ -42,6 +42,9 @@ export async function GET(request: NextRequest) {
     select: {
       id: true,
       conteudo: true,
+      tipo: true,
+      midia_nome_arquivo: true,
+      midia_mimetype: true,
       agendado_para: true,
       status: true,
       erro: true,
@@ -54,6 +57,9 @@ export async function GET(request: NextRequest) {
     agendadas: agendadas.map((item) => ({
       id: item.id,
       conteudo: item.conteudo,
+      tipo: item.tipo,
+      midiaNomeArquivo: item.midia_nome_arquivo,
+      midiaMimetype: item.midia_mimetype,
       agendadoPara: item.agendado_para.toISOString(),
       status: item.status,
       erro: item.erro,

@@ -179,7 +179,10 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
     });
   }, []);
 
-  const selecionarInstancia = useCallback((): void => {}, []);
+  const selecionarInstancia = useCallback((telefone: string, instancia: string | null): void => {
+    void telefone;
+    setFiltroInstancia(instancia);
+  }, []);
 
   const onRegistrarComoLead = async (params: OrphanRegistrarLeadParams) => {
     try {

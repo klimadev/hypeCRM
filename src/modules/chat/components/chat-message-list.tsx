@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { AlertCircle, Check, CheckCheck, Clock3, FileText, Loader2, MessageSquare, Volume2 } from "lucide-react";
+import { AlertCircle, ArrowDown, Check, CheckCheck, Clock3, Download, FileText, Loader2, MessageSquare, Smile, Volume2 } from "lucide-react";
 import NextImage from "next/image";
 import { cn } from "@/lib/utils";
 import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
+import { formatarDuracaoSegundos } from "../preview";
+import { encontrarIndicePrimeiraMensagemNaoLida } from "../chat-ux";
 
 function formatarHora(timestamp: number): string {
   const date = new Date(timestamp * 1000);
@@ -27,23 +29,16 @@ function formatarDataGrupo(timestamp: number): string {
   return `${dias[date.getDay()]}, ${date.getDate()} ${meses[date.getMonth()]} ${date.getFullYear()}`;
 }
 
-function getKindIcon(kind: string): string {
-  const icons: Record<string, string> = {
-    imageMessage: "📷",
-    videoMessage: "🎥",
-    audioMessage: "🎵",
-    documentMessage: "📄",
-    stickerMessage: "🎭",
-    locationMessage: "📍",
-    liveLocationMessage: "📍",
-    contactMessage: "👤",
-    listMessage: "📋",
-    buttonsMessage: "🔘",
-    templateMessage: "📄",
-    orderMessage: "🛒",
-    reactionMessage: "",
-  };
-  return icons[kind] ?? "";
+function rotuloMidia(kind: string): string {
+  return (
+    {
+      imageMessage: "Imagem",
+      videoMessage: "Vídeo",
+      audioMessage: "Áudio",
+      documentMessage: "Documento",
+      stickerMessage: "Sticker",
+    } as Record<string, string>
+  )[kind] ?? "Mídia";
 }
 
 function statusIcon(msg: UnifiedChatMessage) {
@@ -53,7 +48,16 @@ function statusIcon(msg: UnifiedChatMessage) {
   if (msg.optimistic || msg.status === "PENDING") {
     return <span title="Enviando"><Clock3 className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
   }
-  return <span title="Enviado"><Check className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
+  if (msg.status === "READ" || msg.status === "PLAYED") {
+    return <span title="Lida"><CheckCheck className="h-3 w-3 text-[var(--brand)]" /></span>;
+  }
+  if (msg.status === "DELIVERED") {
+    return <span title="Entregue"><CheckCheck className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
+  }
+  if (msg.status === "DELETED") {
+    return <span title="Apagada"><FileText className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
+  }
+  return <span title="Enviada"><Check className="h-3 w-3 text-[var(--text-tertiary)]" /></span>;
 }
 
 function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
@@ -75,8 +79,18 @@ function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
 
 function MediaPreview({ instanceName, message }: { instanceName: string; message: UnifiedChatMessage }) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(message.mediaUrl ?? null);
+  const [seconds, setSeconds] = useState<number | null>(message.seconds ?? null);
   const [loading, setLoading] = useState(!message.mediaUrl);
   const [erro, setErro] = useState(false);
+
+  useEffect(() => {
+    setMediaUrl(message.mediaUrl ?? null);
+    setSeconds(message.seconds ?? null);
+  }, [message.mediaUrl, message.seconds, message.id]);
+
+  useEffect(() => {
+    setLoading(Boolean(message.hasMedia && !message.mediaUrl));
+  }, [message.hasMedia, message.mediaUrl, message.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -91,6 +105,7 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
       if (!mounted) return;
       if (resultado.ok) {
         setMediaUrl(`data:${resultado.dados.media.mimetype};base64,${resultado.dados.media.base64}`);
+        setSeconds(resultado.dados.media.seconds ?? null);
       } else {
         setErro(true);
       }
@@ -114,11 +129,10 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   }
 
   if (erro || !mediaUrl) {
-    const label = message.kind === "audioMessage" ? "Áudio" : message.kind === "videoMessage" ? "Vídeo" : "Mídia";
     return (
       <div className="mt-2 flex h-20 w-full items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3">
         <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />
-        <span className="text-xs text-[var(--text-secondary)]">{label} indisponível</span>
+        <span className="text-xs text-[var(--text-secondary)]">{rotuloMidia(message.kind)} indisponível</span>
       </div>
     );
   }
@@ -137,13 +151,26 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   }
 
   if (message.kind === "audioMessage") {
+    const duracao = formatarDuracaoSegundos(message.seconds ?? seconds);
     return (
       <div className="mt-2 flex w-full min-w-[15rem] max-w-[20rem] flex-col gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3">
         <div className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
           <Volume2 className="h-4 w-4 text-[var(--brand)]" />
-          Áudio
+          Áudio{duracao ? ` · ${duracao}` : ""}
         </div>
         <audio controls src={mediaUrl} className="w-full" />
+      </div>
+    );
+  }
+
+  if (message.kind === "stickerMessage") {
+    return (
+      <div className="mt-2 flex w-full max-w-[14rem] flex-col gap-2 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-2">
+        <div className="flex items-center gap-2 px-1 pt-1 text-[10px] text-[var(--text-tertiary)]">
+          <Smile className="h-3.5 w-3.5 text-[var(--brand)]" />
+          Sticker
+        </div>
+        <img src={mediaUrl} alt="Sticker" className="max-h-64 w-full rounded-xl object-contain" loading="lazy" />
       </div>
     );
   }
@@ -152,10 +179,28 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
     return <video controls className="mt-2 max-h-72 max-w-full rounded-2xl border border-[var(--border-subtle)] bg-black" src={mediaUrl} />;
   }
 
+  if (message.kind === "documentMessage") {
+    const fileName = message.text.match(/^\[Arquivo:\s*(.+)\]$/i)?.[1]?.trim() ?? "Documento";
+    return (
+      <div className="mt-2 overflow-hidden rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)]">
+        <div className="flex items-center gap-3 p-3">
+          <FileText className="h-5 w-5 shrink-0 text-[var(--brand)]" />
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-xs font-medium text-[var(--text-primary)]">{fileName}</p>
+            <p className="text-[10px] text-[var(--text-tertiary)]">Documento</p>
+          </div>
+          <a href={mediaUrl} download={fileName} className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--border-subtle)] text-[var(--text-secondary)] transition-colors hover:text-[var(--text-primary)]" aria-label={`Baixar ${fileName}`}>
+            <Download className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="mt-2 flex w-full items-center gap-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
       <FileText className="h-4 w-4 text-[var(--text-tertiary)]" />
-      <span className="truncate text-xs text-[var(--text-secondary)]">Anexo</span>
+      <span className="truncate text-xs text-[var(--text-secondary)]">{rotuloMidia(message.kind)}</span>
     </div>
   );
 }
@@ -173,11 +218,10 @@ function textoEGatewayReal(msg: UnifiedChatMessage): boolean {
 
 function MessageBubble({ instanceName, msg }: { instanceName: string; msg: UnifiedChatMessage }) {
   const isFromMe = msg.fromMe;
-  const kindIcon = getKindIcon(msg.kind);
   const isProtocol = msg.kind === "protocolMessage";
   const hasMediaCaption = msg.kind === "imageMessage" && textoEGatewayReal(msg);
   const hasBodyText =
-    Boolean(msg.text) && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage";
+    Boolean(msg.text) && msg.kind !== "imageMessage" && msg.kind !== "audioMessage" && msg.kind !== "videoMessage" && msg.kind !== "documentMessage" && msg.kind !== "stickerMessage";
 
   if (isProtocol) return null;
 
@@ -202,10 +246,8 @@ function MessageBubble({ instanceName, msg }: { instanceName: string; msg: Unifi
         ) : null}
 
         {hasBodyText ? (
-          <p className={cn("whitespace-pre-wrap break-words text-[13px] leading-relaxed", msg.hasMedia ? "mt-2" : "")}>{kindIcon && !msg.hasMedia ? `${kindIcon} ` : ""}{msg.text}</p>
+          <p className={cn("whitespace-pre-wrap break-words text-[13px] leading-relaxed", msg.hasMedia ? "mt-2" : "")}>{msg.text}</p>
         ) : null}
-
-        {!hasBodyText && kindIcon && !msg.hasMedia ? <p className="text-[13px] leading-relaxed">{kindIcon}</p> : null}
 
         <div className="mt-1.5 flex items-center justify-end gap-2 text-[10px] text-[var(--text-tertiary)]">
           {isFromMe ? statusIcon(msg) : null}
@@ -226,10 +268,23 @@ function MessageDateSeparator({ timestamp }: { timestamp: number }) {
   );
 }
 
+function UnreadSeparator({ unreadCount }: { unreadCount: number }) {
+  return (
+    <div className="flex items-center gap-3 px-3 py-2">
+      <div className="h-px flex-1 bg-[color:rgba(139,92,246,0.18)]" />
+      <span className="rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] px-3 py-1 text-[10px] font-semibold text-[var(--brand)]">
+        {unreadCount} não lida(s)
+      </span>
+      <div className="h-px flex-1 bg-[color:rgba(139,92,246,0.18)]" />
+    </div>
+  );
+}
+
 type ChatMessageListProps = {
   instanceName: string;
   remoteJid: string;
   messages: UnifiedChatMessage[];
+  unreadCount?: number;
   carregando: boolean;
   carregandoMais?: boolean;
   erro: string | null;
@@ -237,10 +292,22 @@ type ChatMessageListProps = {
   carregarMensagensAnteriores?: () => void;
 };
 
-export function ChatMessageList({ instanceName, remoteJid, messages, carregando, carregandoMais, erro, recarregar, carregarMensagensAnteriores }: ChatMessageListProps) {
+export function ChatMessageList({ instanceName, remoteJid, messages, unreadCount = 0, carregando, carregandoMais, erro, recarregar, carregarMensagensAnteriores }: ChatMessageListProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inicializadoRef = useRef(false);
+  const [mostrarVoltarAoPresente, setMostrarVoltarAoPresente] = useState(false);
+
+  function atualizarEstadoRolagem(container: HTMLDivElement) {
+    const distanciaDoFim = container.scrollHeight - container.scrollTop - container.clientHeight;
+    setMostrarVoltarAoPresente(distanciaDoFim > 240);
+  }
+
+  function rolarParaFim(behavior: ScrollBehavior = "smooth") {
+    const container = containerRef.current;
+    if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior });
+  }
 
   useEffect(() => {
     const container = containerRef.current;
@@ -252,11 +319,9 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
     const deveAncorarNoFim = container.scrollTop === 0 || distanciaDoFim <= 120;
     if (!deveAncorarNoFim) return;
 
-    container.scrollTo({
-      top: container.scrollHeight,
-      behavior: !inicializadoRef.current ? "auto" : "smooth",
-    });
+    rolarParaFim(!inicializadoRef.current ? "auto" : "smooth");
     inicializadoRef.current = true;
+    atualizarEstadoRolagem(container);
   }, [messages.length]);
 
   useEffect(() => {
@@ -264,6 +329,7 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
   }, [instanceName, remoteJid]);
 
   const grouped = useMemo(() => groupMessagesByDate(messages), [messages]);
+  const unreadIndex = useMemo(() => encontrarIndicePrimeiraMensagemNaoLida(messages, unreadCount), [messages, unreadCount]);
   const exibirLoadingVazio = carregando && messages.length === 0;
   const exibirErroVazio = erro && messages.length === 0;
   const exibirEstadoVazio = !carregando && !erro && messages.length === 0;
@@ -273,10 +339,11 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
 
   useEffect(() => {
     const container = containerRef.current;
-    if (!container || !carregarMensagensAnteriores) return;
+    if (!container) return;
 
     const onScroll = () => {
-      if (container.scrollTop <= 40) {
+      atualizarEstadoRolagem(container);
+      if (carregarMensagensAnteriores && container.scrollTop <= 40) {
         carregarMensagensAnteriores();
       }
     };
@@ -286,7 +353,7 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
   }, [carregarMensagensAnteriores]);
 
   return (
-    <div className="min-h-0 flex-1 overflow-hidden bg-[var(--surface)]">
+    <div className="relative min-h-0 flex-1 overflow-hidden bg-[var(--surface)]">
       <div
         ref={containerRef}
         className="h-full overflow-y-auto overscroll-contain"
@@ -361,14 +428,23 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
           </div>
         ) : exibirLoadingIncremental ? (
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-0 py-3">
-            {grouped.map((group) => (
-              <div key={group.date}>
-                <MessageDateSeparator timestamp={group.timestamp} />
-                {group.messages.map((msg) => (
-                  <MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />
-                ))}
-              </div>
-            ))}
+            {(() => {
+              let indiceGlobal = 0;
+              return grouped.map((group) => (
+                <div key={group.date}>
+                  <MessageDateSeparator timestamp={group.timestamp} />
+                  {group.messages.map((msg) => {
+                    const elementos = [];
+                    if (unreadIndex === indiceGlobal) {
+                      elementos.push(<UnreadSeparator key={`unread-${msg.id}`} unreadCount={unreadCount} />);
+                    }
+                    elementos.push(<MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />);
+                    indiceGlobal += 1;
+                    return elementos;
+                  })}
+                </div>
+              ));
+            })()}
             {/* Loading indicator at bottom */}
             <div className="flex items-center justify-center py-4">
               <div className="flex items-center gap-2 text-xs text-[var(--text-tertiary)]">
@@ -380,18 +456,38 @@ export function ChatMessageList({ instanceName, remoteJid, messages, carregando,
           </div>
         ) : (
           <div className="mx-auto flex w-full max-w-5xl flex-col gap-0 py-3">
-            {grouped.map((group) => (
-              <div key={group.date}>
-                <MessageDateSeparator timestamp={group.timestamp} />
-                {group.messages.map((msg) => (
-                  <MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />
-                ))}
-              </div>
-            ))}
+            {(() => {
+              let indiceGlobal = 0;
+              return grouped.map((group) => (
+                <div key={group.date}>
+                  <MessageDateSeparator timestamp={group.timestamp} />
+                  {group.messages.map((msg) => {
+                    const elementos = [];
+                    if (unreadIndex === indiceGlobal) {
+                      elementos.push(<UnreadSeparator key={`unread-${msg.id}`} unreadCount={unreadCount} />);
+                    }
+                    elementos.push(<MessageBubble key={msg.id} instanceName={instanceName} msg={msg} />);
+                    indiceGlobal += 1;
+                    return elementos;
+                  })}
+                </div>
+              ));
+            })()}
             <div ref={messagesEndRef} />
           </div>
         )}
       </div>
+
+      {mostrarVoltarAoPresente ? (
+        <button
+          type="button"
+          onClick={() => rolarParaFim()}
+          className="absolute bottom-4 right-4 inline-flex items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-[11px] font-medium text-[var(--text-primary)] shadow-[var(--shadow-md)] transition-colors hover:border-[var(--border-strong)]"
+        >
+          <ArrowDown className="h-3.5 w-3.5" />
+          Voltar ao presente
+        </button>
+      ) : null}
     </div>
   );
 }

@@ -154,6 +154,11 @@ function extrairTimestamp(conv: { messageTimestamp?: number; activityTimestamp?:
   return messageTs || activityTs || updatedAtTs;
 }
 
+function extrairStatusMensagem(lastMessage: { key?: { fromMe?: boolean } } | undefined | null): string {
+  if (!lastMessage) return "DELIVERED";
+  return lastMessage.key?.fromMe ? "SENT" : "DELIVERED";
+}
+
 function jidEhValido(remoteJid: string, remoteJidAlt: string | null): boolean {
   const jid = remoteJid.trim();
   void remoteJidAlt;
@@ -407,13 +412,13 @@ export async function unificarChatsComLeads({
           });
           existente.isDuplicado = existente.instancias.length > 1;
           existente.unreadCount += unreadRemoto;
-          // Atualizar última mensagem se for mais recente
           if (activityTimestamp && (!existente.ultimaMensagem?.timestamp || activityTimestamp > existente.ultimaMensagem.timestamp)) {
             existente.ultimaMensagem = conv.lastMessage
               ? {
                   conteudo: extrairConteudoMensagem(conv.lastMessage),
                   fromMe: conv.lastMessage.key?.fromMe ?? false,
                   timestamp: activityTimestamp,
+                  status: extrairStatusMensagem(conv.lastMessage),
                 }
               : null;
             existente.instanceName = inst.instanceName;
@@ -437,6 +442,7 @@ export async function unificarChatsComLeads({
                 conteudo: extrairConteudoMensagem(conv.lastMessage),
                 fromMe: conv.lastMessage.key?.fromMe ?? false,
                 timestamp: activityTimestamp,
+                status: extrairStatusMensagem(conv.lastMessage),
               }
             : null,
           instancias: [
@@ -516,13 +522,13 @@ export async function unificarChatsComLeads({
           existente.isDuplicado = existente.instancias.length > 1;
           existente.unreadCount += unreadRemoto;
 
-          // Atualizar última mensagem se for mais recente
           if (activityTimestamp && (!existente.ultimaMensagem?.timestamp || activityTimestamp > existente.ultimaMensagem.timestamp)) {
             existente.ultimaMensagem = conv.lastMessage
               ? {
                   conteudo: extrairConteudoMensagem(conv.lastMessage),
                   fromMe: conv.lastMessage.key?.fromMe ?? false,
                   timestamp: activityTimestamp,
+                  status: extrairStatusMensagem(conv.lastMessage),
                 }
               : null;
             existente.instanceName = inst.instanceName;
@@ -546,6 +552,7 @@ export async function unificarChatsComLeads({
                 conteudo: extrairConteudoMensagem(conv.lastMessage),
                 fromMe: conv.lastMessage.key?.fromMe ?? false,
                 timestamp: activityTimestamp,
+                status: extrairStatusMensagem(conv.lastMessage),
               }
             : null,
           instancias: [

@@ -18,6 +18,7 @@ export type ChatUnificado = {
     kind?: string | null;
     hasMedia?: boolean | null;
     mediaUrl?: string | null;
+    status?: string | null;
   } | null;
   unreadCount: number;
   /** Todas as instâncias que têm este telefone (para chats duplicados entre instâncias) */

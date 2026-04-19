@@ -6,6 +6,7 @@ const {
   mensagemAgendadaUpdateMock,
   followUpConversaUpdateManyMock,
   enviarMensagemTextoMock,
+  enviarMidiaWhatsappMock,
   agendarProximoFollowUpMock,
 } = vi.hoisted(() => ({
   mensagemAgendadaFindManyMock: vi.fn(),
@@ -13,11 +14,13 @@ const {
   mensagemAgendadaUpdateMock: vi.fn(),
   followUpConversaUpdateManyMock: vi.fn(),
   enviarMensagemTextoMock: vi.fn(),
+  enviarMidiaWhatsappMock: vi.fn(),
   agendarProximoFollowUpMock: vi.fn(),
 }));
 
 vi.mock("@/lib/evolution-api.instances", () => ({
   enviarMensagemTexto: enviarMensagemTextoMock,
+  enviarMidiaWhatsapp: enviarMidiaWhatsappMock,
 }));
 
 vi.mock("@/lib/integracoes/instagram-inbox", () => ({
@@ -60,6 +63,7 @@ describe("processarMensagensAgendadas follow-up", () => {
     mensagemAgendadaUpdateManyMock.mockResolvedValue({ count: 1 });
     mensagemAgendadaUpdateMock.mockResolvedValue({});
     enviarMensagemTextoMock.mockResolvedValue(undefined);
+    enviarMidiaWhatsappMock.mockResolvedValue(undefined);
   });
 
   it("agenda a proxima etapa imediatamente apos envio de mensagem de follow-up", async () => {
@@ -141,6 +145,41 @@ describe("processarMensagensAgendadas follow-up", () => {
           status: "ENVIADO",
           erro: null,
         }),
+      }),
+    );
+  });
+
+  it("envia midia quando a mensagem agendada guarda um anexo", async () => {
+    mensagemAgendadaFindManyMock.mockResolvedValue([
+      {
+        id: "msg-4",
+        id_empresa: "emp-1",
+        id_followup_conversa: null,
+        instance_name: "inst-1",
+        remote_jid: "5511666666666@c.us",
+        conteudo: "Legenda",
+        tipo: "image",
+        midia_base64: "aGVsbG8=",
+        midia_mimetype: "image/png",
+        midia_nome_arquivo: "foto.png",
+        followup_etapa: null,
+        followup_ciclo: null,
+      },
+    ]);
+
+    const resultado = await processarMensagensAgendadas(20);
+
+    expect(resultado).toEqual({ processadas: 1, enviadas: 1, falhas: 0, ignoradas: 0 });
+    expect(enviarMensagemTextoMock).not.toHaveBeenCalled();
+    expect(enviarMidiaWhatsappMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        instanceName: "inst-1",
+        telefone: "5511666666666",
+        media: "aGVsbG8=",
+        mimetype: "image/png",
+        fileName: "foto.png",
+        mediaType: "image",
+        caption: "Legenda",
       }),
     );
   });

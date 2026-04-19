@@ -84,7 +84,7 @@ describe("chat messages route", () => {
     }));
     expect(buscarMensagensPorContatoMock).toHaveBeenCalledWith(
       "instancia-1",
-      "1203630@s.whatsapp.net",
+      "1203630@lid",
       3,
       25,
     );

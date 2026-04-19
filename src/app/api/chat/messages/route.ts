@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, whereLeadsPorPerfil } from "@/lib/permissoes";
-import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
+import { enviarMensagemTexto, enviarMidiaWhatsapp } from "@/lib/evolution-api.instances";
 import { buscarMensagensPorContato } from "@/lib/evolution-api.chat";
 import { listarMensagensInstagramPorEmpresa, enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { mensagemErroValidacao, esquemaChatUnificadoMessagesQuery, esquemaChatUnificadoSendMessage } from "@/lib/validacoes";
@@ -9,6 +9,7 @@ import { instagramErrorToResponse } from "@/lib/api/instagram-errors";
 import type { SessaoToken } from "@/lib/tipos";
 import { extrairTelefoneDeRemoteJid, extrairLookupParaMensagens, resolverDestinoConversaWhatsapp } from "@/lib/chat-remote-jid";
 import { chatLogger, criarContextoChat } from "@/lib/chat-logger";
+import { inferirTipoMidiaArquivo } from "@/lib/chat-media";
 
 function ehInstagram(instanceName: string): boolean {
   return instanceName === "instagram";
@@ -143,6 +144,64 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const auth = await exigirSessao(request);
   if (auth.erro) return auth.erro;
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (contentType.includes("multipart/form-data")) {
+    const formData = await request.formData().catch(() => null);
+    if (!formData) {
+      return NextResponse.json({ erro: "Formulario de midia invalido." }, { status: 400 });
+    }
+
+    const instanceName = String(formData.get("instanceName") ?? "");
+    const remoteJid = String(formData.get("remoteJid") ?? "");
+    const caption = String(formData.get("text") ?? "");
+    const arquivo = formData.get("arquivo");
+
+    if (!instanceName || !remoteJid || !(arquivo instanceof File)) {
+      return NextResponse.json({ erro: "Dados de midia invalidos." }, { status: 400 });
+    }
+
+    if (ehInstagram(instanceName)) {
+      return NextResponse.json({ erro: "Envio de midia indisponivel para Instagram." }, { status: 400 });
+    }
+
+    const destinoWhatsapp = await resolverDestinoConversaWhatsapp(instanceName, remoteJid);
+    if (!destinoWhatsapp) {
+      return NextResponse.json({ erro: "Nao foi possivel resolver a conversa informada. Tente novamente mais tarde." }, { status: 400 });
+    }
+
+    const telefone = destinoWhatsapp.telefone ?? extrairTelefoneDeRemoteJid(remoteJid);
+    const acessoPermitido = await verificarAcessoConversa(auth.sessao, telefone);
+    if (!acessoPermitido) {
+      return NextResponse.json({ erro: "Sem permissao para acessar esta conversa." }, { status: 403 });
+    }
+
+    const mediaType = inferirTipoMidiaArquivo(arquivo);
+    const mimetype = arquivo.type || (mediaType === "sticker" ? "image/webp" : mediaType === "image" ? "image/jpeg" : "application/octet-stream");
+    const ctx = criarContextoChat({ idEmpresa: auth.sessao.id_empresa, instanceName, remoteJid });
+
+    chatLogger.log("ENVIAR_MIDIA_EVOLUTION_REQ", ctx, {
+      raw: { instanceName, remoteJid, mediaType, fileName: arquivo.name, mimetype, size: arquivo.size, caption },
+    });
+
+    try {
+      await enviarMidiaWhatsapp({
+        instanceName,
+        telefone,
+        media: Buffer.from(await arquivo.arrayBuffer()).toString("base64"),
+        mimetype,
+        fileName: arquivo.name,
+        mediaType,
+        caption,
+      });
+    } catch (error) {
+      chatLogger.erro("ENVIAR_MIDIA_EVOLUTION_ERRO", ctx, error);
+      return NextResponse.json({ erro: error instanceof Error ? error.message : "Erro ao enviar midia." }, { status: 500 });
+    }
+
+    chatLogger.log("ENVIAR_MIDIA_EVOLUTION_OK", ctx, { normalizado: { fileName: arquivo.name, mediaType, mimetype } });
+    return NextResponse.json({ ok: true });
+  }
 
   const payload = await request.json().catch(() => null);
   const validacao = esquemaChatUnificadoSendMessage.safeParse(payload);

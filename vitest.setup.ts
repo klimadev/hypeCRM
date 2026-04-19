@@ -11,7 +11,14 @@ async function limparBanco() {
 
   try {
     for (const tabela of tabelas) {
-      await prisma.$executeRawUnsafe(`DELETE FROM \"${tabela.name}\"`);
+      try {
+        await prisma.$executeRawUnsafe(`DELETE FROM \"${tabela.name}\"`);
+      } catch (error) {
+        const mensagem = error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
+        if (!mensagem.includes("no such table")) {
+          throw error;
+        }
+      }
     }
 
     const sqliteSequence = (await prisma.$queryRawUnsafe(

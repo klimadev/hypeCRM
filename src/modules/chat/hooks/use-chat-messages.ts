@@ -5,6 +5,7 @@ import {
   assinarMensagensChatUnificado,
   buscarMensagensChatUnificado,
   enviarMensagemChatUnificado,
+  enviarMidiaChatUnificado,
   agendarMensagemChatUnificado,
   listarMensagensAgendadas,
   cancelarMensagemAgendada,
@@ -14,11 +15,12 @@ import type { UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 
 function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatMessage[]) {
   const mapa = new Map<string, UnifiedChatMessage>();
+  const agora = Math.floor(Date.now() / 1000);
 
   for (const message of [...base, ...incoming]) {
     const existenteTemporario = [...mapa.values()].find(
       (item) =>
-        item.optimistic &&
+        (item.optimistic || (item.fromMe && Math.abs(agora - item.timestamp) <= 30)) &&
         !message.optimistic &&
         item.fromMe === message.fromMe &&
         item.remoteJid === message.remoteJid &&
@@ -34,12 +36,22 @@ function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatM
       continue;
     }
 
-    mapa.set(key, {
+    const merged = {
       ...existing,
       ...message,
+      mediaUrl: message.mediaUrl ?? existing.mediaUrl,
+      hasMedia: message.hasMedia || existing.hasMedia,
+      seconds: message.seconds ?? existing.seconds ?? null,
       optimistic: existing.optimistic && message.optimistic,
       error: message.error ?? existing.error,
-    });
+    };
+
+    if (existing.fromMe && !message.optimistic && existing.optimistic) {
+      merged.optimistic = false;
+      merged.status = message.status ?? existing.status;
+    }
+
+    mapa.set(key, merged);
   }
 
   return Array.from(mapa.values()).sort((a, b) => a.timestamp - b.timestamp);
@@ -191,6 +203,8 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
           status: "PENDING",
           hasMedia: false,
           mediaUrl: null,
+          seconds: null,
+          dadosAd: null,
           optimistic: true,
           error: null,
         };
@@ -240,6 +254,51 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     [],
   );
 
+  const sendMedia = useCallback(
+    async (arquivo: File, caption?: string) => {
+      const { instanceName, remoteJid } = paramsRef.current;
+      if (!instanceName || !remoteJid) return;
+
+      setEnviando(true);
+      try {
+        const tempId = `temp-media-${Date.now()}`;
+        const now = Math.floor(Date.now() / 1000);
+        const isSticker = arquivo.type === "image/webp" || arquivo.name.toLowerCase().endsWith(".webp");
+        const isImage = arquivo.type.startsWith("image/");
+        const kind = isSticker ? "stickerMessage" : isImage ? "imageMessage" : "documentMessage";
+        const tempMessage: UnifiedChatMessage = {
+          id: tempId,
+          remoteJid,
+          fromMe: true,
+          text: kind === "documentMessage" ? `[Arquivo: ${arquivo.name}]` : isSticker ? "[Sticker]" : caption?.trim() || "",
+          kind,
+          timestamp: now,
+          pushName: null,
+          status: "PENDING",
+          hasMedia: true,
+          mediaUrl: URL.createObjectURL(arquivo),
+          seconds: null,
+          dadosAd: null,
+          optimistic: true,
+          error: null,
+        };
+
+        setMessages((prev) => mesclarMensagensChat(prev, [tempMessage]));
+
+        const result = await enviarMidiaChatUnificado({ instanceName, remoteJid, arquivo, caption });
+        if (!result.ok) {
+          setMessages((prev) => prev.map((message) => (message.id === tempId ? { ...message, status: "ERROR", optimistic: false, error: result.erro } : message)));
+          throw new Error(result.erro);
+        }
+
+        setMessages((prev) => prev.map((message) => (message.id === tempId ? { ...message, status: "SENT", optimistic: false, error: null } : message)));
+      } finally {
+        setEnviando(false);
+      }
+    },
+    [],
+  );
+
   const fetchAgendadas = useCallback(async () => {
     const { instanceName, remoteJid } = paramsRef.current;
     if (!instanceName || !remoteJid) {
@@ -254,7 +313,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
   }, []);
 
   const scheduleMessage = useCallback(
-    async (text: string, agendadoPara: string) => {
+    async (text: string, agendadoPara: string, arquivo?: File | null) => {
       const { instanceName, remoteJid } = paramsRef.current;
       if (!instanceName || !remoteJid) return;
 
@@ -273,13 +332,14 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       }
 
       const normalizedText = text.trim();
-      if (!normalizedText) return;
+      if (!normalizedText && !arquivo) return;
 
       const result = await agendarMensagemChatUnificado({
         instanceName,
         remoteJid,
         text: normalizedText,
         agendadoPara,
+        arquivo: arquivo ?? undefined,
       });
 
       if (!result.ok) {
@@ -403,6 +463,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
     hasMore,
     recarregar: fetchInitial,
     sendMessage,
+    sendMedia,
     scheduleMessage,
     cancelScheduledMessage,
     agendadas,

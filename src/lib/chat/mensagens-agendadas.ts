@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { enviarMensagemTexto } from "@/lib/evolution-api.instances";
+import { enviarMensagemTexto, enviarMidiaWhatsapp } from "@/lib/evolution-api.instances";
 import { enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
 import { ErroInstagramApi } from "@/lib/integracoes/instagram-client";
 import { agendarProximoFollowUp } from "@/lib/chat/follow-up";
@@ -54,15 +54,30 @@ export async function processarMensagensAgendadas(limite = 20) {
       }
 
       if (ehInstagram(agendada.instance_name)) {
+        if (agendada.tipo !== "text") {
+          throw new Error("Midia agendada nao suportada para Instagram.");
+        }
         const company = await prisma.empresa.findUnique({ where: { id: agendada.id_empresa }, select: { id: true } });
         if (!company) throw new Error("Empresa nao encontrada para envio agendado.");
         await enviarMensagemInstagram(company.id, agendada.remote_jid, agendada.conteudo);
       } else {
-        await enviarMensagemTexto({
-          instanceName: agendada.instance_name,
-          telefone: telefoneDestino,
-          mensagem: agendada.conteudo,
-        });
+        if (agendada.tipo === "text" || !agendada.midia_base64) {
+          await enviarMensagemTexto({
+            instanceName: agendada.instance_name,
+            telefone: telefoneDestino,
+            mensagem: agendada.conteudo,
+          });
+        } else {
+          await enviarMidiaWhatsapp({
+            instanceName: agendada.instance_name,
+            telefone: telefoneDestino,
+            media: agendada.midia_base64,
+            mimetype: agendada.midia_mimetype ?? (agendada.tipo === "sticker" ? "image/webp" : agendada.tipo === "image" ? "image/jpeg" : "application/octet-stream"),
+            fileName: agendada.midia_nome_arquivo ?? "anexo",
+            mediaType: agendada.tipo === "sticker" ? "sticker" : agendada.tipo === "image" ? "image" : "document",
+            caption: agendada.conteudo || undefined,
+          });
+        }
       }
 
       const enviadoEm = new Date();

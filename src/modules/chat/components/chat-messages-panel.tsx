@@ -8,6 +8,7 @@ import { useChatMessages } from "../hooks/use-chat-messages";
 type ChatMessagesPanelProps = {
   instanceName: string;
   remoteJid: string;
+  unreadCount?: number;
   chatContext?: {
     telefone: string;
     pushName: string | null;
@@ -26,15 +27,18 @@ type ChatMessagesPanelProps = {
   followUpContext?: ChatMessageComposerFollowUpContext | null;
 };
 
-export function ChatMessagesPanel({ instanceName, remoteJid, chatContext, followUpContext }: ChatMessagesPanelProps) {
+export function ChatMessagesPanel({ instanceName, remoteJid, unreadCount = 0, chatContext, followUpContext }: ChatMessagesPanelProps) {
   const {
     messages,
     carregando,
+    carregandoMais,
     erro,
     enviando,
     sseConectado,
     recarregar,
+    carregarMensagensAnteriores,
     sendMessage,
+    sendMedia,
     scheduleMessage,
     cancelScheduledMessage,
     agendadas,
@@ -56,9 +60,12 @@ export function ChatMessagesPanel({ instanceName, remoteJid, chatContext, follow
         instanceName={instanceName}
         remoteJid={remoteJid}
         messages={messages}
+        unreadCount={unreadCount}
         carregando={carregando}
+        carregandoMais={carregandoMais}
         erro={erro}
         recarregar={recarregar}
+        carregarMensagensAnteriores={carregarMensagensAnteriores}
       />
 
       <ChatMessageComposer
@@ -69,6 +76,7 @@ export function ChatMessagesPanel({ instanceName, remoteJid, chatContext, follow
         followUpContext={followUpContext}
         agendadas={agendadas}
         sendMessage={sendMessage}
+        sendMedia={sendMedia}
         scheduleMessage={scheduleMessage}
         cancelScheduledMessage={cancelScheduledMessage}
         recarregarAgendadas={recarregarAgendadas}

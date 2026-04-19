@@ -1,15 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, Briefcase, CheckCircle2, MessageCircle, Phone, UserPlus, MailOpen } from "lucide-react";
+import { ArrowLeft, Briefcase, CheckCircle2, MessageCircle, UserPlus, MailOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/components/ui/toast";
 import { ChatMessagesPanel } from "./chat-messages-panel";
 import { ChatOrphanDialog } from "./chat-orphan-dialog";
 import { ChatTransferLeadDialog } from "./chat-transfer-lead-dialog";
 import type { ChatUnificado, OrphanCriarNegocioParams } from "../types";
-import { formatarTelefoneChat, obterMetaOrigemLead, obterNomeChat } from "../helpers";
+import { formatarTelefoneChat, obterNomeChat } from "../helpers";
 import {
   acionarConversaFollowUp,
   ativarConversaFollowUp,
@@ -20,6 +19,7 @@ import {
 } from "@/lib/api/chat-follow-up";
 import { marcarMensagensComoLidas } from "@/lib/api/whatsapp.chat";
 import { buildWhatsappViewedKey, markMessagesAsViewed } from "@/lib/chat-local-view-state";
+import { obterAcaoPrimariaChat, obterResumoOperacionalChat } from "../chat-ux";
 
 function obterApresentacaoStatusFollowUp(followUp: FollowUpConversa | null) {
   if (!followUp) return { variant: "secondary" as const, label: "Desativado" };
@@ -79,10 +79,8 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
   const { addToast } = useToast();
 
   const nome = obterNomeChat(chat);
-  const origemLead = obterMetaOrigemLead(chat.leadMatch?.origem);
   const telefone = formatarTelefoneChat(chat.telefone);
-  const statusPrincipal = chat.semMatch ? "Novo contato" : chat.leadMatch?.nome_estagio ?? "Lead vinculado";
-  const canalLabel = chat.canal === "instagram" ? "Instagram" : "WhatsApp";
+  const resumoOperacional = obterResumoOperacionalChat(chat);
   const podeOperarFollowUp = chat.canal === "whatsapp";
   const statusUi = obterApresentacaoStatusFollowUp(followUp);
   const possuiTemplatesAtivos = templates.length > 0;
@@ -90,6 +88,15 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
   const templateSelecionadoEfetivo = templateSelecionado || templates[0]?.id || "";
   const tempoAteProximoDisparo = formatarTempoAteDisparo(followUp?.proximoDisparoEm ?? null);
   const atualizadoHa = formatarTempoRelativoCurto(ultimaAtualizacaoFollowUp);
+  const acaoPrimaria = obterAcaoPrimariaChat(chat);
+  const detalhesHeader = [
+    telefone,
+    chat.canal === "instagram" ? "Instagram" : null,
+    resumoOperacional,
+    chat.unreadCount > 0 ? `${chat.unreadCount} não lida(s)` : null,
+  ]
+    .filter((item): item is string => Boolean(item))
+    .join(" · ");
 
   useEffect(() => {
     setFollowUp(null);
@@ -116,6 +123,25 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
       setMarcandoLido(false);
     }
   }, [addToast, chat.canal, chat.instanceName, chat.remoteJid, chat.unreadCount, marcandoLido]);
+
+  const handlePrimaryAction = useCallback(() => {
+    if (acaoPrimaria.tipo === "registrar_lead") {
+      setDialogOpen("lead");
+      return;
+    }
+
+    if (acaoPrimaria.tipo === "marcar_lido") {
+      void handleMarkAsRead();
+      return;
+    }
+
+    if (acaoPrimaria.tipo === "criar_negocio") {
+      setDialogOpen("negocio");
+      return;
+    }
+
+    setTransferirAberto(true);
+  }, [acaoPrimaria.tipo, handleMarkAsRead]);
 
   const carregarContextoFollowUp = useCallback(async (mostrarErro = false) => {
     if (!podeOperarFollowUp) return;
@@ -230,65 +256,59 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
   return (
     <>
       <div className="flex h-full min-h-0 flex-1 flex-col bg-[var(--surface)]">
-        <header className="shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2.5 md:px-4">
-          <div className="flex flex-wrap items-start gap-2.5 lg:items-center">
+        <header className="shrink-0 border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 md:px-4">
+          <div className="flex items-center gap-2.5">
             {onVoltar ? (
               <button type="button" onClick={onVoltar} className="rounded-xl p-2 text-[var(--text-tertiary)] transition-colors hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)] md:hidden">
                 <ArrowLeft className="h-4 w-4" />
               </button>
             ) : null}
 
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-[var(--brand)] bg-[var(--brand-soft)] text-sm font-semibold text-[var(--brand)]">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-primary)]">
               {chat.semMatch ? <MessageCircle className="h-4 w-4" /> : nome.charAt(0).toUpperCase()}
             </div>
 
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-1.5">
-                <p className="truncate text-sm font-semibold text-[var(--text-primary)] md:text-[15px]">{nome}</p>
-                <Badge variant={chat.semMatch ? "secondary" : "success"} size="sm" dot>
-                  {chat.semMatch ? "Novo" : "CRM"}
-                </Badge>
-                <Badge variant="secondary" size="sm">{canalLabel}</Badge>
-                {origemLead ? (
-                  <Badge variant={origemLead.variant} size="sm" className="hidden sm:inline-flex" dot>
-                    {origemLead.label}
-                  </Badge>
-                ) : null}
+              <div className="flex items-center gap-2">
+                <p className="truncate text-sm font-medium text-[var(--text-primary)] md:text-[15px]">{nome}</p>
+                {chat.unreadCount > 0 ? <span className="text-[11px] font-medium text-[var(--success)]">{chat.unreadCount}</span> : null}
               </div>
 
-              <div className="mt-0.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[11px] text-[var(--text-secondary)]">
-                <span className="inline-flex items-center gap-1.5">
-                  <Phone className="h-3 w-3 text-[var(--text-tertiary)]" />
-                  {telefone}
-                </span>
-                <span className="truncate">{statusPrincipal}</span>
-                {chat.unreadCount > 0 ? <span>{chat.unreadCount} não lida(s)</span> : null}
-              </div>
+              <p className="mt-0.5 truncate text-[11px] text-[var(--text-secondary)]">{detalhesHeader}</p>
             </div>
 
-            <div className="flex flex-wrap items-center justify-end gap-1.5">
-              {chat.semMatch ? (
-                <Button variant="outline" size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={() => setDialogOpen("lead")}>
-                  <UserPlus className="h-4 w-4" />
-                  <span>Registrar lead</span>
-                </Button>
-              ) : null}
-              <Button size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={() => setDialogOpen("negocio")}>
-                <Briefcase className="h-4 w-4" />
-                <span>Criar negócio</span>
+            <div className="flex shrink-0 items-center gap-1">
+              <Button size="sm" className="h-8 gap-1.5 rounded-full px-3 text-[11px]" onClick={handlePrimaryAction} disabled={acaoPrimaria.tipo === "marcar_lido" && marcandoLido}>
+                {acaoPrimaria.tipo === "registrar_lead" ? <UserPlus className="h-4 w-4" /> : null}
+                {acaoPrimaria.tipo === "marcar_lido" ? <MailOpen className="h-4 w-4" /> : null}
+                {acaoPrimaria.tipo === "criar_negocio" ? <Briefcase className="h-4 w-4" /> : null}
+                {acaoPrimaria.tipo === "transferir" ? <CheckCircle2 className="h-4 w-4" /> : null}
+                <span>{acaoPrimaria.tipo === "marcar_lido" && marcandoLido ? "Marcando..." : acaoPrimaria.label}</span>
               </Button>
-              {chat.leadMatch ? (
-                <Button variant="outline" size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={() => setTransferirAberto(true)}>
-                  <CheckCircle2 className="h-4 w-4" />
-                  <span>Transferir</span>
+
+              {acaoPrimaria.tipo !== "criar_negocio" ? (
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setDialogOpen("negocio")} title="Criar negócio" aria-label="Criar negócio">
+                  <Briefcase className="h-4 w-4" />
                 </Button>
               ) : null}
-              {chat.canal === "whatsapp" && chat.unreadCount > 0 && (
-                <Button variant="outline" size="sm" className="h-9 min-h-9 gap-1.5 rounded-xl px-3 text-[11px]" onClick={handleMarkAsRead} disabled={marcandoLido}>
-                  <MailOpen className="h-4 w-4" />
-                  <span>{marcandoLido ? "Marcando..." : "Marcar como lido"}</span>
+
+              {chat.leadMatch && acaoPrimaria.tipo !== "transferir" ? (
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setTransferirAberto(true)} title="Transferir" aria-label="Transferir">
+                  <CheckCircle2 className="h-4 w-4" />
                 </Button>
-              )}
+              ) : null}
+
+              {chat.semMatch && acaoPrimaria.tipo !== "registrar_lead" ? (
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={() => setDialogOpen("lead")} title="Registrar lead" aria-label="Registrar lead">
+                  <UserPlus className="h-4 w-4" />
+                </Button>
+              ) : null}
+
+              {chat.canal === "whatsapp" && chat.unreadCount > 0 && acaoPrimaria.tipo !== "marcar_lido" ? (
+                <Button variant="outline" size="icon" className="h-8 w-8 rounded-full" onClick={handleMarkAsRead} disabled={marcandoLido} title="Marcar como lido" aria-label="Marcar como lido">
+                  <MailOpen className="h-4 w-4" />
+                </Button>
+              ) : null}
             </div>
           </div>
         </header>
@@ -296,6 +316,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
         <ChatMessagesPanel
           instanceName={chat.instanceName}
           remoteJid={chat.remoteJid}
+          unreadCount={chat.unreadCount}
           chatContext={{ telefone: chat.telefone, pushName: chat.pushName, canal: chat.canal, leadMatch: chat.leadMatch }}
           followUpContext={
             podeOperarFollowUp

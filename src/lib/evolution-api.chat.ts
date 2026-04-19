@@ -450,6 +450,7 @@ export async function buscarMensagensPorContato(
     fromMe: boolean;
     text: string;
     kind: string;
+    seconds: number | null;
     timestamp: number;
     timestampIso: string;
     pushName: string | null;
@@ -617,6 +618,7 @@ export async function buscarMensagensPorContato(
       fromMe: msg.fromMe,
       text,
       kind: msg.kind,
+      seconds: msg.seconds,
       timestamp: msg.timestamp,
       timestampIso: msg.timestampIso,
       pushName,

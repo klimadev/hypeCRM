@@ -248,11 +248,22 @@ export type UnifiedChatMessage = {
   fromMe: boolean;
   text: string;
   kind: string;
+  seconds?: number | null;
   timestamp: number;
   pushName: string | null;
   status: string;
   hasMedia: boolean;
   mediaUrl: string | null;
+  dadosAd?: {
+    titulo: string | null;
+    corpo: string | null;
+    urlOrigem: string | null;
+    idConversao: string | null;
+    urlThumbnail: string | null;
+    tipoOrigem: string | null;
+    appOrigem: string | null;
+    formato: "ctwa" | null;
+  } | null;
   optimistic?: boolean;
   error?: string | null;
 };
@@ -353,9 +364,44 @@ export async function enviarMensagemChatUnificado(payload: {
   return { ok: true, dados: { ok: true } };
 }
 
+export async function enviarMidiaChatUnificado(payload: {
+  instanceName: string;
+  remoteJid: string;
+  arquivo: File;
+  caption?: string;
+}): Promise<ResultadoApi<{ ok: true }>> {
+  try {
+    const formData = new FormData();
+    formData.append("instanceName", payload.instanceName);
+    formData.append("remoteJid", payload.remoteJid);
+    formData.append("arquivo", payload.arquivo);
+    if (payload.caption?.trim()) formData.append("text", payload.caption.trim());
+
+    const resposta = await fetch("/api/chat/messages", {
+      method: "POST",
+      body: formData,
+    });
+
+    const json = await resposta.json().catch(() => ({}));
+    if (!resposta.ok) {
+      return { ok: false, erro: (json.erro as string) ?? "Erro ao enviar midia." };
+    }
+
+    return { ok: true, dados: { ok: true } };
+  } catch (erroFetch) {
+    console.error("[Chat] Erro de rede ao enviar midia", {
+      erro: erroFetch instanceof Error ? erroFetch.message : String(erroFetch),
+    });
+    return { ok: false, erro: "Nao foi possivel conectar ao servidor. Verifique sua conexao." };
+  }
+}
+
 export type MensagemAgendada = {
   id: string;
   conteudo: string;
+  tipo: string;
+  midiaNomeArquivo: string | null;
+  midiaMimetype: string | null;
   agendadoPara: string;
   status: string;
   erro: string | null;
@@ -369,12 +415,24 @@ export async function agendarMensagemChatUnificado(payload: {
   text: string;
   agendadoPara: string;
   idLead?: string;
+  arquivo?: File | null;
 }): Promise<ResultadoApi<{ id: string; agendadoPara: string; status: string }>> {
   try {
+    const { arquivo, ...dados } = payload;
+    const usarMultipart = arquivo instanceof File;
     const resposta = await fetch("/api/chat/messages/schedule", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
+      body: usarMultipart ? (() => {
+        const formData = new FormData();
+        formData.append("instanceName", dados.instanceName);
+        formData.append("remoteJid", dados.remoteJid);
+        formData.append("text", dados.text);
+        formData.append("agendadoPara", dados.agendadoPara);
+        if (dados.idLead) formData.append("idLead", dados.idLead);
+        formData.append("arquivo", arquivo);
+        return formData;
+      })() : JSON.stringify(dados),
+      headers: usarMultipart ? undefined : { "Content-Type": "application/json" },
     });
 
     const json = await resposta.json().catch(() => ({}));

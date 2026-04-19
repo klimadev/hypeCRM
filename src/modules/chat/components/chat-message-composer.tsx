@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
-import { ArrowLeft, CalendarClock, ChevronDown, Clock3, Loader2, RefreshCw, Send, X } from "lucide-react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type KeyboardEvent, type ReactNode } from "react";
+import { ArrowLeft, CalendarClock, ChevronDown, Clock3, FileText, ImagePlus, Loader2, Paperclip, RefreshCw, Send, Smile, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -19,6 +19,7 @@ import {
   resolverAcaoSlashMenuRaizTeclado,
 } from "@/modules/chat/shortcuts-composer";
 import type { FollowUpConversa, FollowUpTemplate } from "@/lib/api/chat-follow-up";
+import { obterPlaceholderComposerChat } from "../chat-ux";
 
 type ChatContextInfo = {
   telefone: string;
@@ -84,7 +85,8 @@ type ChatMessageComposerProps = {
   followUpContext?: ChatMessageComposerFollowUpContext;
   agendadas: MensagemAgendada[];
   sendMessage: (conteudo: string) => Promise<void>;
-  scheduleMessage: (conteudo: string, agendadoParaIso: string) => Promise<unknown>;
+  sendMedia: (arquivo: File, caption?: string) => Promise<void>;
+  scheduleMessage: (conteudo: string, agendadoParaIso: string, arquivo?: File | null) => Promise<unknown>;
   cancelScheduledMessage: (id: string) => Promise<void>;
   recarregarAgendadas: () => Promise<void>;
 };
@@ -97,6 +99,7 @@ export function ChatMessageComposer({
   followUpContext,
   agendadas,
   sendMessage,
+  sendMedia,
   scheduleMessage,
   cancelScheduledMessage,
   recarregarAgendadas,
@@ -105,6 +108,7 @@ export function ChatMessageComposer({
   const [agendar, setAgendar] = useState(false);
   const [agendadoPara, setAgendadoPara] = useState("");
   const [agendadasAbertas, setAgendadasAbertas] = useState(false);
+  const [arquivoSelecionado, setArquivoSelecionado] = useState<File | null>(null);
   const [atalhos, setAtalhos] = useState<ChatShortcut[]>([]);
   const [ultimosUsosAtalhos, setUltimosUsosAtalhos] = useState<Record<string, number>>({});
   const [menuSlashAberto, setMenuSlashAberto] = useState(false);
@@ -112,6 +116,7 @@ export function ChatMessageComposer({
   const [indiceMenuRaizAtivo, setIndiceMenuRaizAtivo] = useState(0);
   const [indiceAtalhoAtivo, setIndiceAtalhoAtivo] = useState(0);
   const [menuFechadoManualParaTexto, setMenuFechadoManualParaTexto] = useState<string | null>(null);
+  const inputArquivoRef = useRef<HTMLInputElement | null>(null);
   const { addToast } = useToast();
 
   const queryAtalho = obterQueryAtalho(texto);
@@ -120,6 +125,38 @@ export function ChatMessageComposer({
   const atalhosFiltrados = useMemo(() => filtrarOrdenarAtalhos(atalhos, queryAtalho, ultimosUsosAtalhos), [atalhos, queryAtalho, ultimosUsosAtalhos]);
   const followUpOperacional = chatContext?.canal === "whatsapp";
   const opcoesMenuRaiz = ["atalhos", "follow-up"] as const;
+  const placeholderTexto = obterPlaceholderComposerChat({
+    agendar,
+    canal: chatContext?.canal ?? "whatsapp",
+    semMatch: !chatContext?.leadMatch,
+    followUpStatus: (followUpContext?.followUp?.status as "ATIVO" | "PAUSADO" | "ENCERRADO" | null | undefined) ?? null,
+  });
+  const resumoFollowUp = useMemo(() => {
+    if (!followUpContext?.followUp) return null;
+    if (followUpContext.followUp.status === "ATIVO") {
+      return {
+        tone: "success" as const,
+        label: followUpContext.tempoAteProximoDisparo
+          ? `Cadência ativa · ${followUpContext.tempoAteProximoDisparo}`
+          : "Cadência ativa",
+      };
+    }
+
+    if (followUpContext.followUp.status === "PAUSADO") {
+      return { tone: "warning" as const, label: "Cadência pausada" };
+    }
+
+    if (followUpContext.followUp.status === "ENCERRADO") {
+      return { tone: "secondary" as const, label: "Cadência encerrada" };
+    }
+
+    return null;
+  }, [followUpContext]);
+  const ajudaComposer = resumoFollowUp?.label ?? "Digite / para atalhos";
+
+  function abrirSeletorArquivo() {
+    inputArquivoRef.current?.click();
+  }
 
   function montarContextoVariaveis(): ContextoTemplateWhatsapp {
     return {
@@ -208,17 +245,21 @@ export function ChatMessageComposer({
 
   const handleSubmit = async (event?: FormEvent) => {
     event?.preventDefault();
-    if (!texto.trim() || enviando) return;
+    if ((!texto.trim() && !arquivoSelecionado) || enviando) return;
     const conteudo = texto;
     setTexto("");
 
     try {
       if (agendar) {
         if (!agendadoPara) throw new Error("Selecione data e hora para agendar.");
-        await scheduleMessage(conteudo, new Date(agendadoPara).toISOString());
+        await scheduleMessage(conteudo, new Date(agendadoPara).toISOString(), arquivoSelecionado ?? undefined);
         setAgendar(false);
         setAgendadoPara("");
+        setArquivoSelecionado(null);
         addToast({ type: "success", title: "Mensagem agendada", description: "A mensagem será enviada no horário definido." });
+      } else if (arquivoSelecionado) {
+        await sendMedia(arquivoSelecionado, conteudo.trim() || undefined);
+        setArquivoSelecionado(null);
       } else {
         await sendMessage(conteudo);
       }
@@ -227,6 +268,12 @@ export function ChatMessageComposer({
       const msgErro = err instanceof Error ? err.message : "Nao foi possivel enviar a mensagem agora.";
       addToast({ type: "error", title: "Erro ao enviar mensagem", description: msgErro });
     }
+  };
+
+  const handleArquivoChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const arquivo = event.target.files?.[0];
+    if (!arquivo) return;
+    setArquivoSelecionado(arquivo);
   };
 
   const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
@@ -350,14 +397,33 @@ export function ChatMessageComposer({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2.5 py-2.5 md:px-3">
-      <div className="mx-auto w-full max-w-5xl rounded-[22px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
-        <div className="flex flex-wrap items-center gap-2 border-b border-[var(--border-subtle)] px-2.5 py-2">
+    <form onSubmit={handleSubmit} className="border-t border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2 py-2 md:px-3">
+      <div className="mx-auto w-full max-w-5xl rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface)]">
+        <div className="flex flex-wrap items-center gap-1.5 border-b border-[var(--border-subtle)] px-2 py-1.5">
+          <input ref={inputArquivoRef} type="file" accept="image/*,.pdf,.doc,.docx,.txt,.xls,.xlsx,.zip,.webp" onChange={handleArquivoChange} className="hidden" />
+          <button type="button" onClick={abrirSeletorArquivo} className="inline-flex h-8 items-center gap-1.5 rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.02)] px-3 text-[11px] font-medium text-[var(--text-secondary)] transition-colors hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]" aria-label="Anexar arquivo">
+            <Paperclip className="h-3.5 w-3.5" />Anexar
+          </button>
           <ComposerToggle active={agendar} label={agendar ? "Agendando" : "Agendar"} icon={<CalendarClock className="h-3.5 w-3.5" />} onClick={() => setAgendar((current) => !current)} />
           {agendadas.length > 0 ? <ComposerToggle active={agendadasAbertas} label={`Agendadas ${agendadas.length}`} icon={<Clock3 className="h-3.5 w-3.5" />} onClick={() => setAgendadasAbertas((current) => !current)} expanded={agendadasAbertas} /> : null}
           {agendar ? <input type="datetime-local" value={agendadoPara} onChange={(e) => setAgendadoPara(e.target.value)} className="h-9 rounded-xl border border-[var(--border-subtle)] bg-transparent px-3 text-[11px] text-[var(--text-primary)]" /> : null}
-          <div className="ml-auto hidden text-[10px] text-[var(--text-tertiary)] md:block">Enter envia, Shift+Enter quebra linha</div>
+          <div className="ml-auto hidden text-[10px] text-[var(--text-tertiary)] md:block">{ajudaComposer}</div>
         </div>
+
+        {arquivoSelecionado ? (
+          <div className="border-b border-[var(--border-subtle)] px-2.5 py-2.5">
+            <div className="flex items-center gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2">
+              {arquivoSelecionado.type === "image/webp" || arquivoSelecionado.name.toLowerCase().endsWith(".webp") ? <Smile className="h-4 w-4 text-[var(--brand)]" /> : arquivoSelecionado.type.startsWith("image/") ? <ImagePlus className="h-4 w-4 text-[var(--brand)]" /> : <FileText className="h-4 w-4 text-[var(--brand)]" />}
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-[12px] font-medium text-[var(--text-primary)]">{arquivoSelecionado.name}</p>
+                <p className="text-[10px] text-[var(--text-tertiary)]">{arquivoSelecionado.type === "image/webp" || arquivoSelecionado.name.toLowerCase().endsWith(".webp") ? "Sticker" : arquivoSelecionado.type.startsWith("image/") ? "Imagem" : "Documento"}</p>
+              </div>
+              <button type="button" onClick={() => setArquivoSelecionado(null)} className="rounded-full border border-[var(--border-subtle)] p-1 text-[var(--text-tertiary)] transition-colors hover:text-[var(--text-primary)]" aria-label="Remover anexo">
+                <X className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          </div>
+        ) : null}
 
         {agendadasAbertas ? (
           <div className="border-b border-[var(--border-subtle)] px-2.5 py-2.5 text-xs text-[var(--text-secondary)]">
@@ -365,7 +431,11 @@ export function ChatMessageComposer({
               {agendadas.map((item) => (
                 <div key={item.id} className="flex items-center justify-between gap-3 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2">
                   <div className="min-w-0">
-                    <div className="truncate text-[var(--text-primary)]">{item.conteudo}</div>
+                    <div className="truncate text-[var(--text-primary)]">
+                      {item.tipo === "text"
+                        ? item.conteudo
+                        : item.midiaNomeArquivo ?? (item.tipo === "sticker" ? "Sticker" : item.tipo === "image" ? "Imagem" : "Documento")}
+                    </div>
                     <div>{new Date(item.agendadoPara).toLocaleString("pt-BR")}</div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -391,13 +461,13 @@ export function ChatMessageComposer({
           </div>
         ) : null}
 
-        <div className="relative flex items-end gap-2 px-2.5 py-2">
+        <div className="relative flex items-end gap-2 px-2 py-1.5">
           <textarea
             value={texto}
             onChange={(event) => setTexto(event.target.value)}
             onKeyDown={handleKeyDown}
             disabled={enviando || !instanceName || !remoteJid}
-            placeholder={agendar ? "Escreva a mensagem que será enviada depois..." : "Escreva uma mensagem"}
+            placeholder={placeholderTexto}
             rows={1}
             className="max-h-28 min-h-[2.5rem] flex-1 resize-none bg-transparent px-2 py-2 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
           />
@@ -407,7 +477,7 @@ export function ChatMessageComposer({
               {menuSlashNivel === "raiz" ? (
                 <div className="space-y-1">
                   <button type="button" onClick={() => { setMenuSlashNivel("atalhos"); setIndiceAtalhoAtivo(0); }} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 0 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--surface-soft)]")}>Acoes rapidas</button>
-                  <button type="button" onClick={() => setMenuSlashNivel("follow-up")} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 1 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--surface-soft)]")}>Cadencia de follow-ups</button>
+                  <button type="button" onClick={() => setMenuSlashNivel("follow-up")} className={cn("w-full rounded-xl px-3 py-2 text-left text-sm transition-colors", indiceMenuRaizAtivo === 1 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]" : "text-[var(--text-primary)] hover:bg-[var(--surface-soft)]")}>Cadencia de follow-up</button>
                 </div>
               ) : null}
 
@@ -504,7 +574,7 @@ export function ChatMessageComposer({
             </div>
           ) : null}
 
-          <Button type="submit" size="icon" disabled={enviando || !texto.trim() || (agendar && !agendadoPara)} className="h-10 w-10 rounded-[14px] bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
+          <Button type="submit" size="icon" disabled={enviando || (!texto.trim() && !arquivoSelecionado) || (agendar && !agendadoPara)} className="h-9 w-9 rounded-full bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]">
             {enviando ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>

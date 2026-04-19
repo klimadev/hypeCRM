@@ -51,6 +51,7 @@ export type MensagemNormalizada = {
   tipoLabel: string;
   text: string;
   conteudo: string;
+  seconds: number | null;
   pushName: string | null;
   status: ChatMessageStatus;
   timestamp: number;

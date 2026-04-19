@@ -448,6 +448,9 @@ model MensagemAgendada {
   remote_jid       String
   conteudo         String
   tipo             String   @default("text")
+  midia_nome_arquivo String?
+  midia_mimetype   String?
+  midia_base64     String?
   followup_etapa   Int?
   followup_ciclo   Int?
   agendado_para    DateTime

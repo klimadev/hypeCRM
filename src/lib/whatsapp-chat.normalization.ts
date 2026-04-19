@@ -89,6 +89,22 @@ function extrairTexto(payload: Record<string, unknown>) {
   return { kind: "unknown" as const, text: `[${tipoEncontrado}]` };
 }
 
+function extrairDuracaoAudio(message: Record<string, unknown>) {
+  const audio = message.audioMessage as Record<string, unknown> | undefined;
+  if (!audio || typeof audio !== "object") return null;
+
+  const candidatos = [audio.seconds, audio.duration, audio.secondsDuration, audio.pttDuration];
+  for (const valor of candidatos) {
+    if (typeof valor === "number" && Number.isFinite(valor)) return Math.max(0, Math.floor(valor));
+    if (typeof valor === "string") {
+      const numero = Number.parseInt(valor, 10);
+      if (!Number.isNaN(numero)) return Math.max(0, numero);
+    }
+  }
+
+  return null;
+}
+
 export function mapearStatusMensagem(rawStatus: unknown, fromMe: boolean): ChatMessageStatus {
   if (typeof rawStatus !== "string") {
     return fromMe ? "SENT" : "DELIVERED";
@@ -191,6 +207,7 @@ export function normalizarMensagensEvolution(payload: unknown): MensagemNormaliz
         tipoLabel: traduzirTipoMensagem(messageType),
         text,
         conteudo: text,
+        seconds: extrairDuracaoAudio(raw),
         pushName: typeof raw.pushName === "string" ? raw.pushName : null,
         status: mapearStatusMensagem(extractedStatus, fromMe),
         timestamp: Number.isNaN(timestamp) ? Math.floor(Date.now() / 1000) : timestamp,
