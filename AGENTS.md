@@ -36,6 +36,7 @@ Siga estas práticas de design automaticamente — não спрашивайте:
 
 - `View Transitions API` é o padrão mandatório para mudanças de tema e navegação de rotas.
 - Proibido usar overlays, máscaras artificiais, clones do DOM ou truques legados para transições de estado.
+- **Spatial UI**: Floating docks, sidebars e drawers que flutuam sobre o conteúdo são permitidos se usarem APIs nativas (`backdrop-filter`, `transform`, `opacity`) sem библиотеки externas. O conteúdo não deve ser reflowed; use `overlay` com `:has()` para foco visual.
 - Não introduzir camadas de suporte visuais quando a transição puder ser resolvida nativamente.
 - Em React/Next.js, use `flushSync` quando necessário para sincronizar a captura visual com a atualização do estado.
 
@@ -53,6 +54,17 @@ Siga estas práticas de design automaticamente — não спрашивайте:
 - Prefira `Container Queries`, `:has()` e CSS Nesting quando melhorarem clareza ou adaptabilidade.
 - Mantenha o código lean, direto e focado em performance percebida.
 - Evite dependências extras para efeitos que o navegador já entrega com qualidade superior.
+
+#### Glassmorphism e Floating Dock
+
+- **Floating Glass Dock**: Sidebars e docks flutuantes devem:
+  - Usar `backdrop-filter: blur(12px)` (ou valor similar) para efeito glass
+  - Bordas sutis (`1px solid rgba(255,255,255,0.1)` no tema escuro)
+  - Border-radius generoso (24px+) para visual premium
+  - Margem da borda da tela (`left/top/bottom: 16px` ou similar)
+  - `transform-gpu` e `will-change` para aceleração de hardware
+- **Zero-Reflow**: Componentes que expandem no hover (sidebars, menus) devem usar `position: absolute/fixed` para sobrepor conteúdo sem redimensionar a área principal
+- **Foco visual com `:has()`**: Use a pseudo-classe `:has()` para aplicar estados de foco (blur, escurecimento) no conteúdo principal quando componentes flutuantes estiverem ativos
 
 #### Sincronização com Framework
 
