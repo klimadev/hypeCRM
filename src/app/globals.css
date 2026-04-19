@@ -204,6 +204,20 @@ html {
   background-color: var(--background);
 }
 
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  z-index: 0;
+}
+
+::view-transition-new(root) {
+  z-index: 1;
+}
+
 body {
   min-height: 100vh;
   background-color: var(--background);

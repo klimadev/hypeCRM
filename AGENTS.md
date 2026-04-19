@@ -23,6 +23,43 @@ Siga estas práticas de design automaticamente — não спрашивайте:
 - Kanban legível em telas pequenas (scroll horizontal se necessário)
 - Prioridade visual por tamanho, não cor apenas
 
+### Vanguarda Tecnológica (2024/2025)
+
+#### Filosofia de Design
+
+- Mantenha Don Norman e Nielsen como base, mas trate a interface como um sistema vivo.
+- Adote `Digital Native Motion`: micro-interações devem comunicar estado, intenção e continuidade.
+- A UI não deve apenas funcionar; deve parecer rápida, precisa e animada com elegância.
+- Evite movimentos genéricos ou decorativos. Toda animação precisa existir para orientar percepção.
+
+#### Padrão de Transições
+
+- `View Transitions API` é o padrão mandatório para mudanças de tema e navegação de rotas.
+- Proibido usar overlays, máscaras artificiais, clones do DOM ou truques legados para transições de estado.
+- Não introduzir camadas de suporte visuais quando a transição puder ser resolvida nativamente.
+- Em React/Next.js, use `flushSync` quando necessário para sincronizar a captura visual com a atualização do estado.
+
+#### Desempenho Perceptivo e Refinamento
+
+- Animações devem parecer físicas, não robóticas.
+- Use curvas contemporâneas e naturais, como `cubic-bezier(0.4, 0, 0.2, 1)` ou equivalentes mais refinadas quando justificadas.
+- Duração padrão de motion: entre `300ms` e `600ms`.
+- Animações pesadas, como `clip-path`, devem ser otimizadas para manter `60fps` e aproveitar camadas de renderização do navegador.
+- Se uma transição comprometer fluidez, simplifique a composição antes de adicionar complexidade visual.
+
+#### Modern Web Stack
+
+- Priorize APIs nativas e CSS moderno antes de bibliotecas de terceiros.
+- Prefira `Container Queries`, `:has()` e CSS Nesting quando melhorarem clareza ou adaptabilidade.
+- Mantenha o código lean, direto e focado em performance percebida.
+- Evite dependências extras para efeitos que o navegador já entrega com qualidade superior.
+
+#### Sincronização com Framework
+
+- Em Next.js e React, a integridade visual tem prioridade sobre abstrações convenientes.
+- Use `flushSync` para garantir que a View Transitions API capture o DOM no estado correto.
+- Componentes de tema, navegação e estados visuais críticos devem ser escritos pensando em captura, commit e animação como uma única operação.
+
 ### Clean Code Principles
 
 - Sem comentários (a menos que spec exija)
