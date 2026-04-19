@@ -5,9 +5,8 @@ import {
   mapearContatoEvolution,
   mapearConversaEvolution,
 } from "./evolution-api.utils";
-import { normalizarRemoteJidCanonico, extrairLookupParaMensagens } from "./chat-remote-jid";
-import { mapearStatusMensagem } from "./whatsapp-chat.normalization";
-import { normalizarTimestampParaIso } from "./whatsapp-utils";
+import { selecionarRemoteJidPreferencial } from "./chat-remote-jid";
+import { normalizarMensagensEvolution } from "./whatsapp-chat.normalization";
 import { chatLogger, criarContextoChat } from "./chat-logger";
 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
@@ -40,6 +39,37 @@ async function fetchEvolution(path: string, init: RequestInit) {
   } finally {
     clearTimeout(timeout);
   }
+}
+
+type MensagemContatoLookup = {
+  key?: {
+    fromMe?: boolean;
+    remoteJid?: string;
+    remoteJidAlt?: string;
+  };
+  pushName?: string | null;
+};
+
+export function extrairContatoCanonicalDeMensagens(registros: MensagemContatoLookup[]) {
+  let pushName: string | null = null;
+  let remoteJidCanonico: string | null = null;
+
+  for (const msg of registros) {
+    if (!pushName && msg.key?.fromMe === false && msg.pushName && msg.pushName.trim().length > 0) {
+      pushName = msg.pushName.trim();
+    }
+
+    const jidPreferencial = selecionarRemoteJidPreferencial(
+      msg.key?.remoteJid ?? "",
+      msg.key?.remoteJidAlt,
+    );
+
+    if (jidPreferencial.includes("@s.whatsapp.net")) {
+      remoteJidCanonico = jidPreferencial;
+    }
+  }
+
+  return { pushName, remoteJidCanonico };
 }
 
 export async function buscarContatos(instanceName: string): Promise<EvolutionContato[]> {
@@ -181,8 +211,55 @@ export async function buscarConversasPaginado(
     return mapped;
   });
 
+  const baseConversas = mapped.filter((item): item is EvolutionConversa => item !== null);
+
+  const conversasEnriquecidas = await Promise.all(
+    baseConversas.map(async (conv) => {
+      if (conv.isGroup) return conv;
+
+      try {
+        const jidParaBusca = (conv.remoteJidAlt ?? conv.remoteJid).trim();
+        const msgRes = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            where: { key: { remoteJid: jidParaBusca, remoteJidAlt: jidParaBusca } },
+            page: 1,
+            offset: 0,
+            take: 20,
+          }),
+        });
+
+        if (msgRes.ok) {
+          const msgJson = await msgRes.json().catch(() => ({}));
+          const registros = msgJson.messages?.records ?? [];
+
+          const { pushName, remoteJidCanonico } = extrairContatoCanonicalDeMensagens(registros);
+
+          if (pushName) {
+            conv.pushName = pushName;
+          }
+
+          if (remoteJidCanonico) {
+            conv.remoteJid = remoteJidCanonico;
+            conv.remoteJidAlt = remoteJidCanonico;
+            conv.lookupRemoteJid = remoteJidCanonico;
+
+            if (conv.lastMessage?.key) {
+              conv.lastMessage.key.remoteJid = remoteJidCanonico;
+              conv.lastMessage.key.remoteJidAlt = remoteJidCanonico;
+            }
+          }
+        }
+      } catch (e) {
+        // Ignora erro
+      }
+      return conv;
+    })
+  );
+
   const resultado = {
-    conversas: mapped.filter((item): item is EvolutionConversa => item !== null),
+    conversas: conversasEnriquecidas,
     temMais,
   };
   chatLogger.log("EVOLUTION_FIND_CHATS_PAGINADO_OK", ctx, { normalizado: { total: resultado.conversas.length, temMais: resultado.temMais } });
@@ -365,12 +442,39 @@ export async function buscarMensagensPorContato(
   remoteJid: string,
   pagina: number = 1,
   limite: number = 50,
-): Promise<{ messages: Array<{ id: string; remoteJid: string; remoteJidAlt: string | null; fromMe: boolean; text: string; kind: string; timestamp: number; timestampIso: string; pushName: string | null; status: string; hasMedia: boolean; mediaUrl: string | null }>; hasMore: boolean }> {
+): Promise<{
+  messages: Array<{
+    id: string;
+    remoteJid: string;
+    remoteJidAlt: string | null;
+    fromMe: boolean;
+    text: string;
+    kind: string;
+    timestamp: number;
+    timestampIso: string;
+    pushName: string | null;
+    status: string;
+    hasMedia: boolean;
+    mediaUrl: string | null;
+    dadosAd?: {
+      titulo: string | null;
+      corpo: string | null;
+      urlOrigem: string | null;
+      idConversao: string | null;
+      urlThumbnail: string | null;
+      tipoOrigem: string | null;
+      appOrigem: string | null;
+      formato: "ctwa" | null;
+    } | null;
+  }>;
+  hasMore: boolean;
+}> {
   const startedAt = Date.now();
   const ctx = criarContextoChat({ instanceName, remoteJid, pagina, limite });
+  const lookupRemoteJid = remoteJid.trim();
   const payload = {
     where: {
-      key: { remoteJid, remoteJidAlt: remoteJid },
+      key: { remoteJid: lookupRemoteJid, remoteJidAlt: lookupRemoteJid },
     },
     page: pagina,
     offset: limite,
@@ -443,8 +547,8 @@ export async function buscarMensagensPorContato(
     remoteJidAlt: msg.key?.remoteJidAlt ?? null,
     lastMessageRemoteJidAlt: msg.lastMessage?.key?.remoteJidAlt ?? null,
     pushName: msg.pushName ?? null,
-    messageTimestamp: msg.messageTimestamp ?? null,
-  }));
+      messageTimestamp: msg.messageTimestamp ?? null,
+    }));
 
   chatLogger.log("EVOLUTION_FIND_MESSAGES_RAW_RESPONSE", ctx, {
     duracaoMs: Date.now() - startedAt,
@@ -471,134 +575,57 @@ export async function buscarMensagensPorContato(
     },
   });
 
-  const mensagens = registros
-    .filter((msg) => {
-      const msgRemoteJid = msg.key?.remoteJid ?? "";
-      return msgRemoteJid && !msgRemoteJid.includes("@g.us") && msgRemoteJid !== "status@broadcast";
-    })
-    .map((msg) => {
-      const remoteJid = msg.key?.remoteJid ?? "";
-      const remoteJidAlt = msg.key?.remoteJidAlt ?? msg.lastMessage?.key?.remoteJidAlt ?? null;
-      const fromMe = msg.key?.fromMe ?? false;
-      const timestamp = msg.messageTimestamp ?? 0;
-      const timestampIso = normalizarTimestampParaIso(timestamp);
-      const pushName = msg.pushName ?? null;
-      const msgType = msg.messageType ?? "";
+  const mensagensNormalizadas = normalizarMensagensEvolution(json).filter(
+    (msg) => !msg.remoteJid.includes("@g.us") && msg.remoteJid !== "status@broadcast",
+  );
+  const tiposComMedia = new Set(["imageMessage", "videoMessage", "audioMessage", "documentMessage", "stickerMessage"]);
+  const mensagens = mensagensNormalizadas.map((msg) => {
+    const hasMedia = tiposComMedia.has(msg.kind);
+    const text = msg.text || msg.conteudo;
+    const pushName = msg.fromMe ? null : msg.pushName;
 
-      let text = "";
-      let kind = "unknown";
-      let hasMedia = false;
-      const mediaUrl: string | null = null;
-
-      const content = msg.message;
-      if (content) {
-        if (content.conversation) {
-          text = content.conversation;
-          kind = "conversation";
-        } else if (content.extendedTextMessage?.text) {
-          text = content.extendedTextMessage.text;
-          kind = "extendedTextMessage";
-        } else if (content.imageMessage) {
-          text = content.imageMessage.caption ?? "📷 Imagem";
-          kind = "imageMessage";
-          hasMedia = true;
-        } else if (content.videoMessage) {
-          text = content.videoMessage.caption ?? "🎥 Vídeo";
-          kind = "videoMessage";
-          hasMedia = true;
-        } else if (content.audioMessage) {
-          text = "🎵 Áudio";
-          kind = "audioMessage";
-          hasMedia = true;
-        } else if (content.documentMessage) {
-          text = `📄 ${content.documentMessage.fileName ?? "Documento"}`;
-          kind = "documentMessage";
-          hasMedia = true;
-        } else if (content.stickerMessage) {
-          text = "🎭 Sticker";
-          kind = "stickerMessage";
-          hasMedia = true;
-        } else if (content.reactionMessage?.text) {
-          text = content.reactionMessage.text;
-          kind = "reactionMessage";
-        } else if (content.locationMessage) {
-          text = "📍 Localização";
-          kind = "locationMessage";
-        } else if (content.contactMessage) {
-          text = "👤 Contato";
-          kind = "contactMessage";
-        } else if (content.listMessage) {
-          text = "📋 Lista";
-          kind = "listMessage";
-        } else if (content.buttonsMessage) {
-          text = "🔘 Botões";
-          kind = "buttonsMessage";
-        } else if (content.templateMessage) {
-          text = "📄 Template";
-          kind = "templateMessage";
-        } else if (content.liveLocationMessage) {
-          text = "📍 Localização em tempo real";
-          kind = "liveLocationMessage";
-        } else if (content.orderMessage) {
-          text = "🛒 Pedido";
-          kind = "orderMessage";
-        } else if (content.protocolMessage) {
-          text = "";
-          kind = "protocolMessage";
-        }
-      }
-
-      if (!kind || kind === "unknown") {
-        kind = msgType || "unknown";
-      }
-
-      const rawStatus = (msg as Record<string, unknown>).status;
-      const messageUpdate = (msg as Record<string, unknown>).MessageUpdate;
-      const resolvedStatus = rawStatus ?? messageUpdate;
-      const status = mapearStatusMensagem(resolvedStatus, fromMe);
-
-      if (remoteJid.includes("@lid") || remoteJidAlt?.includes("@lid")) {
-        chatLogger.log("EVOLUTION_FIND_MESSAGES_LID_TRACE", ctx, {
-          raw: {
-            id: msg.key?.id ?? null,
-            fromMe,
-            remoteJid,
-            remoteJidAlt,
-            lastMessageRemoteJidAlt: msg.lastMessage?.key?.remoteJidAlt ?? null,
+    if (remoteJid.includes("@lid") || msg.remoteJidAlt?.includes("@lid") || msg.remoteJid.includes("@lid")) {
+      chatLogger.log("EVOLUTION_FIND_MESSAGES_LID_TRACE", ctx, {
+        raw: {
+          id: msg.messageId,
+          fromMe: msg.fromMe,
+          remoteJid: msg.remoteJid,
+          remoteJidAlt: msg.remoteJidAlt,
+          pushName,
+          messageTimestamp: msg.timestamp,
+        },
+        rawCompleto: {
+          message: msg,
+          interpretacao: {
+            remoteJid: msg.remoteJid,
+            remoteJidAlt: msg.remoteJidAlt,
+            fromMe: msg.fromMe,
             pushName,
-            messageTimestamp: timestamp,
+            kind: msg.kind,
+            text,
+            hasMedia,
+            status: msg.status,
           },
-          rawCompleto: {
-            message: msg,
-            interpretacao: {
-              remoteJid,
-              remoteJidAlt,
-              fromMe,
-              pushName,
-              kind,
-              text,
-              hasMedia,
-              status,
-            },
-          },
-        });
-      }
+        },
+      });
+    }
 
-      return {
-        id: msg.key?.id ?? `${remoteJid}-${timestamp}`,
-        remoteJid,
-        remoteJidAlt,
-        fromMe,
-        text,
-        kind,
-        timestamp,
-        timestampIso,
-        pushName,
-        status,
-        hasMedia,
-        mediaUrl,
-      };
-    });
+    return {
+      id: msg.messageId,
+      remoteJid: msg.remoteJid,
+      remoteJidAlt: msg.remoteJidAlt,
+      fromMe: msg.fromMe,
+      text,
+      kind: msg.kind,
+      timestamp: msg.timestamp,
+      timestampIso: msg.timestampIso,
+      pushName,
+      status: msg.status,
+      hasMedia,
+      mediaUrl: null,
+      dadosAd: msg.dadosAd ?? null,
+    };
+  });
 
   const resultado = { messages: mensagens, hasMore };
   chatLogger.log("EVOLUTION_FIND_MESSAGES_OK", ctx, {
@@ -614,55 +641,4 @@ export async function buscarMensagensPorContato(
     },
   });
   return resultado;
-}
-
-export async function buscarPushNamePorTelefone(
-  instanceName: string,
-  remoteJid: string,
-  remoteJidAlt?: string | null
-): Promise<string | null> {
-  const jidParaBusca = normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid);
-
-  const resposta = await fetchEvolution(`/chat/findMessages/${instanceName}`, {
-    method: "POST",
-    headers,
-    body: JSON.stringify({
-      where: {
-        key: { remoteJid: jidParaBusca, remoteJidAlt: jidParaBusca },
-      },
-      page: 1,
-      offset: 0,
-      take: 20,
-    }),
-  });
-
-  if (!resposta.ok) {
-    return null;
-  }
-
-  const json = (await resposta.json().catch(() => ({}))) as {
-    messages?: { records?: Array<{ key?: { fromMe?: boolean; remoteJid?: string; remoteJidAlt?: string }; pushName?: string | null; messageTimestamp?: number }> };
-  };
-
-  const registros = json.messages?.records ?? [];
-
-  for (const msg of registros) {
-    if (msg.key?.fromMe === false) {
-      chatLogger.log("EVOLUTION_PUSHNAME_TRACE", criarContextoChat({ instanceName }), {
-        raw: {
-          fromMe: msg.key?.fromMe,
-          remoteJid: msg.key?.remoteJid ?? null,
-          remoteJidAlt: msg.key?.remoteJidAlt ?? null,
-          pushName: msg.pushName ?? null,
-          messageTimestamp: msg.messageTimestamp ?? null,
-        },
-      });
-    }
-    if (msg.key?.fromMe === false && msg.pushName && msg.pushName.trim().length > 0) {
-      const pushName = msg.pushName.trim();
-      return pushName;
-    }
-  }
-
-  return null;
 }

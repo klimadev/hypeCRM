@@ -2,7 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { whereLeadsPorPerfil } from "@/lib/permissoes";
 import { normalizarTelefoneParaWhatsapp } from "@/lib/phone";
 import { listarInstancias } from "@/lib/evolution-api.instances";
-import { buscarConversasPaginado, buscarConversasEvolution, buscarPushNamePorTelefone } from "@/lib/evolution-api.chat";
+import { buscarConversasPaginado, buscarConversasEvolution } from "@/lib/evolution-api.chat";
+import { selecionarRemoteJidPreferencial } from "@/lib/chat-remote-jid";
 import type { EvolutionConversa } from "@/lib/evolution-api.types";
 import type { SessaoToken } from "@/lib/tipos";
 import type { ChatUnificado } from "@/modules/chat/types";
@@ -11,9 +12,7 @@ import { listarConversasInstagram, listarPreviewsMensagensInstagramPorEmpresa } 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
 const CHAT_DEBUG_ENABLED = process.env.CHAT_DEBUG === "1";
-const MAX_PAGINAS_POR_INSTANCIA = 40;
 const LIMITE_PAGINA_DEFAULT = 10;
-const PUSHNAME_BATCH_SIZE = 5;
 
 function logChat(evento: string, detalhes?: Record<string, unknown>) {
   if (detalhes) {
@@ -155,27 +154,14 @@ function extrairTimestamp(conv: { messageTimestamp?: number; activityTimestamp?:
   return messageTs || activityTs || updatedAtTs;
 }
 
-/**
- * Verifica se o remoteJidAlt é válido (deve ser @s.whatsapp.net).
- * Se o remoteJid for @lid e o remoteJidAlt não for @s.whatsapp.net, ignorar.
- */
 function jidEhValido(remoteJid: string, remoteJidAlt: string | null): boolean {
-  if (remoteJid.includes("@lid")) {
-    return !!remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net");
-  }
-  return true;
+  const jid = remoteJid.trim();
+  void remoteJidAlt;
+  return jid.length > 0 && jid !== "status@broadcast" && !jid.includes("@g.us");
 }
 
-/**
- * Seleciona o JID correto para extrair telefone:
- * - Se remoteJidAlt existe e é @s.whatsapp.net, usa ele (caso @lid)
- * - Senão, usa remoteJid
- */
 function selecionarJidParaTelefone(remoteJid: string, remoteJidAlt: string | null): string {
-  if (remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net")) {
-    return remoteJidAlt;
-  }
-  return remoteJid;
+  return selecionarRemoteJidPreferencial(remoteJid, remoteJidAlt);
 }
 
 async function fetchFindChatsRaw(instanceName: string): Promise<unknown> {
@@ -734,39 +720,9 @@ export async function unificarChatsComLeads({
   );
   debug.timingsMs.enrichment = duracaoEnrichmentMs;
 
-  const chatsComPushNamePendente = todasOrdenadas.filter(
-    (chat) => chat.canal === "whatsapp" && chat.pushName === null && chat.ultimaMensagem?.fromMe === true
-  );
-
-  const chatsParaProcessar = chatsComPushNamePendente.slice(0, PUSHNAME_BATCH_SIZE);
-
-  const pushNamePromises = chatsParaProcessar.map(async (chat) => {
-    try {
-      const pushNameBuscado = await buscarPushNamePorTelefone(
-        chat.instanceName,
-        chat.remoteJid,
-        chat.remoteJid
-      );
-      if (pushNameBuscado) {
-        chat.pushName = pushNameBuscado;
-      } else if (chat.leadMatch?.nome) {
-        chat.pushName = chat.leadMatch.nome;
-      }
-    } catch (error) {
-      console.warn("[Chat] Erro ao buscar pushName", {
-        telefone: chat.telefone,
-        instanceName: chat.instanceName,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      if (chat.leadMatch?.nome) {
-        chat.pushName = chat.leadMatch.nome;
-      }
-    }
-  });
-
-  if (pushNamePromises.length > 0) {
-    await Promise.all(pushNamePromises);
-  }
+  // Não precisamos mais do processamento em lote para buscar o pushName, pois 
+  // agora todas as conversas já são enriquecidas dentro de buscarConversasPaginado 
+  // usando as mensagens do próprio chat (obtendo pushName real e remoteJidAlt).
 
   for (const chat of todasOrdenadas) {
     if (chat.leadMatch?.id_negocio) {
@@ -776,7 +732,9 @@ export async function unificarChatsComLeads({
       }
     }
 
-    if (chat.pushName === null && chat.leadMatch?.nome) {
+    // Se ainda assim o pushName for nulo (ex: só o lead mandou msg mas a API não retornou),
+    // ou se for "Você" e tivermos match, tenta puxar do lead
+    if ((chat.pushName === null || chat.pushName === "Você") && chat.leadMatch?.nome) {
       chat.pushName = chat.leadMatch.nome;
     }
   }

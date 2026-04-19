@@ -1,5 +1,5 @@
 import { normalizarStatusInstanciaWhatsapp } from "@/lib/whatsapp-instancia-status";
-import { normalizarRemoteJidCanonico, extrairLookupParaMensagens } from "./chat-remote-jid";
+import { extrairLookupParaMensagens, selecionarRemoteJidPreferencial } from "./chat-remote-jid";
 import type {
   EvolutionConnectionState,
   EvolutionContato,
@@ -81,15 +81,18 @@ export function mapearContatoEvolution(chat: EvolutionConversaEntrada): Evolutio
   const remoteJid = (chat.remoteJid ?? "").trim();
   if (!remoteJid || remoteJid.includes("@g.us")) return null;
 
-  const remoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
+  const rawRemoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
+  const remoteJidAlt = typeof rawRemoteJidAlt === "string" && rawRemoteJidAlt.trim().length > 0 ? rawRemoteJidAlt.trim() : null;
   const pushName = chat.pushName ?? chat.lastMessage?.pushName ?? null;
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
+  const lookupRemoteJid = extrairLookupParaMensagens(remoteJid, remoteJidAlt);
+  const remoteJidAltCanonico = lookupRemoteJid.includes("@s.whatsapp.net") ? lookupRemoteJid : remoteJidAlt;
 
   return {
-    id: normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid),
+    id: lookupRemoteJid,
     nome: pushName,
     pushName,
-    remoteJidAlt,
+    remoteJidAlt: remoteJidAltCanonico,
     isGroup,
   };
 }
@@ -98,27 +101,28 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
   const remoteJid = (chat.remoteJid ?? "").trim();
   if (!remoteJid || remoteJid.includes("@g.us")) return null;
 
-  const remoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
+  const rawRemoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
+  const remoteJidAlt = typeof rawRemoteJidAlt === "string" && rawRemoteJidAlt.trim().length > 0 ? rawRemoteJidAlt.trim() : null;
   const pushName = chat.pushName ?? chat.lastMessage?.pushName ?? null;
   const isGroup = remoteJid.includes("@g.us") || chat.isGroup === true;
 
   const rawRemoteJid = chat.remoteJid ?? "";
-  const rawRemoteJidAlt = chat.remoteJidAlt ?? chat.lastMessage?.key?.remoteJidAlt ?? null;
-  const lookupRemoteJid = extrairLookupParaMensagens(rawRemoteJid, rawRemoteJidAlt);
+  const lookupRemoteJid = extrairLookupParaMensagens(rawRemoteJid, remoteJidAlt);
+  const remoteJidAltCanonico = lookupRemoteJid.includes("@s.whatsapp.net") ? lookupRemoteJid : remoteJidAlt;
 
   const unreadCount = typeof chat.unreadCount === "number" ? chat.unreadCount : 0;
   const updatedAt = typeof chat.updatedAt === "number" ? chat.updatedAt : undefined;
   const messageTimestamp = typeof chat.messageTimestamp === "number" ? chat.messageTimestamp : undefined;
 
-  const lastMessageTimestamp = chat.lastMessage?.messageTimestamp ?? 0;
-  const activityTimestamp =
-    messageTimestamp ?? lastMessageTimestamp ?? (updatedAt ? Math.floor(updatedAt / 1000) : 0);
+  const lastMessageTimestamp = typeof chat.lastMessage?.messageTimestamp === "number" ? chat.lastMessage.messageTimestamp : undefined;
+  const updatedAtTimestamp = typeof updatedAt === "number" ? Math.floor(updatedAt / 1000) : undefined;
+  const activityTimestamp = messageTimestamp ?? lastMessageTimestamp ?? updatedAtTimestamp ?? 0;
 
   const lastMessage = chat.lastMessage
     ? {
         key: {
-          remoteJid: chat.lastMessage.key?.remoteJid ?? remoteJid,
-          remoteJidAlt: chat.lastMessage.key?.remoteJidAlt ?? undefined,
+          remoteJid: chat.lastMessage.key?.remoteJid ?? lookupRemoteJid,
+          remoteJidAlt: chat.lastMessage.key?.remoteJidAlt ?? remoteJidAltCanonico ?? undefined,
           fromMe: chat.lastMessage.key?.fromMe ?? false,
         },
         pushName: chat.lastMessage.pushName ?? undefined,
@@ -128,11 +132,11 @@ export function mapearConversaEvolution(chat: EvolutionConversaEntrada): Evoluti
       }
     : undefined;
 
-  return {
-    remoteJid: normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid),
-    remoteJidAlt: remoteJidAlt && remoteJidAlt.includes("@s.whatsapp.net") ? remoteJidAlt : null,
-    pushName: pushName ?? null,
-    isGroup,
+    return {
+      remoteJid: lookupRemoteJid,
+      remoteJidAlt: remoteJidAltCanonico,
+      pushName: pushName ?? null,
+      isGroup,
     lastMessage,
     lookupRemoteJid,
     unreadCount,
@@ -164,19 +168,34 @@ export function agruparConversasPorBuscaEvolution(
       continue;
     }
 
-    const remoteJidAlt = msg.key?.remoteJidAlt ?? null;
-    const pushName = msg.pushName ?? null;
+    const remoteJidAlt = typeof msg.key?.remoteJidAlt === "string" && msg.key.remoteJidAlt.trim().length > 0 ? msg.key.remoteJidAlt.trim() : null;
+    const pushName = msg.key?.fromMe === false && msg.pushName ? msg.pushName : null;
     const messageTimestamp = msg.messageTimestamp ?? 0;
-    const chaveConversa = normalizarRemoteJidCanonico(remoteJidAlt ?? remoteJid);
+    const chaveConversa = extrairLookupParaMensagens(remoteJid, remoteJidAlt);
+    const remoteJidPreferencial = selecionarRemoteJidPreferencial(remoteJid, remoteJidAlt);
+    const remoteJidAltCanonico = chaveConversa.includes("@s.whatsapp.net") ? chaveConversa : remoteJidAlt;
     const existente = conversasAgrupadas.get(chaveConversa);
 
-    if (!existente || messageTimestamp > existente.ultimaMensagemTimestamp) {
+    if (!existente) {
       conversasAgrupadas.set(chaveConversa, {
-        remoteJid,
-        remoteJidAlt,
+        remoteJid: remoteJidPreferencial,
+        remoteJidAlt: remoteJidAltCanonico,
         pushName,
         ultimaMensagemTimestamp: messageTimestamp,
       });
+    } else {
+      if (messageTimestamp > existente.ultimaMensagemTimestamp) {
+        existente.ultimaMensagemTimestamp = messageTimestamp;
+      }
+      if (pushName && (!existente.pushName || existente.pushName === "Você")) {
+        existente.pushName = pushName;
+      }
+      if (remoteJidAltCanonico && (!existente.remoteJidAlt || existente.remoteJidAlt.includes("@lid"))) {
+        existente.remoteJidAlt = remoteJidAltCanonico;
+      }
+      if (remoteJidPreferencial.includes("@s.whatsapp.net") && existente.remoteJid.includes("@lid")) {
+        existente.remoteJid = remoteJidPreferencial;
+      }
     }
   }
 

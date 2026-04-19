@@ -17,22 +17,32 @@ export function normalizarRemoteJidCanonico(remoteJid: string): string {
   return jidCanonico;
 }
 
-export function extrairLookupParaMensagens(remoteJid: string, remoteJidAlt: string | null | undefined): string {
+export function selecionarRemoteJidPreferencial(
+  remoteJid: string,
+  remoteJidAlt: string | null | undefined,
+): string {
   const jid = (remoteJid || "").trim();
   const alt = (remoteJidAlt || "").trim();
-  const hasAltValid = alt && (alt.includes("@s.whatsapp.net") || alt.includes("@lid"));
-  if (hasAltValid) {
-    return alt;
-  }
-  if (jid.includes("@s.whatsapp.net")) return jid;
-  if (jid.includes("@lid")) {
-    const telefone = extrairTelefoneDeRemoteJid(jid);
-    if (telefone) return `${telefone}@s.whatsapp.net`;
-  }
-  return jid;
+  const candidatos = [jid, alt].filter(Boolean);
+
+  const jidTelefone = candidatos.find((valor) => valor.includes("@s.whatsapp.net"));
+  if (jidTelefone) return jidTelefone;
+
+  const jidLid = candidatos.find((valor) => valor.includes("@lid"));
+  if (jidLid) return jidLid;
+
+  return candidatos[0] ?? "";
+}
+
+export function extrairLookupParaMensagens(remoteJid: string, remoteJidAlt: string | null | undefined): string {
+  return selecionarRemoteJidPreferencial(remoteJid, remoteJidAlt);
 }
 
 type DestinoConversaWhatsapp = {
+  instanceName: string;
+  remoteJid: string;
+  remoteJidCanonico: string;
+  remoteJidAlt: string | null;
   lookupRemoteJid: string;
   telefone: string;
 };
@@ -41,15 +51,21 @@ export async function resolverDestinoConversaWhatsapp(
   instanceName: string,
   remoteJid: string,
 ): Promise<DestinoConversaWhatsapp | null> {
-  void instanceName;
-
   const jidCanonico = remoteJid.trim();
-  const telefone = extrairTelefoneDeRemoteJid(jidCanonico);
+  if (!jidCanonico) return null;
+
+  const remoteJidCanonico = normalizarRemoteJidCanonico(jidCanonico);
+  const remoteJidAlt = ehLid(jidCanonico) ? jidCanonico : null;
+  const lookupRemoteJid = extrairLookupParaMensagens(jidCanonico, remoteJidAlt);
+  const telefone = extrairTelefoneDeRemoteJid(remoteJidCanonico);
+
   if (!telefone) return null;
 
-  const lookupRemoteJid = normalizarRemoteJidCanonico(jidCanonico);
-
   return {
+    instanceName,
+    remoteJid: jidCanonico,
+    remoteJidCanonico,
+    remoteJidAlt,
     lookupRemoteJid,
     telefone,
   };
