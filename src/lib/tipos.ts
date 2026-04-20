@@ -21,4 +21,5 @@ export type SessaoToken = {
   id_empresa: string;
   perfil: Perfil;
   id_pdv: string | null;
+  isSuperAdmin: boolean;
 };

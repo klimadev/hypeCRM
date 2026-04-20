@@ -1,0 +1,1 @@
+export { ModuloSuperAdmin } from "./page";

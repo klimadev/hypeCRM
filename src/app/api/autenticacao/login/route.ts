@@ -34,6 +34,7 @@ export async function POST(request: Request) {
       id_empresa: empresa.id,
       perfil: "EMPRESA",
       id_pdv: null,
+      isSuperAdmin: empresa.isSuperAdmin,
     });
 
     const resposta = NextResponse.json({ ok: true, perfil: "EMPRESA" satisfies Perfil });
@@ -54,12 +55,13 @@ export async function POST(request: Request) {
 
   const perfilFuncionario = (funcionario.cargo === "ADMINISTRADOR" ? "EMPRESA" : funcionario.cargo) as Perfil;
 
-  const token = await criarTokenSessao({
-    id_usuario: funcionario.id,
-    id_empresa: funcionario.id_empresa,
-    perfil: perfilFuncionario,
-    id_pdv: funcionario.id_pdv,
-  });
+const token = await criarTokenSessao({
+      id_usuario: funcionario.id,
+      id_empresa: funcionario.id_empresa,
+      perfil: perfilFuncionario,
+      id_pdv: funcionario.id_pdv,
+      isSuperAdmin: false,
+    });
 
   const resposta = NextResponse.json({ ok: true, perfil: perfilFuncionario });
   definirCookieSessao(resposta, token);

@@ -228,6 +228,7 @@ model Empresa {
   nome              String
   email             String           @unique
   senha_hash        String
+  isSuperAdmin      Boolean          @default(false)
   criado_em         DateTime         @default(now())
   atualizado_em     DateTime         @default(now())
   status_assinatura String           @default("TRIAL")

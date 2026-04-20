@@ -35,6 +35,20 @@ export async function validarTokenSessao(token: string) {
   }
 }
 
+export async function validarSuperAdmin(sessao: SessaoToken | null): Promise<boolean> {
+  if (!sessao) return false;
+  
+  if (sessao.perfil === "EMPRESA") {
+    const empresa = await prisma.empresa.findUnique({
+      where: { id: sessao.id_usuario },
+      select: { isSuperAdmin: true },
+    });
+    return empresa?.isSuperAdmin === true;
+  }
+  
+  return false;
+}
+
 export function definirCookieSessao(resposta: NextResponse, token: string) {
   resposta.cookies.set(NOME_COOKIE_SESSAO, token, {
     httpOnly: true,
@@ -78,7 +92,6 @@ export async function obterDadosUsuarioLogado(
   sessao: SessaoToken,
 ): Promise<DadosUsuarioLogado | null> {
   try {
-    // EMPRESA: id_usuario refere-se ao ID da empresa, não a um funcionário
     if (sessao.perfil === "EMPRESA") {
       const empresa = await prisma.empresa.findUnique({
         where: { id: sessao.id_usuario },
@@ -88,11 +101,13 @@ export async function obterDadosUsuarioLogado(
         return null;
       }
 
+      const cargoExibido = sessao.isSuperAdmin ? "Super Admin" : "Administrador";
+
       return {
         id: empresa.id,
         nome: empresa.nome,
         email: empresa.email,
-        cargo: "Administrador",
+        cargo: cargoExibido,
         nomeEmpresa: empresa.nome,
       };
     }
