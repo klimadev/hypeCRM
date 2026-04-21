@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, useDeferredValue, startTransition } from "react";
 import { useChatData } from "./use-chat-data";
 import { useToast } from "@/components/ui/toast";
 import { obterFiltroOrigemLead } from "../helpers";
@@ -16,9 +16,22 @@ import { listarInstanciasWhatsapp } from "@/lib/api/whatsapp.instances";
 import { instanciaWhatsappEstaConectada } from "@/lib/whatsapp-instancia-status";
 import type { WhatsappInstancia } from "@/modules/whatsapp/types";
 
+const DEBOUNCE_MS = 300;
+
 export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABORADOR"; idUsuario: string }): UseChatModuleReturn {
   const [busca, setBusca] = useState("");
   const [buscaDebounced, setBuscaDebounced] = useState("");
+  const buscaDeferred = useDeferredValue(busca);
+
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      startTransition(() => {
+        setBuscaDebounced(busca);
+      });
+    }, DEBOUNCE_MS);
+    return () => clearTimeout(timeout);
+  }, [busca]);
+
   const {
     chats,
     carregando,
@@ -84,7 +97,7 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
   }, [chats, negocioEstaAberto]);
 
   const chatsFiltrados = useMemo(() => {
-    const termo = busca.trim().toLowerCase();
+    const termo = buscaDeferred.trim().toLowerCase();
 
     return chats.filter((chat) => {
       const filtroChat = obterFiltroOrigemLead(chat.leadMatch?.origem);
@@ -120,7 +133,6 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
         return false;
       }
 
-      // Filtro por instância (para chats duplicados)
       if (filtroInstancia && chat.isDuplicado) {
         const instanciasDoChat = chat.instancias?.map((i) => i.instanceName) ?? [];
         if (!instanciasDoChat.includes(filtroInstancia)) {
@@ -154,7 +166,7 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
         statusNegocio.toLowerCase().includes(termo)
       );
     });
-  }, [chats, busca, filtroOrigem, filtroFila, filtroCanal, filtroCategoria, filtroInstancia, negocioEstaAberto]);
+  }, [chats, buscaDeferred, filtroOrigem, filtroFila, filtroCanal, filtroCategoria, filtroInstancia, negocioEstaAberto]);
 
   const chatsOrdenados = useMemo(() => {
     return [...chatsFiltrados].sort((a, b) => {

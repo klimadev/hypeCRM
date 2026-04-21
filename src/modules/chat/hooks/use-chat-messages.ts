@@ -15,20 +15,28 @@ import type { UnifiedChatMessage } from "@/lib/api/whatsapp.chat";
 
 function mesclarMensagensChat(base: UnifiedChatMessage[], incoming: UnifiedChatMessage[]) {
   const mapa = new Map<string, UnifiedChatMessage>();
+  const mapaTemporario = new Map<string, UnifiedChatMessage>();
   const agora = Math.floor(Date.now() / 1000);
 
   for (const message of [...base, ...incoming]) {
-    const existenteTemporario = [...mapa.values()].find(
-      (item) =>
-        (item.optimistic || (item.fromMe && Math.abs(agora - item.timestamp) <= 30)) &&
-        !message.optimistic &&
-        item.fromMe === message.fromMe &&
-        item.remoteJid === message.remoteJid &&
-        item.text === message.text &&
-        Math.abs(item.timestamp - message.timestamp) <= 120,
-    );
+    let key = message.id;
 
-    const key = existenteTemporario ? existenteTemporario.id : message.id;
+    if (!message.optimistic) {
+      const temporarioMatch = Array.from(mapaTemporario.values()).find(
+        (item) =>
+          item.fromMe === message.fromMe &&
+          item.remoteJid === message.remoteJid &&
+          item.text === message.text &&
+          Math.abs(item.timestamp - message.timestamp) <= 120,
+      );
+      if (temporarioMatch) {
+        key = temporarioMatch.id;
+        mapaTemporario.delete(temporarioMatch.id);
+      }
+    } else if (message.optimistic || (message.fromMe && Math.abs(agora - message.timestamp) <= 30)) {
+      mapaTemporario.set(message.id, message);
+    }
+
     const existing = mapa.get(key);
 
     if (!existing) {
@@ -371,14 +379,11 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
       return;
     }
 
-    // Incrementar geração para invalidar operações assíncronas pendentes
     generationRef.current++;
     const geracaoAtual = generationRef.current;
 
-    // Atualizar o ref de params antes de qualquer operação
     paramsAtuaisRef.current = { instanceName, remoteJid };
 
-    // Limpar mensagens anteriores imediatamente para evitar mistura
     setMessages([]);
     setErro(null);
     setSseConectado(false);
@@ -387,37 +392,14 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
 
     let ativo = true;
     let unsubscribe: (() => void) | null = null;
+    let pausado = false;
 
-    const iniciar = async () => {
-      // Verificar se ainda estamos na mesma geração (conversation)
-      if (geracaoAtual !== generationRef.current) {
-        console.log("[ChatMessages] Abortando - geração mudou");
-        return;
-      }
-
-      if (geracaoAtual !== generationRef.current) return;
-      await fetchInitial();
-
-      // Verificação após fetch
-      if (geracaoAtual !== generationRef.current) {
-        console.log("[ChatMessages] Abortando após fetch - geração mudou");
-        return;
-      }
-      
-      if (!ativo) return;
-
-      // Verificar se ainda estamos na mesma conversa antes de iniciar SSE
-      const atual = paramsAtuaisRef.current;
-      if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
-        console.log("[ChatMessages] Abortando SSE - params mudou");
-        return;
-      }
-
+    const conectarSse = () => {
+      if (unsubscribe || !ativo) return;
       unsubscribe = assinarMensagensChatUnificado(
         { instanceName, remoteJid, limite: 10 },
         {
           onSnapshot: (snapshot) => {
-            // Verificar geração e params
             if (geracaoAtual !== generationRef.current) {
               console.log("[ChatMessages] Ignorando snapshot - geração mudou");
               return;
@@ -427,6 +409,7 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
               console.log("[ChatMessages] Ignorando snapshot - params mudou");
               return;
             }
+            if (pausado) return;
             setMessages((prev) => {
               return mesclarMensagensChat(prev, snapshot.messages ?? []);
             });
@@ -440,16 +423,63 @@ export function useChatMessages(params: { instanceName: string | null; remoteJid
           },
         },
       );
-
       unsubscribeRef.current = unsubscribe;
     };
 
+    const desconectarSse = () => {
+      unsubscribe?.();
+      unsubscribe = null;
+      unsubscribeRef.current = null;
+    };
+
+    const iniciar = async () => {
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando - geração mudou");
+        return;
+      }
+
+      if (geracaoAtual !== generationRef.current) return;
+      await fetchInitial();
+
+      if (geracaoAtual !== generationRef.current) {
+        console.log("[ChatMessages] Abortando após fetch - geração mudou");
+        return;
+      }
+      
+      if (!ativo) return;
+
+      const atual = paramsAtuaisRef.current;
+      if (atual.instanceName !== instanceName || atual.remoteJid !== remoteJid) {
+        console.log("[ChatMessages] Abortando SSE - params mudou");
+        return;
+      }
+
+      conectarSse();
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (pausado && ativo) {
+          pausado = false;
+          desconectarSse();
+          conectarSse();
+          if (geracaoAtual === generationRef.current) {
+            void fetchInitial();
+          }
+        }
+      } else {
+        pausado = true;
+        desconectarSse();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     void iniciar();
 
     return () => {
       ativo = false;
-      unsubscribe?.();
-      unsubscribeRef.current = null;
+      desconectarSse();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [fetchInitial, params.instanceName, params.remoteJid]); // eslint-disable-line react-hooks/exhaustive-deps -- intentional: paramsRef handles current values, only re-subscribe on identity change
 

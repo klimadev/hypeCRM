@@ -117,7 +117,6 @@ export function useChatData(busca?: string) {
   );
 
   useEffect(() => {
-    // Quando há busca, substituir base (não mesclar) para evitar resultados duplicados
     const substituirBase = !!busca && busca.trim().length > 0;
 
     void fetchPagina(1, busca).then(() => {
@@ -126,31 +125,61 @@ export function useChatData(busca?: string) {
       }
     });
 
-    const unsubscribe = criarAssinaturaSse<{ chats: ChatUnificado[]; total: number; temMais: boolean }>(
-      "/api/chat/stream",
-      {
-        onSnapshot: (snapshot) => {
-          const chatsRecebidos = snapshot.chats ?? [];
-          setChats((atual) => {
-            const proximos = mesclarChats(atual, chatsRecebidos, substituirBase);
-            return proximos;
-          });
-          setTotal(snapshot.total ?? 0);
-          setTemMais(snapshot.temMais ?? false);
-          setSseConectado(true);
-          setErro(null);
-          setUltimoSyncEm(Date.now());
-        },
-        onError: () => {
-          setSseConectado(false);
-        },
-      },
-    );
+    let unsubscribe: (() => void) | null = null;
+    let pausado = false;
 
-    unsubscribeRef.current = unsubscribe;
+    const conectarSse = () => {
+      if (unsubscribe) return;
+      unsubscribe = criarAssinaturaSse<{ chats: ChatUnificado[]; total: number; temMais: boolean }>(
+        "/api/chat/stream",
+        {
+          onSnapshot: (snapshot) => {
+            if (pausado) return;
+            const chatsRecebidos = snapshot.chats ?? [];
+            setChats((atual) => {
+              const proximos = mesclarChats(atual, chatsRecebidos, substituirBase);
+              return proximos;
+            });
+            setTotal(snapshot.total ?? 0);
+            setTemMais(snapshot.temMais ?? false);
+            setSseConectado(true);
+            setErro(null);
+            setUltimoSyncEm(Date.now());
+          },
+          onError: () => {
+            setSseConectado(false);
+          },
+        },
+      );
+      unsubscribeRef.current = unsubscribe;
+    };
+
+    const desconectarSse = () => {
+      unsubscribe?.();
+      unsubscribe = null;
+      unsubscribeRef.current = null;
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        if (pausado) {
+          pausado = false;
+          desconectarSse();
+          conectarSse();
+          void fetchPagina(1, busca);
+        }
+      } else {
+        pausado = true;
+        desconectarSse();
+      }
+    };
+
+    conectarSse();
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      unsubscribe();
+      desconectarSse();
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [busca, fetchPagina]);
 

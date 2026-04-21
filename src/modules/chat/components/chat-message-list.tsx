@@ -8,6 +8,9 @@ import { buscarMediaChatUnificado, type UnifiedChatMessage } from "@/lib/api/wha
 import { formatarDuracaoSegundos } from "../preview";
 import { encontrarIndicePrimeiraMensagemNaoLida } from "../chat-ux";
 
+const mediaCache = new Map<string, Promise<{ url: string; seconds: number | null } | null>>();
+const inflightRequests = new Map<string, Promise<{ url: string; seconds: number | null } | null>>();
+
 function formatarHora(timestamp: number): string {
   const date = new Date(timestamp * 1000);
   const h = date.getHours().toString().padStart(2, "0");
@@ -82,6 +85,7 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
   const [seconds, setSeconds] = useState<number | null>(message.seconds ?? null);
   const [loading, setLoading] = useState(!message.mediaUrl);
   const [erro, setErro] = useState(false);
+  const cacheKey = `${instanceName}:${message.id}`;
 
   useEffect(() => {
     setMediaUrl(message.mediaUrl ?? null);
@@ -101,11 +105,28 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
     const timeout = setTimeout(async () => {
       setLoading(true);
       setErro(false);
-      const resultado = await buscarMediaChatUnificado({ instanceName, messageId: message.id });
+
+      let fetchPromise = inflightRequests.get(cacheKey);
+      if (!fetchPromise) {
+        fetchPromise = buscarMediaChatUnificado({ instanceName, messageId: message.id }).then((resultado) => {
+          if (resultado.ok) {
+            const url = `data:${resultado.dados.media.mimetype};base64,${resultado.dados.media.base64}`;
+            const seconds = resultado.dados.media.seconds ?? null;
+            mediaCache.set(cacheKey, Promise.resolve({ url, seconds }));
+            return { url, seconds };
+          }
+          return null;
+        }).finally(() => {
+          inflightRequests.delete(cacheKey);
+        });
+        inflightRequests.set(cacheKey, fetchPromise);
+      }
+
+      const resultado = await fetchPromise;
       if (!mounted) return;
-      if (resultado.ok) {
-        setMediaUrl(`data:${resultado.dados.media.mimetype};base64,${resultado.dados.media.base64}`);
-        setSeconds(resultado.dados.media.seconds ?? null);
+      if (resultado) {
+        setMediaUrl(resultado.url);
+        setSeconds(resultado.seconds);
       } else {
         setErro(true);
       }
@@ -116,7 +137,7 @@ function MediaPreview({ instanceName, message }: { instanceName: string; message
       mounted = false;
       clearTimeout(timeout);
     };
-  }, [instanceName, message.hasMedia, message.id, message.mediaUrl]);
+  }, [instanceName, message.hasMedia, message.id, message.mediaUrl, cacheKey]);
 
   if (!message.hasMedia) return null;
 
