@@ -74,6 +74,7 @@ export function ModuloSuperAdmin() {
     if (!modalExcluir) return;
     await fetch(`/api/super-admin/usuarios/${modalExcluir.id}?tipo=${modalExcluir.tipo}`, {
       method: "DELETE",
+      headers: { "Content-Type": "application/json" },
     });
     setModalExcluir(null);
     carregarUsuarios();

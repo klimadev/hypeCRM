@@ -1,4 +1,4 @@
-import { BarChart3, Blocks, GitBranch, LayoutGrid, MessageCircle, MessageSquare, Package, Settings2, Target, Users, WalletCards } from "lucide-react";
+import { BarChart3, Blocks, GitBranch, LayoutGrid, MessageCircle, MessageSquare, Package, Settings2, Shield, Target, Users, WalletCards } from "lucide-react";
 import type { SessaoToken } from "@/lib/tipos";
 import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
 import { TOUR_TARGETS } from "@/modules/onboarding/lib/selectors";
@@ -40,7 +40,7 @@ export function obterLabelPerfil(perfil: SessaoToken["perfil"]) {
 
 export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection[] {
   const itemIntegracoes = obterItemIntegracoesNavegacao();
-  return [
+  const secoes: NavigationSection[] = [
     { titulo: "Geral", itens: [{ href: "/resumo", label: "Resumo", descricao: getItemDescricao("Resumo"), icon: BarChart3, tourTarget: TOUR_TARGETS.sidebarResumo }] },
     {
       titulo: "Operação",
@@ -64,4 +64,15 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
         ],
     },
   ];
+
+  if (sessao.isSuperAdmin) {
+    secoes.push({
+      titulo: "Super Admin",
+      itens: [
+        { href: "/super-admin/usuarios", label: "Usuários", descricao: "Gerenciamento global de usuários", icon: Shield },
+      ],
+    });
+  }
+
+  return secoes;
 }

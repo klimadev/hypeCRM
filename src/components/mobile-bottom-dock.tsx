@@ -20,9 +20,10 @@ type DockItem = {
 
 type MobileBottomDockProps = {
   perfil: SessaoToken["perfil"];
+  isSuperAdmin?: boolean;
 };
 
-function obterItensDock(perfil: SessaoToken["perfil"]): DockItem[] {
+function obterItensDock(perfil: SessaoToken["perfil"], isSuperAdmin?: boolean): DockItem[] {
   const itensPrincipais: DockItem[] = [
     { href: "/resumo", label: "Resumo", icon: BarChart3 },
     { href: "/leads", label: "Leads", icon: Users },
@@ -50,7 +51,11 @@ const itensAgrupados: DockItem[] = [
   { href: "/configs", label: "Ajustes", icon: Settings2 },
 ];
 
-export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
+const itensSuperAdmin: DockItem[] = [
+  { href: "/super-admin/usuarios", label: "Usuários", icon: Blocks },
+];
+
+export function MobileBottomDock({ perfil, isSuperAdmin }: MobileBottomDockProps) {
   const pathname = usePathname();
   const itens = obterItensDock(perfil);
   const itemIntegracoes = obterItemIntegracoesNavegacao();
@@ -60,6 +65,8 @@ export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
     if (item.href === "/configs") return perfil === "EMPRESA";
     return true;
   });
+
+  const itensSuperAdminFiltrados = itensSuperAdmin.filter(() => isSuperAdmin === true);
 
   return (
     <nav className="pointer-events-auto lg:hidden" aria-label="Navegação principal móvel">
@@ -143,6 +150,25 @@ export function MobileBottomDock({ perfil }: MobileBottomDockProps) {
                         )}
                       >
                         <Icone className={cn("h-4 w-4", ativo && "text-[var(--brand)]")} />
+                        {item.label}
+                      </Link>
+                    );
+                  })}
+                  {itensSuperAdminFiltrados.map((item) => {
+                    const Icone = item.icon;
+                    const ativo = pathname === item.href || pathname.startsWith(`${item.href}/`);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        className={cn(
+                          "flex min-h-11 items-center gap-3 rounded-[var(--radius-control)] border px-4 text-sm font-medium transition-colors",
+                          ativo
+                            ? "border-[var(--warning)] bg-[color:rgba(245,158,11,0.12)] text-[var(--warning)]"
+                            : "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]",
+                        )}
+                      >
+                        <Icone className={cn("h-4 w-4", ativo && "text-[var(--warning)]")} />
                         {item.label}
                       </Link>
                     );

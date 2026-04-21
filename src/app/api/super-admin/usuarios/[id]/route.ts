@@ -94,28 +94,74 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 }
 
+async function deletarEmpresaEmCascata(empresaId: string) {
+  await prisma.whatsappInstancia.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.produto.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.negocio.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.lead.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.parcela.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.estagioFunil.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.funil.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.funcionario.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.pdv.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.mensagemAgendada.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.automacao.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.calComInstancia.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.pendencia.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.leadProduto.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.negocioProduto.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.leadEstagioLog.deleteMany({ where: { empresa_id: empresaId } });
+  await prisma.negocioEstagioLog.deleteMany({ where: { empresa_id: empresaId } });
+  await prisma.reatribuicaoFuncionario.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.registroIP.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.whatsappMensagem.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.instagramConta.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.instagramMensagem.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.campanhaDisparoLead.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.followUpConversa.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.followUpTemplate.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.mensagemAtalho.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.metaCapiConfig.deleteMany({ where: { id_empresa: empresaId } });
+  await prisma.metaCapiEvento.deleteMany({ where: { id_empresa: empresaId } });
+
+  await prisma.empresa.delete({ where: { id: empresaId } });
+}
+
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
-  const sessao = await obterSessaoNoServidor();
-  const eSuperAdmin = await validarSuperAdmin(sessao);
-  if (!sessao || !eSuperAdmin) {
-    return NextResponse.json({ erro: "Nao autorizado" }, { status: 403 });
-  }
-
-  const { id } = await params;
-  const { searchParams } = new URL(request.url);
-  const tipo = searchParams.get("tipo");
-
-  if (tipo === "empresa") {
-    if (id === sessao.id_usuario) {
-      return NextResponse.json({ erro: "Nao pode excluir a si mesmo" }, { status: 400 });
+  try {
+    const sessao = await obterSessaoNoServidor();
+    if (!sessao) {
+      return NextResponse.json({ erro: "Sessao invalida" }, { status: 401 });
+    }
+    const eSuperAdmin = await validarSuperAdmin(sessao);
+    if (!eSuperAdmin) {
+      return NextResponse.json({ erro: "Nao autorizado" }, { status: 403 });
     }
 
-    await prisma.empresa.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
-  } else if (tipo === "funcionario") {
-    await prisma.funcionario.delete({ where: { id } });
-    return NextResponse.json({ ok: true });
-  }
+    const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const tipo = searchParams.get("tipo");
 
-  return NextResponse.json({ erro: "Tipo invalido" }, { status: 400 });
+    if (tipo === "empresa") {
+      if (id === sessao.id_usuario) {
+        return NextResponse.json({ erro: "Nao pode excluir a si mesmo" }, { status: 400 });
+      }
+
+      const existente = await prisma.empresa.findUnique({ where: { id } });
+      if (!existente) {
+        return NextResponse.json({ erro: "Usuario nao encontrado" }, { status: 404 });
+      }
+
+      await deletarEmpresaEmCascata(id);
+      return NextResponse.json({ ok: true });
+    } else if (tipo === "funcionario") {
+      await prisma.funcionario.delete({ where: { id } });
+      return NextResponse.json({ ok: true });
+    }
+
+    return NextResponse.json({ erro: "Tipo invalido" }, { status: 400 });
+  } catch (e) {
+    console.error("DELETE usuario erro:", e);
+    return NextResponse.json({ erro: "Erro ao excluir: " + (e as Error).message }, { status: 500 });
+  }
 }

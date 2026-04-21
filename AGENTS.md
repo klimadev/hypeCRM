@@ -4,6 +4,11 @@
 
 Siga estas práticas de design automaticamente — não спрашивайте:
 
+### Propagação Integral
+
+- Qualquer melhoria em funcionalidade base deve propagar automaticamente para módulos dependentes.
+- Exemplo: se o sistema de envio de mensagens ganha suporte a mídia, o sistema de agendamento deve automaticamente herdar esse suporte sem duplicar código.
+
 ### Fundamentos (Norman, Apple, Dieter Rams)
 
 - **Affordance**: Elementos devem mostrar como usá-los. Botões parecem clicáveis, campos parecem editáveis.
@@ -124,12 +129,22 @@ pnpm test:watch        # modo watch
 
 ## Banco de dados
 
+**ANTES DE QUALQUER MIGRATION: pare TODOS os processos PM2 primeiro!**
+
 ```bash
-pnpm db:generate       # atualiza Prisma Client
-pnpm db:migrate:deploy # aplica migracoes
-pnpm db:migrate:status # status
-pnpm seed              # popula dados iniciais
+pm2 delete hypecrm-web-prod  # APENAS o processo do hypeCRM
+pnpm db:generate             # atualiza Prisma Client
+pnpm prisma migrate deploy   # aplica migracoes (NAO usar db:migrate)
+pnpm db:migrate:status       # status
+pnpm seed                    # popula dados iniciais
 ```
+
+### Migrações - Regra de Ouro
+
+- **NUNCA usar `pnpm prisma migrate dev`** - é interativo e pode causar perda de dados
+- **Sempre usar `pnpm prisma migrate deploy`** - aplica migrações existentes sem interação
+- **Se erro "database schema is not empty"**: usar `prisma migrate resolve --applied <nome_migration>`
+- **ANTES de qualquer migration**: fazer backup do banco: `cp prisma/dev.db prisma/dev.db.backup`
 
 ---
 

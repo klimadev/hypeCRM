@@ -41,7 +41,7 @@ export default async function LayoutDashboard({
             </DashboardErrorBoundary>
           </div>
         </main>
-        <MobileBottomDock perfil={sessao.perfil} />
+        <MobileBottomDock perfil={sessao.perfil} isSuperAdmin={sessao.isSuperAdmin} />
       </div>
     </ProvidersWrapper>
   );

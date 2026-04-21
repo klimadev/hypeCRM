@@ -1,25 +1,9 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 const bcrypt = require("bcryptjs");
+const crypto = require("crypto");
 const { PrismaClient } = require("@prisma/client");
 
 const prisma = new PrismaClient();
-
-const ESTAGIOS_PADRAO = [
-  { nome: "Indefinido", tipo: "ABERTO", ordem: 1 },
-  { nome: "Em Atendimento", tipo: "ABERTO", ordem: 2 },
-  { nome: "Proposta Enviada", tipo: "ABERTO", ordem: 3 },
-  { nome: "Pré Aprovação", tipo: "ABERTO", ordem: 4 },
-  { nome: "Fechado", tipo: "GANHO", ordem: 5 },
-  { nome: "Pós Vendas", tipo: "GANHO", ordem: 6 },
-  { nome: "Perdido", tipo: "PERDIDO", ordem: 7 },
-];
-
-async function limparEmpresaExistente(idEmpresa) {
-  await prisma.lead.deleteMany({ where: { id_empresa: idEmpresa } });
-  await prisma.funcionario.deleteMany({ where: { id_empresa: idEmpresa } });
-  await prisma.pdv.deleteMany({ where: { id_empresa: idEmpresa } });
-  await prisma.estagioFunil.deleteMany({ where: { id_empresa: idEmpresa } });
-}
 
 async function main() {
   const senhaEmpresa = await bcrypt.hash("123456", 10);
@@ -28,119 +12,101 @@ async function main() {
   const empresaEmail = "empresa.demo@hypecrm.com";
   const empresaAtual = await prisma.empresa.findUnique({ where: { email: empresaEmail } });
 
+  const empresaId = empresaAtual?.id || crypto.randomUUID();
+
   if (empresaAtual) {
-    await limparEmpresaExistente(empresaAtual.id);
+    await prisma.lead.deleteMany({ where: { id_empresa: empresaId } });
+    await prisma.funcionario.deleteMany({ where: { id_empresa: empresaId } });
+    await prisma.pdv.deleteMany({ where: { id_empresa: empresaId } });
+    await prisma.$executeRaw`DELETE FROM EstagioFunil WHERE id_empresa = ${empresaId}`;
+    await prisma.$executeRaw`DELETE FROM Funil WHERE id_empresa = ${empresaId}`;
   }
 
-  const empresa = empresaAtual
-    ? await prisma.empresa.update({
-        where: { id: empresaAtual.id },
-        data: { nome: "HYPE CRM Demo", senha_hash: senhaEmpresa },
-      })
-    : await prisma.empresa.create({
-        data: {
-          nome: "HYPE CRM Demo",
-          email: empresaEmail,
-          senha_hash: senhaEmpresa,
-        },
-      });
-
-  await prisma.estagioFunil.createMany({
-    data: ESTAGIOS_PADRAO.map((estagio) => ({
-      ...estagio,
-      id_empresa: empresa.id,
-    })),
-  });
-
-  await prisma.pdv.createMany({
-    data: [
-      { id_empresa: empresa.id, nome: "PDV Centro" },
-      { id_empresa: empresa.id, nome: "PDV Zona Sul" },
-    ],
-  });
-
-  const [pdvCentro, pdvZonaSul] = await prisma.pdv.findMany({
-    where: { id_empresa: empresa.id },
-    orderBy: { nome: "asc" },
-  });
-
-  await prisma.funcionario.createMany({
-    data: [
-      {
-        id_empresa: empresa.id,
-        id_pdv: pdvCentro.id,
-        nome: "Marina Gerente",
-        email: "gerente.demo@hypecrm.com",
-        senha_hash: senhaEquipe,
-        cargo: "GERENTE",
+  if (!empresaAtual) {
+    await prisma.empresa.create({
+      data: {
+        id: empresaId,
+        nome: "HYPE CRM Demo",
+        email: empresaEmail,
+        senha_hash: senhaEmpresa,
+        isSuperAdmin: true,
       },
-      {
-        id_empresa: empresa.id,
-        id_pdv: pdvCentro.id,
-        nome: "Joao Vendas",
-        email: "colaborador1.demo@hypecrm.com",
-        senha_hash: senhaEquipe,
-        cargo: "COLABORADOR",
-      },
-      {
-        id_empresa: empresa.id,
-        id_pdv: pdvZonaSul.id,
-        nome: "Ana Vendas",
-        email: "colaborador2.demo@hypecrm.com",
-        senha_hash: senhaEquipe,
-        cargo: "COLABORADOR",
-      },
-    ],
-  });
-
-  const funcionarios = await prisma.funcionario.findMany({
-    where: { id_empresa: empresa.id, ativo: true },
-    orderBy: { nome: "asc" },
-  });
-  const estagios = await prisma.estagioFunil.findMany({
-    where: { id_empresa: empresa.id },
-    orderBy: { ordem: "asc" },
-  });
-
-  const estagioIndefinido = estagios.find((estagio) => estagio.ordem === 1);
-  const estagioProposta = estagios.find((estagio) => estagio.ordem === 3);
-  const estagioFechado = estagios.find((estagio) => estagio.tipo === "GANHO");
-
-  if (!estagioIndefinido || !estagioProposta || !estagioFechado) {
-    throw new Error("Estagios padrao nao encontrados para seed.");
+    });
+  } else {
+    await prisma.empresa.update({
+      where: { id: empresaId },
+      data: { nome: "HYPE CRM Demo", senha_hash: senhaEmpresa, isSuperAdmin: true },
+    });
   }
 
-  await prisma.lead.createMany({
-    data: [
-      {
-        id_empresa: empresa.id,
-        id_funcionario: funcionarios[0].id,
-        id_estagio: estagioIndefinido.id,
-        nome: "Carlos Almeida",
-        telefone: "(11) 99876-1234",
-        valor_oportunidade: 85000,
-        origem: "MANUAL",
-      },
-      {
-        id_empresa: empresa.id,
-        id_funcionario: funcionarios[1].id,
-        id_estagio: estagioProposta.id,
-        nome: "Patricia Souza",
-        telefone: "(11) 98888-4321",
-        valor_oportunidade: 120000,
-        observacoes: "Cliente pediu retorno na sexta.",
-        origem: "MANUAL",
-      },
-      {
-        id_empresa: empresa.id,
-        id_funcionario: funcionarios[2].id,
-        id_estagio: estagioFechado.id,
-        nome: "Rafael Lima",
-        telefone: "(11) 97777-6543",
-        valor_oportunidade: 98000,
-        origem: "MANUAL",
-      },
-    ],
+  const funilId = crypto.randomUUID();
+  await prisma.$executeRaw`
+    INSERT INTO Funil (id, nome, slug, id_empresa, criado_em, atualizado_em)
+    VALUES (${funilId}, 'Funil Principal', 'funil-principal', ${empresaId}, datetime('now'), datetime('now'))
+  `;
+
+  const estagios = [
+    { nome: "Indefinido", tipo: "ABERTO", ordem: 1 },
+    { nome: "Em Atendimento", tipo: "ABERTO", ordem: 2 },
+    { nome: "Proposta Enviada", tipo: "ABERTO", ordem: 3 },
+    { nome: "Pré Aprovação", tipo: "ABERTO", ordem: 4 },
+    { nome: "Fechado", tipo: "GANHO", ordem: 5 },
+    { nome: "Pós Vendas", tipo: "GANHO", ordem: 6 },
+    { nome: "Perdido", tipo: "PERDIDO", ordem: 7 },
+  ];
+
+  for (const estagio of estagios) {
+    await prisma.$executeRaw`
+      INSERT INTO EstagioFunil (id, nome, tipo, ordem, id_empresa, id_funil, criado_em, atualizado_em)
+      VALUES (${crypto.randomUUID()}, ${estagio.nome}, ${estagio.tipo}, ${estagio.ordem}, ${empresaId}, ${funilId}, datetime('now'), datetime('now'))
+    `;
+  }
+
+  const pdvCentroId = crypto.randomUUID();
+  const pdvZonaSulId = crypto.randomUUID();
+
+  await prisma.pdv.create({
+    data: { id: pdvCentroId, id_empresa: empresaId, nome: "PDV Centro" },
+  });
+  await prisma.pdv.create({
+    data: { id: pdvZonaSulId, id_empresa: empresaId, nome: "PDV Zona Sul" },
+  });
+
+  await prisma.funcionario.create({
+    data: {
+      id: crypto.randomUUID(),
+      id_empresa: empresaId,
+      id_pdv: pdvCentroId,
+      nome: "Marina Gerente",
+      email: "gerente.demo@hypecrm.com",
+      senha_hash: senhaEquipe,
+      cargo: "GERENTE",
+      ativo: true,
+    },
+  });
+  await prisma.funcionario.create({
+    data: {
+      id: crypto.randomUUID(),
+      id_empresa: empresaId,
+      id_pdv: pdvCentroId,
+      nome: "Joao Vendas",
+      email: "colaborador1.demo@hypecrm.com",
+      senha_hash: senhaEquipe,
+      cargo: "COLABORADOR",
+      ativo: true,
+    },
+  });
+  await prisma.funcionario.create({
+    data: {
+      id: crypto.randomUUID(),
+      id_empresa: empresaId,
+      id_pdv: pdvZonaSulId,
+      nome: "Ana Vendas",
+      email: "colaborador2.demo@hypecrm.com",
+      senha_hash: senhaEquipe,
+      cargo: "COLABORADOR",
+      ativo: true,
+    },
   });
 
   console.log("Seed concluido com sucesso.");

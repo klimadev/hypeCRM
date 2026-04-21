@@ -46,7 +46,7 @@ export async function GET(request: Request) {
       ? prisma.empresa.count()
       : tipo === "funcionario"
       ? prisma.funcionario.count()
-      : prisma.empresa.count() + prisma.funcionario.count(),
+      : Promise.all([prisma.empresa.count(), prisma.funcionario.count()]).then(([a, b]) => a + b),
   ]);
 
   const usuarios = [
@@ -76,10 +76,12 @@ export async function GET(request: Request) {
       ? usuarios.slice(offset, offset + limite)
       : usuarios;
 
+  const totalNum = typeof total === "number" ? total : 0;
+
   return NextResponse.json({
     usuarios: paginados,
-    total,
+    total: totalNum,
     pagina,
-    totalPaginas: Math.ceil(total / limite),
+    totalPaginas: Math.ceil(totalNum / limite),
   });
 }

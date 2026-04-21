@@ -264,8 +264,8 @@ model Funil {
   ordem           Int                 @default(0)
   criado_em       DateTime            @default(now())
   atualizado_em   DateTime            @default(now())
-  Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
-  Pdv             Pdv?                @relation(fields: [id_pdv], references: [id])
+  Empresa         Empresa             @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  Pdv             Pdv?                @relation(fields: [id_pdv], references: [id], onDelete: Cascade)
   EstagioFunil    EstagioFunil[]
   Negocio         Negocio[]
   logs_anteriores NegocioEstagioLog[] @relation("NegocioLogFunilAnterior")
@@ -288,8 +288,8 @@ model EstagioFunil {
   estilos         String?
   criado_em       DateTime            @default(now())
   atualizado_em   DateTime            @default(now())
-  Empresa         Empresa             @relation(fields: [id_empresa], references: [id])
-  Funil           Funil               @relation(fields: [id_funil], references: [id])
+  Empresa         Empresa             @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  Funil           Funil               @relation(fields: [id_funil], references: [id], onDelete: Cascade)
   Lead            Lead[]
   Negocio         Negocio[]
   logs_anteriores NegocioEstagioLog[] @relation("NegocioLogEstagioAnterior")
@@ -312,8 +312,8 @@ model Funcionario {
   criado_em     DateTime  @default(now())
   atualizado_em DateTime  @default(now())
   inativado_em  DateTime?
-  Empresa       Empresa   @relation(fields: [id_empresa], references: [id])
-  Pdv           Pdv       @relation(fields: [id_pdv], references: [id])
+  Empresa       Empresa   @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  Pdv           Pdv       @relation(fields: [id_pdv], references: [id], onDelete: Cascade)
   Lead          Lead[]
   Negocio       Negocio[]
 
@@ -346,8 +346,8 @@ model Lead {
   dados_extras         String?
   ativo                Boolean                @default(true)
   AutomacaoAgendamento AutomacaoAgendamento[]
-  Empresa              Empresa                @relation(fields: [id_empresa], references: [id])
-  Funcionario          Funcionario            @relation(fields: [id_funcionario], references: [id])
+  Empresa              Empresa                @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
+  Funcionario          Funcionario            @relation(fields: [id_funcionario], references: [id], onDelete: Cascade)
   Negocio              Negocio?               @relation("LeadOwnership", fields: [id_negocio], references: [id], onDelete: SetNull)
   EstagioFunil         EstagioFunil           @relation(fields: [id_estagio], references: [id])
   LeadEstagioLog       LeadEstagioLog[]
@@ -386,12 +386,12 @@ model Negocio {
   chave_migracao         String?                @unique
   criado_em              DateTime               @default(now())
   atualizado_em          DateTime               @default(now())
-  Empresa                Empresa                @relation(fields: [id_empresa], references: [id])
+  Empresa                Empresa                @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
   Lead                   Lead?                  @relation("NegocioLeadPrincipal", fields: [id_lead], references: [id], onDelete: SetNull)
   Leads                  Lead[]                 @relation("LeadOwnership")
-  Funil                  Funil                  @relation(fields: [id_funil], references: [id])
-  EstagioFunil           EstagioFunil           @relation(fields: [id_estagio], references: [id])
-  Funcionario            Funcionario            @relation(fields: [id_funcionario], references: [id])
+  Funil                  Funil                  @relation(fields: [id_funil], references: [id], onDelete: Cascade)
+  EstagioFunil           EstagioFunil           @relation(fields: [id_estagio], references: [id], onDelete: Cascade)
+  Funcionario            Funcionario            @relation(fields: [id_funcionario], references: [id], onDelete: Cascade)
   ProdutoPrincipal       Produto?               @relation("NegocioProdutoPrincipal", fields: [id_produto_principal], references: [id], onDelete: SetNull)
   Parcela                Parcela[]
   NegocioProduto         NegocioProduto[]
@@ -432,7 +432,7 @@ model LeadProduto {
   atualizado_em   DateTime @default(now())
   Produto         Produto  @relation(fields: [id_produto], references: [id])
   Lead            Lead     @relation(fields: [id_lead], references: [id], onDelete: Cascade)
-  Empresa         Empresa  @relation(fields: [id_empresa], references: [id])
+  Empresa         Empresa  @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
 
   @@index([id_produto])
   @@index([id_lead])
@@ -614,7 +614,7 @@ model NegocioProduto {
   atualizado_em   DateTime @default(now())
   Produto         Produto  @relation(fields: [id_produto], references: [id])
   Negocio         Negocio  @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
-  Empresa         Empresa  @relation(fields: [id_empresa], references: [id])
+  Empresa         Empresa  @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
 
   @@index([id_produto])
   @@index([id_negocio])
@@ -634,7 +634,7 @@ model Parcela {
   status           String    @default("PENDENTE")
   criado_em        DateTime  @default(now())
   atualizado_em    DateTime  @default(now())
-  Empresa          Empresa   @relation(fields: [id_empresa], references: [id])
+  Empresa          Empresa   @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
   Lead             Lead      @relation(fields: [id_lead], references: [id], onDelete: Cascade)
   Negocio          Negocio?  @relation(fields: [id_negocio], references: [id], onDelete: Cascade)
 
@@ -656,7 +656,7 @@ model Pdv {
   Funcionario           Funcionario[]
   Funil                Funil[]
   WhatsappInstancia     WhatsappInstancia? @relation(fields: [id_whatsapp_instancia], references: [id])
-  Empresa               Empresa            @relation(fields: [id_empresa], references: [id])
+  Empresa               Empresa            @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
 
   @@index([id_empresa, id_whatsapp_instancia])
   @@index([id_empresa])
@@ -692,7 +692,7 @@ model Produto {
   LeadProduto      LeadProduto[]
   NegocioProduto   NegocioProduto[]
   NegocioPrincipal Negocio[]        @relation("NegocioProdutoPrincipal")
-  Empresa          Empresa          @relation(fields: [id_empresa], references: [id])
+  Empresa          Empresa          @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
 
   @@unique([id_empresa, slug])
   @@index([id_empresa, ativo])
@@ -722,7 +722,7 @@ model RegistroIP {
   id_empresa String
   user_agent String?
   criado_em  DateTime @default(now())
-  Empresa    Empresa  @relation(fields: [id_empresa], references: [id])
+  Empresa    Empresa  @relation(fields: [id_empresa], references: [id], onDelete: Cascade)
 
   @@unique([ip_address, email_hash])
   @@index([criado_em])
