@@ -83,18 +83,9 @@ function groupMessagesByDate(msgs: UnifiedChatMessage[]) {
 function MediaPreview({ instanceName, message }: { instanceName: string; message: UnifiedChatMessage }) {
   const [mediaUrl, setMediaUrl] = useState<string | null>(message.mediaUrl ?? null);
   const [seconds, setSeconds] = useState<number | null>(message.seconds ?? null);
-  const [loading, setLoading] = useState(!message.mediaUrl);
+  const [loading, setLoading] = useState(Boolean(message.hasMedia && !message.mediaUrl));
   const [erro, setErro] = useState(false);
   const cacheKey = `${instanceName}:${message.id}`;
-
-  useEffect(() => {
-    setMediaUrl(message.mediaUrl ?? null);
-    setSeconds(message.seconds ?? null);
-  }, [message.mediaUrl, message.seconds, message.id]);
-
-  useEffect(() => {
-    setLoading(Boolean(message.hasMedia && !message.mediaUrl));
-  }, [message.hasMedia, message.mediaUrl, message.id]);
 
   useEffect(() => {
     let mounted = true;
@@ -260,7 +251,7 @@ function MessageBubble({ instanceName, msg }: { instanceName: string; msg: Unifi
           <p className="mb-1 text-[11px] font-medium text-[var(--brand)]">{msg.pushName}</p>
         ) : null}
 
-        {msg.hasMedia ? <MediaPreview instanceName={instanceName} message={msg} /> : null}
+        {msg.hasMedia ? <MediaPreview key={`${msg.id}:${msg.mediaUrl ?? ""}:${msg.seconds ?? ""}:${String(msg.hasMedia)}`} instanceName={instanceName} message={msg} /> : null}
 
         {hasMediaCaption ? (
           <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed mt-2">{msg.text}</p>

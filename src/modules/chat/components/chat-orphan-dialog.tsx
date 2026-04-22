@@ -97,8 +97,11 @@ export function ChatOrphanDialog({
     }
 
     let ativo = true;
-    setCarregandoDados(true);
-    setErroDados(null);
+    const inicializacao = setTimeout(() => {
+      if (!ativo) return;
+      setCarregandoDados(true);
+      setErroDados(null);
+    }, 0);
 
     void Promise.all([
       fetch("/api/pipelines", { cache: "no-store" }).then((res) => res.json()),
@@ -146,6 +149,7 @@ export function ChatOrphanDialog({
 
     return () => {
       ativo = false;
+      clearTimeout(inicializacao);
     };
   }, [open, precisaSelecionarPipeline]);
 

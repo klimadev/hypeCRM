@@ -45,6 +45,12 @@ Thumbs.db
 /prisma/dev.db.backup
 /prisma/dev.db.backup-*
 
+# Local SQLite database files
+/prisma/*.db
+/prisma/*.db-shm
+/prisma/*.db-wal
+/prisma/prisma/
+
 # Temporary and ad-hoc exports
 /tmp_*.json
 /*.tmp

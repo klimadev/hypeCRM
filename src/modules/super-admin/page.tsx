@@ -35,7 +35,13 @@ export function ModuloSuperAdmin() {
   };
 
   useEffect(() => {
-    carregarUsuarios();
+    const timer = setTimeout(() => {
+      void carregarUsuarios();
+    }, 0);
+
+    return () => {
+      clearTimeout(timer);
+    };
   }, []);
 
   const handleEditar = async (e: React.FormEvent) => {
