@@ -70,6 +70,7 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
       titulo: "Super Admin",
       itens: [
         { href: "/super-admin/usuarios", label: "Usuários", descricao: "Gerenciamento global de usuários", icon: Shield },
+        { href: "/super-admin/feedbacks", label: "Feedbacks", descricao: "Bugs e sugestões", icon: MessageSquare },
       ],
     });
   }

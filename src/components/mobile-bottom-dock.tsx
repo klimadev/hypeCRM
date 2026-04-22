@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ComponentType } from "react";
-import { BarChart3, Blocks, LayoutGrid, MessageCircle, Settings2, Target, WalletCards, Users, MoreHorizontal } from "lucide-react";
+import { BarChart3, Blocks, LayoutGrid, MessageCircle, MessageSquare, Settings2, Target, WalletCards, Users, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -53,6 +53,7 @@ const itensAgrupados: DockItem[] = [
 
 const itensSuperAdmin: DockItem[] = [
   { href: "/super-admin/usuarios", label: "Usuários", icon: Blocks },
+  { href: "/super-admin/feedbacks", label: "Feedbacks", icon: MessageSquare },
 ];
 
 export function MobileBottomDock({ perfil, isSuperAdmin }: MobileBottomDockProps) {

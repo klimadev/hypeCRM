@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import { BotaoSair } from "@/components/botao-sair";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
+import { FeedbackTrigger } from "@/components/feedback-trigger";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -93,6 +94,8 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
           </div>
 
           <div className={cn("grid items-center gap-2", expandida ? "grid-cols-2" : "grid-cols-1 justify-items-center")}>
+            <FeedbackTrigger isLoggedIn={Boolean(sessao?.id_usuario)} />
+
             {expandida ? (
               <ThemeToggleIcon />
             ) : (

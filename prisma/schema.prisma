@@ -252,6 +252,49 @@ model Empresa {
   CampanhaDisparoLead CampanhaDisparoLead[]
 }
 
+model FeedbackItem {
+  id              String            @id
+  id_empresa     String
+  id_usuario     String
+  perfil_usuario String
+  tipo           String
+  titulo         String
+  descricao       String
+  impacto       String?
+  status         String            @default("NOVO")
+  prioridade     String            @default("MEDIA")
+  rota_origem    String?
+  modulo_origem  String?
+  url_origem     String?
+  viewport       String?
+  user_agent     String?
+  build_ref     String?
+  nota_interna   String?
+  criado_em      DateTime          @default(now())
+  atualizado_em  DateTime          @default(now())
+  FeedbackEvento FeedbackEvento[]
+
+  @@index([id_empresa, status])
+  @@index([id_empresa, tipo])
+  @@index([id_empresa, criado_em])
+  @@index([status])
+}
+
+model FeedbackEvento {
+  id           String   @id
+  id_feedback  String
+  acao         String
+  autor_id     String
+  autor_tipo   String
+  de_status   String?
+  para_status String?
+  meta_json   String?
+  criado_em   DateTime @default(now())
+  FeedbackItem FeedbackItem @relation(fields: [id_feedback], references: [id], onDelete: Cascade)
+
+  @@index([id_feedback, criado_em])
+}
+
 model Funil {
   id              String              @id
   id_empresa      String

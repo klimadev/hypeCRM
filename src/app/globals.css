@@ -70,6 +70,12 @@
   --radius-card: 16px;
   --radius-shell: 28px;
 
+  --z-overlay-backdrop: 50;
+  --z-overlay-dialog: 51;
+  --z-overlay-toast: 100;
+  --overlay-toast-offset: 1rem;
+  --overlay-toast-max-width: 24rem;
+
   --ease-productive: cubic-bezier(0.2, 0.8, 0.2, 1);
   --ease-snappy: cubic-bezier(0.175, 0.885, 0.32, 1.275);
   --duration-fast: 140ms;
