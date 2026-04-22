@@ -37,16 +37,13 @@ Thumbs.db
 .idea/
 .vscode/
 
-# Runtime, local database and generated files
-*.pem
-/prisma/dev.db
-/prisma/dev.db-shm
-/prisma/dev.db-wal
+# Playwright test artifacts
+.playwright-mcp/
+*.png
+
+# Local database backups
+/prisma/dev.db.backup
 /prisma/dev.db.backup-*
-/prisma/verify-fix.db
-/prisma/verify-fix.db-*
-/prisma/prisma/
-/src/generated/prisma/
 
 # Temporary and ad-hoc exports
 /tmp_*.json
