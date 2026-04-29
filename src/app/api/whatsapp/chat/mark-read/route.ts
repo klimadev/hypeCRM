@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
     const mensagensParaMarcar = snapshot.messages
       .filter((mensagem) => mensagem.fromMe === false)
       .map((mensagem) => ({
-        remoteJid: mensagem.remoteJidAlt ?? mensagem.remoteJid,
+        remoteJid: mensagem.remoteJid,
         id: mensagem.id,
       }))
       .filter((mensagem) => mensagem.remoteJid.trim().length > 0 && mensagem.id.trim().length > 0);

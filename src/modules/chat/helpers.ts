@@ -63,6 +63,10 @@ export function obterNomeChat(chat: ChatUnificado): string {
   );
 }
 
+export function marcarChatComoLidoLocalmente(chat: ChatUnificado): ChatUnificado {
+  return { ...chat, unreadCount: 0 };
+}
+
 export function obterMetaOrigemLead(origem?: string | null): MetaOrigemLead | null {
   switch (origem) {
     case "ANUNCIO_CTWA":

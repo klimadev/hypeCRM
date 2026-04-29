@@ -82,6 +82,7 @@ export type UseChatModuleReturn = {
   chats: ChatUnificado[];
   chatSelecionado: ChatUnificado | null;
   setChatSelecionado: (chat: ChatUnificado | null) => void;
+  marcarChatSelecionadoComoLido: () => void;
   busca: string;
   setBusca: (termo: string) => void;
   filtroOrigem: "todos" | "anuncio" | "whatsapp" | "manual";

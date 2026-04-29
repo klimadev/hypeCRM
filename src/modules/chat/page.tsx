@@ -106,6 +106,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
               onRegistrarLead={vm.onRegistrarComoLead}
               onCriarNegocio={vm.onCriarNegocio}
               onTransferirLead={vm.onTransferirLead}
+              onMarcarComoLido={vm.marcarChatSelecionadoComoLido}
             />
           ) : (
             <div className="hidden h-full items-center justify-center p-8 text-center md:flex">

@@ -64,9 +64,10 @@ type ChatPanelProps = {
   onRegistrarLead: (params: { telefone: string; nome?: string; id_pdv?: string; id_funcionario?: string }) => Promise<void>;
   onCriarNegocio: (params: OrphanCriarNegocioParams) => Promise<void>;
   onTransferirLead: (params: { idLead: string; idFuncionario: string }) => Promise<void>;
+  onMarcarComoLido: () => void;
 };
 
-export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNegocio, onTransferirLead }: ChatPanelProps) {
+export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNegocio, onTransferirLead, onMarcarComoLido }: ChatPanelProps) {
   const [dialogOpen, setDialogOpen] = useState<"lead" | "negocio" | null>(null);
   const [transferirAberto, setTransferirAberto] = useState(false);
   const [followUp, setFollowUp] = useState<FollowUpConversa | null>(null);
@@ -115,6 +116,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
       if (resultado.ok) {
         const viewedKey = buildWhatsappViewedKey(chat.instanceName, chat.remoteJid);
         markMessagesAsViewed(viewedKey, []);
+        onMarcarComoLido();
         addToast({ type: "success", title: "Mensagens marcadas como lidas" });
       } else {
         addToast({ type: "error", title: "Erro ao marcar como lido", description: resultado.erro });
@@ -122,7 +124,7 @@ export function ChatPanel({ chat, perfil, onVoltar, onRegistrarLead, onCriarNego
     } finally {
       setMarcandoLido(false);
     }
-  }, [addToast, chat.canal, chat.instanceName, chat.remoteJid, chat.unreadCount, marcandoLido]);
+  }, [addToast, chat.canal, chat.instanceName, chat.remoteJid, chat.unreadCount, marcandoLido, onMarcarComoLido]);
 
   const handlePrimaryAction = useCallback(() => {
     if (acaoPrimaria.tipo === "registrar_lead") {

@@ -176,7 +176,7 @@ export async function enviarMensagemEvolution(instanceName: string, number: stri
 export async function marcarMensagensComoLidasEvolution(instanceName: string, mensagens: Array<{ remoteJid: string; id: string }>) {
   if (!mensagens.length) return;
 
-  await fetch(`${EVOLUTION_API_URL}/chat/markMessageAsRead/${instanceName}`, {
+  const response = await fetch(`${EVOLUTION_API_URL}/chat/markMessageAsRead/${instanceName}`, {
     method: "POST",
     headers: payloadHeaders(),
     body: JSON.stringify({
@@ -186,7 +186,18 @@ export async function marcarMensagensComoLidasEvolution(instanceName: string, me
         fromMe: false,
       })),
     }),
-  }).catch(() => undefined);
+  });
+
+  if (!response.ok) {
+    const erro = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+    const mensagem =
+      typeof erro.message === "string"
+        ? erro.message
+        : typeof erro.error === "string"
+          ? erro.error
+          : "Erro ao marcar mensagens como lidas.";
+    throw new Error(mensagem);
+  }
 }
 
 export async function buscarMediaBase64(instanceName: string, messageId: string): Promise<{

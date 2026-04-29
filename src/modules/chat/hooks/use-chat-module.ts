@@ -3,7 +3,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback, useDeferredValue, startTransition } from "react";
 import { useChatData } from "./use-chat-data";
 import { useToast } from "@/components/ui/toast";
-import { obterFiltroOrigemLead } from "../helpers";
+import { marcarChatComoLidoLocalmente, obterFiltroOrigemLead } from "../helpers";
 import type {
   ChatUnificado,
   UseChatModuleReturn,
@@ -197,6 +197,16 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
     setFiltroInstancia(instancia);
   }, []);
 
+  const marcarChatSelecionadoComoLido = useCallback(() => {
+    setChatSelecionado((chatAtual) => {
+      if (!chatAtual) return chatAtual;
+
+      const chatLido = marcarChatComoLidoLocalmente(chatAtual);
+      atualizarChatLocal(chatAtual.instanceName, chatAtual.remoteJid, marcarChatComoLidoLocalmente);
+      return chatLido;
+    });
+  }, [atualizarChatLocal]);
+
   const onRegistrarComoLead = async (params: OrphanRegistrarLeadParams) => {
     try {
       const res = await fetch("/api/chat/orphan/registrar-lead", {
@@ -330,6 +340,7 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
     chats: chatsOrdenados,
     chatSelecionado,
     setChatSelecionado,
+    marcarChatSelecionadoComoLido,
     busca,
     setBusca,
     carregando,
