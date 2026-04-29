@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -62,13 +62,19 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
 
   const [pixelId, setPixelId] = useState(vm.config?.pixelId ?? "");
   const [accessToken, setAccessToken] = useState(vm.config?.accessToken ?? "");
-  const [eventName, setEventName] = useState(vm.config?.eventName ?? "lead_closed");
   const [ativo, setAtivo] = useState(vm.config?.ativo ?? false);
   const [feedbackErro, setFeedbackErro] = useState<string | null>(null);
   const [feedbackSucesso, setFeedbackSucesso] = useState<string | null>(null);
   const [dadosConexao, setDadosConexao] = useState<MetaCapiTestResult | null>(null);
   const [testando, setTestando] = useState(false);
   const [salvando, setSalvando] = useState(false);
+
+  useEffect(() => {
+    if (!vm.config) return;
+    setPixelId(vm.config.pixelId ?? "");
+    setAccessToken(vm.config.accessToken ?? "");
+    setAtivo(vm.config.ativo ?? false);
+  }, [vm.config]);
 
   const totalEventos = vm.eventos.length;
   const eventosEnviados = vm.eventos.filter((e) => e.evento_status === "ENVIADO").length;
@@ -89,7 +95,6 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
     const resultado = await vm.salvarConfig({
       pixelId: pixelId.trim(),
       accessToken: accessToken.trim(),
-      eventName: eventName.trim(),
       ativo,
     });
 
@@ -229,11 +234,12 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSalvar} className="space-y-4">
+              <form onSubmit={handleSalvar} autoComplete="off" className="space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--text-primary)]">Pixel ID</label>
                   <Input
                     autoComplete="off"
+                    name="meta-capi-pixel-id"
                     placeholder="1234567890"
                     value={pixelId}
                     onChange={(e) => setPixelId(e.target.value)}
@@ -243,23 +249,28 @@ export function ModuloMeta({ perfil }: ModuloMetaProps) {
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-[var(--text-primary)]">Access Token</label>
                   <Input
-                    autoComplete="off"
+                    autoComplete="new-password"
                     placeholder="EAAC..."
                     type="password"
-                    name="meta-access-token"
+                    name="meta-capi-access-token"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    data-lpignore="true"
+                    data-1p-ignore="true"
                     value={accessToken}
                     onChange={(e) => setAccessToken(e.target.value)}
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-[var(--text-primary)]">Nome do Evento</label>
-                  <Input
-                    autoComplete="off"
-                    placeholder="lead_closed"
-                    value={eventName}
-                    onChange={(e) => setEventName(e.target.value)}
-                  />
+                  <label className="text-sm font-medium text-[var(--text-primary)]">Evento enviado</label>
+                  <div className="flex min-h-10 items-center rounded-md border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 text-sm text-[var(--text-primary)]">
+                    Purchase
+                  </div>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    O evento da Meta fica fixo como conversão de compra, com envio de valor e moeda em cada fechamento.
+                  </p>
                 </div>
 
                 <div className="flex items-center gap-2">

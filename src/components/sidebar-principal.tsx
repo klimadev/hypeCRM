@@ -1,11 +1,12 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
+import { PanelTopClose } from "lucide-react";
 import { BotaoSair } from "@/components/botao-sair";
 import { ThemeToggleIcon } from "@/components/theme-toggle";
 import { FeedbackTrigger } from "@/components/feedback-trigger";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -48,84 +49,70 @@ export function SidebarPrincipal({ sessao, dadosUsuario }: Props) {
           }
         }}
       >
-        <div className={cn("flex items-center", expandida ? "justify-start px-1" : "justify-center")}>
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[18px] border border-[color:rgba(255,255,255,0.08)] bg-[color:rgba(255,255,255,0.04)] shadow-[var(--shadow-sm)]">
-            <div className="relative h-10 w-10 overflow-hidden rounded-[15px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
-              <Image src="/logo.png" alt="HYPE CRM" fill className="object-cover" />
-            </div>
-          </div>
+        <div
+          className={cn(
+            "flex items-center rounded-[22px] border border-[color:rgba(255,255,255,0.08)] bg-[color:rgba(255,255,255,0.04)] transition-[padding,background-color,border-color] duration-200 ease-[var(--ease-productive)]",
+            expandida ? "gap-3 px-2.5 py-2.5" : "justify-center border-transparent bg-transparent px-0 py-0",
+          )}
+        >
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            title={`${nomeExibicao} • ${cargoExibicao}`}
+            aria-label={`${nomeExibicao}, ${cargoExibicao}`}
+            className="h-10 w-10 shrink-0 rounded-full border-[var(--brand)] bg-[linear-gradient(135deg,var(--brand),var(--info-alt))] text-[10px] font-semibold uppercase text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:brightness-105"
+          >
+            {iniciaisNome}
+          </Button>
           {expandida ? (
-            <div className="min-w-0 pl-3">
-              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-[var(--text-tertiary)]">Workspace</p>
-              <p className="truncate text-sm font-semibold text-[var(--text-primary)]">HYPE CRM</p>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{nomeExibicao}</p>
+              <p className="truncate text-xs text-[var(--text-tertiary)]">HYPE CRM • {cargoExibicao}</p>
             </div>
           ) : null}
         </div>
 
-        <nav className="mt-4 flex w-full flex-1 flex-col gap-3 overflow-y-auto" aria-label="Navegação principal">
+        <nav className="sidebar-scroll-invisible mt-4 flex w-full flex-1 flex-col gap-3 overflow-y-auto pr-1" aria-label="Navegação principal">
           {secoes.map((secao) => (
             <SidebarNavSection key={secao.titulo} section={secao} expanded={expandida} pathname={pathname} onNavigate={onNavigate} resumo={resumo ?? undefined} />
           ))}
         </nav>
 
         <div className="mt-auto flex w-full flex-col gap-2 pt-3">
-          <div
-            className={cn(
-              "flex items-center rounded-[22px] border border-[color:rgba(255,255,255,0.08)] bg-[color:rgba(255,255,255,0.04)] transition-[padding,background-color,border-color] duration-200 ease-[var(--ease-productive)]",
-              expandida ? "gap-3 px-2.5 py-2.5" : "justify-center border-transparent bg-transparent px-0 py-0",
-            )}
-          >
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              title={`${nomeExibicao} • ${cargoExibicao}`}
-              aria-label={`${nomeExibicao}, ${cargoExibicao}`}
-              className="h-10 w-10 shrink-0 rounded-full border-[var(--brand)] bg-[linear-gradient(135deg,var(--brand),var(--info-alt))] text-[10px] font-semibold uppercase text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:brightness-105"
-            >
-              {iniciaisNome}
-            </Button>
-            {expandida ? (
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-[var(--text-primary)]">{nomeExibicao}</p>
-                <p className="truncate text-xs text-[var(--text-secondary)]">{cargoExibicao}</p>
-              </div>
-            ) : null}
-          </div>
-
-          <div className={cn("grid items-center gap-2", expandida ? "grid-cols-2" : "grid-cols-1 justify-items-center")}>
-            <FeedbackTrigger isLoggedIn={Boolean(sessao?.id_usuario)} />
-
-            {expandida ? (
+          {expandida ? (
+            <div className="grid grid-cols-3 items-center gap-2">
+              <FeedbackTrigger isLoggedIn={Boolean(sessao?.id_usuario)} />
               <ThemeToggleIcon />
-            ) : (
-              <Tooltip content="Alternar tema" side="right">
-                <span>
-                  <ThemeToggleIcon />
-                </span>
-              </Tooltip>
-            )}
-
-            {expandida ? (
               <BotaoSair
                 apenasIcone
-                className={cn(
-                  "h-9 w-9 rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]",
-                )}
+                className="h-9 w-9 rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]"
               />
-            ) : (
-              <Tooltip content="Encerrar sessão" side="right">
+            </div>
+          ) : (
+            <Popover>
+              <Tooltip content="Ações rápidas" side="right">
                 <span>
-                  <BotaoSair
-                    apenasIcone
-                    className={cn(
-                      "h-9 w-9 rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]",
-                    )}
-                  />
+                  <PopoverTrigger
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] transition-[border-color,background-color,color,transform] duration-200 hover:-translate-y-px hover:border-[var(--brand-ring)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]"
+                    aria-label="Abrir ações rápidas"
+                  >
+                    <PanelTopClose className="h-4 w-4" />
+                  </PopoverTrigger>
                 </span>
               </Tooltip>
-            )}
-          </div>
+              <PopoverContent className="w-44 p-2">
+                <div className="grid grid-cols-3 gap-2">
+                  <FeedbackTrigger isLoggedIn={Boolean(sessao?.id_usuario)} />
+                  <ThemeToggleIcon />
+                  <BotaoSair
+                    apenasIcone
+                    className="h-9 w-9 rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)] hover:text-[var(--text-primary)]"
+                  />
+                </div>
+              </PopoverContent>
+            </Popover>
+          )}
         </div>
       </div>
     </aside>

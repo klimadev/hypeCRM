@@ -36,6 +36,7 @@ export function useChatData(busca?: string) {
   const [chats, setChats] = useState<ChatUnificado[]>([]);
   // Keep the first render deterministic across SSR and hydration.
   const [carregando, setCarregando] = useState(true);
+  const [carregandoMais, setCarregandoMais] = useState(false);
   const [atualizandoInbox, setAtualizandoInbox] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [sseConectado, setSseConectado] = useState(false);
@@ -57,6 +58,8 @@ export function useChatData(busca?: string) {
     try {
       if (pag === 1) {
         setAtualizandoInbox(true);
+      } else {
+        setCarregandoMais(true);
       }
       if (pag === 1 && chatsRef.current.length === 0) {
         setCarregando(true);
@@ -92,15 +95,17 @@ export function useChatData(busca?: string) {
       window.clearTimeout(timeout);
       if (pag === 1) {
         setAtualizandoInbox(false);
+      } else {
+        setCarregandoMais(false);
       }
       setCarregando(false);
     }
   }, []);
 
   const carregarMais = useCallback(() => {
-    if (!temMais || carregando) return;
-    fetchPagina(pagina + 1, busca);
-  }, [temMais, carregando, pagina, fetchPagina, busca]);
+    if (!temMais || carregando || carregandoMais) return;
+    void fetchPagina(pagina + 1, busca);
+  }, [temMais, carregando, carregandoMais, pagina, fetchPagina, busca]);
 
   const recarregar = useCallback(() => fetchPagina(1, busca), [fetchPagina, busca]);
 
@@ -186,6 +191,7 @@ export function useChatData(busca?: string) {
   return {
     chats,
     carregando,
+    carregandoMais,
     atualizandoInbox,
     erro,
     sseConectado,

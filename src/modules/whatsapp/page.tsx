@@ -1,36 +1,113 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Loader2, CheckCircle2, Wifi } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Loader2, Radio, Wifi, WifiOff } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { InlineStatusAlert } from "@/components/shared/inline-status-alert";
-import { instanciaWhatsappEstaConectada } from "@/lib/whatsapp-instancia-status";
+import { instanciaWhatsappEstaConectada, normalizarStatusInstanciaWhatsapp } from "@/lib/whatsapp-instancia-status";
 import { useWhatsappModule } from "./hooks/use-whatsapp-module";
 import { InstanciasList } from "./components/instances-list";
+import { WhatsappConnectionWizard } from "./components/whatsapp-connection-wizard";
+import { getStatusBadgeWhatsapp } from "./components/instances-list.utils";
 
 export function ModuloWhatsapp() {
   const vm = useWhatsappModule();
+  const {
+    instancias,
+    carregando,
+    erro,
+    criarInstancia,
+    excluirInstancia,
+    atualizarStatus,
+    reconectarInstancia,
+    estaReconectando,
+    getQrCode,
+    getPairingCode,
+    buscarQrCode,
+  } = vm;
   const [nomeInstancia, setNomeInstancia] = useState("");
-  const [sucesso, setSucesso] = useState<string | null>(null);
-  const [focused, setFocused] = useState(false);
+  const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
+  const [instanciaAssistidaId, setInstanciaAssistidaId] = useState<string | null>(null);
+  const [carregandoCriacao, setCarregandoCriacao] = useState(false);
+  const [carregandoQr, setCarregandoQr] = useState(false);
 
-  const handleCriar = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!nomeInstancia.trim()) return;
-    
-    setSucesso(null);
-    await vm.criarInstancia(nomeInstancia.trim());
+  const instanciaAssistida = useMemo(
+    () => instancias.find((instancia) => instancia.id === instanciaAssistidaId) ?? null,
+    [instanciaAssistidaId, instancias],
+  );
+
+  const qrCodeAtual = instanciaAssistidaId ? getQrCode(instanciaAssistidaId) : null;
+  const pairingCodeAtual = instanciaAssistidaId ? getPairingCode(instanciaAssistidaId) : null;
+
+  const carregarQrCode = useCallback(
+    async (id: string) => {
+      setCarregandoQr(true);
+      await buscarQrCode(id);
+      setCarregandoQr(false);
+    },
+    [buscarQrCode],
+  );
+
+  const handleCriar = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const nome = nomeInstancia.trim();
+    if (!nome || carregandoCriacao) return;
+
+    setCarregandoCriacao(true);
+    const resultado = await criarInstancia(nome);
+    setCarregandoCriacao(false);
+
+    if (!resultado.instanciaId) return;
+
+    setInstanciaAssistidaId(resultado.instanciaId);
+    setWizardStep(2);
     setNomeInstancia("");
-    setSucesso("Instância criada! Escaneie o QR Code com seu WhatsApp.");
-    
-    setTimeout(() => setSucesso(null), 5000);
+    await carregarQrCode(resultado.instanciaId);
   };
 
-  const connectedCount = vm.instancias.filter(instanciaWhatsappEstaConectada).length;
+  const handleGerarNovoQr = useCallback(async () => {
+    if (!instanciaAssistidaId) return;
+    await reconectarInstancia(instanciaAssistidaId);
+    await carregarQrCode(instanciaAssistidaId);
+    setWizardStep(2);
+  }, [carregarQrCode, instanciaAssistidaId, reconectarInstancia]);
+
+  const reiniciarWizard = useCallback(() => {
+    setWizardStep(1);
+    setInstanciaAssistidaId(null);
+    setNomeInstancia("");
+    setCarregandoQr(false);
+  }, []);
+
+  useEffect(() => {
+    if (wizardStep !== 2 || !instanciaAssistidaId) return;
+    const interval = setInterval(() => {
+      void atualizarStatus(instanciaAssistidaId);
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [atualizarStatus, instanciaAssistidaId, wizardStep]);
+
+  useEffect(() => {
+    if (wizardStep !== 2 || !instanciaAssistidaId || instanciaAssistida?.phone || qrCodeAtual || carregandoQr) return;
+    void carregarQrCode(instanciaAssistidaId);
+  }, [carregandoQr, carregarQrCode, instanciaAssistida?.phone, instanciaAssistidaId, qrCodeAtual, wizardStep]);
+
+  useEffect(() => {
+    if (!instanciaAssistida || !instanciaWhatsappEstaConectada(instanciaAssistida)) return;
+    setWizardStep(3);
+  }, [instanciaAssistida]);
+
+  const connectedCount = instancias.filter(instanciaWhatsappEstaConectada).length;
+  const pareandoCount = instancias.filter((instancia) => {
+    const status = normalizarStatusInstanciaWhatsapp(instancia.status);
+    return !instanciaWhatsappEstaConectada(instancia) && ["pending", "qrcode", "qr_code", "creating", "loading", "connecting"].includes(status);
+  }).length;
+  const offlineCount = Math.max(instancias.length - connectedCount - pareandoCount, 0);
+
+  const statusWizard = instanciaAssistida ? getStatusBadgeWhatsapp(instanciaAssistida).labelDetailed : "Aguardando criacao";
 
   return (
     <ModulePageShell spacing="lg">
@@ -45,9 +122,7 @@ export function ModuloWhatsapp() {
         }
       />
 
-      <InlineStatusAlert variant="error" message={vm.erro} className="animate-fade-in" />
-
-      <InlineStatusAlert variant="success" message={sucesso} icon={<CheckCircle2 className="h-5 w-5" />} className="animate-fade-in" />
+      <InlineStatusAlert variant="error" message={erro} className="animate-fade-in" />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
@@ -65,62 +140,68 @@ export function ModuloWhatsapp() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+          <CardContent className="flex items-center gap-4 p-[18px] md:p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]">
+              <Radio className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Pareando</p>
+              <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{pareandoCount}</p>
+              <p className="text-xs text-[var(--text-secondary)]">Aguardando autenticacao</p>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+          <CardContent className="flex items-center gap-4 p-[18px] md:p-5">
+            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]">
+              <WifiOff className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Offline</p>
+              <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{offlineCount}</p>
+              <p className="text-xs text-[var(--text-secondary)]">Precisam de acao manual</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-        <Card className="overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)] transition-[border-color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base font-semibold text-[var(--text-primary)]">Nova conexao WhatsApp</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="flex gap-3" onSubmit={handleCriar}>
-            <div className="relative flex-1">
-              <Input
-                className={`h-11 pr-4 transition-all ${
-                  focused
-                    ? "border-[var(--success)] shadow-[0_0_0_4px_color-mix(in_srgb,var(--success)_20%,transparent)]"
-                    : ""
-                }`}
-                placeholder="Ex: WhatsApp vendas, suporte..."
-                value={nomeInstancia}
-                onChange={(e) => setNomeInstancia(e.target.value)}
-                onFocus={() => setFocused(true)}
-                onBlur={() => setFocused(false)}
-                required
-                minLength={3}
-              />
-            </div>
-            <Button 
-              className="bg-[var(--success)] text-[var(--primary-foreground)] shadow-[var(--shadow-sm)] hover:brightness-110"
-              disabled={!nomeInstancia.trim() || vm.carregando}
-            >
-              {vm.carregando ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <>
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Criar instancia
-                </>
-              )}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+      <WhatsappConnectionWizard
+        step={wizardStep}
+        nomeInstancia={nomeInstancia}
+        onNomeInstanciaChange={setNomeInstancia}
+        onCriarInstancia={handleCriar}
+        carregandoCriacao={carregandoCriacao}
+        instanciaNome={instanciaAssistida?.profile_name ?? instanciaAssistida?.nome ?? null}
+        instanciaPhone={instanciaAssistida?.phone ?? null}
+        qrCode={qrCodeAtual}
+        pairingCode={pairingCodeAtual}
+        carregandoQr={carregandoQr}
+        statusAtual={statusWizard}
+        onGerarNovoQr={handleGerarNovoQr}
+        onReiniciarFluxo={reiniciarWizard}
+      />
 
-      {vm.carregando ? (
+      {carregando ? (
         <div className="flex flex-col items-center justify-center py-12">
           <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
           <p className="mt-3 text-sm text-[var(--text-secondary)]">Carregando suas conexoes...</p>
         </div>
       ) : (
-        <InstanciasList
-          instancias={vm.instancias}
-          onExcluir={vm.excluirInstancia}
-          onAtualizarStatus={vm.atualizarStatus}
-          onReconectar={vm.reconectarInstancia}
-          estaReconectando={vm.estaReconectando}
-          getQrCode={vm.getQrCode}
-          buscarQrCode={vm.buscarQrCode}
-        />
+        <div className="space-y-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Instancias existentes</p>
+          <InstanciasList
+            instancias={instancias}
+            onExcluir={excluirInstancia}
+            onAtualizarStatus={atualizarStatus}
+            onReconectar={reconectarInstancia}
+            estaReconectando={estaReconectando}
+            getQrCode={getQrCode}
+            buscarQrCode={buscarQrCode}
+          />
+        </div>
       )}
     </ModulePageShell>
   );

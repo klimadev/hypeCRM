@@ -3,7 +3,6 @@ import type { SessaoToken } from "@/lib/tipos";
 export type MetaCapiConfig = {
   pixelId: string;
   accessToken: string;
-  eventName: string;
   ativo: boolean;
 };
 

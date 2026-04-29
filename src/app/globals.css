@@ -335,6 +335,29 @@ a, button, input, select, textarea, [data-interactive] {
   background-color: var(--scrollbar-thumb-hover);
 }
 
+.sidebar-scroll-invisible {
+  scrollbar-width: none;
+  scrollbar-color: transparent transparent;
+}
+
+.sidebar-scroll-invisible::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.sidebar-scroll-invisible:hover,
+.sidebar-scroll-invisible:focus-within,
+.dashboard-sidebar-dock[data-expanded="true"] .sidebar-scroll-invisible {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
+}
+
+.sidebar-scroll-invisible:hover::-webkit-scrollbar,
+.sidebar-scroll-invisible:focus-within::-webkit-scrollbar,
+.dashboard-sidebar-dock[data-expanded="true"] .sidebar-scroll-invisible::-webkit-scrollbar {
+  width: 8px;
+}
+
 *:focus-visible {
   outline: none;
   border-color: var(--border-focus);

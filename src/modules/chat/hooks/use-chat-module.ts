@@ -35,6 +35,7 @@ export function useChatModule(params: { perfil: "EMPRESA" | "GERENTE" | "COLABOR
   const {
     chats,
     carregando,
+    carregandoMais,
     atualizandoInbox,
     erro,
     sseConectado,
@@ -332,6 +333,7 @@ const [filtroInstancia, setFiltroInstancia] = useState<string | null>(null);
     busca,
     setBusca,
     carregando,
+    carregandoMais,
     erro,
     sseConectado,
     ultimoSyncEm,

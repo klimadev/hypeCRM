@@ -5,7 +5,6 @@ export type NavigationItem = {
   label: string;
   descricao: string;
   icon: ComponentType<{ className?: string }>;
-  tourTarget?: string;
   children?: NavigationItem[];
 };
 

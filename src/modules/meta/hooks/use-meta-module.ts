@@ -28,7 +28,6 @@ export function useMetaModule(): UseMetaModuleReturn {
       setConfig({
         pixelId: dados.pixelId ?? "",
         accessToken: dados.accessToken ?? "",
-        eventName: dados.eventName ?? "lead_closed",
         ativo: dados.ativo ?? false,
       });
       setEventos(dados.eventos || []);

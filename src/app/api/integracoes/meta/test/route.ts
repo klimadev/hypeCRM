@@ -1,4 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  hashEmail,
+  hashTelefone,
+  META_CAPI_CURRENCY,
+  META_CAPI_EVENT_NAME,
+  META_CAPI_LEAD_EVENT_SOURCE,
+} from "@/lib/meta-capi";
 import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 
@@ -10,19 +17,26 @@ type MetaEventPayload = {
   action_source: "system_generated";
   event_id: string;
   user_data: {
-    external_id: string;
+    em?: string;
+    ph?: string;
+    external_id?: string;
     client_ip_address: string;
     client_user_agent: string;
   };
   custom_data: {
     lead_event_source: string;
     event_source: "crm";
+    value: number;
+    currency: string;
   };
 };
 
 const META_GRAPH_API_VERSION = "v25.0";
 const DEFAULT_TEST_IP = "127.0.0.1";
 const DEFAULT_TEST_USER_AGENT = "hypecrm-meta-capi-test/1.0";
+const DEFAULT_TEST_EMAIL = "meta.test@hypecrm.com";
+const DEFAULT_TEST_PHONE = "+55 11 99999-0000";
+const DEFAULT_TEST_VALUE = 1;
 
 function obterIpCliente(request: NextRequest): string {
   const forwardedFor = request.headers.get("x-forwarded-for");
@@ -35,30 +49,36 @@ function obterIpCliente(request: NextRequest): string {
   return realIp || DEFAULT_TEST_IP;
 }
 
-function criarPayloadPadraoTeste(request: NextRequest, idEmpresa: string, eventName?: string): { data: MetaEventPayload[] } {
+function criarPayloadPadraoTeste(request: NextRequest, idEmpresa: string): { data: MetaEventPayload[] } {
   const agora = Math.floor(Date.now() / 1000);
+  const emailHash = hashEmail(DEFAULT_TEST_EMAIL);
+  const telefoneHash = hashTelefone(DEFAULT_TEST_PHONE);
   return {
     data: [
       {
-        event_name: eventName?.trim() || "Lead",
+        event_name: META_CAPI_EVENT_NAME,
         event_time: agora,
         action_source: "system_generated",
         event_id: `meta-test-${idEmpresa}-${agora}`,
         user_data: {
+          ...(emailHash ? { em: emailHash } : {}),
+          ...(telefoneHash ? { ph: telefoneHash } : {}),
           external_id: `empresa:${idEmpresa}`,
           client_ip_address: obterIpCliente(request),
           client_user_agent: request.headers.get("user-agent")?.trim() || DEFAULT_TEST_USER_AGENT,
         },
         custom_data: {
-          lead_event_source: "CRM HYPE",
+          lead_event_source: META_CAPI_LEAD_EVENT_SOURCE,
           event_source: "crm",
+          value: DEFAULT_TEST_VALUE,
+          currency: META_CAPI_CURRENCY,
         },
       },
     ],
   };
 }
 
-export function criarPayloadTesteMeta(request: NextRequest, idEmpresa: string, configEventName?: string, body?: MetaTestBody): { data: Array<Record<string, unknown>>; test_event_code?: string } {
+export function criarPayloadTesteMeta(request: NextRequest, idEmpresa: string, body?: MetaTestBody): { data: Array<Record<string, unknown>>; test_event_code?: string } {
   if (body?.data?.length) {
     return {
       data: body.data,
@@ -66,7 +86,7 @@ export function criarPayloadTesteMeta(request: NextRequest, idEmpresa: string, c
     };
   }
 
-  return criarPayloadPadraoTeste(request, idEmpresa, configEventName);
+  return criarPayloadPadraoTeste(request, idEmpresa);
 }
 
 export async function POST(request: NextRequest) {
@@ -119,7 +139,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(response);
   }
 
-  const payload = criarPayloadTesteMeta(request, idEmpresa, config.event_name, body);
+  const payload = criarPayloadTesteMeta(request, idEmpresa, body);
 
   let rawResponse = "";
   let metaHttpStatus = 200;

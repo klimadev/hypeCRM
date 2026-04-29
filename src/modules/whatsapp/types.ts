@@ -95,17 +95,27 @@ export type WhatsappInstancia = {
   data_source?: ConnectionDataSource;
 };
 
+export type ResultadoQrWhatsapp = {
+  qrCode: string | null;
+  pairingCode: string | null;
+  status: string;
+  conectado: boolean;
+  phone: string | null;
+  origem: "status" | "restart" | "connect" | null;
+};
+
 export type UseWhatsappModuleReturn = {
   instancias: WhatsappInstancia[];
   carregando: boolean;
   erro: string | null;
-  criarInstancia: (nome: string) => Promise<void>;
+  criarInstancia: (nome: string) => Promise<{ instanciaId: string | null }>;
   excluirInstancia: (id: string) => Promise<void>;
   atualizarStatus: (id: string) => Promise<void>;
   reconectarInstancia: (id: string) => Promise<void>;
   estaReconectando: (id: string) => boolean;
-  buscarQrCode: (id: string) => Promise<string | null>;
+  buscarQrCode: (id: string) => Promise<ResultadoQrWhatsapp | null>;
   getQrCode: (id: string) => string | null;
+  getPairingCode: (id: string) => string | null;
   recarregar: () => Promise<void>;
 };
 

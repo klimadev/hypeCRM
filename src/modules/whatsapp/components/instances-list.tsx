@@ -2,7 +2,7 @@
 
 import { Card, CardContent } from "@/components/ui/card";
 import { Smartphone } from "lucide-react";
-import type { WhatsappInstancia } from "../types";
+import type { ResultadoQrWhatsapp, WhatsappInstancia } from "../types";
 import { InstancesListCard } from "./instances-list-card";
 
 type Props = {
@@ -12,7 +12,7 @@ type Props = {
   onReconectar: (id: string) => Promise<void>;
   estaReconectando: (id: string) => boolean;
   getQrCode: (id: string) => string | null;
-  buscarQrCode: (id: string) => Promise<string | null>;
+  buscarQrCode: (id: string) => Promise<ResultadoQrWhatsapp | null>;
 };
 
 export function InstanciasList({ instancias, onExcluir, onAtualizarStatus, onReconectar, estaReconectando, getQrCode, buscarQrCode }: Props) {

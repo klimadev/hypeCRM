@@ -1,7 +1,6 @@
 import { BarChart3, Blocks, GitBranch, LayoutGrid, MessageCircle, MessageSquare, Package, Settings2, Shield, Target, Users, WalletCards } from "lucide-react";
 import type { SessaoToken } from "@/lib/tipos";
 import { obterItemIntegracoesNavegacao, podeExibirIntegracoesNaNavegacao } from "@/modules/integracoes/navegacao";
-import { TOUR_TARGETS } from "@/modules/onboarding/lib/selectors";
 import type { NavigationSection } from "./navigation-types";
 
 const SIGLA_PERFIL: Record<SessaoToken["perfil"], string> = { EMPRESA: "ADM", GERENTE: "GTE", COLABORADOR: "CLB" };
@@ -41,17 +40,17 @@ export function obterLabelPerfil(perfil: SessaoToken["perfil"]) {
 export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection[] {
   const itemIntegracoes = obterItemIntegracoesNavegacao();
   const secoes: NavigationSection[] = [
-    { titulo: "Geral", itens: [{ href: "/resumo", label: "Resumo", descricao: getItemDescricao("Resumo"), icon: BarChart3, tourTarget: TOUR_TARGETS.sidebarResumo }] },
+    { titulo: "Geral", itens: [{ href: "/resumo", label: "Resumo", descricao: getItemDescricao("Resumo"), icon: BarChart3 }] },
     {
       titulo: "Operação",
       itens: [
-        { href: "/leads", label: "Leads", descricao: getItemDescricao("Leads"), icon: Users, tourTarget: TOUR_TARGETS.sidebarLeads },
+        { href: "/leads", label: "Leads", descricao: getItemDescricao("Leads"), icon: Users },
         { href: "/produtos", label: "Produtos", descricao: getItemDescricao("Produtos"), icon: Package },
-        { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid, tourTarget: TOUR_TARGETS.sidebarNegocios },
+        { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid },
         { href: "/chat", label: "Chat", descricao: getItemDescricao("Chat"), icon: MessageSquare },
         
         ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards }] : []),
-        ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target, tourTarget: TOUR_TARGETS.sidebarEquipe }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
+        ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
       ],
     },
     {
@@ -59,8 +58,8 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
         itens: [
           ...(podeExibirIntegracoesNaNavegacao(sessao.perfil) ? [{ href: itemIntegracoes.href, label: itemIntegracoes.label, descricao: itemIntegracoes.descricao, icon: Blocks }] : []),
           ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/automacoes", label: "Automações", descricao: getItemDescricao("Automações"), icon: GitBranch }] : []),
-          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle, tourTarget: TOUR_TARGETS.sidebarWhatsapp }] : []),
-          ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2, tourTarget: TOUR_TARGETS.sidebarConfigs }] : []),
+          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle }] : []),
+          ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2 }] : []),
         ],
     },
   ];

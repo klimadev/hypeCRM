@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 import { Prisma } from "@prisma/client";
+import { META_CAPI_EVENT_NAME } from "@/lib/meta-capi";
 
 export async function GET(request: NextRequest) {
   console.log("[META-CONFIG] === INICIANDO GET CONFIG ===");
@@ -72,7 +73,7 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     pixelId: config?.pixel_id ?? "",
     accessToken: config?.access_token ?? "",
-    eventName: config?.event_name ?? "lead_closed",
+    eventName: META_CAPI_EVENT_NAME,
     ativo: config?.ativo ?? false,
     eventos: eventos.map((e) => ({
       id: e.id,

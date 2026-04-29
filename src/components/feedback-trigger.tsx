@@ -2,8 +2,9 @@
 
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
-import { BugPlay, Lightbulb, MessageCircle } from "lucide-react";
+import { MessageCircle } from "lucide-react";
 import { FeedbackForm } from "@/modules/feedback";
+import { Tooltip } from "@/components/ui/tooltip";
 
 type FeedbackTriggerProps = {
   isLoggedIn: boolean;
@@ -24,37 +25,20 @@ export function FeedbackTrigger({ isLoggedIn }: FeedbackTriggerProps) {
   return (
     <>
       <FeedbackForm open={open} onClose={() => setOpen(false)} initialTipo={tipoPadrao} />
-      <div className="grid gap-1.5">
+      <Tooltip content={`Feedback (${pagina})`} side="top">
         <button
           type="button"
           onClick={() => {
             setTipoPadrao("BUG");
             setOpen(true);
           }}
-          className="group inline-flex w-full items-center justify-start gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] transition-[transform,border-color,bg-color,color] duration-200 hover:border-[var(--danger)] hover:bg-[color:rgba(244,63,94,0.10)] hover:text-[var(--danger)]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-[13px] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-secondary)] transition-[border-color,background-color,color,transform] duration-200 hover:-translate-y-px hover:border-[var(--brand)] hover:bg-[color:var(--brand-soft)] hover:text-[var(--text-primary)]"
+          aria-label="Abrir feedback"
+          title={`Feedback (${pagina})`}
         >
-          <BugPlay className="h-4 w-4" />
-          Reportar bug
+          <MessageCircle className="h-4 w-4" />
         </button>
-        <button
-          type="button"
-          onClick={() => {
-            setTipoPadrao("SUGESTAO");
-            setOpen(true);
-          }}
-          className="group inline-flex w-full items-center justify-start gap-2 rounded-full border border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2 text-xs text-[var(--text-secondary)] transition-[transform,border-color,bg-color,color] duration-200 hover:border-[var(--success)] hover:bg-[color:rgba(16,185,129,0.10)] hover:text-[var(--success)]"
-        >
-          <Lightbulb className="h-4 w-4" />
-          Sugerir melhora
-        </button>
-
-        <div
-          className="mx-auto inline-flex w-full items-center justify-center rounded-[999px] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--surface-soft)_82%,transparent)] px-3 py-2 text-[10px] font-medium uppercase tracking-[0.2em] text-[var(--text-tertiary)]"
-        >
-          <MessageCircle className="mr-1 h-3.5 w-3.5" />
-          {pagina}
-        </div>
-      </div>
+      </Tooltip>
     </>
   );
 }

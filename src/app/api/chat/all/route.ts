@@ -40,6 +40,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       chats: resultado.chats,
       total: resultado.total,
+      pagina: resultado.pagina,
+      limite: resultado.limite,
       temMais: resultado.temMais,
     });
   } catch (error) {

@@ -12,7 +12,7 @@ import { listarConversasInstagram, listarPreviewsMensagensInstagramPorEmpresa } 
 const EVOLUTION_API_URL = process.env.EVOLUTION_API_URL ?? "http://localhost:8080";
 const EVOLUTION_API_KEY = process.env.EVOLUTION_API_KEY ?? "";
 const CHAT_DEBUG_ENABLED = process.env.CHAT_DEBUG === "1";
-const LIMITE_PAGINA_DEFAULT = 10;
+const FATOR_BUSCA_PAGINACAO_WHATSAPP = 4;
 
 function logChat(evento: string, detalhes?: Record<string, unknown>) {
   if (detalhes) {
@@ -216,9 +216,11 @@ export async function unificarChatsComLeads({
       whatsapp: 0,
       instagram: 0,
       enrichment: 0,
-      total: 0,
-    },
+    total: 0,
+  },
   };
+
+  let temMaisWhatsapp = false;
 
   const where = await whereLeadsPorPerfil(sessao);
   debug.timingsMs.leads = 0;
@@ -460,8 +462,9 @@ export async function unificarChatsComLeads({
       }
     }
 } else {
-    // Modo normal: buscar conversas paginadas para listagem (sem busca)
-    // Busca APENAS a página solicitada - paginação real no nível da Evolution API
+    // Modo normal: busca a janela acumulada e pagina depois da unificação.
+    const limiteJanela = pagina * limite;
+    const limiteBuscaWhatsapp = limiteJanela * FATOR_BUSCA_PAGINACAO_WHATSAPP;
     const { resultado: resultadosWhatsapp, duracaoMs: duracaoWhatsappMs } = await medirDuracao(() =>
       Promise.all(
         instanciasValidas.map(async (inst) => {
@@ -470,8 +473,7 @@ export async function unificarChatsComLeads({
               debug.rawFindChatsSample[inst.instanceName] = await fetchFindChatsRaw(inst.instanceName);
             }
 
-            // Busca apenas a página solicitada com limite de 10 por instância
-            const resultado = await buscarConversasPaginado(inst.instanceName, pagina, LIMITE_PAGINA_DEFAULT);
+            const resultado = await buscarConversasPaginado(inst.instanceName, 1, limiteBuscaWhatsapp);
             return { inst, conversas: resultado.conversas, temMais: resultado.temMais };
           } catch (error) {
             const msg = `Erro ao buscar conversas da instancia ${inst.instanceName}: ${error instanceof Error ? error.message : String(error)}`;
@@ -482,6 +484,7 @@ export async function unificarChatsComLeads({
         }),
       ),
     );
+    temMaisWhatsapp = resultadosWhatsapp.some((item) => item.temMais);
     debug.timingsMs.whatsapp = duracaoWhatsappMs;
 
     const telefonesColetados: string[] = [];
@@ -746,23 +749,22 @@ export async function unificarChatsComLeads({
     }
   }
 
-  const total = todasOrdenadas.length;
-  const inicio = (pagina - 1) * limite;
-  const fim = inicio + limite;
-  const chatsPaginados = todasOrdenadas.slice(inicio, fim);
+   const total = todasOrdenadas.length;
+   const hasMore = busca && busca.trim().length > 0 ? false : temMaisWhatsapp || total > pagina * limite;
+   const chatsPaginados = todasOrdenadas.slice((pagina - 1) * limite, pagina * limite);
 
-  return {
-    chats: chatsPaginados,
-    total,
-    pagina,
-    limite,
-    temMais: fim < total,
-    debug: {
-      ...debug,
-      timingsMs: {
-        ...debug.timingsMs,
-        total: Date.now() - inicioTotal,
-      },
-    },
-  };
+   return {
+     chats: chatsPaginados,
+     total,
+     pagina,
+     limite,
+     temMais: hasMore,
+     debug: {
+       ...debug,
+       timingsMs: {
+         ...debug.timingsMs,
+         total: Date.now() - inicioTotal,
+       },
+     },
+   };
 }

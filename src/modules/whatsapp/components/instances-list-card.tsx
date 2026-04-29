@@ -7,7 +7,7 @@ import { OptimisticSync } from "@/components/ui/optimistic-sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Clock, Loader2, QrCode, RefreshCw, RotateCcw, Trash2, Wifi, WifiOff, Zap } from "lucide-react";
-import type { WhatsappInstancia } from "../types";
+import type { ResultadoQrWhatsapp, WhatsappInstancia } from "../types";
 import { calculateUptimeWhatsapp, getInitialsWhatsapp, getStatusBadgeWhatsapp } from "./instances-list.utils";
 import { InstancesListQrCode } from "./instances-list-qr-code";
 
@@ -36,7 +36,7 @@ type InstanceCardProps = {
   onReconectar: (id: string) => Promise<void>;
   estaReconectando: (id: string) => boolean;
   getQrCode: (id: string) => string | null;
-  buscarQrCode: (id: string) => Promise<string | null>;
+  buscarQrCode: (id: string) => Promise<ResultadoQrWhatsapp | null>;
 };
 
 export function InstancesListCard(props: InstanceCardProps) {

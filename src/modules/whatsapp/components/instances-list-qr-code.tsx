@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Clock, QrCode } from "lucide-react";
+import type { ResultadoQrWhatsapp } from "../types";
 
 type QrCodeDisplayProps = {
   qrCode: string | null;
   phone: string | null;
   instanciaId: string;
-  buscarQrCode: (id: string) => Promise<string | null>;
+  buscarQrCode: (id: string) => Promise<ResultadoQrWhatsapp | null>;
 };
 
 export function InstancesListQrCode({ qrCode, phone, instanciaId, buscarQrCode }: QrCodeDisplayProps) {
@@ -41,8 +42,8 @@ export function InstancesListQrCode({ qrCode, phone, instanciaId, buscarQrCode }
     if (phone || qrAtual || !instanciaId || instanciaId.startsWith("temp-")) return;
     const carregarQr = async () => {
       setCarregandoQr(true);
-      const novoQr = await buscarQrCode(instanciaId);
-      if (novoQr) setQrAtual(novoQr);
+      const novoSnapshot = await buscarQrCode(instanciaId);
+      if (novoSnapshot?.qrCode) setQrAtual(novoSnapshot.qrCode);
       setCarregandoQr(false);
     };
     void carregarQr();

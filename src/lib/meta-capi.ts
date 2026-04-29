@@ -3,17 +3,63 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import type { NegocioResumo } from "@/lib/negocios.types";
 
-const META_CAPI_EVENT_NAME = "lead_closed";
+export const META_CAPI_EVENT_NAME = "Purchase";
+export const META_CAPI_CURRENCY = "BRL";
+export const META_CAPI_EVENT_SOURCE = "crm";
+export const META_CAPI_LEAD_EVENT_SOURCE = "Hype CRM";
 
 function normalizarTelefoneParaHash(telefone: string) {
   return telefone.replace(/\D/g, "");
 }
 
-function hashTelefone(telefone: string) {
-  const normalizado = normalizarTelefoneParaHash(telefone);
+function normalizarEmailParaHash(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function hashTelefone(telefone: string | null | undefined) {
+  const normalizado = normalizarTelefoneParaHash(telefone ?? "");
   if (!normalizado) return null;
 
   return createHash("sha256").update(normalizado).digest("hex");
+}
+
+export function hashEmail(email: string | null | undefined) {
+  const normalizado = normalizarEmailParaHash(email ?? "");
+  if (!normalizado) return null;
+
+  return createHash("sha256").update(normalizado).digest("hex");
+}
+
+function obterValorMeta(negocio: NegocioResumo) {
+  const valor = negocio.valor_fechado ?? negocio.valor_estimado ?? 0;
+  return Number(valor.toFixed(2));
+}
+
+export function criarPayloadMetaCapiFechamento(params: {
+  idEmpresa: string;
+  negocio: NegocioResumo;
+  telefoneHash: string;
+  emailHash?: string | null;
+}) {
+  const eventTime = Math.floor(new Date(params.negocio.data_fechamento ?? new Date()).getTime() / 1000);
+  return {
+    event_name: META_CAPI_EVENT_NAME,
+    event_time: eventTime,
+    user_data: {
+      ph: params.telefoneHash,
+      ...(params.emailHash ? { em: params.emailHash } : {}),
+    },
+    action_source: "system_generated" as const,
+    custom_data: {
+      event_source: META_CAPI_EVENT_SOURCE,
+      lead_event_source: META_CAPI_LEAD_EVENT_SOURCE,
+      value: obterValorMeta(params.negocio),
+      currency: META_CAPI_CURRENCY,
+      negocio_id: params.negocio.id,
+      etapa: params.negocio.estagio?.nome ?? "fechado",
+      empresa_id: params.idEmpresa,
+    },
+  };
 }
 
 async function criarTabelaSeNecessario() {
@@ -54,26 +100,21 @@ export async function registrarMetaCapiFechamento(params: { idEmpresa: string; n
 
   const telefone = params.negocio.lead_principal?.telefone ?? params.negocio.leads?.[0]?.telefone ?? "";
   const telefoneHash = hashTelefone(telefone);
+  const email = params.negocio.lead_principal?.email ?? params.negocio.leads?.[0]?.email ?? null;
+  const emailHash = hashEmail(email);
 
   if (!telefoneHash) {
     return { ok: false as const, erro: "Telefone do lead ausente ou invalido para Meta CAPI." };
   }
 
-  const eventTime = Math.floor(new Date(params.negocio.data_fechamento ?? new Date()).getTime() / 1000);
   const cicloFechamento = await contarEventosFechamento({ idEmpresa: params.idEmpresa, idNegocio: params.negocio.id });
   const idempotencyKey = `meta-capi:${params.idEmpresa}:${params.negocio.id}:closed:${cicloFechamento}`;
-  const payload = {
-    event_name: META_CAPI_EVENT_NAME,
-    event_time: eventTime,
-    user_data: { ph: telefoneHash },
-    action_source: "system_generated",
-    custom_data: {
-      event_source: "crm",
-      lead_event_source: "hypecrm",
-      negocio_id: params.negocio.id,
-      etapa: params.negocio.estagio?.nome ?? "fechado",
-    },
-  };
+  const payload = criarPayloadMetaCapiFechamento({
+    idEmpresa: params.idEmpresa,
+    negocio: params.negocio,
+    telefoneHash,
+    emailHash,
+  });
 
   await prisma.$executeRaw(Prisma.sql`
     INSERT INTO MetaCapiEvento (

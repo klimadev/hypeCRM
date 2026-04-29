@@ -97,6 +97,7 @@ export type UseChatModuleReturn = {
   filtroInstancia: string | null;
   setFiltroInstancia: (instancia: string | null) => void;
   carregando: boolean;
+  carregandoMais: boolean;
   recarregandoInbox: boolean;
   erro: string | null;
   sseConectado: boolean;

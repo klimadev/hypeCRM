@@ -42,6 +42,7 @@ export function ModuloChat({ perfil, idUsuario }: Props) {
             filtroOrigem={vm.filtroOrigem}
             setFiltroOrigem={vm.setFiltroOrigem}
             carregando={vm.carregando}
+            carregandoMais={vm.carregandoMais}
             totalOrphans={vm.totalOrphans}
             totalMatched={vm.totalMatched}
             totalSemDono={vm.totalSemDono}

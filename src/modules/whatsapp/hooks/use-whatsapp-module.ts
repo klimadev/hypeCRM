@@ -9,11 +9,12 @@ import {
   obterQrCodeWhatsapp,
   reconectarInstanciaWhatsapp,
 } from "@/lib/api/whatsapp";
-import type { WhatsappInstancia, UseWhatsappModuleReturn } from "../types";
+import type { ResultadoQrWhatsapp, WhatsappInstancia, UseWhatsappModuleReturn } from "../types";
 
 export function useWhatsappModule(): UseWhatsappModuleReturn {
   const [instancias, setInstancias] = useState<WhatsappInstancia[]>([]);
   const [qrCodes, setQrCodes] = useState<Record<string, string>>({});
+  const [pairingCodes, setPairingCodes] = useState<Record<string, string>>({});
   const [reconectandoIds, setReconectandoIds] = useState<Record<string, boolean>>({});
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
@@ -46,21 +47,56 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
     void carregar();
   }, [carregarInstancias]);
 
-  const buscarQrCode = useCallback(async (id: string): Promise<string | null> => {
+  const buscarQrCode = useCallback(async (id: string): Promise<ResultadoQrWhatsapp | null> => {
     try {
       const resultado = await obterQrCodeWhatsapp(id);
-      if (!resultado.ok || !resultado.dados.qrCode) {
+
+      if (!resultado.ok) {
         return null;
       }
-      const qrCode = resultado.dados.qrCode;
-      setQrCodes((antigo) => ({ ...antigo, [id]: qrCode }));
-      return qrCode;
+
+      const snapshot = resultado.dados;
+
+      setInstancias((atual) =>
+        atual.map((instancia) =>
+          instancia.id === id
+            ? {
+                ...instancia,
+                status: snapshot.status,
+                phone: snapshot.phone ?? instancia.phone,
+              }
+            : instancia,
+        ),
+      );
+
+      if (snapshot.qrCode) {
+        setQrCodes((atual) => ({ ...atual, [id]: snapshot.qrCode! }));
+      }
+
+      if (snapshot.pairingCode) {
+        setPairingCodes((atual) => ({ ...atual, [id]: snapshot.pairingCode! }));
+      }
+
+      if (snapshot.conectado) {
+        setQrCodes((atual) => {
+          const proximo = { ...atual };
+          delete proximo[id];
+          return proximo;
+        });
+        setPairingCodes((atual) => {
+          const proximo = { ...atual };
+          delete proximo[id];
+          return proximo;
+        });
+      }
+
+      return snapshot;
     } catch {
       return null;
     }
   }, []);
 
-  const criarInstancia = useCallback(async (nome: string) => {
+  const criarInstancia = useCallback(async (nome: string): Promise<{ instanciaId: string | null }> => {
     setErro(null);
 
     const idTemporario = `temp-${Date.now()}`;
@@ -90,7 +126,7 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
       if (!resultado.ok) {
         setErro(resultado.erro);
         setInstancias((atual) => atual.filter((i) => i.id !== idTemporario));
-        return;
+        return { instanciaId: null };
       }
 
       if (resultado.dados.instancia) {
@@ -100,10 +136,15 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
           const qrCode = resultado.dados.qrCode;
           setQrCodes((antigo) => ({ ...antigo, [instanciaCriada.id]: qrCode }));
         }
+        return { instanciaId: instanciaCriada.id };
       }
+
+      setInstancias((atual) => atual.filter((i) => i.id !== idTemporario));
+      return { instanciaId: null };
     } catch {
       setErro("Erro ao criar instância.");
       setInstancias((atual) => atual.filter((i) => i.id !== idTemporario));
+      return { instanciaId: null };
     }
   }, []);
 
@@ -115,6 +156,11 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
 
     setInstancias((atual) => atual.filter((i) => i.id !== id));
     setQrCodes((antigo) => {
+      const resto = { ...antigo };
+      delete resto[id];
+      return resto;
+    });
+    setPairingCodes((antigo) => {
       const resto = { ...antigo };
       delete resto[id];
       return resto;
@@ -143,6 +189,19 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
 
       const instanciaAtualizada = resultado.dados.instancia;
       setInstancias((atual) => atual.map((i) => (i.id === id ? instanciaAtualizada : i)));
+
+      if (instanciaAtualizada.phone) {
+        setQrCodes((atual) => {
+          const proximo = { ...atual };
+          delete proximo[id];
+          return proximo;
+        });
+        setPairingCodes((atual) => {
+          const proximo = { ...atual };
+          delete proximo[id];
+          return proximo;
+        });
+      }
     } catch {
       // Silencioso
     }
@@ -168,8 +227,19 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
 
       if (resultado.dados.qrCode) {
         setQrCodes((atual) => ({ ...atual, [id]: resultado.dados.qrCode! }));
-      } else if (resultado.dados.conectado) {
+      }
+
+      if (resultado.dados.pairingCode) {
+        setPairingCodes((atual) => ({ ...atual, [id]: resultado.dados.pairingCode! }));
+      }
+
+      if (resultado.dados.conectado) {
         setQrCodes((atual) => {
+          const proximo = { ...atual };
+          delete proximo[id];
+          return proximo;
+        });
+        setPairingCodes((atual) => {
           const proximo = { ...atual };
           delete proximo[id];
           return proximo;
@@ -198,6 +268,10 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
     return qrCodes[id] ?? null;
   }, [qrCodes]);
 
+  const getPairingCode = useCallback((id: string): string | null => {
+    return pairingCodes[id] ?? null;
+  }, [pairingCodes]);
+
   const estaReconectando = useCallback((id: string) => reconectandoIds[id] === true, [reconectandoIds]);
 
   return {
@@ -211,6 +285,7 @@ export function useWhatsappModule(): UseWhatsappModuleReturn {
     estaReconectando,
     buscarQrCode,
     getQrCode,
+    getPairingCode,
     recarregar: carregarInstancias,
   };
 }

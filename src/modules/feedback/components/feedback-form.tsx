@@ -24,6 +24,11 @@ const impactoOptions: { value: FeedbackImpacto; label: string }[] = [
   { value: "sugestao", label: "Sugestão" },
 ];
 
+const tipoOptions: { value: FeedbackTipo; label: string }[] = [
+  { value: "BUG", label: "Reportar bug" },
+  { value: "SUGESTAO", label: "Sugerir melhoria" },
+];
+
 const toopcao = (valor: string | null | undefined): string | undefined => {
   const texto = valor?.trim();
   return texto ? texto : undefined;
@@ -136,7 +141,21 @@ export function FeedbackForm({ open, onClose, initialTipo }: FeedbackFormProps) 
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Input value={tipo} disabled className="uppercase tracking-[0.2em] text-xs font-semibold" />
+          <div className="space-y-2">
+            <label className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Tipo</label>
+            <Select value={tipo} onValueChange={(valor) => setTipo(valor as FeedbackTipo)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                {tipoOptions.map((opcao) => (
+                  <SelectItem key={opcao.value} value={opcao.value}>
+                    {opcao.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Input
             value={titulo}
             onChange={(event) => setTitulo(event.target.value)}

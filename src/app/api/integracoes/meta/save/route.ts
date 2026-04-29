@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { META_CAPI_EVENT_NAME } from "@/lib/meta-capi";
 import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 
@@ -27,7 +28,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log("[META-SAVE] Body received:", JSON.stringify(body, null, 2));
 
-    const { pixelId, accessToken, eventName, ativo } = body;
+    const { pixelId, accessToken, ativo } = body;
 
     console.log("[META-SAVE] Executando upsert...");
     await prisma.metaCapiConfig.upsert({
@@ -35,7 +36,7 @@ export async function POST(request: NextRequest) {
       update: {
         pixel_id: pixelId ?? null,
         access_token: accessToken ?? null,
-        event_name: eventName ?? "lead_closed",
+        event_name: META_CAPI_EVENT_NAME,
         ativo: ativo ?? false,
         atualizado_em: new Date(),
       },
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
         id_empresa: idEmpresa,
         pixel_id: pixelId ?? null,
         access_token: accessToken ?? null,
-        event_name: eventName ?? "lead_closed",
+        event_name: META_CAPI_EVENT_NAME,
         ativo: ativo ?? false,
       },
     });

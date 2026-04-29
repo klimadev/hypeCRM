@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, MessageCircle, ChevronDown, Activity, Plus, RotateCw, Inbox, MailOpen, Briefcase, CheckCircle } from "lucide-react";
+import { Search, MessageCircle, ChevronDown, Activity, Plus, RotateCw, Inbox, MailOpen, Briefcase, CheckCircle, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ChatItem } from "./chat-item";
 import { ChatNewChatDialog } from "./chat-new-chat-dialog";
@@ -20,6 +20,7 @@ type ChatSidebarProps = {
   filtroOrigem: "todos" | "anuncio" | "whatsapp" | "manual";
   setFiltroOrigem: (filtro: "todos" | "anuncio" | "whatsapp" | "manual") => void;
   carregando: boolean;
+  carregandoMais: boolean;
   totalOrphans: number;
   totalMatched: number;
   totalSemDono: number;
@@ -54,6 +55,7 @@ export function ChatSidebar({
   filtroOrigem,
   setFiltroOrigem,
   carregando,
+  carregandoMais,
   totalOrphans,
   totalMatched,
   totalSemDono,
@@ -267,10 +269,11 @@ export function ChatSidebar({
               <button
                 type="button"
                 onClick={carregarMais}
-                className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)]"
+                disabled={carregandoMais}
+                className="mt-2 flex h-9 w-full items-center justify-center gap-1.5 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-xs font-medium text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface)] hover:text-[var(--text-primary)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                <ChevronDown className="h-3.5 w-3.5" />
-                Carregar mais
+                {carregandoMais ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ChevronDown className="h-3.5 w-3.5" />}
+                {carregandoMais ? "Carregando" : "Carregar mais"}
               </button>
             )}
           </div>

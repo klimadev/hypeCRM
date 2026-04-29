@@ -31,7 +31,16 @@ export async function obterWhatsappStats(): Promise<ResultadoApi<WhatsappStats>>
   return { ok: true, dados: json };
 }
 
-export async function obterQrCodeWhatsapp(id: string): Promise<ResultadoApi<{ qrCode: string | null }>> {
+export async function obterQrCodeWhatsapp(id: string): Promise<
+  ResultadoApi<{
+    qrCode: string | null;
+    pairingCode: string | null;
+    status: string;
+    conectado: boolean;
+    phone: string | null;
+    origem: "status" | "restart" | "connect" | null;
+  }>
+> {
   const resposta = await fetch(`/api/whatsapp/instances/${id}/qrcode`, { method: "GET" });
   const json = await lerJsonSeguro<WhatsappConexaoPayload & ApiErro>(resposta);
 
@@ -39,7 +48,17 @@ export async function obterQrCodeWhatsapp(id: string): Promise<ResultadoApi<{ qr
     return { ok: false, erro: json.erro ?? "Erro ao buscar QR Code." };
   }
 
-  return { ok: true, dados: { qrCode: json.qrCode ?? null } };
+  return {
+    ok: true,
+    dados: {
+      qrCode: json.qrCode ?? null,
+      pairingCode: json.pairingCode ?? null,
+      status: json.status ?? "unknown",
+      conectado: json.conectado === true,
+      phone: json.phone ?? null,
+      origem: json.origem ?? null,
+    },
+  };
 }
 
 export async function reconectarInstanciaWhatsapp(id: string): Promise<
