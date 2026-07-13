@@ -1,8 +1,8 @@
 "use client";
 
-import { FolderOpen, Play, Plus, Settings } from "lucide-react";
+import { Play, Plus, Settings, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import type { Pipeline } from "../types";
 
 type KanbanPipelineCatalogProps = {
@@ -26,60 +26,49 @@ export function KanbanPipelineCatalog({
 
   if (pipelines.length === 0) {
     return (
-      <Card className="border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-primary)]">
-        <CardHeader>
-          <CardTitle className="text-base">Nenhum funil encontrado</CardTitle>
-        </CardHeader>
-        <CardContent className="pb-6">
-          <div className="flex flex-col gap-4">
-            <p className="text-sm text-[var(--text-secondary)]">
-              Ainda não há funis cadastrados para esta empresa.
-            </p>
-            {podeGerenciar && onCreatePipeline && (
-              <Button
-                onClick={onCreatePipeline}
-                className="w-full rounded-xl bg-[var(--brand)]"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Criar Primeiro Pipeline
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
+        <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[var(--surface-soft)]">
+          <FolderOpen className="h-10 w-10 text-[var(--text-tertiary)]" />
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-[var(--text-primary)]">
+            Nenhum funil encontrado
+          </h3>
+          <p className="mt-1 text-sm text-[var(--text-secondary)]">
+            Crie seu primeiro funil em 10 segundos
+          </p>
+        </div>
+        {podeGerenciar && onCreatePipeline && (
+          <Button onClick={onCreatePipeline} className="rounded-xl bg-[var(--brand)]">
+            <Plus className="mr-2 h-4 w-4" />
+            Criar primeiro funil
+          </Button>
+        )}
+      </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="rounded-[20px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)] md:p-6">
-        <div className="flex items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Kanban</p>
-            <h2 className="mt-2 text-2xl font-semibold text-[var(--text-primary)]">Escolha um funil para abrir</h2>
-            <p className="mt-1 text-sm text-[var(--text-secondary)]">
-              Cada funil possui seu próprio conjunto de estágios e negócios.
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            {podeGerenciar && onCreatePipeline && (
-              <Button
-                onClick={onCreatePipeline}
-                size="sm"
-                className="rounded-xl bg-[var(--brand)]"
-              >
-                <Plus className="mr-1.5 h-4 w-4" />
-                <span className="hidden sm:inline">Novo</span>
-              </Button>
-            )}
-            <div className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface)] p-2 text-[var(--text-secondary)]">
-              <FolderOpen className="h-5 w-5" />
-            </div>
-          </div>
-        </div>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex items-center justify-between px-1">
+        <h2 className="text-lg font-semibold text-[var(--text-primary)]">
+          Seus funis
+        </h2>
+        {podeGerenciar && onCreatePipeline && (
+          <Button
+            onClick={onCreatePipeline}
+            size="sm"
+            className="rounded-xl bg-[var(--brand)]"
+          >
+            <Plus className="mr-1.5 h-4 w-4" />
+            Novo funil
+          </Button>
+        )}
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+      {/* Lista vertical */}
+      <div className="space-y-2">
         {pipelines.map((pipeline) => {
           const estaSelecionada = pipeline.id === selecionadaId;
 
@@ -92,46 +81,46 @@ export function KanbanPipelineCatalog({
                   : "bg-[var(--surface)]"
               }
             >
-              <CardHeader className="pb-2">
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <CardTitle className="text-base">{pipeline.nome}</CardTitle>
-                    <p className="mt-1 text-xs text-[var(--text-secondary)]">
-                      {pipeline.descricao ?? "Funil comercial"}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    {pipeline.padrao ? (
-                      <span className="inline-flex rounded-full border border-[color-mix(in_srgb,var(--brand)_45%,transparent)] bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] px-2.5 py-1 text-xs font-semibold uppercase tracking-[0.1em] text-[var(--brand)]">
+              <CardContent className="flex items-center gap-3 p-4">
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">
+                      {pipeline.nome}
+                    </span>
+                    {pipeline.padrao && (
+                      <span className="inline-flex items-center rounded-full border border-[color-mix(in_srgb,var(--brand)_45%,transparent)] bg-[color-mix(in_srgb,var(--brand)_20%,transparent)] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-[var(--brand)]">
                         Padrão
                       </span>
-                    ) : null}
-                    {podeGerenciar && onEditPipeline && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => onEditPipeline(pipeline)}
-                        className="h-8 w-8 rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--surface-elevated)]"
-                      >
-                        <Settings className="h-4 w-4" />
-                      </Button>
                     )}
                   </div>
+                  {pipeline.descricao && (
+                    <p className="mt-0.5 text-xs text-[var(--text-secondary)]">
+                      {pipeline.descricao}
+                    </p>
+                  )}
                 </div>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <p className="mb-4 text-xs text-[var(--text-tertiary)]">
-                  {pipeline.slug}
-                </p>
 
-                <Button
-                  size="sm"
-                  className="w-full rounded-xl bg-[var(--surface-elevated)] text-[var(--text-primary)] text-sm font-medium hover:bg-[var(--surface-soft-hover)]"
-                  onClick={() => onOpenPipeline(pipeline.id)}
-                >
-                  <Play className="mr-2 h-4 w-4" />
-                  Abrir quadro
-                </Button>
+                <div className="flex items-center gap-1">
+                  {podeGerenciar && onEditPipeline && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => onEditPipeline(pipeline)}
+                      className="h-8 w-8 rounded-lg text-[var(--text-tertiary)] hover:bg-[var(--surface-elevated)]"
+                      title="Editar funil"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  )}
+                  <Button
+                    size="sm"
+                    className="rounded-xl bg-[var(--brand)] text-white hover:bg-[var(--brand-strong)]"
+                    onClick={() => onOpenPipeline(pipeline.id)}
+                  >
+                    <Play className="mr-1.5 h-3.5 w-3.5" />
+                    Abrir
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           );

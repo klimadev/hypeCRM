@@ -14,6 +14,7 @@ import { VinculoNegocioDialog } from "./components/vinculo-negocio-dialog";
 import { LeadFormDialog } from "./components/lead-form-dialog";
 import { LeadDeleteDialog } from "./components/lead-delete-dialog";
 import { LeadsBulkActions } from "./components/leads-bulk-actions";
+import { LeadsBulkDeleteDialog } from "./components/leads-bulk-delete-dialog";
 import { LeadDisparoCampaignDialog } from "./components/lead-disparo-campaign-dialog";
 import { LeadDisparoCampaignsPanel } from "./components/lead-disparo-campaigns-panel";
 import { LeadsImportCsvDialog } from "./components/leads-import-csv-dialog";
@@ -23,7 +24,7 @@ export function ModuloLeads() {
   const vm = useLeadsModule();
 
   return (
-    <ModulePageShell spacing="lg">
+    <ModulePageShell spacing="lg" className={vm.totalSelecionados > 0 ? "pb-24" : ""}>
       <ModulePageHeader
         title="Leads"
         subtitle="Lista operacional de contatos e vínculos comerciais."
@@ -98,10 +99,12 @@ export function ModuloLeads() {
         totalSelecionados={vm.totalSelecionados}
         totalFiltrados={vm.leadsFiltrados.length}
         todosFiltradosSelecionados={vm.todosFiltradosSelecionados}
+        carregando={vm.removendoLeadsEmMassa || vm.convertendoLeads || vm.disparandoCampanha}
         onSelecionarTodosFiltrados={vm.selecionarTodosFiltrados}
         onLimparSelecao={vm.limparSelecao}
         onDisparar={vm.abrirDialogDisparo}
         onConverterEmNegocios={vm.abrirDialogConversao}
+        onRemover={vm.abrirRemocaoMassa}
       />
 
       <LeadDisparoCampaignDialog
@@ -176,6 +179,21 @@ export function ModuloLeads() {
         }}
         onRemoverNegociosChange={vm.setRemoverNegociosVinculados}
         onConfirmar={() => void vm.confirmarRemocaoLead()}
+      />
+
+      <LeadsBulkDeleteDialog
+        leads={vm.leadsSelecionadosParaRemocao}
+        open={vm.dialogRemocaoMassaAberto}
+        removendo={vm.removendoLeadsEmMassa}
+        removerNegociosVinculados={vm.removerNegociosVinculados}
+        erro={vm.erroRemocaoLead}
+        onOpenChange={(aberto) => {
+          if (!aberto) {
+            vm.fecharRemocaoMassa();
+          }
+        }}
+        onRemoverNegociosChange={vm.setRemoverNegociosVinculados}
+        onConfirmar={() => void vm.confirmarRemocaoMassa()}
       />
 
       <LeadConversaoDialog

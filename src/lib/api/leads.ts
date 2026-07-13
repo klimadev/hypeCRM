@@ -278,6 +278,34 @@ export async function removerLeadContato(
   };
 }
 
+export type PayloadRemoverLeadsEmMassa = {
+  lead_ids: string[];
+  remover_negocios_vinculados?: boolean;
+};
+
+export type ResultadoRemocaoLeadsEmMassa = {
+  sucesso: boolean;
+  removidos: number;
+  erros: number;
+};
+
+export async function removerLeadsEmMassa(
+  payload: PayloadRemoverLeadsEmMassa,
+): Promise<ResultadoApi<ResultadoRemocaoLeadsEmMassa>> {
+  const resposta = await fetch("/api/leads/batch-delete", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+
+  const json = await lerJsonSeguro<ResultadoRemocaoLeadsEmMassa & ApiErro>(resposta);
+  if (!resposta.ok) {
+    return { ok: false, erro: json.erro ?? "Erro ao remover leads em massa." };
+  }
+
+  return { ok: true, dados: { sucesso: json.sucesso ?? true, removidos: json.removidos ?? 0, erros: json.erros ?? 0 } };
+}
+
 export async function criarCampanhaDisparoLeadsApi(payload: PayloadCriarCampanhaDisparo): Promise<
   ResultadoApi<{
     campanhaId: string;

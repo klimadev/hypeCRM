@@ -12,6 +12,7 @@ import {
   listarCampanhasDisparoLeadsApi,
   listarLeadsApi,
   removerLeadContato,
+  removerLeadsEmMassa,
   type ApiFuncionarioContato,
   type ApiLeadContato,
   type ApiPdvContato,
@@ -77,6 +78,8 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const [removendoLead, setRemovendoLead] = useState(false);
   const [removerNegociosVinculados, setRemoverNegociosVinculados] = useState(false);
   const [erroRemocaoLead, setErroRemocaoLead] = useState<string | null>(null);
+  const [dialogRemocaoMassaAberto, setDialogRemocaoMassaAberto] = useState(false);
+  const [removendoLeadsEmMassa, setRemovendoLeadsEmMassa] = useState(false);
   const [dialogNovoLeadAberto, setDialogNovoLeadAberto] = useState(false);
   const [dialogImportacaoAberto, setDialogImportacaoAberto] = useState(false);
   const [importandoCsv, setImportandoCsv] = useState(false);
@@ -202,6 +205,11 @@ export function useLeadsModule(): UseLeadsModuleReturn {
   const totalSelecionados = idsSelecionados.length;
   const todosFiltradosSelecionados = leadsFiltrados.length > 0 && leadsFiltrados.every((lead) => idsSelecionados.includes(lead.id));
 
+  const leadsSelecionadosParaRemocao = useMemo(
+    () => leads.filter((lead) => idsSelecionados.includes(lead.id)),
+    [idsSelecionados, leads],
+  );
+
   const { pdvsPresentesNaSelecao, semPdvSelecionados } = useMemo(
     () => calcularResumoSelecaoDisparo(leadsSelecionados, pdvsPorId),
     [leadsSelecionados, pdvsPorId],
@@ -235,6 +243,52 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     setLeadParaRemover(null);
     setRemoverNegociosVinculados(false);
     setErroRemocaoLead(null);
+  };
+
+  const abrirRemocaoMassa = () => {
+    setErroRemocaoLead(null);
+    setDialogRemocaoMassaAberto(true);
+  };
+
+  const fecharRemocaoMassa = () => {
+    if (removendoLeadsEmMassa || !dialogRemocaoMassaAberto) return;
+    setDialogRemocaoMassaAberto(false);
+    setErroRemocaoLead(null);
+  };
+
+  const confirmarRemocaoMassa = async () => {
+    if (removendoLeadsEmMassa || leadsSelecionadosParaRemocao.length === 0) return;
+    setRemovendoLeadsEmMassa(true);
+    setErroRemocaoLead(null);
+
+    try {
+      const resultado = await removerLeadsEmMassa({
+        lead_ids: leadsSelecionadosParaRemocao.map((l) => l.id),
+        remover_negocios_vinculados: removerNegociosVinculados,
+      });
+
+      if (!resultado.ok) {
+        setErroRemocaoLead(resultado.erro);
+        return;
+      }
+
+      if (resultado.dados.erros > 0) {
+        setErroRemocaoLead(`${resultado.dados.erros} lead(s) n�o puderam ser removidos.`);
+      }
+
+      setDialogRemocaoMassaAberto(false);
+      setIdsSelecionados([]);
+      await carregarDados(true);
+      addToast({
+        type: "success",
+        title: "Leads removidos",
+        description: `${resultado.dados.removidos} lead(s) removido(s) com sucesso.`,
+      });
+    } catch (error) {
+      setErroRemocaoLead(error instanceof Error ? error.message : "Não foi possível remover os leads.");
+    } finally {
+      setRemovendoLeadsEmMassa(false);
+    }
   };
 
   const abrirNovoLead = () => {
@@ -765,6 +819,12 @@ export function useLeadsModule(): UseLeadsModuleReturn {
     fecharRemocaoLead,
     setRemoverNegociosVinculados,
     confirmarRemocaoLead,
+    dialogRemocaoMassaAberto,
+    removendoLeadsEmMassa,
+    leadsSelecionadosParaRemocao,
+    abrirRemocaoMassa,
+    fecharRemocaoMassa,
+    confirmarRemocaoMassa,
     // Conversão em massa de leads para negócios
     dialogConversaoAberto,
     convertendoLeads,

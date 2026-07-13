@@ -223,6 +223,32 @@ model MetaCapiEvento {
   @@index([criado_em])
 }
 
+model MetaLeadAdsConfig {
+  id            String    @id @default(cuid())
+  id_empresa    String    @unique
+  page_tokens   String    @default("[]")
+  campo_mapping String?   @default("{}")
+  ativo         Boolean   @default(false)
+  intervalo_min Int       @default(5)
+  ultima_sync   DateTime?
+  criado_em     DateTime  @default(now())
+  atualizado_em DateTime  @updatedAt
+}
+
+model MetaLeadAdsLead {
+  id              String
+  id_empresa      String
+  id_lead_crm     String?
+  page_id         String
+  form_id         String
+  ad_id           String?
+  dados_brutos    String
+  sincronizado_em DateTime @default(now())
+
+  @@unique([id_empresa, id])
+  @@index([id_empresa, id_lead_crm])
+}
+
 model Empresa {
   id                String           @id
   nome              String

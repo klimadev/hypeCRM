@@ -1,9 +1,15 @@
 "use client";
 
-import type { FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+
+const MOTIVOS_SUGERIDOS = [
+  "Preço muito alto",
+  "Cliente escolheu concorrente",
+  "Sem orçamento no momento",
+  "Outro",
+];
 
 type PerdaDialogProps = {
   movimentoPendente: { id_negocio: string; id_estagio: string } | null;
@@ -20,24 +26,67 @@ export function PerdaDialog({
   onConfirmarPerda,
   onOpenChange,
 }: PerdaDialogProps) {
+  const [carregando, setCarregando] = useState(false);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setCarregando(true);
+    try {
+      await onConfirmarPerda(e);
+    } finally {
+      setCarregando(false);
+    }
+  };
+
   return (
     <Dialog open={Boolean(movimentoPendente)} onOpenChange={onOpenChange}>
-        <DialogContent className="rounded-[var(--radius-card)]">
+      <DialogContent className="max-w-sm">
         <DialogHeader>
-          <DialogTitle>Motivo de perda</DialogTitle>
+          <DialogTitle>Perder negócio</DialogTitle>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Tem certeza? Informe o motivo para registrar o aprendizado.
+          </p>
         </DialogHeader>
 
-        <form className="space-y-3" onSubmit={onConfirmarPerda}>
-          <Textarea
-            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
-            value={motivoPerda}
-            onChange={(e) => setMotivoPerda(e.target.value)}
-            placeholder="Descreva o motivo da perda..."
-            required
-          />
-          <Button className="w-full rounded-[var(--radius-control)] font-medium" type="submit">
-            Confirmar
-          </Button>
+        <form className="space-y-3" onSubmit={handleSubmit}>
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-[var(--text-primary)]">Motivo</label>
+            <div className="flex flex-wrap gap-1.5">
+              {MOTIVOS_SUGERIDOS.map((m) => (
+                <button
+                  key={m}
+                  type="button"
+                  onClick={() => setMotivoPerda(m)}
+                  className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-colors ${
+                    motivoPerda === m
+                      ? "bg-[var(--danger)] text-white"
+                      : "bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:bg-[var(--surface-elevated)]"
+                  }`}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={carregando}
+              className="flex-1 rounded-xl"
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={carregando || !motivoPerda.trim()}
+              className="flex-1 rounded-xl bg-[var(--danger)] text-white hover:bg-[var(--danger-strong)]"
+            >
+              {carregando ? "Salvando..." : "Confirmar perda"}
+            </Button>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

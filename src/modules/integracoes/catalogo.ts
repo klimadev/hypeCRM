@@ -66,5 +66,24 @@ export function listarIntegracoesDisponiveis(): IntegracaoCatalogoItem[] {
       ],
       perfisPermitidos: PERFIS_GESTAO,
     },
+    {
+      slug: "meta-leads",
+      nome: "Central de Leads",
+      tituloCurto: "Importacao automatica de leads do Facebook/Instagram",
+      resumoCurto: "Conecte a Central de Leads do Meta para importar leads de formularios automaticamente.",
+      descricao: "Integracao com a Meta Lead Ads API para buscar leads de formularios das paginas conectadas e importa-los automaticamente para o CRM a cada 5 minutos.",
+      categoria: "Leads",
+      href: "/integracoes/meta-leads",
+      disponibilidade: "disponivel",
+      statusLabel: "Disponivel agora",
+      destaque: "Importacao automatica de leads com deduplicacao e mapeamento de campos.",
+      acaoLabel: "Abrir integracao",
+      recursos: [
+        "Busca automatica de formularios das paginas",
+        "Importacao a cada 5 minutos com deduplicacao",
+        "Preview de leads antes de ativar",
+      ],
+      perfisPermitidos: PERFIS_GESTAO,
+    },
   ];
 }

@@ -1,13 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { ArrowRight, CalendarRange, Construction, Instagram, LayoutGrid, PlugZap, Zap } from "lucide-react";
+import { ArrowRight, CalendarRange, Construction, Instagram, LayoutGrid, PlugZap, Users, Zap } from "lucide-react";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIntegracoesModule } from "./hooks/use-integracoes-module";
+
+const ICONE_POR_SLUG: Record<string, React.ComponentType<{ className?: string }>> = {
+  instagram: Instagram,
+  "meta-capi": Zap,
+  "meta-leads": Users,
+  calcom: CalendarRange,
+};
 
 function obterResumoCatalogo(total: number) {
   if (total === 1) {
@@ -59,6 +66,7 @@ export function ModuloIntegracoes() {
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
         {vm.integracoes.map((integracao) => {
           const estaDisponivel = integracao.disponibilidade === "disponivel";
+          const Icone = ICONE_POR_SLUG[integracao.slug] ?? CalendarRange;
           const ConteudoCard = (
             <Card
               className={cn(
@@ -86,13 +94,7 @@ export function ModuloIntegracoes() {
                         : "border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]",
                     )}
                   >
-                    {integracao.slug === "instagram" ? (
-                      <Instagram className="h-5 w-5" />
-                    ) : integracao.slug === "meta-capi" ? (
-                      <Zap className="h-5 w-5" />
-                    ) : (
-                      <CalendarRange className="h-5 w-5" />
-                    )}
+                    <Icone className="h-5 w-5" />
                   </span>
                 </div>
               </CardHeader>

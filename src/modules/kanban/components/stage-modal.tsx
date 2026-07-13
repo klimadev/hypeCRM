@@ -6,6 +6,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Loader2, Plus } from "lucide-react";
+import { useToast } from "@/components/ui/toast";
 import type { TipoEstagio } from "../types";
 import { TypeSelector } from "./type-selector";
 
@@ -31,6 +32,7 @@ export function StageModal({
   const [nome, setNome] = useState(dadosIniciais?.nome ?? "");
   const [tipo, setTipo] = useState<TipoEstagio>(dadosIniciais?.tipo ?? "ABERTO");
   const [erro, setErro] = useState<string | null>(null);
+  const { addToast } = useToast();
 
   const handleSubmit = async (evento: FormEvent<HTMLFormElement>) => {
     evento.preventDefault();
@@ -41,7 +43,16 @@ export function StageModal({
       return;
     }
 
-    await onSubmit({ nome: nome.trim(), tipo });
+    try {
+      await onSubmit({ nome: nome.trim(), tipo });
+      addToast({
+        type: "success",
+        title: modoEdicao ? "Estágio atualizado!" : "Estágio adicionado!",
+      });
+      onOpenChange(false);
+    } catch {
+      setErro("Erro ao salvar. Tente novamente.");
+    }
   };
 
   return (
@@ -50,34 +61,39 @@ export function StageModal({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {modoEdicao ? "Editar Estágio" : "Adicionar Estágio"}
+            {modoEdicao ? "Editar estágio" : "Adicionar estágio"}
           </DialogTitle>
         </DialogHeader>
 
         <form className="space-y-4" onSubmit={handleSubmit}>
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--text-primary)]">
-              Nome do Estágio
+              Nome do estágio
             </label>
             <Input
               value={nome}
-              onChange={(e) => setNome(e.target.value)}
+              onChange={(e) => {
+                setNome(e.target.value);
+                if (erro) setErro(null);
+              }}
               placeholder="Ex: Novo Lead"
               disabled={carregando}
               required
               maxLength={100}
-              className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
+              className={`h-11 rounded-xl border bg-[var(--surface)] text-sm ${
+                erro ? "border-[var(--danger)]" : "border-[var(--border-subtle)]"
+              }`}
+              autoFocus
             />
+            {erro && <p className="text-sm text-[var(--danger)]">{erro}</p>}
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             <label className="text-sm font-medium text-[var(--text-primary)]">
               Tipo
             </label>
             <TypeSelector value={tipo} onChange={setTipo} disabled={carregando} />
           </div>
-
-          {erro && <p className="text-sm text-[var(--danger)]">{erro}</p>}
 
           <div className="flex justify-end gap-2 pt-2">
             <Button
@@ -102,7 +118,7 @@ export function StageModal({
               ) : (
                 <>
                   <Plus className="mr-2 h-4 w-4" />
-                  {modoEdicao ? "Salvar Alterações" : "Adicionar"}
+                  {modoEdicao ? "Salvar" : "Adicionar"}
                 </>
               )}
             </Button>

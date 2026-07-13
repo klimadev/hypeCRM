@@ -80,14 +80,14 @@ export function LeadDetailsDrawerTabs(props: LeadDetailsDrawerTabsProps) {
             className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none border border-transparent data-[state=active]:border-[var(--border-subtle)]"
           >
             <FileText className="mr-1.5 h-3.5 w-3.5" />
-            Detalhes
+            Dados
           </TabsTrigger>
           <TabsTrigger
             value="vinculos"
             className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none border border-transparent data-[state=active]:border-[var(--border-subtle)]"
           >
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
-            Vínculos
+            Histórico
           </TabsTrigger>
         </TabsList>
       </div>

@@ -92,6 +92,13 @@ export type UseLeadsModuleReturn = {
   removerNegociosVinculados: boolean;
   erroRemocaoLead: string | null;
   negociosRelacionadosAoLead: ApiNegocioResumo[];
+  // Bulk delete
+  dialogRemocaoMassaAberto: boolean;
+  removendoLeadsEmMassa: boolean;
+  leadsSelecionadosParaRemocao: ApiLeadContato[];
+  abrirRemocaoMassa: () => void;
+  fecharRemocaoMassa: () => void;
+  confirmarRemocaoMassa: () => Promise<void>;
   // Conversão em massa de leads para negócios
   dialogConversaoAberto: boolean;
   convertendoLeads: boolean;

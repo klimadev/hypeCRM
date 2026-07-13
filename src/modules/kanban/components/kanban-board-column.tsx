@@ -98,7 +98,7 @@ export function KanbanBoardColumn({
                         className={cn(
                           negocio.id.startsWith("temp-")
                             ? "bg-transparent"
-                            : "cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] transition-all duration-150 hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft)] active:scale-[0.99]",
+                            : "group cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] transition-all duration-150 hover:shadow-md hover:scale-[1.02] hover:border-[var(--border-strong)] active:scale-[0.99]",
                           visualCue.border,
                           getClasseBordaGravidade(pendenciasPorNegocio[negocio.id]?.gravidadeMaxima),
                           draggableSnapshot.isDragging && "shadow-lg opacity-80",
