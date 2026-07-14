@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import React from "react";
 import { ArrowUpRight, Link2, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -21,6 +22,15 @@ type LeadsTableProps = {
   onRemover: (lead: ApiLeadContato) => void;
 };
 
+/** Mapeia nome da etapa para cor semântica */
+function corEtapa(etapa: string): { bg: string; text: string } {
+  const nome = etapa.toLowerCase();
+  if (nome.includes("novo") || nome.includes("lead")) return { bg: "bg-[color-mix(in_srgb,var(--info)_14%,transparent)]", text: "text-[var(--info)]" };
+  if (nome.includes("negocia") || nome.includes("proposta") || nome.includes("orçamento")) return { bg: "bg-[color-mix(in_srgb,var(--warning)_14%,transparent)]", text: "text-[var(--warning)]" };
+  if (nome.includes("fechado") || nome.includes("ganho") || nome.includes("convertido")) return { bg: "bg-[color-mix(in_srgb,var(--success)_14%,transparent)]", text: "text-[var(--success)]" };
+  return { bg: "bg-[var(--surface-soft)]", text: "text-[var(--text-secondary)]" };
+}
+
 export function LeadsTable({
   linhas,
   resumoTotal,
@@ -33,17 +43,17 @@ export function LeadsTable({
   onRemover,
 }: LeadsTableProps) {
   return (
-    <section className="min-w-0 overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
+    <section className="min-w-0 overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
       <div className="flex items-center justify-between gap-3 border-b border-[var(--border-subtle)] px-4 py-3">
-        <p className="text-sm font-semibold text-[var(--text-primary)]">Leads ({linhas.length})</p>
-        <p className="text-xs text-[var(--text-secondary)]">{resumoTotal}</p>
+        <p className="text-sm font-semibold text-[var(--text-primary)]">{linhas.length} lead{linhas.length === 1 ? "" : "s"}</p>
+        <p className="text-xs text-[var(--text-tertiary)]">{resumoTotal}</p>
       </div>
 
       <div className="overflow-x-auto overscroll-x-contain">
-        <Table className="min-w-[600px] w-full">
+        <Table className="min-w-[480px] w-full">
           <TableHeader className="sticky top-0 z-10 bg-[var(--surface-elevated)]">
             <TableRow className="hover:bg-transparent">
-              <TableHead className="w-12">
+              <TableHead className="w-10">
                 <input
                   type="checkbox"
                   checked={todosDaPaginaSelecionados}
@@ -53,34 +63,32 @@ export function LeadsTable({
                 />
               </TableHead>
               <TableHead>Lead</TableHead>
-              <TableHead>Telefone</TableHead>
-              <TableHead>Etapa</TableHead>
+              <TableHead className="hidden sm:table-cell">Telefone</TableHead>
               <TableHead className="hidden md:table-cell">Responsável</TableHead>
-              <TableHead className="hidden lg:table-cell">PDV</TableHead>
-              <TableHead className="hidden xl:table-cell">Origem</TableHead>
-              <TableHead className="hidden xl:table-cell">Valor</TableHead>
-              <TableHead className="hidden lg:table-cell">Atualizado</TableHead>
+              <TableHead className="hidden lg:table-cell">Origem</TableHead>
               <TableHead className="text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {linhas.map((linha) => {
               const selecionado = idsSelecionados.includes(linha.id);
+              const badge = corEtapa(linha.etapa);
               return (
                 <TableRow
                   key={linha.id}
                   className={cn(
-                    "cursor-pointer border-[var(--border-subtle)] transition-colors",
-                    selecionado && "bg-[var(--brand)]/5 shadow-[inset_3px_0_0_var(--brand)]",
+                    "border-[var(--border-subtle)] transition-colors",
+                    selecionado && "bg-[color-mix(in_srgb,var(--brand)_6%,transparent)] shadow-[inset_3px_0_0_var(--brand)]",
+                    !selecionado && "hover:bg-[var(--surface-soft)]",
                   )}
-                  onClick={(e) => {
-                    // Ignore clicks on interactive elements
+                  onClick={(e?: React.MouseEvent<HTMLTableRowElement>) => {
+                    if (!e) return;
                     const target = e.target as HTMLElement;
                     if (target.tagName === "BUTTON" || target.tagName === "A" || target.tagName === "INPUT" || target.closest("button, a, [role=button], input")) return;
                     onAlternarSelecao(linha.id);
                   }}
                 >
-                  <TableCell className="py-3">
+                  <TableCell className="py-4">
                     <input
                       type="checkbox"
                       checked={selecionado}
@@ -89,48 +97,44 @@ export function LeadsTable({
                       className="h-4 w-4 rounded border border-[var(--border-strong)] bg-transparent accent-[var(--brand)]"
                     />
                   </TableCell>
-                  <TableCell className="py-3">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-[var(--text-primary)]">{linha.nome}</p>
-                      <p className="text-xs text-[var(--text-secondary)]">{linha.id}</p>
+                  <TableCell className="py-4">
+                    <div className="flex items-center gap-2">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium text-[var(--text-primary)]">{linha.nome}</p>
+                        <span className={cn("mt-0.5 inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium", badge.bg, badge.text)}>
+                          {linha.etapa}
+                        </span>
+                      </div>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3 text-[var(--text-secondary)]">{linha.telefone}</TableCell>
-                  <TableCell className="py-3 text-[var(--text-secondary)]">{linha.etapa}</TableCell>
-                  <TableCell className="hidden py-3 text-[var(--text-secondary)] md:table-cell">{linha.responsavel}</TableCell>
-                  <TableCell className="hidden py-3 text-[var(--text-secondary)] lg:table-cell">{linha.pdv}</TableCell>
-                  <TableCell className="hidden py-3 text-[var(--text-secondary)] xl:table-cell">{linha.origem}</TableCell>
-                  <TableCell className="hidden py-3 font-semibold text-[var(--text-primary)] xl:table-cell">{linha.valor}</TableCell>
-                  <TableCell className="hidden py-3 text-[var(--text-secondary)] lg:table-cell">{linha.atualizadoEm}</TableCell>
-                  <TableCell className="py-3 text-right">
+                  <TableCell className="hidden py-4 text-[var(--text-secondary)] sm:table-cell">
+                    <span className="tabular-nums">{linha.telefone}</span>
+                  </TableCell>
+                  <TableCell className="hidden py-4 text-[var(--text-secondary)] md:table-cell">{linha.responsavel}</TableCell>
+                  <TableCell className="hidden py-4 text-[var(--text-secondary)] lg:table-cell">{linha.origem}</TableCell>
+                  <TableCell className="py-4 text-right">
                     <div className="flex items-center justify-end gap-1">
                       {linha.idNegocio ? (
-                        <Button asChild variant="ghost" size="sm" className="h-8 w-8 p-0 text-[var(--info)]">
-                          <Link href={`/kanban?negocio=${linha.idNegocio}`} title="Abrir negócio">
+                        <Button asChild variant="ghost" size="sm" className="h-8 w-8 rounded-lg p-0 text-[var(--info)]">
+                          <Link href={`/kanban?negocio=${linha.idNegocio}`} title="Ver negócio">
                             <ArrowUpRight className="h-4 w-4" />
                           </Link>
                         </Button>
                       ) : null}
-
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={() => onEditar(linha.lead)}
-                        title="Editar"
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Button>
-
                       <Popover>
-                        <PopoverTrigger asChild>
-                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" title="Mais ações">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                        <PopoverTrigger className="flex h-8 w-8 items-center justify-center rounded-lg border-0 bg-transparent text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-soft)] hover:text-[var(--text-primary)]">
+                          <MoreHorizontal className="h-4 w-4" />
                         </PopoverTrigger>
-                        <PopoverContent align="end" sideOffset={4} className="w-48 p-1">
+                        <PopoverContent className="w-44 p-1">
                           <div className="flex flex-col gap-0.5">
+                            <button
+                              type="button"
+                              onClick={() => onEditar(linha.lead)}
+                              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--text-primary)] transition-colors hover:bg-[var(--surface-elevated)]"
+                            >
+                              <Pencil className="h-4 w-4 text-[var(--text-secondary)]" />
+                              Editar lead
+                            </button>
                             <button
                               type="button"
                               onClick={() => onVincular(linha.lead)}
@@ -139,10 +143,11 @@ export function LeadsTable({
                               <Link2 className="h-4 w-4 text-[var(--text-secondary)]" />
                               {linha.idNegocio ? "Trocar vínculo" : "Vincular negócio"}
                             </button>
+                            <hr className="my-0.5 border-[var(--border-subtle)]" />
                             <button
                               type="button"
                               onClick={() => onRemover(linha.lead)}
-                              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--destructive)] transition-colors hover:bg-[var(--destructive)]/10"
+                              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm text-[var(--danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]"
                             >
                               <Trash2 className="h-4 w-4" />
                               Remover

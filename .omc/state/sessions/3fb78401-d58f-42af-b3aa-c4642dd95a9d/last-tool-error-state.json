@@ -1,0 +1,7 @@
+{
+  "tool_name": "Edit",
+  "tool_input_preview": "{\"file_path\":\"/etc/apache2/sites-enabled/app-hypecrm-le-ssl.conf\",\"old_string\":\"    ProxyErrorOverride On\\n    ErrorDocument 502 /maintenance/index.html\",\"new_string\":\"    ErrorDocument 502 /maintenan...",
+  "error": "Refusing to write through symlink: /etc/apache2/sites-enabled/app-hypecrm-le-ssl.conf. Resolve the symlink and pass the real target path explicitly.",
+  "timestamp": "2026-07-06T20:32:50.580Z",
+  "retry_count": 1
+}

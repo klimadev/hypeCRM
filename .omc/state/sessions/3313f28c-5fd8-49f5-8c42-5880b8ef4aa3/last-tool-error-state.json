@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"grep -c \\\"metaLeadAdsLead\\\" /var/www/hypeCRM/node_modules/.prisma/client/index.js 2>/dev/null\",\"description\":\"Confirm client now has metaLeadAdsLead\"}",
+  "error": "Exit code 2",
+  "timestamp": "2026-07-10T05:14:46.209Z",
+  "retry_count": 1
+}

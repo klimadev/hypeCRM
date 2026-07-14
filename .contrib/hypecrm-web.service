@@ -1,0 +1,21 @@
+[Unit]
+Description=HypeCRM Web (Next.js)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/hypeCRM
+ExecStart=/usr/bin/node ./node_modules/next/dist/bin/next start -H 0.0.0.0 -p 3434
+Environment=NODE_ENV=production
+Environment=UNDICI_SOCKET_FAMILY=ipv4
+Restart=on-failure
+RestartSec=5
+MemoryMax=1G
+KillSignal=SIGINT
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

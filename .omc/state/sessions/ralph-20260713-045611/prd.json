@@ -1,0 +1,84 @@
+{
+  "title": "Kanban UX Overhaul",
+  "epic": "Simplificar módulo Kanban para João Pedro 67 anos",
+  "stories": [
+    {
+      "id": "US-001",
+      "title": "Pipeline Catalog — Redesign tela de seleção",
+      "description": "Redesenhar kanban-pipeline-catalog.tsx para lista vertical limpa com empty state ilustrado",
+      "acceptanceCriteria": [
+        "Pipeline catalog é lista vertical (não grid) com 1 linha por pipeline: nome + badge padrão + botão 'Abrir'",
+        "Empty state mostra ilustração + texto 'Crie seu primeiro funil em 10 segundos' + CTA",
+        "Botão 'Novo Pipeline' visível inline no header do catalog"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-002",
+      "title": "Pipeline Modal — Simplificar criação",
+      "description": "Pipeline-modal.tsx com 1 campo obrigatório (nome), feedback imediato",
+      "acceptanceCriteria": [
+        "Criar pipeline requer apenas nome (obrigatório), descrição é opcional expandível",
+        "Modal fecha automaticamente ao salvar com toast de sucesso",
+        "Validação inline: campo vazio mostra erro no próprio campo"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-003",
+      "title": "Header — Reduzir drasticamente",
+      "description": "kanban-header.tsx comprimido para 1 linha + linha de métricas opcional",
+      "acceptanceCriteria": [
+        "Header principal tem 1 linha: seletor pipeline + botão 'Novo negócio' + toggle métricas",
+        "KPIs movidos para seção colapsável 'Ver métricas'",
+        "Filtros em popover único com busca + origem + funcionário"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-004",
+      "title": "Board Kanban — Simplificar cards + affordance drag",
+      "description": "Cards com no máximo 3 campos, sombra ao hover, animação de drag, scroll visual",
+      "acceptanceCriteria": [
+        "Card mostra: nome, valor (se >0), indicador de pendência (bolinha)",
+        "Card tem sombra + escala ao hover para indicar que é arrastável",
+        "Scroll horizontal tem fade nas bordas + dica visual '→'",
+        "Mobile: board em accordion vertical (estágio → lista de cards)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-005",
+      "title": "Drawer Detalhes — Abas + simplificação",
+      "description": "lead-details-drawer.tsx com abas claras, fluxo de perda simples, info de contato visível",
+      "acceptanceCriteria": [
+        "Drawer com abas: Dados | Histórico (nomes claros em português)",
+        "Info de contato visível sem scroll",
+        "Fluxo 'Perder negócio': motivos predefinidos + confirmação destrutiva (≤3 cliques)"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-006",
+      "title": "Gestão de Estágios — Modal simplificado",
+      "description": "stage-modal.tsx com toast de feedback, auto-fechar, validação inline",
+      "acceptanceCriteria": [
+        "Stage modal: toast ao salvar, auto-fechar em sucesso",
+        "Validação inline com erro no campo"
+      ],
+      "passes": true
+    },
+    {
+      "id": "US-007",
+      "title": "Micro-interações e Feedback",
+      "description": "Skeletons, toasts, animações, empty states nos componentes principais",
+      "acceptanceCriteria": [
+        "Pipeline modal: toast 'Pipeline criado!' ao salvar",
+        "Perda: confirmação destrutiva com botão vermelho",
+        "Card: animação hover + scale indicando que é interativo",
+        "Board: dica visual de scroll horizontal"
+      ],
+      "passes": true
+    }
+  ]
+}

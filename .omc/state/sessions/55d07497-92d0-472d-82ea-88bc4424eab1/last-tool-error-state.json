@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pnpm build 2>&1\",\"timeout\":300000,\"description\":\"Full build verbose output\"}",
+  "error": "Exit code 1\n$ next build\n▲ Next.js 16.1.6 (Turbopack)\n- Environments: .env\n- Experiments (use with caution):\n  · optimizePackageImports\n\n  Creating an optimized production build ...\n\n> Build error occurred\nError: Turbopack build failed with 1 errors:\n./src/lib/meta-campos.ts:26:10\nParsing ecmascript source code failed\n\u001b[0m \u001b[90m 24 |\u001b[39m\n \u001b[90m 25 |\u001b[39m \u001b[36mexport\u001b[39m \u001b[36mfunction\u001b[39m autoDetectNome(campos\u001b[33m:\u001b[39m string[])\u001b[33m:\u001b[39m string {\n\u001b[31m\u001b[1m>\u001b[22m\u001b[39m\u001b[90m 26 |\u001b[39m   \u001b[36m...",
+  "timestamp": "2026-07-10T03:28:18.839Z",
+  "retry_count": 1
+}

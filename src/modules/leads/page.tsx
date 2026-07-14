@@ -27,7 +27,7 @@ export function ModuloLeads() {
     <ModulePageShell spacing="lg" className={vm.totalSelecionados > 0 ? "pb-24" : ""}>
       <ModulePageHeader
         title="Leads"
-        subtitle="Lista operacional de contatos e vínculos comerciais."
+        subtitle="Gerencie seus contatos e negócios."
         icon={<Users className="h-5 w-5" />}
         badges={[
           <span key="total" className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-1 text-[11px] font-semibold text-[var(--text-secondary)]">
@@ -63,7 +63,7 @@ export function ModuloLeads() {
       />
 
       {vm.carregando ? (
-        <div className="flex min-h-[240px] items-center justify-center rounded-[18px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
+        <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
           <Users className="h-5 w-5 animate-pulse text-[var(--text-secondary)]" />
         </div>
       ) : vm.linhasTabela.length === 0 ? (

@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meta Lead Ads — Debug Tool v22.0</title>
+<style>
+:root {
+  --bg: #0d1117; --surface: #161b22; --border: #30363d;
+  --text: #c9d1d9; --muted: #8b949e; --accent: #58a6ff;
+  --green: #3fb950; --red: #f85149; --yellow: #d2991d;
+  --purple: #a371f7;
+}
+* { box-sizing:border-box; margin:0; padding:0 }
+body { background:var(--bg); color:var(--text); font:14px/1.5 SF Mono,Consolas,monospace; padding:20px }
+h1 { font-size:18px; margin-bottom:4px }
+h2 { font-size:14px; color:var(--accent); margin:16px 0 8px; border-bottom:1px solid var(--border); padding-bottom:4px }
+label { display:block; font-size:12px; color:var(--muted); margin:8px 0 4px }
+input,textarea,select { width:100%; background:var(--surface); border:1px solid var(--border); color:var(--text); padding:8px; font:inherit; border-radius:4px }
+textarea { resize:vertical; min-height:60px }
+button { background:var(--accent); color:#fff; border:none; padding:8px 16px; font:inherit; border-radius:4px; cursor:pointer; margin:4px 4px 4px 0 }
+button:hover { filter:brightness(1.1) }
+button.danger { background:var(--red) }
+button.small { padding:4px 10px; font-size:12px }
+.row { display:flex; gap:8px; flex-wrap:wrap }
+.col { flex:1; min-width:280px }
+.card { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:12px; margin-bottom:12px }
+pre { background:#0d1117; border:1px solid var(--border); border-radius:4px; padding:12px; overflow:auto; max-height:500px; font-size:12px; white-space:pre-wrap; word-break:break-all }
+.badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:bold }
+.badge.ok { background:var(--green); color:#000 }
+.badge.err { background:var(--red); color:#fff }
+.badge.info { background:var(--purple); color:#fff }
+.badge.warn { background:var(--yellow); color:#000 }
+.token-info { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; font-size:12px }
+.token-info dt { color:var(--muted) }
+.token-info dd { word-break:break-all }
+#log { max-height:400px; overflow-y:auto }
+.log-line { padding:2px 8px; border-left:3px solid var(--border); margin:2px 0; font-size:12px }
+.log-line.req { border-color:var(--accent) }
+.log-line.res { border-color:var(--green) }
+.log-line.err { border-color:var(--red); color:var(--red) }
+.spin { animation:spin 1s linear infinite }
+@keyframes spin { to { transform:rotate(360deg) } }
+</style>
+</head>
+<body>
+
+<h1>🔍 Meta Lead Ads — Debug Tool</h1>
+<p style="color:var(--muted);font-size:12px">Graph API v22.0 · Central de Leads · <span id="tokenStatus" class="badge warn">USER TOKEN</span></p>
+
+<div class="card">
+  <h2>🔑 User Access Token</h2>
+  <label>1. Cole seu User Token aqui (do <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--accent)">Graph API Explorer</a> ou OAuth)</label>
+  <div class="row">
+    <input type="text" id="token" placeholder="EAA..." style="flex:1">
+    <button onclick="debugToken()">🔬 Debug Token</button>
+    <button onclick="automatizarTudo()" style="background:var(--green);font-weight:bold">🚀 AUTOMATIZAR TUDO</button>
+  </div>
+  <div id="tokenDebug" style="margin-top:8px"></div>
+  <p style="font-size:11px;color:var(--yellow);margin-top:8px">⚠️ User Token <b>NÃO</b> funciona pra forms/leads. Precisa extrair Page Token no passo 2.</p>
+</div>
+
+<div class="card">
+  <h2>📄 2. Extrair Page Tokens — GET /me/accounts</h2>
+  <label>Isso lista TODAS as páginas que você admin + o <b>access_token</b> de cada uma</label>
+  <button onclick="fetchPages()">📋 GET /me/accounts?fields=id,name,category,access_token,tasks</button>
+  <div id="pagesOutWrapper" style="margin-top:8px;display:none">
+    <label style="color:var(--green)">✅ Page Token ativo para chamadas abaixo:</label>
+    <div class="row">
+      <select id="pageTokenSelect" onchange="onPageTokenChange()" style="flex:1">
+        <option value="">-- Selecione uma página --</option>
+      </select>
+      <button onclick="useCustomPageToken()" class="small">🔧 Usar token manual</button>
+    </div>
+    <div id="activePageTokenInfo" style="font-size:11px;color:var(--muted);margin-top:4px"></div>
+    <pre id="pagesOut" style="margin-top:8px;max-height:200px">—</pre>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>📋 3. LeadGen Forms</h2>
+      <label>Page ID (auto-preenchido ao selecionar acima)</label>
+      <input type="text" id="formPageId" placeholder="PAGE_ID" readonly style="opacity:0.7">
+      <button onclick="fetchForms()">📝 GET /{page_id}/leadgen_forms</button>
+      <pre id="formsOut" style="margin-top:8px">—</pre>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>📄 Buscar Page Única</h2>
+      <label>Page ID</label>
+      <input type="text" id="pageId" placeholder="PAGE_ID">
+      <button onclick="fetchSinglePage()">🔍 GET /{page_id}</button>
+      <pre id="pagesOut2" style="margin-top:8px">—</pre>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col">
+    <div class="card">
+      <h2>👤 Puxar Leads por Form</h2>
+      <label>Form ID</label>
+      <input type="text" id="leadFormId" placeholder="FORM_ID">
+      <label>Campos (padrão: todos)</label>
+      <input type="text" id="leadFields" value="id,created_time,ad_id,form_id,field_data,custom_disclaimer_responses">
+      <label>Filtro de data (UNIX timestamp, opcional)</label>
+      <div class="row">
+        <input type="text" id="filterSince" placeholder="since (opcional)" style="flex:1">
+        <input type="text" id="filterUntil" placeholder="until (opcional)" style="flex:1">
+      </div>
+      <button onclick="fetchLeadsByForm()">👥 GET /{form_id}/leads</button>
+      <button onclick="fetchLeadsByFormPaged()" class="small">📄 Com paginação</button>
+      <pre id="leadsOut" style="margin-top:8px">—</pre>
+    </div>
+  </div>
+  <div class="col">
+    <div class="card">
+      <h2>🎯 Puxar Lead Único</h2>
+      <label>Lead ID</label>
+      <input type="text" id="singleLeadId" placeholder="LEAD_ID">
+      <button onclick="fetchSingleLead()">🎯 GET /{lead_id}</button>
+      <pre id="singleLeadOut" style="margin-top:8px">—</pre>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h2>🔔 Webhook Status</h2>
+  <label>Page ID</label>
+  <div class="row">
+    <input type="text" id="webhookPageId" placeholder="PAGE_ID" style="flex:1">
+    <button onclick="checkWebhooks()">📡 GET /{page_id}/subscribed_apps</button>
+  </div>
+  <pre id="webhookOut" style="margin-top:8px">—</pre>
+</div>
+
+<div class="card">
+  <h2>📋 Relatório de Descobertas — Meta Lead Ads API (v22.0)</h2>
+  <div style="font-size:13px;line-height:1.7">
+
+<h3>🔑 Autenticação — Fluxo Real (Descoberto na Prática)</h3>
+<ul>
+  <li><b>⚠️ DESCOBERTA CRÍTICA</b>: User Token <b>NÃO</b> acessa <code>/{page_id}/leadgen_forms</code> nem <code>/{form_id}/leads</code>. Retorna erro <code>(#190) This method must be called with a Page Access Token</code>.</li>
+  <li><b>Solução</b>: User Token → <code>GET /me/accounts?fields=access_token</code> → o JSON de resposta já contém o <b>access_token de cada página</b> no campo <code>data[].access_token</code>. Usar esse token para todas as chamadas de forms e leads.</li>
+  <li><b>3 tipos de token</b>: User Token (OAuth login), Page Token (via <code>/me/accounts</code> — expira em ~1h), System User Token (recomendado para produção — nunca expira).</li>
+  <li><b>Fluxo OAuth</b>: <code>GET https://www.facebook.com/v22.0/dialog/oauth?client_id=...&redirect_uri=...&state=...&scope=...</code> → obtém authorization_code → troca por access_token via <code>GET https://graph.facebook.com/v22.0/oauth/access_token?client_id=...&client_secret=...&code=...</code></li>
+  <li><b>System User</b>: Criar em Business Settings → Users → System Users → atribuir à App → gerar token com permissões. Token <b>não expira</b>, ideal server-to-server.</li>
+  <li><b>App em Development</b>: Só acessa leads de testers/developers/admins do app. Para produção precisa App Review + Go Live.</li>
+  <li><b>Exemplo real de resposta /me/accounts</b>: <pre style="font-size:11px">{
+  "data": [{
+    "id": "1054092957791716",
+    "name": "Chamalead.ia",
+    "category": "Produto/serviço",
+    "access_token": "EAApAbVhbqhE...PageTokenAqui...",
+    "tasks": ["ADVERTISE","ANALYZE","CREATE_CONTENT","MESSAGING","MODERATE","MANAGE"]
+  }]
+}</pre></li>
+</ul>
+
+<h3>📡 Endpoints (Testados na Prática)</h3>
+<p style="font-size:12px;color:var(--muted);margin-bottom:8px">⚠️ User Token só funciona nos 2 primeiros. Todo o resto exige <b>Page Token</b>.</p>
+<table style="width:100%;border-collapse:collapse;font-size:12px">
+<tr style="background:var(--surface)"><th style="text-align:left;padding:4px;border:1px solid var(--border)">Token</th><th style="text-align:left;padding:4px;border:1px solid var(--border)">Método</th><th style="text-align:left;padding:4px;border:1px solid var(--border)">Endpoint</th><th style="text-align:left;padding:4px;border:1px solid var(--border)">Descrição</th></tr>
+<tr><td style="padding:4px;border:1px solid var(--border)"><span class="badge warn">User</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/debug_token?input_token=...</code></td><td style="padding:4px;border:1px solid var(--border)">Inspeciona token (app token ou user token)</td></tr>
+<tr><td style="padding:4px;border:1px solid var(--border)"><span class="badge warn">User</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/me/accounts?fields=id,name,category,access_token,tasks</code></td><td style="padding:4px;border:1px solid var(--border)">Lista páginas + <b>Page Token de cada uma</b></td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{page_id}/leadgen_forms</code></td><td style="padding:4px;border:1px solid var(--border)">Lista formulários da página ✅</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{form_id}/leads</code></td><td style="padding:4px;border:1px solid var(--border)">Leads por formulário (pode dar #100 em alguns casos — fallback automático)</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{page_id}/leads</code></td><td style="padding:4px;border:1px solid var(--border)">Fallback #1: leads da página (filtra por form_id no client)</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{ad_id}/leads</code></td><td style="padding:4px;border:1px solid var(--border)">Leads por anúncio específico</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{lead_id}</code></td><td style="padding:4px;border:1px solid var(--border)">Lead individual</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{page_id}/subscribed_apps</code></td><td style="padding:4px;border:1px solid var(--border)">Verifica apps inscritos para webhook</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">POST</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{page_id}/subscribed_apps</code></td><td style="padding:4px;border:1px solid var(--border)">Inscreve app no webhook (param: <code>subscribed_fields=leadgen</code>)</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/{form_id}?fields=questions</code></td><td style="padding:4px;border:1px solid var(--border)">Campos/perguntas do formulário</td></tr>
+<tr style="background:rgba(63,185,80,0.1)"><td style="padding:4px;border:1px solid var(--border)"><span class="badge ok">Page</span></td><td style="padding:4px;border:1px solid var(--border)">GET</td><td style="padding:4px;border:1px solid var(--border)"><code>/v22.0/ads/lead_gen/export_csv/?id={form_id}&type=form</code></td><td style="padding:4px;border:1px solid var(--border)">Fallback #2: export CSV/TSV</td></tr>
+</table>
+
+<h3>🔐 Permissões Obrigatórias</h3>
+<ul>
+  <li><code>ads_management</code> — acesso a anúncios</li>
+  <li><code>ads_read</code> — leitura de dados de anúncios</li>
+  <li><code>leads_retrieval</code> — <b>essencial</b> para ler leads</li>
+  <li><code>pages_show_list</code> — listar páginas</li>
+  <li><code>pages_read_engagement</code> — ler dados de engajamento</li>
+  <li><code>pages_manage_ads</code> — gerenciar anúncios da página</li>
+  <li><code>pages_manage_metadata</code> — necessário para webhooks</li>
+</ul>
+<p style="color:var(--red);font-size:12px">⚠️ App Review necessário para produção. App em Development só acessa leads de testers.</p>
+
+<h3>📦 Campos do Lead (field_data)</h3>
+<p>Cada lead retorna <code>field_data</code> como array de <code>{name, values[]}</code>. Campos comuns:</p>
+<ul>
+  <li><code>full_name</code>, <code>first_name</code>, <code>last_name</code></li>
+  <li><code>email</code>, <code>phone_number</code></li>
+  <li><code>city</code>, <code>state</code>, <code>zip_code</code></li>
+  <li><code>custom_disclaimer_responses</code> — checkbox de consentimento</li>
+  <li>+ campos customizados definidos no formulário (ex: <code>car_make</code>, <code>selected_dealer</code>)</li>
+</ul>
+
+<h3>📊 Rate Limits</h3>
+<p><b>Fórmula</b>: <code>200 × 24 × (número de leads nos últimos 90 dias)</code> por página a cada 24h.</p>
+<p>Ex: página com 100 leads/90d → <code>200 × 24 × 100 = 480,000</code> chamadas/dia.<br>
+Ex: página com 10 leads/90d → <code>200 × 24 × 10 = 48,000</code> chamadas/dia.</p>
+<p style="color:var(--yellow);font-size:12px">⚠️ Exceder retorna erro. Implementar exponential backoff.</p>
+
+<h3>🔔 Webhooks (Real-Time)</h3>
+<ul>
+  <li><b>Objeto</b>: <code>page</code>, <b>campo</b>: <code>leadgen</code></li>
+  <li>Payload contém: <code>leadgen_id</code>, <code>page_id</code>, <code>form_id</code>, <code>adgroup_id</code>, <code>ad_id</code>, <code>created_time</code></li>
+  <li>Recebido o webhook → usar <code>leadgen_id</code> para buscar dados completos via <code>GET /v22.0/{leadgen_id}</code></li>
+  <li>Pode chegar múltiplos leads em 1 notificação (array de <code>changes[]</code>)</li>
+  <li>Meta envia <code>hub.challenge</code> na verificação — responder com mesmo valor</li>
+  <li>Requer HTTPS com TLS 1.2+</li>
+</ul>
+
+<h3>🎯 Fluxo Recomendado (Validado na Prática)</h3>
+<ol>
+  <li>Criar Meta App (tipo Business) em <a href="https://developers.facebook.com" target="_blank" style="color:var(--accent)">developers.facebook.com</a></li>
+  <li>Adicionar produtos: <b>Webhooks</b> + <b>Facebook Login</b> na app</li>
+  <li>Gerar User Token no <a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--accent)">Graph API Explorer</a> com permissões: <code>ads_management, ads_read, leads_retrieval, pages_show_list, pages_read_engagement, pages_manage_ads, pages_manage_metadata</code></li>
+  <li><b>User Token → Page Token</b>: <code>GET /me/accounts?fields=id,name,access_token</code> → copiar <code>data[].access_token</code></li>
+  <li>Usar <b>Page Token</b> para tudo: forms, leads, webhooks</li>
+  <li>Listar forms: <code>GET /{page_id}/leadgen_forms</code></li>
+  <li>Ler leads: <code>GET /{form_id}/leads?fields=id,created_time,field_data</code> (com fallback pra <code>/{page_id}/leads</code>)</li>
+  <li>Configurar webhook: <code>POST /{page_id}/subscribed_apps?subscribed_fields=leadgen</code></li>
+  <li>Pra produção: criar System User no Business Manager (token não expira) + App Review + Go Live</li>
+  <li><b>OU</b>: clicar 🚀 AUTOMATIZAR TUDO nessa tool e deixar ela fazer os passos 4-8 sozinha</li>
+</ol>
+
+<h3>⚠️ Pegadinhas Comuns (Todas Encontradas na Prática)</h3>
+<ul>
+  <li><b>User Token vs Page Token</b> — erro <code>(#190) This method must be called with a Page Access Token</code> ao usar User Token em <code>leadgen_forms</code> ou <code>/leads</code>. Solução: extrair Page Token via <code>/me/accounts?fields=access_token</code>.</li>
+  <li><b>Campo "leads" inexistente</b> — erro <code>(#100) Tried accessing nonexisting field (leads)</code> ao chamar <code>/{form_id}/leads</code> em alguns forms. Solução: essa tool tem fallback automático para <code>/{page_id}/leads</code>.</li>
+  <li>App em Development → erro <code>(#3) Apps in dev mode should only access leads submitted from App special roles</code></li>
+  <li>Lead pode não ter <code>ad_id</code> se for orgânico (<code>is_organic=1</code>)</li>
+  <li>API da Meta pode ser inconsistente — leads podem sumir e reaparecer dias depois</li>
+  <li>Token de página expira em ~1h — usar System User para produção</li>
+  <li>CSV export disponível em <code>/ads/lead_gen/export_csv/</code> para backup bulk com filtro de data</li>
+  <li>Versão mais recente da API: <b>v22.0</b> (2025-2026). v25.0 mencionada em docs de features novas.</li>
+</ul>
+
+<h3>🔄 Sistema de Fallback (Resiliente)</h3>
+<p>Esta tool implementa 3 níveis de fallback automático ao buscar leads:</p>
+<ol>
+  <li><b>GET /{form_id}/leads</b> — endpoint padrão (funciona na maioria)</li>
+  <li><b>GET /{page_id}/leads</b> → filtra por <code>form_id</code> no client — fallback quando #1 retorna erro #100</li>
+  <li><b>GET /ads/lead_gen/export_csv/?id={form_id}&type=form</b> — export TSV bruto, último recurso</li>
+</ol>
+
+<h3>🧪 Como Testar Leads (App em Development)</h3>
+<ul>
+  <li>Usar <b>Lead Ads Testing Tool</b> no Facebook Ads Manager → enviar lead de teste</li>
+  <li>Só testers/developers/admins do app conseguem ver leads em Development mode</li>
+  <li>Form Preview no Ads Manager também gera leads de teste</li>
+  <li>Depois de testar: App Review → Go Live → acesso a leads reais</li>
+</ul>
+
+<h3>📚 Links Oficiais</h3>
+<ul>
+  <li><a href="https://developers.facebook.com/docs/marketing-api/guides/lead-ads/" target="_blank" style="color:var(--accent)">Meta Lead Ads Docs</a></li>
+  <li><a href="https://developers.facebook.com/docs/graph-api/webhooks/getting-started/webhooks-for-leadgen" target="_blank" style="color:var(--accent)">Webhooks for Leadgen</a></li>
+  <li><a href="https://developers.facebook.com/tools/explorer/" target="_blank" style="color:var(--accent)">Graph API Explorer</a></li>
+  <li><a href="https://developers.facebook.com/tools/debug/accesstoken/" target="_blank" style="color:var(--accent)">Access Token Debugger</a></li>
+</ul>
+</div>
+</div>
+
+<div class="card">
+  <h2>📊 Log de Requisições</h2>
+  <button onclick="clearLog()" class="small">Limpar</button>
+  <div id="log" style="margin-top:8px"></div>
+</div>
+
+<script>
+// ─── State ───
+const API = 'https://graph.facebook.com/v22.0';
+let lastResponse = null;
+let activePageToken = null;
+let activePageId = null;
+
+// ─── Log ───
+function log(type, msg, detail) {
+  const div = document.getElementById('log');
+  const now = new Date().toLocaleTimeString();
+  const icon = {req:'⬆️', res:'⬇️', err:'❌', info:'ℹ️'}[type]||'';
+  const line = document.createElement('div');
+  line.className = `log-line ${type}`;
+  line.innerHTML = `<b>${now}</b> ${icon} ${msg}`;
+  if (detail) line.title = typeof detail === 'string' ? detail : JSON.stringify(detail);
+  div.appendChild(line);
+  div.scrollTop = div.scrollHeight;
+}
+
+function clearLog() { document.getElementById('log').innerHTML = ''; }
+
+// ─── Helpers ───
+function token() {
+  // Usa Page Token se disponível, senão User Token
+  if (activePageToken) return activePageToken;
+  return document.getElementById('token').value.trim();
+}
+function currentTokenDisplay() { return activePageToken ? 'PAGE TOKEN' : 'USER TOKEN'; }
+
+async function apiCall(endpoint, params = {}, method = 'GET', forceUserToken = false) {
+  const tok = forceUserToken ? document.getElementById('token').value.trim() : token();
+  if (!tok) { alert('⚠️ Cole o access token primeiro'); return null; }
+  params.access_token = tok;
+  const tokLabel = forceUserToken ? 'USER TOKEN' : currentTokenDisplay();
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API}/${endpoint}`;
+
+  let fetchOpts = { method };
+  let fullUrl = url;
+
+  if (method === 'GET') {
+    const qs = new URLSearchParams(params).toString();
+    fullUrl = url + (url.includes('?') ? '&' : '?') + qs;
+  } else {
+    fetchOpts.headers = { 'Content-Type': 'application/json' };
+    fetchOpts.body = JSON.stringify(params);
+  }
+
+  log('req', `${method} ${fullUrl.replace(tok, 'TOKEN_REDACTED')} [${tokLabel}]`);
+
+  try {
+    const res = await fetch(fullUrl, fetchOpts);
+    const json = await res.json();
+    log('res', `${res.status} ${res.statusText}`, JSON.stringify(json).slice(0,200));
+    lastResponse = { status: res.status, headers: Object.fromEntries(res.headers), body: json };
+    return json;
+  } catch (e) {
+    log('err', e.message);
+    return { error: e.message };
+  }
+}
+
+function renderJSON(obj, elId) {
+  const el = document.getElementById(elId);
+  el.textContent = JSON.stringify(obj, null, 2);
+}
+
+function renderTokenInfo(info, elId) {
+  const el = document.getElementById(elId);
+  if (!info || info.error) {
+    el.innerHTML = `<span class="badge err">ERRO</span> ${info?.error?.message || 'Token inválido'}`;
+    return;
+  }
+  const d = info.data || info;
+  const expires = d.expires_at ? new Date(d.expires_at * 1000).toLocaleString() : 'Never (System User / Long-Lived)';
+  const scopes = (d.scopes || []).map(s => `<span class="badge info">${s}</span>`).join(' ') || '—';
+  const valid = d.is_valid ? '<span class="badge ok">✅ Válido</span>' : '<span class="badge err">❌ Inválido</span>';
+  const type = d.type || '?';
+
+  el.innerHTML = `
+    <dl class="token-info">
+      <dt>App</dt><dd>${d.application || '—'}</dd>
+      <dt>Type</dt><dd><span class="badge warn">${type}</span></dd>
+      <dt>Valid</dt><dd>${valid}</dd>
+      <dt>Expires</dt><dd>${expires}</dd>
+      <dt>User ID</dt><dd>${d.user_id || '— (System User)'}</dd>
+      <dt>Scopes</dt><dd>${scopes}</dd>
+      <dt>Data Access</dt><dd>${d.data_access_expires_at ? new Date(d.data_access_expires_at*1000).toLocaleString() : '—'}</dd>
+      <dt>Granular Scopes</dt><dd>${(d.granular_scopes||[]).map(g=>`<span class="badge info">${g.scope}:${g.target_ids||'*'}</span>`).join(' ')||'—'}</dd>
+    </dl>`;
+}
+
+// ─── Debug Token ───
+async function debugToken() {
+  const tok = token();
+  if (!tok) return;
+  log('info', 'Debugando token...');
+  const appTok = `${document.getElementById('token').dataset.appId || ''}|${document.getElementById('token').dataset.appSecret || ''}`;
+  // Tenta com app token se disponível, senão próprio token
+  const result = await apiCall(`debug_token?input_token=${encodeURIComponent(tok)}`, {});
+  // Se falhar, tenta sem access_token extra (o debug_token endpoint aceita app token)
+  if (result?.error) {
+    // Tenta com o próprio token
+    const r2 = await apiCall(`debug_token?input_token=${encodeURIComponent(tok)}`, {});
+    renderTokenInfo(r2, 'tokenDebug');
+  } else {
+    renderTokenInfo(result, 'tokenDebug');
+  }
+}
+
+// ─── Pages ───
+async function fetchPages() {
+  const result = await apiCall('me/accounts', { fields: 'id,name,category,access_token,tasks' }, 'GET', true); // force user token
+  if (!result) return;
+  renderJSON(result, 'pagesOut');
+  document.getElementById('pagesOutWrapper').style.display = 'block';
+
+  if (result.data?.length) {
+    const sel = document.getElementById('pageTokenSelect');
+    sel.innerHTML = '<option value="">-- Selecione uma página --</option>';
+    result.data.forEach((p, i) => {
+      sel.innerHTML += `<option value="${i}" data-token="${p.access_token}" data-id="${p.id}" data-name="${p.name}">${p.name} (${p.id}) — ${p.category||'—'}</option>`;
+    });
+    // auto-select primeira
+    if (result.data.length === 1) {
+      sel.selectedIndex = 1;
+      onPageTokenChange();
+    }
+    log('info', `${result.data.length} páginas com Page Token extraídos ✅`);
+  }
+}
+
+async function fetchSinglePage() {
+  const id = document.getElementById('pageId').value.trim();
+  if (!id) return alert('Coloque o Page ID');
+  const result = await apiCall(id, { fields: 'id,name,category,access_token,leadgen_forms{id,name,status,questions}' });
+  renderJSON(result, 'pagesOut2');
+}
+
+function onPageTokenChange() {
+  const sel = document.getElementById('pageTokenSelect');
+  const opt = sel.options[sel.selectedIndex];
+  const badge = document.getElementById('tokenStatus');
+  if (!opt?.dataset?.token) {
+    activePageToken = null;
+    activePageId = null;
+    document.getElementById('formPageId').value = '';
+    document.getElementById('webhookPageId').value = '';
+    document.getElementById('activePageTokenInfo').innerHTML = '<span class="badge err">Nenhum Page Token ativo</span>';
+    badge.textContent = 'USER TOKEN';
+    badge.className = 'badge warn';
+    return;
+  }
+  activePageToken = opt.dataset.token;
+  activePageId = opt.dataset.id;
+  document.getElementById('formPageId').value = activePageId;
+  document.getElementById('webhookPageId').value = activePageId;
+  document.getElementById('activePageTokenInfo').innerHTML =
+    `<span class="badge ok">✅ PAGE TOKEN ativo</span> ${opt.dataset.name} (${activePageId})<br>` +
+    `<small style="color:var(--muted)">Token: ${activePageToken.slice(0,20)}...${activePageToken.slice(-10)}</small>`;
+  badge.textContent = 'PAGE TOKEN ✅';
+  badge.className = 'badge ok';
+  log('info', `Page Token ativado para: ${opt.dataset.name}`);
+}
+
+function useCustomPageToken() {
+  const tok = prompt('Cole o Page Access Token:');
+  if (tok && tok.trim()) {
+    activePageToken = tok.trim();
+    activePageId = document.getElementById('formPageId').value.trim() || '(manual)';
+    document.getElementById('activePageTokenInfo').innerHTML =
+      `<span class="badge warn">⚠️ TOKEN MANUAL</span> Token: ${activePageToken.slice(0,20)}...`;
+    const badge = document.getElementById('tokenStatus');
+    badge.textContent = 'PAGE TOKEN (manual)';
+    badge.className = 'badge warn';
+    log('info', 'Usando Page Token manual');
+  }
+}
+
+// ─── 🚀 AUTOMATIZAR TUDO ───
+async function automatizarTudo() {
+  const userTok = document.getElementById('token').value.trim();
+  if (!userTok) { alert('⚠️ Cole o User Token primeiro!'); return; }
+
+  log('info', '🚀 INICIANDO AUTOMATIZAÇÃO COMPLETA...');
+  log('info', '━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
+  // Step 1: Debug token
+  log('info', '📌 PASSO 1/6: Debugando User Token...');
+  const debugR = await apiCall(`debug_token?input_token=${encodeURIComponent(userTok)}`, {}, 'GET', true);
+  renderTokenInfo(debugR, 'tokenDebug');
+  if (debugR?.error) {
+    log('err', '❌ Token inválido, abortando.');
+    return;
+  }
+  log('info', '✅ Token debugado com sucesso');
+
+  // Step 2: Fetch pages
+  log('info', '📌 PASSO 2/6: Buscando páginas...');
+  const pagesR = await apiCall('me/accounts', { fields: 'id,name,category,access_token,tasks' }, 'GET', true);
+  if (!pagesR?.data?.length) {
+    log('err', '❌ Nenhuma página encontrada.');
+    return;
+  }
+  renderJSON(pagesR, 'pagesOut');
+  document.getElementById('pagesOutWrapper').style.display = 'block';
+  log('info', `✅ ${pagesR.data.length} página(s) encontrada(s)`);
+
+  // Populate dropdown
+  const sel = document.getElementById('pageTokenSelect');
+  sel.innerHTML = '<option value="">-- Selecione uma página --</option>';
+  pagesR.data.forEach((p, i) => {
+    sel.innerHTML += `<option value="${i}" data-token="${p.access_token}" data-id="${p.id}" data-name="${p.name}">${p.name} (${p.id}) — ${p.category||'—'}</option>`;
+  });
+
+  // Process each page
+  for (let i = 0; i < pagesR.data.length; i++) {
+    const page = pagesR.data[i];
+    const pageTok = page.access_token;
+    const pageId = page.id;
+    log('info', `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    log('info', `📌 PASSO 3a/6: Página ${i+1}/${pagesR.data.length} — ${page.name} (${pageId})`);
+
+    // Activate this page's token
+    activePageToken = pageTok;
+    activePageId = pageId;
+    sel.selectedIndex = i + 1;
+    onPageTokenChange();
+    document.getElementById('formPageId').value = pageId;
+    document.getElementById('webhookPageId').value = pageId;
+
+    // Step 3: Fetch forms
+    log('info', `📌 PASSO 3b/6: Buscando formulários da página ${page.name}...`);
+    const formsR = await apiCall(`${pageId}/leadgen_forms`, { fields: 'id,name,status,locale,questions,custom_disclaimer,created_time' });
+    renderJSON(formsR, 'formsOut');
+
+    if (!formsR?.data?.length) {
+      log('info', `⚠️ Página ${page.name}: nenhum formulário encontrado.`);
+      // Still check webhook
+      log('info', `📌 PASSO 5/6: Verificando webhook...`);
+      const whR = await apiCall(`${pageId}/subscribed_apps`, {});
+      renderJSON(whR, 'webhookOut');
+      log('info', whR?.data?.length ? `✅ ${whR.data.length} app(s) inscrito(s) para webhook` : '⚠️ Nenhum app inscrito para webhook');
+      continue;
+    }
+
+    log('info', `✅ ${formsR.data.length} formulário(s) na página ${page.name}`);
+    if (formsR.data.length <= 3) {
+      formsR.data.forEach(f => log('info', `  📝 Form: ${f.name} (${f.id}) status=${f.status}`));
+    }
+
+    // Step 4: Fetch leads for each form
+    let totalLeadsPagina = 0;
+    for (let j = 0; j < formsR.data.length; j++) {
+      const form = formsR.data[j];
+      const fields = document.getElementById('leadFields').value.trim();
+      log('info', `📌 PASSO 4/6: Form ${j+1}/${formsR.data.length} — ${form.name} (${form.id})...`);
+      document.getElementById('leadFormId').value = form.id;
+
+      const leadsR = await fetchLeads(form.id, pageId, fields);
+      renderJSON(leadsR, 'leadsOut');
+
+      const leadCount = leadsR?.data?.length || 0;
+      totalLeadsPagina += leadCount;
+
+      if (leadCount === 0) {
+        log('info', `  ⚠️ Form ${form.name}: 0 leads`);
+      } else {
+        log('info', `  ✅ Form ${form.name}: ${leadCount} lead(s)`);
+
+        // Show each lead summary
+        leadsR.data.forEach((lead, k) => {
+          const fields = (lead.field_data || []).map(f => `${f.name}=${(f.values||[]).join(',')}`).join(' | ') || '—';
+          log('info', `    👤 Lead #${k+1} id=${lead.id} created=${lead.created_time} | ${fields.slice(0,150)}`);
+        });
+
+        // Paging info
+        if (leadsR?.paging?.cursors) {
+          log('info', `    📄 Paginação: after=${leadsR.paging.cursors.after.slice(0,30)}...`);
+        }
+      }
+    }
+
+    log('info', `✅ Total leads na página ${page.name}: ${totalLeadsPagina}`);
+
+    // Step 5: Webhook check
+    log('info', `📌 PASSO 5/6: Verificando webhook da página ${page.name}...`);
+    const whR = await apiCall(`${pageId}/subscribed_apps`, {});
+    renderJSON(whR, 'webhookOut');
+    log('info', whR?.data?.length ? `✅ ${whR.data.length} app(s) inscrito(s) para webhook em ${page.name}` : `⚠️ Nenhum app inscrito para webhook em ${page.name}`);
+  }
+
+  // Step 6: Single lead lookup
+  const singleId = document.getElementById('singleLeadId').value.trim();
+  if (singleId) {
+    log('info', `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+    log('info', `📌 PASSO 6/6: Buscando lead único ${singleId}...`);
+    const singleR = await apiCall(singleId, { fields: 'id,created_time,ad_id,form_id,field_data,custom_disclaimer_responses' });
+    renderJSON(singleR, 'singleLeadOut');
+    if (!singleR?.error) {
+      const fields = (singleR.field_data || []).map(f => `${f.name}=${(f.values||[]).join(',')}`).join(' | ');
+      log('info', `✅ Lead único: id=${singleR.id} created=${singleR.created_time} | ${fields?.slice(0,200)||'—'}`);
+    } else {
+      log('err', `❌ Lead único: ${singleR.error.message}`);
+    }
+  } else {
+    log('info', `📌 PASSO 6/6: Nenhum Lead ID manual informado — pulando. (Preencha "Lead ID" antes de automatizar se quiser)`)
+  }
+
+  log('info', `━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+  log('info', '🏁 AUTOMATIZAÇÃO COMPLETA!');
+}
+
+// ─── Forms ───
+async function fetchForms() {
+  const id = document.getElementById('formPageId').value.trim();
+  if (!id) return alert('Coloque o Page ID');
+  const result = await apiCall(`${id}/leadgen_forms`, { fields: 'id,name,status,locale,questions,custom_disclaimer,created_time' });
+  renderJSON(result, 'formsOut');
+  // Auto-preencher leadFormId se tiver 1 form
+  if (result?.data?.length >= 1) {
+    document.getElementById('leadFormId').value = result.data[0].id;
+  }
+}
+
+// ─── Leads (com fallback) ───
+async function fetchLeads(formId, pageId, fields) {
+  // Tentativa 1: /{form_id}/leads (padrão)
+  let r = await apiCall(`${formId}/leads`, { fields, limit: 100 });
+  if (!r?.error) return r;
+
+  log('info', `⚠️ /{form_id}/leads falhou (#${r.error.code}): ${r.error.message}. Tentando fallback...`);
+
+  // Tentativa 2: /{page_id}/leads com filtro de form_id
+  const params = { fields, limit: 100 };
+  if (pageId) {
+    params.filtering = JSON.stringify([{field:'time_created','operator':'GREATER_THAN','value':0}]);
+  }
+  r = await apiCall(`${pageId}/leads`, params);
+  if (!r?.error) {
+    // Filtra manualmente por form_id
+    if (r.data?.length) {
+      r.data = r.data.filter(l => l.form_id === formId || !formId);
+      log('info', `✅ Fallback /{page_id}/leads funcionou: ${r.data.length} leads do form ${formId}`);
+    }
+    return r;
+  }
+
+  log('info', `⚠️ /{page_id}/leads também falhou (#${r.error.code}): ${r.error.message}. Tentando CSV...`);
+
+  // Tentativa 3: export_csv
+  r = await apiCall(`ads/lead_gen/export_csv/`, { id: formId, type: 'form' });
+  if (!r?.error) {
+    log('info', '✅ Fallback CSV funcionou (dados em TSV)');
+    return { data: [], csv: r, note: 'CSV/TSV export — parse manual necessário' };
+  }
+
+  return r; // todas falharam
+}
+
+async function fetchLeadsByForm() {
+  const id = document.getElementById('leadFormId').value.trim();
+  if (!id) return alert('Coloque o Form ID');
+  const fields = document.getElementById('leadFields').value.trim();
+  const pageId = activePageId || document.getElementById('formPageId').value.trim();
+  const since = document.getElementById('filterSince').value.trim();
+  const until = document.getElementById('filterUntil').value.trim();
+  const params = { fields, limit: 100 };
+  if (since || until) {
+    const filters = [];
+    if (since) filters.push({field:'time_created','operator':'GREATER_THAN_OR_EQUAL',value:parseInt(since)});
+    if (until) filters.push({field:'time_created','operator':'LESS_THAN',value:parseInt(until)});
+    params.filtering = JSON.stringify(filters);
+  }
+  const result = await fetchLeads(id, pageId, fields);
+  renderJSON(result, 'leadsOut');
+}
+
+async function fetchLeadsByFormPaged() {
+  const id = document.getElementById('leadFormId').value.trim();
+  if (!id) return alert('Coloque o Form ID');
+  const fields = document.getElementById('leadFields').value.trim();
+  const pageId = activePageId || document.getElementById('formPageId').value.trim();
+  const result = await fetchLeads(id, pageId, fields);
+  if (result?.paging?.cursors) {
+    log('info', `Paging: after=${result.paging.cursors.after}, before=${result.paging.cursors.before}`);
+  }
+  if (result?.paging?.next) {
+    log('info', `Next page URL: ${result.paging.next.replace(token(), 'TOKEN_REDACTED')}`);
+  }
+  renderJSON(result, 'leadsOut');
+}
+
+async function fetchSingleLead() {
+  const id = document.getElementById('singleLeadId').value.trim();
+  if (!id) return alert('Coloque o Lead ID');
+  const result = await apiCall(id, { fields: 'id,created_time,ad_id,form_id,field_data,custom_disclaimer_responses' });
+  renderJSON(result, 'singleLeadOut');
+}
+
+// ─── Webhooks ───
+async function checkWebhooks() {
+  const id = document.getElementById('webhookPageId').value.trim();
+  if (!id) return alert('Coloque o Page ID');
+  const result = await apiCall(`${id}/subscribed_apps`, {});
+  renderJSON(result, 'webhookOut');
+  if (result?.data?.length) {
+    log('info', `${result.data.length} apps inscritos nesta página`);
+  } else if (!result.error) {
+    log('info', 'Nenhum app inscrito para webhook nesta página');
+  }
+}
+
+// ─── Permitir colar e auto-debug ───
+document.getElementById('token').addEventListener('paste', () => {
+  setTimeout(debugToken, 200);
+});
+
+// ─── Atalho: Enter no token input = debug ───
+document.getElementById('token').addEventListener('keydown', e => {
+  if (e.key === 'Enter') debugToken();
+});
+
+log('info', 'Ferramenta carregada. Cole seu access token para começar.');
+log('info', 'API base: ' + API);
+log('info', 'Permissões necessárias: ads_management, leads_retrieval, pages_show_list, pages_read_engagement, pages_manage_ads, pages_manage_metadata');
+</script>
+</body>
+</html>

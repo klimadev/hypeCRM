@@ -1,0 +1,42 @@
+## Kanban UX Overhaul — Progress
+
+### US-001 Pipeline Catalog ✅
+- Redesigned kanban-pipeline-catalog.tsx: grid → vertical list
+- Empty state with icon + "Crie seu primeiro funil em 10 segundos" + CTA
+- "Novo funil" button inline in header
+- Settings moved to icon button per row
+
+### US-002 Pipeline Modal ✅
+- Simplified pipeline-modal.tsx: descrição é opcional expandível
+- Auto-close on save with toast de sucesso
+- Inline validation no campo nome
+- Botão desabilitado se nome vazio
+
+### US-003 Header ✅
+- Header desktop comprimido: seletor pipeline + busca + filtros popover + novo negócio + métricas toggle
+- KPIs movidos para seção colapsável "Métricas"
+- Header mobile adaptado: seletor + filtros inline + novo negócio
+- Filtros em popover próprio com status + origem
+
+### US-004 Board ✅
+- Card simplificado: nome, valor, tags (origem, pendência, tempo parado)
+- Drag affordance: hover:shadow-md + hover:scale-[1.02] + active:scale-[0.99]
+- Scroll indicator: fade gradient + seta pulsante quando há colunas fora da viewport
+- Mobile já usa accordion vertical (tabs)
+
+### US-005 Drawer ✅
+- Abas renomeadas: "Detalhes" → "Dados", "Vínculos" → "Histórico"
+- Perda dialog simplificado: 4 motivos predefinidos (clicáveis), botão destrutivo vermelho
+
+### US-006 Stage Modal ✅
+- Stage modal simplificado: toast, auto-fechar, validação inline
+
+### US-007 Micro-interações ✅
+- Perda dialog: 4 motivos predefinidos + confirmação destrutiva
+- Pipeline/stage modal: toast + auto-close
+- Cards: hover scale/shadow affordance
+- Board: scroll fade + seta indicadora
+
+### Próximos passos
+- Kanban stage reorder (backend + inline) - postergado por depender de API
+- Mobile board melhorias contínuas

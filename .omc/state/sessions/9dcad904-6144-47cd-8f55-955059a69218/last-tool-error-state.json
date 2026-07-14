@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"git add DESIGN.md PRODUCT.md && git add src/modules/kanban/ && git add src/modules/leads/ && git add src/lib/api/leads.ts src/modules/integracoes/ pnpm-workspace.yaml src/app/api/leads/bat...",
+  "error": "Exit code 2\n/bin/bash: eval: line 1: syntax error near unexpected token `('\n/bin/bash: eval: line 1: `git add DESIGN.md PRODUCT.md && git add src/modules/kanban/ && git add src/modules/leads/ && git add src/lib/api/leads.ts src/modules/integracoes/ pnpm-workspace.yaml src/app/api/leads/batch-delete/ src/lib/meta-campos.ts src/app/(dashboard)/integracoes/meta-leads/ src/app/api/integracoes/meta-leads/ src/modules/meta-leads/ prisma/scripts/extend-trial-all.js prisma/schema.prisma'",
+  "timestamp": "2026-07-13T13:28:50.068Z",
+  "retry_count": 1
+}

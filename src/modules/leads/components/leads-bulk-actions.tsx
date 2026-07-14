@@ -60,7 +60,7 @@ export function LeadsBulkActions({
               <Trash2 className="mr-2 h-4 w-4" />
               Excluir selecionados
             </Button>
-            <Button type="button" onClick={onConverterEmNegocios} className="h-9 bg-[var(--success)] text-white hover:bg-[var(--success-hover)]" disabled={carregando}>
+            <Button type="button" onClick={onConverterEmNegocios} className="h-9 bg-[var(--success)] text-white hover:bg-[color-mix(in_srgb,var(--success)_80%,black)]" disabled={carregando}>
               <Briefcase className="mr-2 h-4 w-4" />
               Converter em negócios
             </Button>

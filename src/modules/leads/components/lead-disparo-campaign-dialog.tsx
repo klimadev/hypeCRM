@@ -87,7 +87,7 @@ export function LeadDisparoCampaignDialog({
             </div>
           </div>
 
-          <div className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
             <p className="mb-2 text-sm font-medium text-[var(--text-primary)]">Instância por PDV</p>
             <div className="grid gap-3">
               {pdvsPresentes.length === 0 ? <p className="text-xs text-[var(--text-secondary)]">Nenhum PDV encontrado na seleção atual.</p> : null}

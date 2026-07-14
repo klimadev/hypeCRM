@@ -27,7 +27,7 @@ export function LeadDisparoCampaignsPanel({
   onCancelar,
 }: Props) {
   return (
-    <section className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+    <section className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="text-sm font-semibold text-[var(--text-primary)]">Campanhas de disparo</h3>
         <span className="text-xs text-[var(--text-secondary)]">{campanhas.length} registradas</span>
@@ -39,7 +39,7 @@ export function LeadDisparoCampaignsPanel({
 
       <div className="grid gap-2">
         {campanhas.map((campanha) => (
-          <div key={campanha.id} className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+          <div key={campanha.id} className="rounded-xl border border-[var(--border-subtle)] p-3">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-sm font-medium text-[var(--text-primary)]">{campanha.nome}</p>
               <span className="rounded-full border border-[var(--border-subtle)] px-2 py-0.5 text-[11px] text-[var(--text-secondary)]">{campanha.status}</span>
@@ -62,7 +62,7 @@ export function LeadDisparoCampaignsPanel({
       </div>
 
       {detalheIdAberta && detalhe ? (
-        <div className="mt-4 rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+        <div className="mt-4 rounded-xl border border-[var(--border-subtle)] p-3">
           {carregandoDetalhe ? <p className="text-sm text-[var(--text-secondary)]">Carregando detalhes...</p> : null}
           <p className="text-sm font-medium text-[var(--text-primary)]">{detalhe.nome}</p>
           <p className="mt-1 text-xs text-[var(--text-secondary)]">

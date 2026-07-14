@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "entries": {
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1783654166579,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1783654021981,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1783654014324,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "0a57ff8e9cb61340e501789bbc264f5fb7bc4786f7aace68e8a4fc9787c1bb0e": {
+      "last_emitted_at_ms": 1783651975601,
+      "message": "Spawning agent: Explore (inherit) | Task: Explore meta-leads frontend structure"
+    },
+    "e6c4312bfc5c88c916ad71577a3057509e275c26eaffbf4aa0c6ec9381ebb63e": {
+      "last_emitted_at_ms": 1783651965593,
+      "message": "Spawning agent: Explore (inherit) | Task: Explore Prisma schema Meta models"
+    }
+  },
+  "updated_at": "2026-07-10T03:29:26.579Z"
+}

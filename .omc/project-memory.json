@@ -1,0 +1,538 @@
+{
+  "version": "1.0.0",
+  "lastScanned": 1784065031791,
+  "projectRoot": "/var/www/hypeCRM",
+  "techStack": {
+    "languages": [
+      {
+        "name": "JavaScript/TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "package.json"
+        ]
+      },
+      {
+        "name": "TypeScript",
+        "version": null,
+        "confidence": "high",
+        "markers": [
+          "tsconfig.json"
+        ]
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "next",
+        "version": "16.1.6",
+        "category": "fullstack"
+      },
+      {
+        "name": "react",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "react-dom",
+        "version": "19.2.3",
+        "category": "frontend"
+      },
+      {
+        "name": "playwright",
+        "version": "1.58.2",
+        "category": "testing"
+      },
+      {
+        "name": "vitest",
+        "version": "3.2.4",
+        "category": "testing"
+      }
+    ],
+    "packageManager": "pnpm",
+    "runtime": null
+  },
+  "build": {
+    "buildCommand": "npx tsc --noEmit --pretty 2>&1 | tail -5",
+    "testCommand": "pnpm test",
+    "lintCommand": "pnpm lint",
+    "devCommand": "pnpm dev",
+    "scripts": {
+      "dev": "next dev -H 0.0.0.0 -p 3434",
+      "build": "next build",
+      "clean:next": "node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"",
+      "start": "next start -H 0.0.0.0 -p 3434",
+      "db:generate": "prisma generate",
+      "db:migrate:deploy": "prisma migrate deploy",
+      "db:migrate:status": "prisma migrate status",
+      "lint": "eslint",
+      "typecheck": "tsc --noEmit --project tsconfig.json",
+      "test": "NODE_ENV=test vitest run --config vitest.config.ts",
+      "test:watch": "NODE_ENV=test vitest --config vitest.config.ts",
+      "test:coverage": "NODE_ENV=test vitest run --config vitest.config.ts --coverage",
+      "seed": "prisma db seed",
+      "setup": "node scripts/setup-wizard.js",
+      "deploy": "next build && systemctl restart hypecrm-web hypecrm-chat-scheduler"
+    }
+  },
+  "conventions": {
+    "namingStyle": null,
+    "importStyle": null,
+    "testPattern": null,
+    "fileOrganization": "type-based"
+  },
+  "structure": {
+    "isMonorepo": true,
+    "workspaces": [],
+    "mainDirectories": [
+      "docs",
+      "public",
+      "scripts",
+      "src"
+    ],
+    "gitBranches": {
+      "defaultBranch": "main",
+      "branchingStrategy": null
+    }
+  },
+  "customNotes": [],
+  "directoryMap": {
+    "HYPE_REDESIGN_PLAN": {
+      "path": "HYPE_REDESIGN_PLAN",
+      "purpose": null,
+      "fileCount": 0,
+      "lastAccessed": 1784065031759,
+      "keyFiles": []
+    },
+    "backups": {
+      "path": "backups",
+      "purpose": null,
+      "fileCount": 1,
+      "lastAccessed": 1784065031760,
+      "keyFiles": [
+        "dev-before-lead-negocio-expand-20260327-141726.db"
+      ]
+    },
+    "docs": {
+      "path": "docs",
+      "purpose": "Documentation",
+      "fileCount": 4,
+      "lastAccessed": 1784065031761,
+      "keyFiles": [
+        "META-APP-REVIEW-GUIA.md",
+        "PLANO-MIGRACAO-HYPE-CRM.md",
+        "instagram-messaging-api-issue.md",
+        "instagram-messaging-diagnostico-completo.md"
+      ]
+    },
+    "logs": {
+      "path": "logs",
+      "purpose": null,
+      "fileCount": 3,
+      "lastAccessed": 1784065031761,
+      "keyFiles": [
+        "pm2-error.log",
+        "pm2-out.log",
+        "webhook-events.log"
+      ]
+    },
+    "prisma": {
+      "path": "prisma",
+      "purpose": null,
+      "fileCount": 10,
+      "lastAccessed": 1784065031762,
+      "keyFiles": [
+        "dev.db",
+        "dev.db-shm",
+        "dev.db-wal",
+        "dev.db.backup",
+        "dev.db.backup-before-instagram-fix-20260401014008"
+      ]
+    },
+    "public": {
+      "path": "public",
+      "purpose": "Public files",
+      "fileCount": 6,
+      "lastAccessed": 1784065031762,
+      "keyFiles": [
+        "file.svg",
+        "globe.svg",
+        "logo.png",
+        "next.svg",
+        "vercel.svg"
+      ]
+    },
+    "scripts": {
+      "path": "scripts",
+      "purpose": "Build/utility scripts",
+      "fileCount": 3,
+      "lastAccessed": 1784065031769,
+      "keyFiles": [
+        "chat-scheduled-messages-worker.ts",
+        "pricing-screenshots.js",
+        "setup-wizard.js"
+      ]
+    },
+    "site": {
+      "path": "site",
+      "purpose": null,
+      "fileCount": 2,
+      "lastAccessed": 1784065031772,
+      "keyFiles": [
+        "index.html",
+        "index.php"
+      ]
+    },
+    "src": {
+      "path": "src",
+      "purpose": "Source code",
+      "fileCount": 0,
+      "lastAccessed": 1784065031773,
+      "keyFiles": []
+    },
+    "prisma/migrations": {
+      "path": "prisma/migrations",
+      "purpose": "Database migrations",
+      "fileCount": 1,
+      "lastAccessed": 1784065031774,
+      "keyFiles": [
+        "migration_lock.toml"
+      ]
+    },
+    "src/app": {
+      "path": "src/app",
+      "purpose": "Application code",
+      "fileCount": 6,
+      "lastAccessed": 1784065031778,
+      "keyFiles": [
+        "favicon.ico",
+        "globals.css",
+        "layout.tsx"
+      ]
+    },
+    "src/components": {
+      "path": "src/components",
+      "purpose": "UI components",
+      "fileCount": 15,
+      "lastAccessed": 1784065031779,
+      "keyFiles": [
+        "agenda-widget-wrapper.tsx",
+        "botao-sair.tsx",
+        "dashboard-error-boundary.tsx"
+      ]
+    },
+    "src/lib": {
+      "path": "src/lib",
+      "purpose": "Library code",
+      "fileCount": 80,
+      "lastAccessed": 1784065031780,
+      "keyFiles": [
+        "autenticacao.ts",
+        "automacoes.ts",
+        "calculo-pendencias.ts"
+      ]
+    }
+  },
+  "hotPaths": [
+    {
+      "path": "src/app/api/integracoes/meta-leads/sync/route.ts",
+      "accessCount": 38,
+      "lastAccessed": 1783660433309,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/meta-leads/page.tsx",
+      "accessCount": 35,
+      "lastAccessed": 1783653434764,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/hooks/use-leads-module.ts",
+      "accessCount": 27,
+      "lastAccessed": 1784068599130,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/components/leads-table.tsx",
+      "accessCount": 19,
+      "lastAccessed": 1784071649682,
+      "type": "file"
+    },
+    {
+      "path": "prisma/schema.prisma",
+      "accessCount": 18,
+      "lastAccessed": 1783686335696,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/page.tsx",
+      "accessCount": 15,
+      "lastAccessed": 1784068123831,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/api/leads.ts",
+      "accessCount": 12,
+      "lastAccessed": 1784071519760,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/page.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1783651986835,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/components/leads-bulk-actions.tsx",
+      "accessCount": 11,
+      "lastAccessed": 1784067981057,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/components/leads-toolbar.tsx",
+      "accessCount": 10,
+      "lastAccessed": 1784068264066,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/meta-leads/types.ts",
+      "accessCount": 9,
+      "lastAccessed": 1783653233944,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/integracoes/meta-leads/test/route.ts",
+      "accessCount": 8,
+      "lastAccessed": 1783653063854,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/types.ts",
+      "accessCount": 8,
+      "lastAccessed": 1784067981405,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/meta-leads/hooks/use-meta-leads-module.ts",
+      "accessCount": 5,
+      "lastAccessed": 1783653254539,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/catalogo.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783652055050,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/integracoes/meta-leads/config/route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783653090269,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/leads/[id]/route.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783659378274,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/meta-campos.ts",
+      "accessCount": 4,
+      "lastAccessed": 1783659953413,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/components/lead-delete-dialog.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1784066814796,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/leads/components/leads-bulk-delete-dialog.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1784066817396,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/integracoes/meta-leads/save/route.ts",
+      "accessCount": 3,
+      "lastAccessed": 1783653073217,
+      "type": "file"
+    },
+    {
+      "path": "src/components/shared/module-page-shell.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1783660229920,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/types.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783652055339,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/hooks/use-integracoes-module.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783652055714,
+      "type": "file"
+    },
+    {
+      "path": "src/app/(dashboard)/integracoes/meta-leads/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1783652474354,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/validacoes.crm.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783652485768,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/leads/route.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783659051834,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/leads.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783659086007,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/prisma.ts",
+      "accessCount": 2,
+      "lastAccessed": 1783660085111,
+      "type": "file"
+    },
+    {
+      "path": "src/app/(dashboard)/leads/page.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1783660690145,
+      "type": "file"
+    },
+    {
+      "path": "src/lib/estagios-fixos.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783651989528,
+      "type": "file"
+    },
+    {
+      "path": "src/app/api/integracoes/meta-leads/delete/route.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783651990151,
+      "type": "file"
+    },
+    {
+      "path": "src/components/shared/module-page-header.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652004450,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/sheet.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652004525,
+      "type": "file"
+    },
+    {
+      "path": "src/components/shared/inline-status-alert.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652004622,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652004854,
+      "type": "file"
+    },
+    {
+      "path": "src/components/shared/access-denied-card.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652004995,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/textarea.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652016603,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/switch.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652017178,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/tabs.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652017295,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/button.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652029218,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/input.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652029449,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/badge.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652029603,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/whatsapp/components/whatsapp-connection-scan-step.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652038346,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/whatsapp/components/whatsapp-connection-wizard.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652038723,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/whatsapp/components/whatsapp-connection-success-step.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652038754,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/card.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652046706,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "accessCount": 1,
+      "lastAccessed": 1783652046863,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/navegacao.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783652055534,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/integracoes/index.ts",
+      "accessCount": 1,
+      "lastAccessed": 1783652055811,
+      "type": "file"
+    }
+  ],
+  "userDirectives": []
+}

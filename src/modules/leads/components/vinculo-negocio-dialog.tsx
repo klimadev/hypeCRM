@@ -74,7 +74,7 @@ export function VinculoNegocioDialog({
               value={buscaNegocio}
               onChange={(event) => onBuscaNegocioChange(event.target.value)}
               placeholder="Título, lead, funil, estágio ou responsável"
-              className="h-10 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
+              className="h-10 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--border-focus)]"
             />
           </div>
 
@@ -88,7 +88,7 @@ export function VinculoNegocioDialog({
 
             <div className="max-h-[42vh] overflow-y-auto pr-1">
               {negocios.length === 0 ? (
-                <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-4 text-sm text-[var(--text-secondary)]">
+                <div className="rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-4 text-sm text-[var(--text-secondary)]">
                   Nenhum negócio encontrado com esse filtro.
                 </div>
               ) : (
@@ -105,9 +105,9 @@ export function VinculoNegocioDialog({
                         type="button"
                         onClick={() => onSelecionarNegocio(negocio.id)}
                         className={cn(
-                          "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-3 text-left transition-colors",
+                          "flex w-full items-start justify-between gap-3 rounded-xl border px-3 py-3 text-left transition-colors",
                           selecionado
-                            ? "border-[color:rgba(139,92,246,0.36)] bg-[color:rgba(139,92,246,0.12)]"
+                            ? "border-[color-mix(in_srgb,var(--brand)_36%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)]"
                             : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] hover:border-[var(--border-strong)]",
                         )}
                       >
@@ -124,15 +124,15 @@ export function VinculoNegocioDialog({
                         <div className="flex flex-col items-end gap-1 text-[11px]">
                           <span
                             className={cn(
-                              "rounded-full px-2 py-0.5",
+                              "rounded-md px-2 py-0.5 text-[11px]",
                               selecionado
                                 ? "bg-[var(--brand-soft)] text-[var(--text-primary)]"
-                                : "bg-[color:rgba(255,255,255,0.04)] text-[var(--text-tertiary)]",
+                                : "bg-[var(--surface-soft)] text-[var(--text-tertiary)]",
                             )}
                           >
                             {selecionado ? "Selecionado" : "Selecionar"}
                           </span>
-                          <span className="rounded-full border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-2 py-0.5 text-[var(--text-tertiary)]">
+                          <span className="rounded-md border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-2 py-0.5 text-[var(--text-tertiary)]">
                             {negocio.leads?.length ?? 0} lead{(negocio.leads?.length ?? 0) === 1 ? "" : "s"}
                           </span>
                         </div>
@@ -145,9 +145,9 @@ export function VinculoNegocioDialog({
           </div>
 
           {erro ? (
-            <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
+            <div className="rounded-lg border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
               <span className="inline-flex items-center gap-2">
-                <AlertCircle className="h-4 w-4" />
+                <AlertCircle className="h-4 w-4 shrink-0" />
                 {erro}
               </span>
             </div>

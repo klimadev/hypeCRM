@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"npm run clean:next && NODE_OPTIONS=\\\"--max-old-space-size=3072\\\" TIMEFORMAT='elapsed: %R seconds' && time NODE_OPTIONS=\\\"--max-old-space-size=3072\\\" next build --turbo 2>&1\",\"timeout\":1800...",
+  "error": "Exit code 127\n\n> hype-crm@0.1.0 clean:next\n> node -e \"require('node:fs').rmSync('.next', { recursive: true, force: true })\"\n\n/bin/bash: line 1: next: command not found\nelapsed: 0.019 seconds",
+  "timestamp": "2026-07-14T11:35:18.000Z",
+  "retry_count": 1
+}

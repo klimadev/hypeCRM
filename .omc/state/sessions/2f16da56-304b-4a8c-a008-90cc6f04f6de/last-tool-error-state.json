@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/var/www/hypeCRM/src/modules/leads/helpers.ts\",\"limit\":10}",
+  "error": "File does not exist. Note: your current working directory is /var/www/hypeCRM.",
+  "timestamp": "2026-07-10T04:09:35.556Z",
+  "retry_count": 1
+}

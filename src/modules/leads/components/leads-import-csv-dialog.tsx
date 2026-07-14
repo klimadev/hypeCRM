@@ -326,7 +326,7 @@ export function LeadsImportCsvDialog({
             <DialogTitle>Importar leads por CSV</DialogTitle>
           </div>
           <DialogDescription>
-            Wizard em 3 passos para importar qualquer CSV com mapeamento flexível, deduplicação e validação.
+            Selecione um arquivo CSV, mapeie as colunas e revise antes de importar.
           </DialogDescription>
         </DialogHeader>
 
@@ -337,10 +337,17 @@ export function LeadsImportCsvDialog({
         </div>
 
         {step === 1 ? (
-          <div className="space-y-4 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
-            <label className="block text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Arquivo .csv</label>
-            <Input type="file" accept=".csv,text/csv" onChange={(event) => void handleFile(event.target.files?.[0] ?? null)} disabled={importing} />
-            {fileName ? <p className="text-sm text-[var(--text-secondary)]">Arquivo selecionado: {fileName}</p> : null}
+          <div className="space-y-4">
+            <div className="rounded-xl border-2 border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-8 text-center">
+              <FileSpreadsheet className="mx-auto h-8 w-8 text-[var(--brand)]" />
+              <p className="mt-2 text-sm text-[var(--text-secondary)]">Clique para selecionar ou arraste o arquivo CSV</p>
+              <Input type="file" accept=".csv,text/csv" onChange={(event) => void handleFile(event.target.files?.[0] ?? null)} disabled={importing} className="mt-4" />
+              {fileName ? (
+                <p className="mt-2 inline-flex items-center gap-1 text-sm text-[var(--success)]">
+                  <CheckCircle2 className="h-4 w-4" /> {fileName}
+                </p>
+              ) : null}
+            </div>
             <p className="text-xs text-[var(--text-tertiary)]">Suporta delimitadores `;`, `,`, `|` e tabulação com ou sem cabeçalho.</p>
           </div>
         ) : null}
@@ -374,7 +381,7 @@ export function LeadsImportCsvDialog({
               ))}
             </div>
 
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
               <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Prévia (5 linhas)</p>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[640px] text-left text-sm">
@@ -387,7 +394,7 @@ export function LeadsImportCsvDialog({
                   </thead>
                   <tbody>
                     {rows.slice(0, 5).map((row, index) => (
-                      <tr key={`preview-${index}`} className="border-b border-[color:rgba(255,255,255,0.04)] text-[var(--text-secondary)]">
+                      <tr key={`preview-${index}`} className="border-b border-[var(--border-subtle)] text-[var(--text-secondary)]">
                         {headers.map((header) => (
                           <td key={`${index}-${header}`} className="px-2 py-2">{row[header]}</td>
                         ))}
@@ -403,19 +410,19 @@ export function LeadsImportCsvDialog({
         {step === 3 ? (
           <div className="space-y-4">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-              <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
+              <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Total lido</p>
                 <p className="text-xl font-semibold text-[var(--text-primary)]">{resumo.total}</p>
               </div>
-              <div className="rounded-[var(--radius-card)] border border-[color:rgba(16,185,129,0.22)] bg-[color:rgba(16,185,129,0.08)] p-3">
+              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--success)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Válidos</p>
                 <p className="text-xl font-semibold text-[var(--success)]">{resumo.validos}</p>
               </div>
-              <div className="rounded-[var(--radius-card)] border border-[color:rgba(245,158,11,0.22)] bg-[color:rgba(245,158,11,0.08)] p-3">
+              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--warning)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Inválidos</p>
                 <p className="text-xl font-semibold text-[var(--warning)]">{resumo.invalidos}</p>
               </div>
-              <div className="rounded-[var(--radius-card)] border border-[color:rgba(56,189,248,0.22)] bg-[color:rgba(56,189,248,0.08)] p-3">
+              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--info)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--info)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Duplicados no CSV</p>
                 <p className="text-xl font-semibold text-[var(--info)]">{resumo.duplicadosNoArquivo}</p>
               </div>
@@ -448,15 +455,13 @@ export function LeadsImportCsvDialog({
               </label>
             </div>
 
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-xs text-[var(--text-tertiary)]">
-              Segurança aplicada: limite de 2000 linhas, validação de campos e normalização de telefone antes de persistir.
-            </div>
+            <p className="text-xs text-[var(--text-tertiary)]">Limite de 2000 linhas por importação.</p>
           </div>
         ) : null}
 
         {erroExibido ? (
-          <div className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
-            <span className="inline-flex items-center gap-2"><AlertCircle className="h-4 w-4" />{erroExibido}</span>
+          <div className="rounded-lg border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
+            <span className="inline-flex items-center gap-2"><AlertCircle className="h-4 w-4 shrink-0" />{erroExibido}</span>
           </div>
         ) : null}
 

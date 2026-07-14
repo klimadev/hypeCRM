@@ -60,7 +60,7 @@ export function LeadDeleteDialog({
             </div>
 
             {negociosRelacionados.length > 0 ? (
-              <div className="flex items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[var(--text-primary)]">Remover negócios vinculados</p>
                   <p className="text-xs text-[var(--text-secondary)]">
@@ -72,7 +72,7 @@ export function LeadDeleteDialog({
                 <Switch checked={removerNegociosVinculados} onCheckedChange={onRemoverNegociosChange} disabled={removendoLead} />
               </div>
             ) : (
-              <p className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.03)] px-3 py-3 text-sm text-[var(--text-secondary)]">
+              <p className="rounded-xl border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3 text-sm text-[var(--text-secondary)]">
                 Este lead não possui negócios vinculados ativos.
               </p>
             )}
@@ -80,12 +80,12 @@ export function LeadDeleteDialog({
         ) : null}
 
         {erro ? (
-          <p className="rounded-[var(--radius-control)] border border-[color:rgba(244,63,94,0.24)] bg-[color:rgba(244,63,94,0.08)] p-3 text-sm font-medium text-[color:#fecdd3]">
+          <div className="rounded-lg border border-[color-mix(in_srgb,var(--danger)_24%,transparent)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
             <span className="inline-flex items-center gap-2">
-              <AlertCircle className="h-4 w-4" />
+              <AlertCircle className="h-4 w-4 shrink-0" />
               {erro}
             </span>
-          </p>
+          </div>
         ) : null}
 
         <DialogFooter className="gap-2 sm:gap-0">

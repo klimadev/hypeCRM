@@ -91,6 +91,35 @@ export type PayloadAtualizarLead = {
   ativo?: boolean;
 };
 
+export type LeadInformacoesApi = {
+  lead: ApiLeadContato;
+  negocios: Array<{
+    id: string;
+    titulo: string;
+    status?: string;
+    valor_estimado: number;
+    valor_fechado?: number | null;
+    funil?: { nome: string } | null;
+    estagio?: { nome: string } | null;
+    funcionario?: { nome: string } | null;
+  }>;
+  resumo?: {
+    negociosTotal?: number;
+    valorEstimadoTotal?: number;
+    valorFechadoTotal?: number;
+    interacoesTotal?: number;
+  } | null;
+  interacoes: Array<{
+    id: string;
+    tipo: string;
+    titulo: string;
+    descricao: string;
+    data: string;
+    origem: string;
+    status: string;
+  }>;
+};
+
 export type ResultadoRemocaoLead = {
   sucesso: boolean;
   negocios_removidos?: number;

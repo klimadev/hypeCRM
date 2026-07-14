@@ -69,7 +69,7 @@ function StepForm({
           <div className="grid gap-2">
             <label htmlFor="estagio-negocio" className="text-sm font-medium text-[var(--text-primary)]">Estágio</label>
             <Select value={formulario.idEstagio} onValueChange={(value) => onCampoChange("idEstagio", value)}>
-              <SelectTrigger id="estagio-negocio">
+              <SelectTrigger className="h-12 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] text-base">
                 <SelectValue placeholder="Selecionar estágio" />
               </SelectTrigger>
               <SelectContent>
@@ -91,7 +91,7 @@ function StepForm({
                   onValueChange={(value) => onCampoChange("idFuncionario", value)}
                   disabled={formulario.usarResponsavelAutomatico}
                 >
-                  <SelectTrigger id="responsavel-negocio" className="w-full">
+                  <SelectTrigger className="h-12 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] text-base">
                     <SelectValue placeholder="Selecionar responsável" />
                   </SelectTrigger>
                   <SelectContent>
@@ -107,7 +107,11 @@ function StepForm({
                 type="button"
                 variant={formulario.usarResponsavelAutomatico ? "default" : "outline"}
                 size="sm"
-                className={formulario.usarResponsavelAutomatico ? "bg-[var(--success)] hover:bg-[var(--success-hover)]" : ""}
+                className={`h-12 rounded-xl ${
+          formulario.usarResponsavelAutomatico
+            ? "bg-[var(--success)] text-white hover:bg-[color-mix(in_srgb,var(--success)_80%,black)]"
+            : "border-[var(--border-subtle)]"
+        }`}
                 onClick={() => onCampoChange("usarResponsavelAutomatico", !formulario.usarResponsavelAutomatico)}
                 title="Atribuir automaticamente (round-robin)"
               >
@@ -119,7 +123,7 @@ function StepForm({
 
         {/* Preview dos leads que serão convertidos */}
         {leadsPreview.length > 0 && (
-          <div className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
             <p className="mb-2 text-sm font-medium text-[var(--text-primary)]">
               Pré-visualização ({leadsPreview.length} de {totalLeads})
             </p>
@@ -127,7 +131,7 @@ function StepForm({
               {leadsPreview.slice(0, 10).map((lead) => (
                 <div key={lead.id} className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
                   <span>{lead.nome}</span>
-                  <span className="text-[var(--text-tertiary)]">→ {lead.nome} (R$ 0,00)</span>
+                  <span className="text-[var(--text-tertiary)]">→ R$ 0,00</span>
                 </div>
               ))}
               {leadsPreview.length > 10 && (
@@ -141,13 +145,13 @@ function StepForm({
       </div>
 
       <DialogFooter>
-        <Button variant="outline" disabled={convertendo}>
+        <Button variant="outline" disabled={convertendo} className="rounded-xl">
           Cancelar
         </Button>
         <Button
           onClick={onConfirmar}
           disabled={convertendo || !formulario.idEstagio}
-          className="bg-[var(--success)] text-white hover:bg-[var(--success-hover)]"
+          className="rounded-xl bg-[var(--success)] text-white hover:bg-[color-mix(in_srgb,var(--success)_80%,black)]"
         >
           {convertendo ? "Convertendo..." : `Converter ${totalLeads} lead${totalLeads !== 1 ? "s" : ""}`}
         </Button>
@@ -191,7 +195,7 @@ function StepConflito({
 
       <div className="grid gap-4">
         {/* Lista de leads com conflito */}
-        <div className="rounded-[var(--radius-control)] border border-[var(--warning)]/30 bg-[var(--warning)]/5 p-3">
+        <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_30%,transparent)] bg-[color-mix(in_srgb,var(--warning)_5%,transparent)] p-3">
           <p className="mb-2 text-sm font-medium text-[var(--text-primary)]">Leads com negócio existente:</p>
           <div className="max-h-32 space-y-1 overflow-y-auto">
             {leadsComNegocio.slice(0, 8).map((lead) => (
@@ -208,7 +212,7 @@ function StepConflito({
 
         {/* Leads sem conflito */}
         {leadsSemNegocio.length > 0 && (
-          <div className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] p-3">
+          <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
             <p className="mb-2 text-sm font-medium text-[var(--text-primary)]">Novos leads ({leadsSemNegocio.length}):</p>
             <p className="text-xs text-[var(--text-tertiary)]">Esses leads serão convertidos normalmente.</p>
           </div>
@@ -221,7 +225,7 @@ function StepConflito({
             <Button
               type="button"
               variant={acaoConflito === "ignorar" ? "default" : "outline"}
-              className="justify-start gap-2"
+              className="justify-start gap-2 rounded-xl"
               onClick={() => onAcaoConflitoChange("ignorar")}
             >
               <ArrowRight className="h-4 w-4" />
@@ -230,7 +234,7 @@ function StepConflito({
             <Button
               type="button"
               variant={acaoConflito === "criar_novo" ? "default" : "outline"}
-              className="justify-start gap-2"
+              className="justify-start gap-2 rounded-xl"
               onClick={() => onAcaoConflitoChange("criar_novo")}
             >
               <ArrowRight className="h-4 w-4" />
@@ -239,7 +243,7 @@ function StepConflito({
             <Button
               type="button"
               variant={acaoConflito === "substituir" ? "default" : "outline"}
-              className="justify-start gap-2"
+              className="justify-start gap-2 rounded-xl"
               onClick={() => onAcaoConflitoChange("substituir")}
             >
               <ArrowRight className="h-4 w-4" />
@@ -250,13 +254,13 @@ function StepConflito({
       </div>
 
       <DialogFooter>
-        <Button variant="outline" disabled={convertendo}>
+        <Button variant="outline" disabled={convertendo} className="rounded-xl">
           Cancelar
         </Button>
         <Button
           onClick={onConfirmarConflito}
           disabled={convertendo || !acaoConflito}
-          className="bg-[var(--success)] text-white hover:bg-[var(--success-hover)]"
+          className="rounded-xl bg-[var(--success)] text-white hover:bg-[color-mix(in_srgb,var(--success)_80%,black)]"
         >
           {convertendo ? "Processando..." : "Confirmar"}
         </Button>

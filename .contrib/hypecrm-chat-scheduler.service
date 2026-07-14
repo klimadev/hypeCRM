@@ -1,0 +1,21 @@
+[Unit]
+Description=HypeCRM Chat Scheduler
+After=network.target hypecrm-web.service
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/www/hypeCRM
+ExecStart=/usr/bin/node ./node_modules/tsx/dist/cli.mjs scripts/chat-scheduled-messages-worker.ts
+Environment=NODE_ENV=production
+Environment=UNDICI_SOCKET_FAMILY=ipv4
+Restart=on-failure
+RestartSec=10
+MemoryMax=256M
+KillSignal=SIGINT
+TimeoutStopSec=10
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
