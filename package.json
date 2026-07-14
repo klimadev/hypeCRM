@@ -16,7 +16,8 @@
     "test:watch": "NODE_ENV=test vitest --config vitest.config.ts",
     "test:coverage": "NODE_ENV=test vitest run --config vitest.config.ts --coverage",
     "seed": "prisma db seed",
-    "setup": "node scripts/setup-wizard.js"
+    "setup": "node scripts/setup-wizard.js",
+    "deploy": "next build && systemctl restart hypecrm-web hypecrm-chat-scheduler"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",

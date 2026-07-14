@@ -1,6 +1,7 @@
 "use client";
 
-import type { Estagio, Funcionario, KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, Pdv, Pipeline, ResumoPendencias } from "../types";
+import type { Estagio, Funcionario, KanbanFilters, KpiKanban, OrdenacaoKanban, OrigemStats, Pdv, Pipeline } from "../types";
+import type { ResumoPendencias } from "../hooks/use-pendencias-globais";
 import { KanbanHeaderDesktop } from "./kanban-header-desktop";
 import { KanbanHeaderMobile } from "./kanban-header-mobile";
 
@@ -20,11 +21,11 @@ type KanbanHeaderProps = {
   erroNovoNegocio: string | null;
   setErroNovoNegocio: (erro: string | null) => void;
   criandoNegocio: boolean;
-  cargoNovoNegocio: string;
+  cargoNovoNegocio: { id_funcionario: string } | null;
   estagioAberto: string;
   estagioNovoNegocio: string;
   setEstagioNovoNegocio: (id: string) => void;
-  setCargoNovoNegocio: (cargo: string) => void;
+  setCargoNovoNegocio: (cargo: { id_funcionario: string } | null) => void;
   filtros: KanbanFilters;
   setFiltros: (filtros: KanbanFilters) => void;
   busca: string;
@@ -33,7 +34,7 @@ type KanbanHeaderProps = {
   setOrdenacao: (o: OrdenacaoKanban) => void;
   modoFocoPendencias: boolean;
   setModoFocoPendencias: (v: boolean) => void;
-  resumoPendencias: ResumoPendencias;
+  resumoPendencias: ResumoPendencias | null;
   totalNegocios: number;
   totalPipeline: number;
   negociosParados: number;
@@ -44,7 +45,10 @@ type KanbanHeaderProps = {
   alternarNotificacoes: () => Promise<boolean>;
   permissaoNotificacao: () => NotificationPermission | "unknown";
   redistribuindoNegociosEmAtendimento: boolean;
-  redistribuirNegociosEmAtendimento: () => Promise<void>;
+  redistribuirNegociosEmAtendimento: () => Promise<
+    | { ok: false; erro: string }
+    | { ok: true; avaliados: number; elegiveis: number; reatribuidos: number; ignoradosSemDestino: number }
+  >;
 };
 
 export function KanbanHeader(props: KanbanHeaderProps) {

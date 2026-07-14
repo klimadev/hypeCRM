@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useKanbanModule } from "./hooks/use-kanban-module";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
@@ -10,7 +10,9 @@ import { KanbanPipelineCatalog } from "./components/kanban-pipeline-catalog";
 import { PipelineModal } from "./components/pipeline-modal";
 import { PerdaDialog } from "./components/perda-dialog";
 import { NegocioDetailsDrawer } from "./components/lead-details-drawer";
+import { NovoNegocioDialog } from "./components/novo-negocio-dialog";
 import type { Lead, Props } from "./types";
+import type { ContatoDisponivelNegocio } from "./components/kanban-header.utils";
 import { LayoutList } from "lucide-react";
 
 export function ModuloKanban({ perfil, idUsuario }: Props) {
@@ -27,6 +29,18 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
     idUsuario,
     pipelineSelecionadaIdInicial: pipelineSelecionadaIdQuery,
   });
+
+  const inputNomeRef = useRef<HTMLInputElement>(null);
+  const [contatosSelecionados, setContatosSelecionados] = useState<string[]>([]);
+  const contatosDisponiveis: ContatoDisponivelNegocio[] = useMemo(
+    () => vm.leadsDisponiveis.map((l) => ({
+      id: l.id,
+      nome: l.nome,
+      telefone: l.telefone,
+      id_negocio: l.id_negocio,
+    })),
+    [vm.leadsDisponiveis],
+  );
 
   const mostrarKanbanDireto =
     Boolean(searchParams.get("negocio"))
@@ -221,6 +235,30 @@ export function ModuloKanban({ perfil, idUsuario }: Props) {
             permissaoNotificacao={vm.permissaoNotificacao}
             redistribuindoNegociosEmAtendimento={vm.redistribuindoNegociosEmAtendimento}
             redistribuirNegociosEmAtendimento={vm.redistribuirNegociosEmAtendimento}
+          />
+
+          <NovoNegocioDialog
+            open={vm.dialogNovoNegocioAberto}
+            onOpenChange={vm.setDialogNovoNegocioAberto}
+            onSubmit={vm.criarNegocio}
+            trigger={<span />}
+            inputNomeRef={inputNomeRef}
+            criandoNegocio={vm.criandoNegocio}
+            valorNovoNegocio={vm.valorNovoNegocio}
+            setValorNovoNegocio={vm.setValorNovoNegocio}
+            estagioNovoNegocio={vm.estagioNovoNegocio}
+            estagioAberto={vm.estagioAberto}
+            setEstagioNovoNegocio={vm.setEstagioNovoNegocio}
+            cargoNovoNegocio={vm.cargoNovoNegocio}
+            setCargoNovoNegocio={vm.setCargoNovoNegocio}
+            contatosDisponiveis={contatosDisponiveis}
+            carregandoContatosDisponiveis={vm.carregandoLeadsDisponiveis}
+            contatosSelecionados={contatosSelecionados}
+            setContatosSelecionados={setContatosSelecionados}
+            perfil={perfil}
+            funcionarios={vm.funcionarios}
+            estagios={vm.estagios}
+            erroNovoNegocio={vm.erroNovoNegocio}
           />
 
           <KanbanBoard

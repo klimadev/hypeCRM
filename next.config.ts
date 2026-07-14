@@ -17,9 +17,8 @@ const nextConfig: NextConfig = {
     },
   },
 
-  cacheComponents: false,
-
   experimental: {
+    cpus: 2,
     optimizePackageImports: [
       "lucide-react",
       "@radix-ui/react-dialog",
@@ -27,12 +26,6 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-tabs",
       "@hello-pangea/dnd",
     ],
-  },
-
-  modularizeImports: {
-    lucideReact: {
-      transform: "lucide-react/dist/esm/{{member}}",
-    },
   },
 };
 
