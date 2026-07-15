@@ -20,7 +20,7 @@ export function InstanciasList({ instancias, onExcluir, onAtualizarStatus, onRec
     return (
       <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
         <CardContent className="flex flex-col items-center justify-center py-16">
-          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
+          <div className="mb-5 flex h-20 w-20 items-center justify-center rounded-xl">
             <Smartphone className="h-10 w-10 text-[var(--text-tertiary)]" />
           </div>
           <h3 className="text-lg font-semibold text-[var(--text-primary)]">Nenhuma conexao ativa</h3>

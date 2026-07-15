@@ -17,7 +17,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Conectado",
       labelShort: "Online",
       labelDetailed: "Sincronizado e Pronto",
-      className: "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]",
+      className: "rounded-md border px-1.5 py-0.5 text-[10px] font-medium border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]",
       icon: "connected",
     };
   }
@@ -27,7 +27,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Escaneie o QR Code",
       labelShort: "QR",
       labelDetailed: "Aguardando Conexão",
-      className: "border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]",
+      className: "rounded-md border px-1.5 py-0.5 text-[10px] font-medium border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-[var(--warning)]",
       icon: "qrcode",
     };
   }
@@ -37,7 +37,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Carregando...",
       labelShort: "Carregando",
       labelDetailed: "Inicializando",
-      className: "border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]",
+      className: "rounded-md border px-1.5 py-0.5 text-[10px] font-medium border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]",
       icon: "loading",
     };
   }
@@ -47,7 +47,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
       label: "Desconectado",
       labelShort: "Offline",
       labelDetailed: "Desconectado",
-      className: "bg-[var(--surface-soft)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
+      className: "rounded-md border px-1.5 py-0.5 text-[10px] font-medium bg-[var(--surface-soft)] text-[var(--text-secondary)] border-[var(--border-subtle)]",
       icon: "disconnected",
     };
   }
@@ -56,7 +56,7 @@ export function getStatusBadgeWhatsapp(instancia: Pick<WhatsappInstancia, "statu
     label: "Erro",
     labelShort: "Erro",
     labelDetailed: "Erro de Conexão",
-    className: "border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]",
+    className: "rounded-md border px-1.5 py-0.5 text-[10px] font-medium border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]",
     icon: "error",
   };
 }

@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Loader2, TimerReset } from "lucide-react";
+import { TimerReset } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Skeleton, SkeletonTableRow } from "@/components/ui/skeleton";
 import type { WhatsappJobItem, WhatsappJobsResumo } from "../types";
 import { JobsTableHeader } from "./jobs-table-header";
 import { JobsTableRow } from "./jobs-table-row";
@@ -43,21 +44,37 @@ export function JobsTable({ resumo, jobs, carregando, erro, onRetryJob }: JobsTa
 
   if (carregando && jobs.length === 0) {
     return (
-      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface)] p-8 shadow-[var(--shadow-sm)]">
-        <div className="flex flex-col items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">Carregando jobs...</p>
-        </div>
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
+        <Table>
+          <TableHeader>
+            <TableRow className="hover:bg-[var(--surface-soft)]">
+              <TableHead className="w-[100px]"><Skeleton className="h-4 w-12" /></TableHead>
+              <TableHead className="w-[80px]"><Skeleton className="h-4 w-8" /></TableHead>
+              <TableHead><Skeleton className="h-4 w-16" /></TableHead>
+              <TableHead className="w-[180px]"><Skeleton className="h-4 w-12" /></TableHead>
+              <TableHead className="w-[200px]"><Skeleton className="h-4 w-14" /></TableHead>
+              <TableHead className="w-[100px]"><Skeleton className="h-4 w-12" /></TableHead>
+              <TableHead className="w-[80px]"><Skeleton className="h-4 w-10" /></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            <SkeletonTableRow columns={7} />
+            <SkeletonTableRow columns={7} />
+            <SkeletonTableRow columns={7} />
+            <SkeletonTableRow columns={7} />
+            <SkeletonTableRow columns={7} />
+          </TableBody>
+        </Table>
       </div>
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+    <div className="overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
       <JobsTableHeader filtro={filter} counts={filterCounts} resumoAgendados={resumo.pendentes + resumo.processando} onFiltroChange={setFilter} />
 
       {erro ? (
-        <div className="mx-4 mt-3 rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2">
+        <div className="mx-4 mt-3 rounded-xl border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2">
           <p className="text-xs text-[var(--danger)]">{erro}</p>
         </div>
       ) : null}
@@ -80,7 +97,7 @@ export function JobsTable({ resumo, jobs, carregando, erro, onRetryJob }: JobsTa
               <TableRow>
                 <TableCell colSpan={7} className="py-8 text-center text-[var(--text-secondary)]">
                   <div className="flex flex-col items-center gap-2">
-                    <TimerReset className="h-8 w-8 text-[var(--text-tertiary)]" />
+                    <TimerReset className="h-6 w-6 text-[var(--text-tertiary)]" />
                     <p className="text-sm">Nenhum job encontrado</p>
                   </div>
                 </TableCell>

@@ -1,8 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { Loader2, Radio, Wifi, WifiOff } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Radio, Wifi, WifiOff } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { InlineStatusAlert } from "@/components/shared/inline-status-alert";
@@ -30,6 +32,7 @@ export function ModuloWhatsapp() {
   const [nomeInstancia, setNomeInstancia] = useState("");
   const [wizardStep, setWizardStep] = useState<1 | 2 | 3>(1);
   const [instanciaAssistidaId, setInstanciaAssistidaId] = useState<string | null>(null);
+  const [wizardAberto, setWizardAberto] = useState(false);
   const [carregandoCriacao, setCarregandoCriacao] = useState(false);
   const [carregandoQr, setCarregandoQr] = useState(false);
 
@@ -81,6 +84,15 @@ export function ModuloWhatsapp() {
     setCarregandoQr(false);
   }, []);
 
+  // Auto-abre o wizard se nao tem nenhuma instancia
+  const autoAberturaFeita = useRef(false);
+  useEffect(() => {
+    if (!carregando && instancias.length === 0 && !autoAberturaFeita.current) {
+      autoAberturaFeita.current = true;
+      setWizardAberto(true);
+    }
+  }, [carregando, instancias]);
+
   useEffect(() => {
     if (wizardStep !== 2 || !instanciaAssistidaId) return;
     const interval = setInterval(() => {
@@ -125,15 +137,14 @@ export function ModuloWhatsapp() {
       <InlineStatusAlert variant="error" message={erro} className="animate-fade-in" />
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        <Card className="relative overflow-hidden border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,color-mix(in_srgb,var(--success)_18%,transparent),transparent_50%),radial-gradient(circle_at_bottom_right,color-mix(in_srgb,var(--info-alt)_12%,transparent),transparent_55%)]" />
-          <CardContent className="relative flex items-center justify-between p-[18px] md:p-5">
+        <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+          <CardContent className="flex items-center justify-between p-[18px] md:p-5">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)] shadow-[var(--shadow-sm)]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_14%,transparent)] text-[var(--success)]">
                 <Wifi className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Status</p>
+                <p className="text-xs font-semibold text-[var(--text-tertiary)]">Status</p>
                 <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{connectedCount}</p>
                 <p className="text-xs text-[var(--success)]">Instancias conectadas</p>
               </div>
@@ -143,11 +154,11 @@ export function ModuloWhatsapp() {
 
         <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
           <CardContent className="flex items-center gap-4 p-[18px] md:p-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_14%,transparent)] text-[var(--warning)]">
               <Radio className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Pareando</p>
+              <p className="text-xs font-semibold text-[var(--text-tertiary)]">Pareando</p>
               <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{pareandoCount}</p>
               <p className="text-xs text-[var(--text-secondary)]">Aguardando autenticacao</p>
             </div>
@@ -156,11 +167,11 @@ export function ModuloWhatsapp() {
 
         <Card className="border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
           <CardContent className="flex items-center gap-4 p-[18px] md:p-5">
-            <div className="flex h-12 w-12 items-center justify-center rounded-[var(--radius-control)] border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]">
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[var(--border-strong)] bg-[var(--surface-elevated)] text-[var(--text-secondary)]">
               <WifiOff className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--text-tertiary)]">Offline</p>
+              <p className="text-xs font-semibold text-[var(--text-tertiary)]">Offline</p>
               <p className="text-2xl font-bold tracking-tight text-[var(--text-primary)]">{offlineCount}</p>
               <p className="text-xs text-[var(--text-secondary)]">Precisam de acao manual</p>
             </div>
@@ -168,30 +179,83 @@ export function ModuloWhatsapp() {
         </Card>
       </div>
 
-      <WhatsappConnectionWizard
-        step={wizardStep}
-        nomeInstancia={nomeInstancia}
-        onNomeInstanciaChange={setNomeInstancia}
-        onCriarInstancia={handleCriar}
-        carregandoCriacao={carregandoCriacao}
-        instanciaNome={instanciaAssistida?.profile_name ?? instanciaAssistida?.nome ?? null}
-        instanciaPhone={instanciaAssistida?.phone ?? null}
-        qrCode={qrCodeAtual}
-        pairingCode={pairingCodeAtual}
-        carregandoQr={carregandoQr}
-        statusAtual={statusWizard}
-        onGerarNovoQr={handleGerarNovoQr}
-        onReiniciarFluxo={reiniciarWizard}
-      />
+      <Sheet open={wizardAberto} onOpenChange={(open) => { if (!open) { reiniciarWizard(); setWizardAberto(false); } }}>
+          <SheetContent side="right" className="w-full max-w-lg overflow-y-auto p-0">
+            <WhatsappConnectionWizard
+              step={wizardStep}
+              nomeInstancia={nomeInstancia}
+              onNomeInstanciaChange={setNomeInstancia}
+              onCriarInstancia={handleCriar}
+              carregandoCriacao={carregandoCriacao}
+              instanciaNome={instanciaAssistida?.profile_name ?? instanciaAssistida?.nome ?? null}
+              instanciaPhone={instanciaAssistida?.phone ?? null}
+              qrCode={qrCodeAtual}
+              pairingCode={pairingCodeAtual}
+              carregandoQr={carregandoQr}
+              statusAtual={statusWizard}
+              onGerarNovoQr={handleGerarNovoQr}
+              onReiniciarFluxo={reiniciarWizard}
+            />
+          </SheetContent>
+        </Sheet>
 
       {carregando ? (
-        <div className="flex flex-col items-center justify-center py-12">
-          <Loader2 className="h-8 w-8 animate-spin text-[var(--text-tertiary)]" />
-          <p className="mt-3 text-sm text-[var(--text-secondary)]">Carregando suas conexoes...</p>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5">
+              <Skeleton className="mb-3 h-3 w-20" />
+              <Skeleton className="mb-2 h-7 w-28" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5">
+              <Skeleton className="mb-3 h-3 w-20" />
+              <Skeleton className="mb-2 h-7 w-28" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5">
+              <Skeleton className="mb-3 h-3 w-20" />
+              <Skeleton className="mb-2 h-7 w-28" />
+              <Skeleton className="h-3 w-16" />
+            </div>
+          </div>
+          <div className="space-y-4 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-6">
+            <Skeleton className="h-5 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-1/2" />
+          </div>
+          <div className="space-y-3">
+            <Skeleton className="h-4 w-36" />
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="space-y-3 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5">
+                  <div className="flex items-center gap-3">
+                    <Skeleton className="h-10 w-10 shrink-0" rounded="full" />
+                    <div className="flex-1 space-y-1.5">
+                      <Skeleton className="h-4 w-28" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </div>
+                  <Skeleton className="h-8 w-full" rounded="control" />
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Instancias existentes</p>
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-semibold text-[var(--text-tertiary)]">Instancias existentes</p>
+            {!wizardAberto ? (
+              <button
+                type="button"
+                onClick={() => { setWizardStep(1); setWizardAberto(true); }}
+                className="text-xs font-medium text-[var(--brand)] transition-colors hover:brightness-110"
+              >
+                + Nova conexao
+              </button>
+            ) : null}
+          </div>
           <InstanciasList
             instancias={instancias}
             onExcluir={excluirInstancia}

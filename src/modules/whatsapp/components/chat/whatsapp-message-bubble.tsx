@@ -343,12 +343,9 @@ export function WhatsappMessageBubble({ message, onRetry }: Props) {
       <div
         className={`max-w-[80%] border px-3 py-2 text-[13px] leading-6 shadow-[var(--shadow-sm)] ${
           outgoing
-            ? "border-[var(--brand)] bg-[var(--brand-soft)] rounded-br-none"
-            : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] rounded-bl-none"
+            ? "border-[var(--brand)] bg-[var(--brand-soft)] rounded-[18px] rounded-br-[4px]"
+            : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] rounded-[18px] rounded-bl-[4px]"
         } ${isDeleted ? "opacity-50" : ""}`}
-        style={{
-          borderRadius: outgoing ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-        }}
         >
         {isDeleted ? (
           <p className="whitespace-pre-wrap text-sm italic text-[var(--text-tertiary)]">Mensagem excluída</p>

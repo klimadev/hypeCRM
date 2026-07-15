@@ -1,12 +1,12 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { OptimisticSync } from "@/components/ui/optimistic-sync";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tooltip } from "@/components/ui/tooltip";
-import { Clock, Loader2, QrCode, RefreshCw, RotateCcw, Trash2, Wifi, WifiOff, Zap } from "lucide-react";
+import { Loader2, QrCode, RefreshCw, RotateCcw, Trash2, Wifi, WifiOff } from "lucide-react";
 import type { ResultadoQrWhatsapp, WhatsappInstancia } from "../types";
 import { calculateUptimeWhatsapp, getInitialsWhatsapp, getStatusBadgeWhatsapp } from "./instances-list.utils";
 import { InstancesListQrCode } from "./instances-list-qr-code";
@@ -45,20 +45,19 @@ export function InstancesListCard(props: InstanceCardProps) {
   const badge = getStatusBadgeWhatsapp(instancia);
   const isConnected = badge.icon === "connected";
   const isReconectando = estaReconectando(instancia.id);
-  const podeReconectar = !isConnected && !isTemporario;
   const uptime = useMemo(() => calculateUptimeWhatsapp(instancia.last_seen_at || null), [instancia.last_seen_at]);
+  const [showQrCode, setShowQrCode] = useState(false);
 
   return (
     <OptimisticSync key={instancia.id} active={isTemporario} className="cursor-wait">
       <Card className={`group relative overflow-hidden rounded-2xl border transition-all hover:shadow-lg ${isConnected ? "border-[var(--success)] bg-[var(--surface)] shadow-[var(--shadow-md)]" : "border-[var(--border-subtle)] bg-[var(--surface)] hover:border-[var(--border-strong)] hover:shadow-[var(--shadow-md)]"}`}>
-        <div className={`absolute left-0 top-0 h-1 w-full transition-colors ${isConnected ? "bg-[var(--success)]" : badge.icon === "qrcode" ? "bg-[var(--warning)]" : "bg-[var(--border-strong)]"}`} />
-        <CardContent className={`p-5 pt-6 ${isConnected ? "bg-[var(--surface-elevated)]" : ""}`}>
+        <CardContent className={`p-5 ${isConnected ? "bg-[var(--surface-elevated)]" : ""}`}>
           <div className="flex items-start gap-4">
             <div className="relative">
               {instancia.profile_pic ? (
-                <Image src={instancia.profile_pic} alt="Foto de perfil" width={56} height={56} className={`h-14 w-14 rounded-xl object-cover shadow-sm ${isConnected ? "ring-2 ring-[var(--success)] ring-offset-2 ring-offset-[var(--surface-elevated)]" : ""}`} unoptimized />
+                <Image src={instancia.profile_pic} alt="Foto de perfil" width={56} height={56} className="h-14 w-14 rounded-xl object-cover shadow-sm" unoptimized />
               ) : (
-                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl shadow-sm ${isConnected ? "bg-[color-mix(in_srgb,var(--success)_18%,var(--surface))] text-[var(--success)] ring-2 ring-[var(--success)] ring-offset-2 ring-offset-[var(--surface-elevated)]" : "bg-[var(--surface-soft)] text-[var(--success)]"}`}>
+                <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-xl shadow-sm ${isConnected ? "bg-[color-mix(in_srgb,var(--success)_18%,var(--surface))] text-[var(--success)]" : "bg-[var(--surface-soft)] text-[var(--success)]"}`}>
                   <span className="text-lg font-bold">{getInitialsWhatsapp(instancia.profile_name || instancia.nome)}</span>
                 </div>
               )}
@@ -72,7 +71,7 @@ export function InstancesListCard(props: InstanceCardProps) {
               {instancia.phone ? <p className={`mt-0.5 truncate text-sm font-mono ${isConnected ? "text-[color-mix(in_srgb,var(--success)_80%,var(--text-secondary))]" : "text-[var(--text-secondary)]"}`}>{instancia.phone}</p> : null}
               {!instancia.phone && instancia.instance_name ? <p className={`mt-0.5 truncate text-xs ${isConnected ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)]"}`}>{instancia.instance_name}</p> : null}
               <div className="mt-2">
-                <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${isConnected ? "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_20%,transparent)] text-[var(--success)]" : badge.className}`}>
+                <span className={`inline-flex items-center gap-1.5 rounded-md border px-1.5 py-0.5 text-[10px] font-medium ${isConnected ? "border-[var(--success)] bg-[color-mix(in_srgb,var(--success)_20%,transparent)] text-[var(--success)]" : badge.className}`}>
                   <StatusIcon icon={badge.icon} />
                   {isConnected ? "Sincronizado e Pronto" : badge.labelShort}
                 </span>
@@ -81,26 +80,23 @@ export function InstancesListCard(props: InstanceCardProps) {
           </div>
 
           {isConnected ? (
-            <div className="mt-4 flex items-center gap-4 rounded-lg bg-[var(--surface-soft)] p-3">
-              <div className="flex items-center gap-2"><Zap className="h-3.5 w-3.5 text-[var(--success)]" /><span className="text-xs text-[var(--text-secondary)]">{instancia.latency_ms ? `${instancia.latency_ms}ms` : "—"}</span></div>
-              <div className="h-3 w-px bg-[var(--border-subtle)]" />
-              <div className="flex items-center gap-2"><Clock className="h-3.5 w-3.5 text-[var(--success)]" /><span className="text-xs text-[var(--text-secondary)]">{uptime}</span></div>
-            </div>
+            <p className="mt-4 text-xs text-[var(--text-secondary)]">{instancia.latency_ms ? `${instancia.latency_ms}ms` : "—"} &middot; {uptime}</p>
           ) : null}
 
-          <InstancesListQrCode qrCode={getQrCode(instancia.id)} phone={instancia.phone} instanciaId={instancia.id} buscarQrCode={buscarQrCode} />
+          {!instancia.phone ? (
+            <button type="button" onClick={() => setShowQrCode(!showQrCode)} className="mt-3 text-xs text-[var(--text-tertiary)] underline-offset-2 hover:text-[var(--text-secondary)] hover:underline">
+              {showQrCode ? "Ocultar QR Code" : "Mostrar QR Code"}
+            </button>
+          ) : null}
+          {showQrCode ? <InstancesListQrCode qrCode={getQrCode(instancia.id)} phone={instancia.phone} instanciaId={instancia.id} buscarQrCode={buscarQrCode} /> : null}
 
           <div className="mt-4 flex gap-2">
-            {podeReconectar ? (
-              <Button size="sm" className="flex-1 rounded-xl bg-[var(--success)] text-[var(--primary-foreground)] hover:brightness-110" disabled={isReconectando} onClick={() => onReconectar(instancia.id)}>
-                {isReconectando ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : <RotateCcw className="mr-1.5 h-3.5 w-3.5" />}
-                Reconectar
+            {!isTemporario ? (
+              <Button size="sm" className={`flex-1 rounded-xl transition-all ${isConnected ? "bg-[var(--surface-soft)] text-[var(--text-primary)] hover:bg-[var(--surface-elevated)]" : "bg-[var(--success)] text-[var(--primary-foreground)] hover:brightness-110"}`} disabled={isReconectando} onClick={() => isConnected ? onAtualizarStatus(instancia.id) : onReconectar(instancia.id)}>
+                {isReconectando ? <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" /> : isConnected ? <RefreshCw className="mr-1.5 h-3.5 w-3.5" /> : <RotateCcw className="mr-1.5 h-3.5 w-3.5" />}
+                {isConnected ? "Atualizar" : "Reconectar"}
               </Button>
             ) : null}
-            <Button variant="outline" size="sm" className={`flex-1 rounded-xl transition-all ${isConnected ? "border-[var(--border-strong)] text-[var(--text-primary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft)]" : "border-[var(--border-subtle)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft)]"}`} disabled={isTemporario} onClick={() => onAtualizarStatus(instancia.id)}>
-              <RefreshCw className="mr-1.5 h-3.5 w-3.5" />
-              Atualizar
-            </Button>
             <Tooltip content="Excluir instância">
               <Button variant="outline" size="sm" className="rounded-xl border-[var(--danger)] text-[var(--danger)] transition-all hover:bg-[color-mix(in_srgb,var(--danger)_10%,transparent)]" disabled={isTemporario} onClick={() => onExcluir(instancia.id)}>
                 <Trash2 className="h-3.5 w-3.5" />

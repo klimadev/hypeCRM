@@ -24,7 +24,7 @@ function FilterPill({
         "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-[background-color,border-color,color,box-shadow,transform] duration-[var(--duration-fast)] ease-[var(--ease-productive)]",
         active
           ? "border-[var(--brand)] bg-[var(--brand-soft)] text-[var(--text-primary)] shadow-[var(--shadow-sm)]"
-          : "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:-translate-y-px hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)]",
+          : "border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)] hover:border-[var(--border-strong)] hover:bg-[var(--surface-soft-hover)] hover:text-[var(--text-primary)]",
       )}
     >
       {icon}
@@ -52,12 +52,12 @@ export function JobsTableHeader({ filtro, counts, resumoAgendados, onFiltroChang
   return (
     <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3">
       <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-[var(--radius-control)] border border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] shadow-[var(--shadow-sm)]">
+        <div className="flex h-9 w-9 items-center justify-center rounded-xl border border-[var(--info)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)] shadow-[var(--shadow-sm)]">
           <TimerReset className="h-5 w-5" />
         </div>
         <div>
           <p className="text-base font-semibold tracking-tight text-[var(--text-primary)]">Fila de envios em tempo real</p>
-          <p className="text-[11px] uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{resumoAgendados} jobs agendados</p>
+          <p className="text-xs font-semibold text-[var(--text-tertiary)]">{resumoAgendados} jobs agendados</p>
         </div>
       </div>
 

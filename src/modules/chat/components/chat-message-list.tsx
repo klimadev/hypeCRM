@@ -243,7 +243,7 @@ function MessageBubble({ instanceName, msg }: { instanceName: string; msg: Unifi
         className={cn(
           "relative max-w-[86%] rounded-[20px] px-3 py-2 text-sm shadow-sm sm:max-w-[78%] xl:max-w-[66%]",
           isFromMe
-            ? "bg-[linear-gradient(180deg,rgba(139,92,246,0.26),rgba(139,92,246,0.16))] text-[var(--text-primary)]"
+            ? "bg-[color-mix(in_srgb,var(--brand)_18%,var(--surface-elevated))] text-[var(--text-primary)]"
             : "border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)]",
         )}
       >
@@ -283,11 +283,11 @@ function MessageDateSeparator({ timestamp }: { timestamp: number }) {
 function UnreadSeparator({ unreadCount }: { unreadCount: number }) {
   return (
     <div className="flex items-center gap-3 px-3 py-2">
-      <div className="h-px flex-1 bg-[color:rgba(139,92,246,0.18)]" />
-      <span className="rounded-full border border-[color:rgba(139,92,246,0.24)] bg-[var(--brand-soft)] px-3 py-1 text-[10px] font-semibold text-[var(--brand)]">
+      <div className="h-px flex-1 bg-[color-mix(in_srgb,var(--brand)_18%,transparent)]" />
+      <span className="rounded-full border border-[color-mix(in_srgb,var(--brand)_24%,transparent)] bg-[var(--brand-soft)] px-3 py-1 text-[10px] font-semibold text-[var(--brand)]">
         {unreadCount} não lida(s)
       </span>
-      <div className="h-px flex-1 bg-[color:rgba(139,92,246,0.18)]" />
+      <div className="h-px flex-1 bg-[color-mix(in_srgb,var(--brand)_18%,transparent)]" />
     </div>
   );
 }
@@ -369,10 +369,6 @@ export function ChatMessageList({ instanceName, remoteJid, messages, unreadCount
       <div
         ref={containerRef}
         className="h-full overflow-y-auto overscroll-contain"
-        style={{
-          backgroundImage: "radial-gradient(circle at 1px 1px, rgba(255,255,255,0.02) 1px, transparent 0)",
-          backgroundSize: "24px 24px",
-        }}
       >
         {carregandoMais ? (
           <div className="flex justify-center py-3">
@@ -394,7 +390,7 @@ export function ChatMessageList({ instanceName, remoteJid, messages, unreadCount
               <div key={index} className={cn("flex", index % 3 === 0 ? "justify-end" : "justify-start")}>
                 <div
                   className={cn(
-                    "animate-pulse rounded-[18px] bg-[var(--surface-elevated)]",
+                    "animate-pulse rounded-xl bg-[var(--surface-elevated)]",
                     index % 3 === 0 ? "h-12 w-32" : index % 3 === 1 ? "h-16 w-48" : "h-10 w-40",
                   )}
                 />
@@ -423,7 +419,7 @@ export function ChatMessageList({ instanceName, remoteJid, messages, unreadCount
           <div className="flex h-full items-center justify-center">
             <div className="flex flex-col items-center gap-4 p-6 text-center">
               <div className="relative">
-                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[linear-gradient(180deg,rgba(139,92,246,0.08),rgba(255,255,255,0.02))]">
+                <div className="flex h-16 w-16 items-center justify-center rounded-[22px] border border-[var(--border-subtle)] bg-[color-mix(in_srgb,var(--brand)_8%,var(--surface))]">
                   <MessageSquare className="h-7 w-7 text-[var(--text-tertiary)]" />
                 </div>
                 <div className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full bg-[var(--surface)] border border-[var(--border-subtle)]">

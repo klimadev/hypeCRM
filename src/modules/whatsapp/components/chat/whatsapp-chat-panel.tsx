@@ -43,7 +43,7 @@ export function WhatsappChatPanel({
   }, [messages.length]);
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[var(--radius-shell)] border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-primary)] shadow-[var(--shadow-md)]">
+    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] text-[var(--text-primary)]">
       <div className="flex items-center justify-between border-b border-[var(--border-subtle)] bg-[var(--surface-soft)] px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-semibold text-[var(--text-primary)] shadow-[var(--shadow-sm)]">
@@ -57,16 +57,9 @@ export function WhatsappChatPanel({
         <WhatsappConnectionBadge status={connectionStatus} />
       </div>
 
-      <div 
-        ref={scrollRef} 
-        className="flex-1 overflow-y-auto scroll-smooth bg-[radial-gradient(circle_at_top,var(--brand-soft),transparent_38%)] p-3"
-        style={{
-          backgroundImage: `
-            radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--text-secondary) 10%, transparent) 1px, transparent 1px),
-            linear-gradient(to bottom, var(--surface-soft), transparent)
-          `,
-          backgroundSize: "20px 20px, 100% 100%",
-        }}
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto scroll-smooth bg-[var(--surface)] p-3"
       >
         <WhatsappMessageList 
           messages={messages} 
@@ -77,15 +70,15 @@ export function WhatsappChatPanel({
 
       <div className="border-t border-[var(--border-subtle)] bg-[var(--surface)] px-3 py-2">
         {error && (
-          <p className="mb-2 rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-3 py-2 text-xs text-[var(--danger)]">
+          <p className="mb-2 rounded-xl border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] px-3 py-2 text-xs text-[var(--danger)]">
             {error}
           </p>
         )}
         {blockedState && (
-          <div className="mb-2 flex items-center justify-between gap-3 rounded-[var(--radius-control)] border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2 text-[var(--warning)]">
+          <div className="mb-2 flex items-center justify-between gap-3 rounded-xl border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] px-3 py-2 text-[var(--warning)]">
             <p className="text-xs text-[var(--text-primary)]">{blockedState.message}</p>
             {blockedState.actionHref ? (
-              <Button asChild size="sm" variant="outline" className="h-8 rounded-[calc(var(--radius-control)-2px)] border-[var(--warning)] bg-[var(--surface-soft)] text-[var(--warning)] hover:bg-[color-mix(in_srgb,var(--warning)_12%,transparent)]">
+              <Button asChild size="sm" variant="outline" className="h-8 rounded-xl border-[var(--warning)] bg-[var(--surface-soft)] text-[var(--warning)] hover:bg-[color-mix(in_srgb,var(--warning)_12%,transparent)]">
                 <Link href={blockedState.actionHref}>
                   <Settings2 className="mr-1 h-3.5 w-3.5" />
                   {blockedState.actionLabel ?? "Configurar"}
@@ -95,9 +88,9 @@ export function WhatsappChatPanel({
           </div>
         )}
         {!blockedState && !canSend && (
-          <div className="mb-2 flex items-center justify-between gap-2 rounded-[var(--radius-control)] border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2">
+          <div className="mb-2 flex items-center justify-between gap-2 rounded-xl border border-[var(--warning)] bg-[color-mix(in_srgb,var(--warning)_10%,transparent)] px-3 py-2">
             <p className="text-xs text-[var(--text-secondary)]">WhatsApp desconectado.</p>
-            <Button asChild size="sm" variant="outline" className="h-7 rounded-[calc(var(--radius-control)-2px)] border-[var(--warning)] bg-[var(--surface-soft)] text-[var(--warning)] hover:bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-xs">
+            <Button asChild size="sm" variant="outline" className="h-7 rounded-xl border-[var(--warning)] bg-[var(--surface-soft)] text-[var(--warning)] hover:bg-[color-mix(in_srgb,var(--warning)_12%,transparent)] text-xs">
               <Link href="/whatsapp">
                 <MessageCircle className="mr-1 h-3.5 w-3.5" />
                 Conectar

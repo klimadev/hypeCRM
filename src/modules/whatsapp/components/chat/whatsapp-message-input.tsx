@@ -62,7 +62,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
         </Button>
       </div>
 
-      <div className="flex flex-1 items-center rounded-[calc(var(--radius-control)+4px)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-2 shadow-[var(--shadow-sm)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)] focus-within:border-[var(--border-focus)] focus-within:shadow-[var(--focus-ring)]">
+      <div className="flex flex-1 items-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-4 py-2 shadow-[var(--shadow-sm)] transition-all duration-[var(--duration-fast)] ease-[var(--ease-productive)] focus-within:border-[var(--border-focus)] focus-within:shadow-[var(--focus-ring)]">
         <input
           ref={inputRef}
           className="min-h-[20px] max-h-[100px] flex-1 bg-transparent text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none"
@@ -79,7 +79,7 @@ export function WhatsappMessageInput({ disabled, sending, onSend }: Props) {
           type="submit"
           size="icon"
           disabled={disabled || sending || !text.trim()}
-          className="h-10 w-10 rounded-full bg-[var(--brand)] text-[var(--primary-foreground)] shadow-[var(--shadow-glow)] hover:bg-[var(--brand-strong)] active:scale-[0.99]"
+          className="h-10 w-10 rounded-full bg-[var(--brand)] text-[var(--primary-foreground)] hover:bg-[var(--brand-strong)] active:scale-[0.99]"
         >
           <Send className="h-5 w-5" />
         </Button>

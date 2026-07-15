@@ -58,7 +58,7 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
         itens: [
           ...(podeExibirIntegracoesNaNavegacao(sessao.perfil) ? [{ href: itemIntegracoes.href, label: itemIntegracoes.label, descricao: itemIntegracoes.descricao, icon: Blocks }] : []),
           ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/automacoes", label: "Automações", descricao: getItemDescricao("Automações"), icon: GitBranch }] : []),
-          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle }] : []),
+          ...(sessao.perfil === "EMPRESA" || sessao.perfil === "GERENTE" ? [{ href: "/whatsapp", label: "WhatsApp", descricao: getItemDescricao("WhatsApp"), icon: MessageCircle, limpo: true }] : []),
           ...(sessao.perfil === "EMPRESA" ? [{ href: "/configs", label: "Configurações", descricao: getItemDescricao("Configurações"), icon: Settings2 }] : []),
         ],
     },

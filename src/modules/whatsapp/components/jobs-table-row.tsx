@@ -16,7 +16,7 @@ function StatusBadge({ status }: { status: string }) {
   const c = config[status] || config.PENDENTE;
 
   return (
-    <Badge variant={c.variant} className="gap-1.5 px-2.5 py-1 text-[10px] font-semibold tracking-[0.16em]">
+    <Badge variant={c.variant} className="rounded-md px-1.5 py-0.5 text-[10px] font-medium">
       {c.icon}
       {status}
     </Badge>
@@ -45,7 +45,7 @@ function ErrorTooltip(props: {
         {expanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
       </button>
       {expanded ? (
-        <div className="mt-2 rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] p-3 text-left">
+        <div className="mt-2 rounded-xl border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] p-3 text-left">
           <div className="space-y-1">
             <p className="font-semibold text-[var(--danger)]">Erro: {erroCodigo || "Desconhecido"}</p>
             {erroCategoria ? <p className="text-xs text-[var(--text-secondary)]">Categoria: {erroCategoria}</p> : null}
@@ -75,7 +75,7 @@ function CountdownTimer({ targetDate, status }: { targetDate: string; status: st
   if (status === "ENVIADO") return <span className="text-xs text-[var(--success)]">Enviado</span>;
   if (status === "CANCELADO") return <span className="text-xs text-[var(--text-tertiary)]">Cancelado</span>;
   if (status === "FALHA") return <span className="text-xs text-[var(--danger)]">Falhou</span>;
-  if (diff <= 0) return <span className="animate-pulse text-xs font-medium text-[var(--danger)]">Agora!</span>;
+  if (diff <= 0) return <span className="text-xs font-medium text-[var(--danger)]">Agora!</span>;
 
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
@@ -124,7 +124,7 @@ export function JobsTableRow({ job, podeRetry, retrying, onRetry }: JobsTableRow
           <span>#{job.id.slice(0, 6)}</span>
           {job.tentativas > 0 ? <span className="text-[var(--warning)]" title={`${job.tentativas} tentativas`}>({job.tentativas})</span> : null}
           {job.status === "FALHA" && podeRetry ? (
-            <button type="button" onClick={() => onRetry(job.id)} disabled={retrying} className="ml-2 inline-flex items-center gap-1 rounded-full border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-2 py-0.5 text-[var(--danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_16%,transparent)] disabled:opacity-50" title="Tentar novamente">
+            <button type="button" onClick={() => onRetry(job.id)} disabled={retrying} className="ml-2 inline-flex items-center gap-1 rounded-md border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-2 py-0.5 text-[var(--danger)] transition-colors hover:bg-[color-mix(in_srgb,var(--danger)_16%,transparent)] disabled:opacity-50" title="Tentar novamente">
               {retrying ? <Loader2 className="h-3 w-3 animate-spin" /> : <RotateCcw className="h-3 w-3" />}
               Retry
             </button>
