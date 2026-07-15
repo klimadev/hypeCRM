@@ -1,5 +1,4 @@
-import { Search, SlidersHorizontal, X } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UseRecebimentosModuleReturn } from "../types";
@@ -10,25 +9,7 @@ type RecebimentosFiltersProps = {
 
 export function RecebimentosFilters({ vm }: RecebimentosFiltersProps) {
   return (
-    <section className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] p-4 shadow-[var(--shadow-sm)]">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-[12px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
-            <SlidersHorizontal className="h-4 w-4 text-[var(--text-secondary)]" />
-          </div>
-          <div>
-            <h2 className="text-sm font-semibold text-[var(--text-primary)]">Filtros operacionais</h2>
-            <p className="text-xs text-[var(--text-secondary)]">Refine o painel por periodo, origem da carteira e prioridade financeira.</p>
-          </div>
-        </div>
-
-        {vm.temFiltrosAtivos ? (
-          <Button type="button" variant="outline" className="rounded-[12px]" onClick={vm.limparFiltros}>
-            <X className="mr-2 h-4 w-4" />
-            Limpar filtros
-          </Button>
-        ) : null}
-      </div>
+    <section className="rounded-xl">
 
       <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-6">
         <div className="xl:col-span-2">
@@ -80,38 +61,14 @@ export function RecebimentosFilters({ vm }: RecebimentosFiltersProps) {
         </div>
       </div>
 
-      <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Ordenar por</label>
-          <Select value={vm.filtros.ordenar} onValueChange={(value) => vm.setOrdenar(value as typeof vm.filtros.ordenar)}>
-            <SelectTrigger className="rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="vencimento">Vencimento</SelectItem>
-              <SelectItem value="pagamento">Pagamento</SelectItem>
-              <SelectItem value="valor">Valor</SelectItem>
-            </SelectContent>
-          </Select>
+      {vm.temFiltrosAtivos ? (
+        <div className="flex justify-end">
+          <button type="button" onClick={vm.limparFiltros} className="inline-flex items-center gap-1 text-xs text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors">
+            <X className="h-3 w-3" />
+            Limpar filtros
+          </button>
         </div>
-
-        <div>
-          <label className="mb-1 block text-xs font-medium text-[var(--text-secondary)]">Direcao</label>
-          <Select value={vm.filtros.direcao} onValueChange={(value) => vm.setDirecao(value as typeof vm.filtros.direcao)}>
-            <SelectTrigger className="rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">Crescente</SelectItem>
-              <SelectItem value="desc">Decrescente</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="rounded-[12px] border border-[color:rgba(56,189,248,0.18)] bg-[color:rgba(56,189,248,0.1)] px-3 py-2 text-sm text-[var(--info)] xl:col-span-2">
-          {vm.totalRegistros} registros encontrados nesta visao.
-        </div>
-      </div>
+      ) : null}
     </section>
   );
 }

@@ -44,12 +44,12 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
     {
       titulo: "Operação",
       itens: [
-        { href: "/leads", label: "Leads", descricao: getItemDescricao("Leads"), icon: Users },
+        { href: "/leads", label: "Leads", descricao: getItemDescricao("Leads"), icon: Users, limpo: true },
         { href: "/produtos", label: "Produtos", descricao: getItemDescricao("Produtos"), icon: Package },
-        { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid },
+        { href: "/kanban", label: "Negócios", descricao: getItemDescricao("Negócios"), icon: LayoutGrid, limpo: true },
         { href: "/chat", label: "Chat", descricao: getItemDescricao("Chat"), icon: MessageSquare },
         
-        ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards }] : []),
+        ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards, limpo: true }] : []),
         ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
       ],
     },

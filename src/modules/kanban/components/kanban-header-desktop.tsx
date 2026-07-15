@@ -177,7 +177,7 @@ export function KanbanHeaderDesktop({
 
       {/* Métricas colapsáveis */}
       {mostrarMetricas && (
-        <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-4">
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-wider text-[var(--text-tertiary)]">Negócios</p>

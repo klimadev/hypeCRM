@@ -77,14 +77,14 @@ export function LeadDetailsDrawerTabs(props: LeadDetailsDrawerTabsProps) {
         <TabsList className="grid w-full grid-cols-2 bg-transparent p-0 h-9">
           <TabsTrigger
             value="detalhes"
-            className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none border border-transparent data-[state=active]:border-[var(--border-subtle)]"
+            className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none data-[state=active]:border-[var(--border-subtle)]"
           >
             <FileText className="mr-1.5 h-3.5 w-3.5" />
             Dados
           </TabsTrigger>
           <TabsTrigger
             value="vinculos"
-            className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none border border-transparent data-[state=active]:border-[var(--border-subtle)]"
+            className="rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] transition-colors duration-150 data-[state=active]:bg-[var(--surface-elevated)] data-[state=active]:text-[var(--text-primary)] data-[state=active]:shadow-none data-[state=active]:border-[var(--border-subtle)]"
           >
             <Link2 className="mr-1.5 h-3.5 w-3.5" />
             Histórico

@@ -10,7 +10,7 @@ type RecebimentosChartCardProps = {
 
 export function RecebimentosChartCard({ dados }: RecebimentosChartCardProps) {
   return (
-    <Card className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+    <Card className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
       <CardHeader>
         <CardTitle className="text-base font-semibold text-[var(--text-primary)]">Fluxo de recebimento</CardTitle>
         <p className="text-sm text-[var(--text-secondary)]">Compare o previsto com o efetivamente recebido ao longo do tempo.</p>

@@ -33,7 +33,7 @@ export function InstallmentCard({ parcela, pagando, onPagar }: InstallmentCardPr
   const [dataPagamento, setDataPagamento] = useState(new Date().toISOString().slice(0, 10));
 
   return (
-    <div className="group relative rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 transition-all duration-200 hover:shadow-[var(--shadow-sm)]">
+    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-[var(--text-primary)]">

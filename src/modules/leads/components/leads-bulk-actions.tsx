@@ -33,7 +33,7 @@ export function LeadsBulkActions({
   return (
     <>
       {/* ponytail: barra fixa que segue a tela, pb-24 no shell garante espa�o no final */}
-      <section className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[var(--surface)]/98 p-3 shadow-[var(--shadow-lg)] backdrop-blur-md">
+      <section className="fixed bottom-0 left-0 right-0 z-50 border-t border-[var(--border-subtle)] bg-[var(--surface)]/95 p-3 shadow-[var(--shadow-lg)]">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-2">
           <span className="rounded-full border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-2.5 py-1 text-xs font-semibold text-[var(--text-primary)]">
             {carregando ? (

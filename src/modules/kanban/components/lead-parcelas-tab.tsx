@@ -16,7 +16,7 @@ function ParcelasResumo({ parcelas }: { parcelas: { valor: number; status: strin
   const progresso = total > 0 ? (pago / total) * 100 : 0;
 
   return (
-    <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
+    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-soft)] p-4">
       <div className="mb-2 flex items-center justify-between text-sm">
         <span className="text-[var(--text-secondary)]">Progresso</span>
         <span className="font-semibold text-[var(--text-primary)]">
@@ -58,7 +58,7 @@ export function NegocioParcelasTab({ negocioId }: NegocioParcelasTabProps) {
 
   if (vm.loading) {
     return (
-      <div className="flex h-40 items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
+      <div className="flex h-40 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
         <Loader2 className="h-5 w-5 animate-spin text-[var(--text-secondary)]" />
       </div>
     );
@@ -94,7 +94,7 @@ export function NegocioParcelasTab({ negocioId }: NegocioParcelasTabProps) {
       )}
 
       {vm.error ? (
-        <div className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
+        <div className="rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {vm.error}

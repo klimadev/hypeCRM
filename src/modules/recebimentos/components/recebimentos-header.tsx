@@ -11,7 +11,7 @@ export function RecebimentosHeader({ quantidadeMonitoradas, temFiltrosAtivos }: 
   return (
     <ModulePageHeader
       title="Recebimentos"
-      subtitle="Acompanhe o que entrou, o que vence e o que exige acao agora em toda a empresa."
+      subtitle="Acompanhe os recebimentos e pagamentos da empresa."
       iconTone="blue"
       icon={<WalletCards className="h-6 w-6" />}
       badges={[

@@ -7,9 +7,9 @@ import type { UseRecebimentosModuleReturn } from "../types";
 
 function StatusBadge({ status }: { status: "PAGO" | "PENDENTE" | "ATRASADO" }) {
   const estilos = {
-    PAGO: "border-[color:rgba(16,185,129,0.18)] bg-[color:rgba(16,185,129,0.12)] text-[var(--success)]",
-    PENDENTE: "border-[color:rgba(56,189,248,0.18)] bg-[color:rgba(56,189,248,0.12)] text-[var(--info)]",
-    ATRASADO: "border-[color:rgba(244,63,94,0.18)] bg-[color:rgba(244,63,94,0.12)] text-[var(--danger)]",
+    PAGO: "border-[color-mix(in_srgb,var(--success)_18%,transparent)] bg-[color-mix(in_srgb,var(--success)_12%,transparent)] text-[var(--success)]",
+    PENDENTE: "border-[color-mix(in_srgb,var(--info)_18%,transparent)] bg-[color-mix(in_srgb,var(--info)_12%,transparent)] text-[var(--info)]",
+    ATRASADO: "border-[color-mix(in_srgb,var(--danger)_18%,transparent)] bg-[color-mix(in_srgb,var(--danger)_12%,transparent)] text-[var(--danger)]",
   }[status];
 
   const label = {
@@ -18,7 +18,7 @@ function StatusBadge({ status }: { status: "PAGO" | "PENDENTE" | "ATRASADO" }) {
     ATRASADO: "Atrasado",
   }[status];
 
-  return <span className={cn("rounded-full border px-2.5 py-1 text-xs font-semibold", estilos)}>{label}</span>;
+  return <span className={cn("rounded-md px-1.5 py-0.5 text-[10px] font-medium", estilos)}>{label}</span>;
 }
 
 type RecebimentosTableProps = {
@@ -27,15 +27,15 @@ type RecebimentosTableProps = {
 
 export function RecebimentosTable({ vm }: RecebimentosTableProps) {
   return (
-    <section className="overflow-hidden rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
+    <section className="overflow-hidden rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-sm)]">
       <div className="border-b border-[var(--border-subtle)] px-4 py-3">
         <h2 className="text-sm font-semibold text-[var(--text-primary)]">Operacao detalhada</h2>
         <p className="text-xs text-[var(--text-secondary)]">Acompanhe cada recebimento e navegue rapidamente para o lead no Kanban.</p>
       </div>
 
       <Table>
-        <TableHeader className="sticky top-0 bg-[color:rgba(255,255,255,0.02)]">
-          <TableRow className="hover:bg-[color:rgba(255,255,255,0.03)]">
+        <TableHeader className="sticky top-0 bg-[var(--surface-soft)]">
+          <TableRow>
             <TableHead>Lead</TableHead>
             <TableHead>Parcela</TableHead>
             <TableHead>Vencimento</TableHead>
@@ -49,7 +49,7 @@ export function RecebimentosTable({ vm }: RecebimentosTableProps) {
         </TableHeader>
         <TableBody>
           {vm.recebimentos.map((item) => (
-            <TableRow key={item.id} className="group">
+            <TableRow key={item.id}>
               <TableCell className="py-4">
                 <div>
                   <p className="font-medium text-[var(--text-primary)]">{item.lead.nome}</p>
@@ -69,7 +69,7 @@ export function RecebimentosTable({ vm }: RecebimentosTableProps) {
               <TableCell className="py-4 text-[var(--text-secondary)]">{item.pdv?.nome ?? "-"}</TableCell>
               <TableCell className="py-4 text-[var(--text-secondary)]">{item.responsavel.nome}</TableCell>
               <TableCell className="py-4 text-right">
-                <Button asChild variant="ghost" size="sm" className="text-[var(--info)] hover:bg-[color:rgba(56,189,248,0.08)] hover:text-[var(--info-alt)]">
+                <Button asChild variant="ghost" size="sm" className="text-[var(--info)]">
                   <Link href={`/kanban?lead=${item.lead.id}`}>
                     <ArrowUpRight className="mr-1 h-4 w-4" />
                     Abrir lead

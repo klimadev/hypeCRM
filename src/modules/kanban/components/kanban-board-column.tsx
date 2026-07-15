@@ -50,7 +50,7 @@ export function KanbanBoardColumn({
           ref={provided.innerRef}
           {...provided.droppableProps}
           className={cn(
-            "min-w-[280px] max-w-[320px] shrink-0 rounded-xl border p-3 transition-colors duration-150 h-full flex flex-col",
+            "min-w-[280px] max-w-[320px] shrink-0 rounded-xl border p-3 h-full flex flex-col",
             obterTintColunaKanban(estagio),
             snapshot.isDraggingOver
               ? "border-[color-mix(in_srgb,var(--brand)_34%,transparent)] bg-[color-mix(in_srgb,var(--brand)_8%,transparent)]"
@@ -98,7 +98,7 @@ export function KanbanBoardColumn({
                         className={cn(
                           negocio.id.startsWith("temp-")
                             ? "bg-transparent"
-                            : "group cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] transition-all duration-150 hover:shadow-md hover:scale-[1.02] hover:border-[var(--border-strong)] active:scale-[0.99]",
+                            : "group cursor-pointer rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] transition-colors duration-150 hover:border-[var(--border-strong)]",
                           visualCue.border,
                           getClasseBordaGravidade(pendenciasPorNegocio[negocio.id]?.gravidadeMaxima),
                           draggableSnapshot.isDragging && "shadow-lg opacity-80",

@@ -27,7 +27,7 @@ export function RecebimentosKpis({ itens, carregando }: RecebimentosKpisProps) {
     return (
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         {Array.from({ length: 4 }).map((_, indice) => (
-          <div key={`recebimentos-kpi-${indice}`} className="h-32 rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] animate-shimmer" />
+          <div key={`recebimentos-kpi-${indice}`} className="h-32 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] animate-shimmer" />
         ))}
       </div>
     );
@@ -38,8 +38,7 @@ export function RecebimentosKpis({ itens, carregando }: RecebimentosKpisProps) {
       {itens.map((item) => {
         const Icone = icones[item.tom];
         return (
-          <article key={item.id} className={cn("relative overflow-hidden rounded-[16px] border p-4 shadow-[var(--shadow-sm)] transition-all hover:-translate-y-0.5 hover:shadow-[var(--shadow-md)]", gradientes[item.tom])}>
-            <div className="absolute -right-8 -top-8 h-20 w-20 rounded-full bg-[color-mix(in_srgb,var(--brand)_16%,transparent)] blur-2xl" />
+          <article key={item.id} className={cn("relative overflow-hidden rounded-xl border p-4 shadow-[var(--shadow-sm)]", gradientes[item.tom])}>
             <div className="relative flex items-start justify-between gap-4">
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--text-tertiary)]">{item.rotulo}</p>
@@ -47,7 +46,7 @@ export function RecebimentosKpis({ itens, carregando }: RecebimentosKpisProps) {
                 <p className="mt-1 text-sm text-[var(--text-secondary)]">{item.apoio}</p>
                 {item.tendencia ? <p className="mt-2 text-xs font-medium text-[var(--text-tertiary)]">{item.tendencia}</p> : null}
               </div>
-              <div className="flex h-11 w-11 items-center justify-center rounded-[14px] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
+              <div className="flex h-11 w-11 items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] shadow-[var(--shadow-sm)]">
                 <Icone className="h-5 w-5 text-[var(--text-primary)]" />
               </div>
             </div>

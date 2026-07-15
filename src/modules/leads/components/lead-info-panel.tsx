@@ -50,12 +50,12 @@ export function LeadInfoPanel({ open, leadBase, informacoes, carregando, erro, o
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="z-[60] w-full max-w-[980px] overflow-hidden border-l border-[color:rgba(255,255,255,0.12)] bg-[color:#101010] shadow-[0_24px_90px_rgba(0,0,0,0.72)] backdrop-blur-xl" side="right">
-        <SheetHeader className="sticky top-0 z-10 space-y-4 border-b border-[var(--border-subtle)] bg-[color:rgba(16,16,16,0.96)] p-5 backdrop-blur-xl">
+      <SheetContent className="z-[60] w-full max-w-[980px] overflow-hidden border-l border-[var(--border-subtle)] bg-[var(--surface)] shadow-[var(--shadow-lg)]" side="right">
+        <SheetHeader className="sticky top-0 z-10 space-y-4 border-b border-[var(--border-subtle)] bg-[var(--surface)]/95 p-5">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
             <div className="min-w-0">
               <SheetTitle className="flex items-center gap-2 text-2xl">
-                <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-[color:rgba(255,255,255,0.04)]">
+                <span className="flex h-10 w-10 items-center justify-center rounded-2xl border border-[var(--border-subtle)] bg-white/5">
                   <UserRound className="h-5 w-5 text-[var(--brand)]" />
                 </span>
                 <span className="truncate">{lead?.nome ?? "Informações do lead"}</span>

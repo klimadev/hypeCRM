@@ -64,7 +64,7 @@ export function KanbanBoardMobile({
               {ativo ? (
                 <div
                   className={cn(
-                    "animate-fade-in rounded-xl border border-[var(--border-subtle)] p-3",
+                    "rounded-xl border border-[var(--border-subtle)] p-3",
                     obterTintColunaKanban(estagio),
                   )}
                 >
@@ -90,7 +90,7 @@ export function KanbanBoardMobile({
                           key={negocio.id}
                           type="button"
                           className={cn(
-                            "min-h-9 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-left transition-colors duration-150 active:scale-[0.99]",
+                            "min-h-9 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3 text-left transition-colors duration-150",
                             obterSinalVisualNegocioKanban(estagio).border,
                           )}
                           onClick={() => onNegocioClick(negocio)}

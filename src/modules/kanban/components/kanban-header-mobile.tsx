@@ -88,7 +88,7 @@ export function KanbanHeaderMobile({
 
       {/* Filtros popover */}
       {filtrosAbertos && (
-        <div className="space-y-2 rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3">
+        <div className="space-y-2 rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-3">
           <div className="space-y-1">
             <label className="text-xs text-[var(--text-secondary)]">Status</label>
             <Select

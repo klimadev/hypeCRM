@@ -1,8 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { RefreshCcw } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ModulePageShell } from "@/components/shared/module-page-shell";
 import { InlineStatusAlert } from "@/components/shared/inline-status-alert";
 import { useRecebimentosModule } from "./hooks/use-recebimentos-module";
@@ -19,7 +17,7 @@ import { RecebimentosEmptyState } from "./components/recebimentos-empty-state";
 const RecebimentosChartCard = dynamic(
   () => import("./components/recebimentos-chart-card").then((mod) => ({ default: mod.RecebimentosChartCard })),
   {
-    loading: () => <div className="min-h-[280px] animate-pulse rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)]" />,
+    loading: () => <div className="min-h-[280px] animate-pulse rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)]" />,
     ssr: false,
   }
 );
@@ -33,25 +31,18 @@ export function ModuloRecebimentos() {
 
       <InlineStatusAlert variant="error" message={vm.erro} />
 
-      <div className="flex justify-end">
-        <Button type="button" variant="outline" className="rounded-[12px]" onClick={() => void vm.recarregar()} disabled={vm.carregando}>
-          <RefreshCcw className="mr-2 h-4 w-4" />
-          Atualizar painel
-        </Button>
-      </div>
-
       <RecebimentosKpis itens={vm.kpis} carregando={vm.carregando} />
+
+      <RecebimentosFilters vm={vm} />
+      <RecebimentosTabs vm={vm} />
 
       <div className="grid gap-3 xl:grid-cols-[1.45fr_0.95fr]">
         <RecebimentosChartCard dados={vm.graficos.recebimentosPorPeriodo} />
         <RecebimentosStatusDonut dados={vm.graficos.distribuicaoStatus} />
       </div>
 
-      <RecebimentosFilters vm={vm} />
-      <RecebimentosTabs vm={vm} />
-
       {vm.carregando ? (
-        <div className="rounded-[16px] border border-[var(--border-subtle)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] animate-shimmer">
+        <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface)] p-5 shadow-[var(--shadow-sm)] animate-shimmer">
           <div className="h-80 rounded-xl bg-transparent" />
         </div>
       ) : vm.recebimentos.length === 0 ? (

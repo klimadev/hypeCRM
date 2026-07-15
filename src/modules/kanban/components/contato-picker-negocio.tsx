@@ -12,7 +12,7 @@ type ContatoPickerNegocioProps = {
 
 export function ContatoPickerNegocio({ contatos, carregando, selecionados, setSelecionados }: ContatoPickerNegocioProps) {
   return (
-    <div className="space-y-3 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-glass)] p-3">
+    <div className="space-y-3 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--text-tertiary)]">Leads vinculados</p>
@@ -24,11 +24,11 @@ export function ContatoPickerNegocio({ contatos, carregando, selecionados, setSe
       </div>
 
       {carregando ? (
-        <div className="rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+        <div className="rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
           Carregando leads disponíveis...
         </div>
       ) : contatos.length === 0 ? (
-        <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+        <div className="rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-2 text-sm text-[var(--text-secondary)]">
           Nenhum lead disponível para vincular.
         </div>
       ) : (
@@ -41,7 +41,7 @@ export function ContatoPickerNegocio({ contatos, carregando, selecionados, setSe
                 type="button"
                 onClick={() => setSelecionados(toggleContatoSelecionado(selecionados, contato.id))}
                 className={cn(
-                  "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-2 text-left transition-colors",
+                  "flex w-full items-start justify-between gap-3 rounded-lg border px-3 py-2 text-left transition-colors",
                   selecionado
                     ? "border-[color-mix(in_srgb,var(--brand)_38%,transparent)] bg-[color-mix(in_srgb,var(--brand)_12%,transparent)] text-[var(--text-primary)]"
                     : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",

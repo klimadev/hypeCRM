@@ -79,7 +79,7 @@ export function KanbanBoard({
           {podeScrollDireita && (
             <>
               <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 bg-gradient-to-l from-[var(--surface)] to-transparent z-10 rounded-r-xl" />
-              <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 z-20 animate-pulse">
+              <div className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 z-20">
                 <ChevronRight className="h-5 w-5 text-[var(--text-tertiary)]" />
               </div>
             </>

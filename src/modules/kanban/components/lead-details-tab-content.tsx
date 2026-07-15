@@ -83,12 +83,12 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
 
   return (
     <div className="space-y-4 p-4">
-      <div className={`rounded-[var(--radius-card)] border p-4 ${statusNegocio.classe}`}>
+      <div className={`rounded-xl border p-4 ${statusNegocio.classe}`}>
         <p className="text-sm font-semibold">Status atual: {statusNegocio.rotulo}</p>
         <p className="mt-1 text-xs">{statusNegocio.descricao}</p>
       </div>
 
-      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <p className="mb-2 text-sm font-semibold text-[var(--text-primary)]">Contato principal</p>
         {contatoPrincipal ? (
           <div className="space-y-1 text-sm text-[var(--text-secondary)]">
@@ -97,7 +97,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
             {contatoPrincipal.origem ? <p className="text-xs uppercase tracking-[0.16em] text-[var(--text-tertiary)]">{contatoPrincipal.origem}</p> : null}
           </div>
         ) : (
-          <div className="flex items-start gap-2 rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
+          <div className="flex items-start gap-2 rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-2 text-sm text-[var(--text-secondary)]">
             <Link2 className="mt-0.5 h-4 w-4 text-[var(--text-tertiary)]" />
             <span>Este negócio ainda não tem um contato principal vinculado.</span>
           </div>
@@ -122,13 +122,13 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         ) : null}
       </div>
 
-      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <p className="mb-3 text-sm font-semibold text-[var(--text-primary)]">Dados editáveis</p>
 
         <div className="mt-3 space-y-2">
           <label className="text-sm font-medium text-[var(--text-secondary)]">Valor estimado</label>
           <Input
-            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
+            className="h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
             inputMode="numeric"
             value={aplicaMascaraMoedaBr(String(Math.round(negocioSelecionado.valor_oportunidade * 100)))}
             onChange={(e) => onMudarNegocio({ ...negocioSelecionado, valor_oportunidade: converteMoedaBrParaNumero(e.target.value) })}
@@ -138,7 +138,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         <div className="mt-3 space-y-2">
           <label className="text-sm font-medium text-[var(--text-secondary)]">Observações comerciais</label>
           <Textarea
-            className="min-h-[100px] rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
+            className="min-h-[100px] rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-primary)]"
             value={negocioSelecionado.observacoes ?? ""}
             onChange={(e) => onMudarNegocio({ ...negocioSelecionado, observacoes: e.target.value })}
           />
@@ -148,7 +148,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
           <div className="mt-3 space-y-2">
             <label className="text-sm font-medium text-[var(--text-secondary)]">Responsável comercial</label>
             <Select value={negocioSelecionado.id_funcionario} onValueChange={(id_funcionario) => onMudarNegocio({ ...negocioSelecionado, id_funcionario })}>
-              <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
+              <SelectTrigger className="h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
                 <SelectValue placeholder="Selecione o responsável" />
               </SelectTrigger>
               <SelectContent>
@@ -171,7 +171,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
               id_produto_principal: idProduto === SEM_PRODUTO_VALUE ? null : idProduto,
             })}
           >
-            <SelectTrigger className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
+            <SelectTrigger className="h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] text-[var(--text-secondary)]">
               <SelectValue placeholder={carregandoProdutosDisponiveis ? "Carregando produtos..." : "Selecione o produto"} />
             </SelectTrigger>
             <SelectContent>
@@ -189,7 +189,7 @@ export function NegocioDetailsTabContent(props: NegocioDetailsTabContentProps) {
         </div>
 
         {erroDetalhesNegocio ? (
-          <p className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm font-medium text-[var(--danger)]">
+          <p className="rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm font-medium text-[var(--danger)]">
             <span className="inline-flex items-center gap-1">
               <AlertCircle className="h-4 w-4" />
               {erroDetalhesNegocio}

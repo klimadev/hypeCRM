@@ -28,7 +28,7 @@ export function InstallmentGeneratorForm({
   const valorPorParcela = qtdParcelas > 0 && valorNumero > 0 ? valorNumero / qtdParcelas : 0;
 
   return (
-    <div className="rounded-2xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+    <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
       <h3 className="text-sm font-semibold text-[var(--text-primary)]">Gerar Plano de Pagamento</h3>
       <p className="mt-1 text-xs text-[var(--text-secondary)]">Defina o valor total e quantidade de parcelas.</p>
 

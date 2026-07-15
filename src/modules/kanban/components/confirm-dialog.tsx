@@ -43,7 +43,7 @@ export function ConfirmDialog({
 
   return createPortal(
       <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[color-mix(in_srgb,var(--canvas)_72%,black)] p-4">
-      <div className="w-full max-w-md animate-in zoom-in-95 rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6 shadow-[var(--shadow-overlay)]">
+      <div className="w-full max-w-md rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-6 shadow-[var(--shadow-overlay)]">
         {icone ? (
           <div className="mb-4 flex items-center justify-center">
             <div
@@ -61,7 +61,7 @@ export function ConfirmDialog({
         <div className="mb-6 text-center text-sm text-[var(--text-secondary)]">{descricao}</div>
 
         {erro ? (
-          <div className="mb-4 flex items-start gap-2 rounded-[var(--radius-control)] border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-sm text-[var(--danger)]">
+          <div className="mb-4 flex items-start gap-2 rounded-lg border border-[color-mix(in_srgb,var(--danger)_28%,transparent)] bg-[color-mix(in_srgb,var(--danger)_10%,transparent)] px-3 py-2 text-sm text-[var(--danger)]">
             <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
             <span>{erro}</span>
           </div>

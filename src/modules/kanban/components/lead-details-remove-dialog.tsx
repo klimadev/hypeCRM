@@ -41,7 +41,7 @@ export function LeadDetailsRemoveDialog({
 
         {negocioSelecionado ? (
           <div className="space-y-3">
-            <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
+            <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4">
               <p className="text-sm font-semibold text-[var(--text-primary)]">{negocioSelecionado.nome}</p>
               <p className="mt-1 text-xs text-[var(--text-secondary)]">
                 {negocioSelecionado.lead_principal?.telefone ?? "Sem telefone principal"} • {quantidadeLeadsRelacionados.toLocaleString("pt-BR")} lead{quantidadeLeadsRelacionados === 1 ? "" : "s"} relacionado{quantidadeLeadsRelacionados === 1 ? "" : "s"}
@@ -49,7 +49,7 @@ export function LeadDetailsRemoveDialog({
             </div>
 
             {quantidadeLeadsRelacionados > 0 ? (
-              <div className="flex items-center justify-between gap-4 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3">
+              <div className="flex items-center justify-between gap-4 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3">
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-[var(--text-primary)]">Remover leads vinculados</p>
                   <p className="text-xs text-[var(--text-secondary)]">{descricaoRemocao}</p>
@@ -57,7 +57,7 @@ export function LeadDetailsRemoveDialog({
                 <Switch checked={removerLeadsVinculados} onCheckedChange={setRemoverLeadsVinculados} disabled={removendoNegocio} />
               </div>
             ) : (
-              <p className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3 text-sm text-[var(--text-secondary)]">
+              <p className="rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--surface-soft)] px-3 py-3 text-sm text-[var(--text-secondary)]">
                 Este negócio não possui leads vinculados ativos.
               </p>
             )}

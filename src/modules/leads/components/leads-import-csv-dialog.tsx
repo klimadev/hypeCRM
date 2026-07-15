@@ -414,15 +414,15 @@ export function LeadsImportCsvDialog({
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Total lido</p>
                 <p className="text-xl font-semibold text-[var(--text-primary)]">{resumo.total}</p>
               </div>
-              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--success)_8%,transparent)] p-3">
+              <div className="rounded-xl border border-[color-mix(in_srgb,var(--success)_22%,transparent)] bg-[color-mix(in_srgb,var(--success)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Válidos</p>
                 <p className="text-xl font-semibold text-[var(--success)]">{resumo.validos}</p>
               </div>
-              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--warning)_8%,transparent)] p-3">
+              <div className="rounded-xl border border-[color-mix(in_srgb,var(--warning)_22%,transparent)] bg-[color-mix(in_srgb,var(--warning)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Inválidos</p>
                 <p className="text-xl font-semibold text-[var(--warning)]">{resumo.invalidos}</p>
               </div>
-              <div className="rounded-xl border border-[color:color-mix(in_srgb,var(--info)_22%,transparent)] bg-[color:color-mix(in_srgb,var(--info)_8%,transparent)] p-3">
+              <div className="rounded-xl border border-[color-mix(in_srgb,var(--info)_22%,transparent)] bg-[color-mix(in_srgb,var(--info)_8%,transparent)] p-3">
                 <p className="text-xs uppercase tracking-[0.14em] text-[var(--text-tertiary)]">Duplicados no CSV</p>
                 <p className="text-xl font-semibold text-[var(--info)]">{resumo.duplicadosNoArquivo}</p>
               </div>

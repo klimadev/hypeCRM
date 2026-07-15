@@ -70,14 +70,14 @@ export function NovoNegocioDialog({
         <form className="space-y-3" onSubmit={onSubmit}>
           <Input
             ref={inputNomeRef}
-            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
+            className="h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
             name="titulo"
             placeholder="Título do negócio"
             disabled={criandoNegocio}
             required
           />
           <Input
-            className="h-11 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
+            className="h-11 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:bg-[var(--surface-elevated)] focus:ring-[var(--focus-ring)]"
             name="valor"
             placeholder="Valor"
             inputMode="numeric"
@@ -92,7 +92,7 @@ export function NovoNegocioDialog({
           <input type="hidden" name="lead_ids_json" value={JSON.stringify(contatosSelecionados)} />
 
           <Select disabled={criandoNegocio} value={estagioNovoNegocio || estagioAberto} onValueChange={setEstagioNovoNegocio}>
-            <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
+            <SelectTrigger className="h-11 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
               <SelectValue placeholder="Estágio" />
             </SelectTrigger>
             <SelectContent>
@@ -117,7 +117,7 @@ export function NovoNegocioDialog({
               value={cargoNovoNegocio?.id_funcionario ?? undefined}
               onValueChange={(valor) => setCargoNovoNegocio({ id_funcionario: valor })}
             >
-              <SelectTrigger className="h-11 w-full rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
+              <SelectTrigger className="h-11 w-full rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm font-medium text-[var(--text-secondary)]">
                 <SelectValue placeholder="Funcionário" />
               </SelectTrigger>
               <SelectContent>

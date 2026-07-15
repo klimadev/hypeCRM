@@ -6,6 +6,7 @@ export type NavigationItem = {
   descricao: string;
   icon: ComponentType<{ className?: string }>;
   children?: NavigationItem[];
+  limpo?: boolean;
 };
 
 export type NavigationSection = {

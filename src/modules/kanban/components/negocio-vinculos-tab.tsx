@@ -60,7 +60,7 @@ export function NegocioVinculosTab({
 
   return (
     <div className="space-y-4 p-4">
-      <div className="rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
+      <div className="rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)] p-4 shadow-[var(--shadow-sm)]">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -99,7 +99,7 @@ export function NegocioVinculosTab({
           value={busca}
           onChange={(event) => setBusca(event.target.value)}
           placeholder="Nome, telefone ou ID"
-          className="h-10 rounded-[var(--radius-control)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
+          className="h-10 rounded-lg border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-[var(--border-focus)] focus:ring-[var(--focus-ring)]"
         />
       </div>
 
@@ -112,11 +112,11 @@ export function NegocioVinculosTab({
         </div>
 
         {carregandoLeadsDisponiveis ? (
-          <div className="flex min-h-[240px] items-center justify-center rounded-[var(--radius-card)] border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
+          <div className="flex min-h-[240px] items-center justify-center rounded-xl border border-[var(--border-subtle)] bg-[var(--surface-elevated)]">
             <Loader2 className="h-5 w-5 animate-spin text-[var(--text-secondary)]" />
           </div>
         ) : leadsFiltrados.length === 0 ? (
-          <div className="rounded-[var(--radius-control)] border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-4 text-sm text-[var(--text-secondary)]">
+          <div className="rounded-lg border border-dashed border-[var(--border-subtle)] bg-[var(--surface-elevated)] px-3 py-4 text-sm text-[var(--text-secondary)]">
             Nenhum lead encontrado com esse filtro.
           </div>
         ) : (
@@ -132,7 +132,7 @@ export function NegocioVinculosTab({
                   type="button"
                   onClick={() => alternarLead(lead.id)}
                   className={cn(
-                    "flex w-full items-start justify-between gap-3 rounded-[var(--radius-control)] border px-3 py-3 text-left transition-colors",
+                    "flex w-full items-start justify-between gap-3 rounded-lg border px-3 py-3 text-left transition-colors",
                     selecionado
                       ? "border-[color-mix(in_srgb,var(--brand)_36%,transparent)] bg-[color-mix(in_srgb,var(--brand)_14%,transparent)] text-[var(--text-primary)]"
                       : "border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]",
@@ -174,7 +174,7 @@ export function NegocioVinculosTab({
       </div>
 
       {erroVinculos ? (
-        <div className="rounded-[var(--radius-control)] border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
+        <div className="rounded-lg border border-[var(--danger)] bg-[color-mix(in_srgb,var(--danger)_8%,transparent)] p-3 text-sm text-[var(--danger)]">
           <p className="flex items-center gap-2 font-medium">
             <AlertCircle className="h-4 w-4" />
             {erroVinculos}
