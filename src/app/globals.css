@@ -73,6 +73,10 @@
   --z-overlay-backdrop: 50;
   --z-overlay-dialog: 51;
   --z-overlay-toast: 100;
+  --z-sidebar: 30;
+  --top-bar-height: 3.5rem; /* 56px */
+  --z-tab-bar: 40;
+  --z-sheet: 50;
   --overlay-toast-offset: 1rem;
   --overlay-toast-max-width: 24rem;
 
@@ -81,6 +85,12 @@
   --duration-fast: 140ms;
   --duration-overlay: 200ms;
   --duration-shimmer: 1.4s;
+  --tab-bar-height: 64px;
+  --nav-item-active-bg: color-mix(in srgb, var(--brand) 20%, transparent);
+  --nav-item-active-border: color-mix(in srgb, var(--brand) 40%, transparent);
+  --nav-item-active-glow: 0 0 20px -8px var(--brand);
+  --nav-item-hover-bg: color-mix(in srgb, var(--brand) 6%, transparent);
+  --nav-item-hover-border: color-mix(in srgb, var(--brand) 15%, transparent);
 
   --surface-soft: rgb(255 255 255 / 4%);
   --surface-soft-hover: rgb(255 255 255 / 8%);
@@ -236,14 +246,6 @@ body {
 }
 
 .dashboard-shell {
-  --sidebar-dock-offset: 1rem;
-  --sidebar-dock-collapsed-width: 4.75rem;
-  --sidebar-dock-expanded-width: 17.5rem;
-  --sidebar-dock-border: rgb(255 255 255 / 10%);
-}
-
-html[data-theme="light"] .dashboard-shell {
-  --sidebar-dock-border: rgb(15 23 42 / 10%);
 }
 
 .dashboard-shell__content {
@@ -271,17 +273,6 @@ html[data-theme="light"] .dashboard-shell {
   will-change: filter, opacity, transform;
 }
 
-@supports selector(:has(*)) {
-  .dashboard-shell:has(.dashboard-sidebar-dock[data-expanded="true"]) .dashboard-shell__content::before {
-    opacity: 1;
-  }
-
-  .dashboard-shell:has(.dashboard-sidebar-dock[data-expanded="true"]) .dashboard-shell__viewport {
-    filter: blur(2px) saturate(0.9);
-    opacity: 0.72;
-    transform: translate3d(10px, 0, 0) scale(0.995);
-  }
-}
 
 a {
   color: inherit;
@@ -333,29 +324,6 @@ a, button, input, select, textarea, [data-interactive] {
 
 *::-webkit-scrollbar-thumb:hover {
   background-color: var(--scrollbar-thumb-hover);
-}
-
-.sidebar-scroll-invisible {
-  scrollbar-width: none;
-  scrollbar-color: transparent transparent;
-}
-
-.sidebar-scroll-invisible::-webkit-scrollbar {
-  width: 0;
-  height: 0;
-}
-
-.sidebar-scroll-invisible:hover,
-.sidebar-scroll-invisible:focus-within,
-.dashboard-sidebar-dock[data-expanded="true"] .sidebar-scroll-invisible {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) transparent;
-}
-
-.sidebar-scroll-invisible:hover::-webkit-scrollbar,
-.sidebar-scroll-invisible:focus-within::-webkit-scrollbar,
-.dashboard-sidebar-dock[data-expanded="true"] .sidebar-scroll-invisible::-webkit-scrollbar {
-  width: 8px;
 }
 
 *:focus-visible {
@@ -592,4 +560,13 @@ a, button, input, select, textarea, [data-interactive] {
   );
   background-size: 200% 100%;
   animation: shimmer var(--duration-shimmer) linear infinite;
+}
+
+/* === REDUCED MOTION === */
+@media (prefers-reduced-motion: reduce) {
+  [data-tab-bar] * {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+
 }

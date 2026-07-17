@@ -14,18 +14,25 @@ function SheetContent({
   className,
   ...props
 }: React.ComponentProps<typeof DrawerPrimitive.Content> & {
-  side?: "left" | "right";
+  side?: "left" | "right" | "bottom";
 }) {
-  const isRight = side === "right";
   return (
     <SheetPortal>
-      <DrawerPrimitive.Overlay className="fixed inset-0 z-50 bg-[var(--surface-overlay)] backdrop-blur-sm" />
+      <DrawerPrimitive.Overlay
+        className={cn(
+          "fixed inset-0 z-50",
+          side === "bottom" ? "bg-[var(--surface-overlay)]" : "bg-[var(--surface-overlay)] backdrop-blur-sm",
+        )}
+      />
       <DrawerPrimitive.Content
         className={cn(
-          "fixed top-0 bottom-0 z-50 flex flex-col border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] shadow-[var(--shadow-overlay)] transition-transform duration-[var(--duration-overlay)] ease-[var(--ease-productive)]",
-          isRight
-            ? "right-0 w-full max-w-md rounded-l-[var(--radius-shell)] data-[state=closed]:translate-x-full data-[state=open]:translate-x-0"
-            : "left-0 w-full max-w-md rounded-r-[var(--radius-shell)] data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0",
+          "fixed z-50 flex flex-col border border-[var(--border-subtle)] bg-[var(--surface-elevated)] text-[var(--text-primary)] shadow-[var(--shadow-overlay)]",
+          side === "right" &&
+            "top-0 bottom-0 right-0 w-full max-w-md rounded-l-[var(--radius-shell)] transition-transform duration-[var(--duration-overlay)] ease-[var(--ease-productive)] data-[state=closed]:translate-x-full data-[state=open]:translate-x-0",
+          side === "left" &&
+            "top-0 bottom-0 left-0 w-full max-w-md rounded-r-[var(--radius-shell)] transition-transform duration-[var(--duration-overlay)] ease-[var(--ease-productive)] data-[state=closed]:-translate-x-full data-[state=open]:translate-x-0",
+          side === "bottom" &&
+            "bottom-0 left-0 right-0 max-h-[85dvh] rounded-t-[var(--radius-shell)] transition-transform duration-[var(--duration-overlay)] ease-[var(--ease-productive)] data-[state=closed]:translate-y-full data-[state=open]:translate-y-0",
           className,
         )}
         {...props}

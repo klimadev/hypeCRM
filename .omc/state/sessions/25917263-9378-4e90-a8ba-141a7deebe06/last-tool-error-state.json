@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"pkill -f \\\"python3 -m http.server\\\" 2>/dev/null; sleep 0.5; echo \\\"killed\\\"\",\"description\":\"Kill existing server\"}",
+  "error": "Exit code 144",
+  "timestamp": "2026-07-15T18:22:15.875Z",
+  "retry_count": 1
+}

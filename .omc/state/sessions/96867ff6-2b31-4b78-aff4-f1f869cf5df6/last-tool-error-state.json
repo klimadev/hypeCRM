@@ -1,0 +1,7 @@
+{
+  "tool_name": "Read",
+  "tool_input_preview": "{\"file_path\":\"/var/www/hypeCRM/src/components/navigation/navigation-config.tsx\"}",
+  "error": "File does not exist. Note: your current working directory is /var/www/hypeCRM. Did you mean navigation-config.ts?",
+  "timestamp": "2026-07-15T17:17:07.482Z",
+  "retry_count": 1
+}

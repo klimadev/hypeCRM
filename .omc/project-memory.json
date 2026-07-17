@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "lastScanned": 1784065031791,
+  "lastScanned": 1784251706501,
   "projectRoot": "/var/www/hypeCRM",
   "techStack": {
     "languages": [
@@ -52,7 +52,7 @@
     "runtime": null
   },
   "build": {
-    "buildCommand": "npx tsc --noEmit --pretty 2>&1 | tail -5",
+    "buildCommand": "pnpm build",
     "testCommand": "pnpm test",
     "lintCommand": "pnpm lint",
     "devCommand": "pnpm dev",
@@ -100,14 +100,14 @@
       "path": "HYPE_REDESIGN_PLAN",
       "purpose": null,
       "fileCount": 0,
-      "lastAccessed": 1784065031759,
+      "lastAccessed": 1784251706449,
       "keyFiles": []
     },
     "backups": {
       "path": "backups",
       "purpose": null,
       "fileCount": 1,
-      "lastAccessed": 1784065031760,
+      "lastAccessed": 1784251706450,
       "keyFiles": [
         "dev-before-lead-negocio-expand-20260327-141726.db"
       ]
@@ -116,7 +116,7 @@
       "path": "docs",
       "purpose": "Documentation",
       "fileCount": 4,
-      "lastAccessed": 1784065031761,
+      "lastAccessed": 1784251706450,
       "keyFiles": [
         "META-APP-REVIEW-GUIA.md",
         "PLANO-MIGRACAO-HYPE-CRM.md",
@@ -128,7 +128,7 @@
       "path": "logs",
       "purpose": null,
       "fileCount": 3,
-      "lastAccessed": 1784065031761,
+      "lastAccessed": 1784251706454,
       "keyFiles": [
         "pm2-error.log",
         "pm2-out.log",
@@ -139,7 +139,7 @@
       "path": "prisma",
       "purpose": null,
       "fileCount": 10,
-      "lastAccessed": 1784065031762,
+      "lastAccessed": 1784251706455,
       "keyFiles": [
         "dev.db",
         "dev.db-shm",
@@ -152,7 +152,7 @@
       "path": "public",
       "purpose": "Public files",
       "fileCount": 6,
-      "lastAccessed": 1784065031762,
+      "lastAccessed": 1784251706493,
       "keyFiles": [
         "file.svg",
         "globe.svg",
@@ -165,7 +165,7 @@
       "path": "scripts",
       "purpose": "Build/utility scripts",
       "fileCount": 3,
-      "lastAccessed": 1784065031769,
+      "lastAccessed": 1784251706495,
       "keyFiles": [
         "chat-scheduled-messages-worker.ts",
         "pricing-screenshots.js",
@@ -176,7 +176,7 @@
       "path": "site",
       "purpose": null,
       "fileCount": 2,
-      "lastAccessed": 1784065031772,
+      "lastAccessed": 1784251706495,
       "keyFiles": [
         "index.html",
         "index.php"
@@ -186,14 +186,14 @@
       "path": "src",
       "purpose": "Source code",
       "fileCount": 0,
-      "lastAccessed": 1784065031773,
+      "lastAccessed": 1784251706495,
       "keyFiles": []
     },
     "prisma/migrations": {
       "path": "prisma/migrations",
       "purpose": "Database migrations",
       "fileCount": 1,
-      "lastAccessed": 1784065031774,
+      "lastAccessed": 1784251706496,
       "keyFiles": [
         "migration_lock.toml"
       ]
@@ -202,7 +202,7 @@
       "path": "src/app",
       "purpose": "Application code",
       "fileCount": 6,
-      "lastAccessed": 1784065031778,
+      "lastAccessed": 1784251706496,
       "keyFiles": [
         "favicon.ico",
         "globals.css",
@@ -213,7 +213,7 @@
       "path": "src/components",
       "purpose": "UI components",
       "fileCount": 15,
-      "lastAccessed": 1784065031779,
+      "lastAccessed": 1784251706496,
       "keyFiles": [
         "agenda-widget-wrapper.tsx",
         "botao-sair.tsx",
@@ -224,7 +224,7 @@
       "path": "src/lib",
       "purpose": "Library code",
       "fileCount": 80,
-      "lastAccessed": 1784065031780,
+      "lastAccessed": 1784251706496,
       "keyFiles": [
         "autenticacao.ts",
         "automacoes.ts",
@@ -270,6 +270,12 @@
       "type": "file"
     },
     {
+      "path": "src/modules/leads/components/leads-bulk-actions.tsx",
+      "accessCount": 14,
+      "lastAccessed": 1784080686537,
+      "type": "file"
+    },
+    {
       "path": "src/lib/api/leads.ts",
       "accessCount": 12,
       "lastAccessed": 1784071519760,
@@ -282,9 +288,9 @@
       "type": "file"
     },
     {
-      "path": "src/modules/leads/components/leads-bulk-actions.tsx",
+      "path": "src/modules/whatsapp/components/whatsapp-connection-scan-step.tsx",
       "accessCount": 11,
-      "lastAccessed": 1784067981057,
+      "lastAccessed": 1784132340589,
       "type": "file"
     },
     {
@@ -309,6 +315,12 @@
       "path": "src/modules/leads/types.ts",
       "accessCount": 8,
       "lastAccessed": 1784067981405,
+      "type": "file"
+    },
+    {
+      "path": "src/modules/whatsapp/components/whatsapp-connection-wizard.tsx",
+      "accessCount": 6,
+      "lastAccessed": 1784132313529,
       "type": "file"
     },
     {
@@ -354,6 +366,12 @@
       "type": "file"
     },
     {
+      "path": "src/components/ui/sheet.tsx",
+      "accessCount": 4,
+      "lastAccessed": 1784138255070,
+      "type": "file"
+    },
+    {
       "path": "src/app/api/integracoes/meta-leads/save/route.ts",
       "accessCount": 3,
       "lastAccessed": 1783653073217,
@@ -363,6 +381,12 @@
       "path": "src/components/shared/module-page-shell.tsx",
       "accessCount": 3,
       "lastAccessed": 1783660229920,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/skeleton.tsx",
+      "accessCount": 3,
+      "lastAccessed": 1784132131425,
       "type": "file"
     },
     {
@@ -414,6 +438,18 @@
       "type": "file"
     },
     {
+      "path": "src/modules/whatsapp/components/whatsapp-connection-success-step.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1784131981626,
+      "type": "file"
+    },
+    {
+      "path": "src/components/ui/dialog.tsx",
+      "accessCount": 2,
+      "lastAccessed": 1784136098712,
+      "type": "file"
+    },
+    {
       "path": "src/lib/estagios-fixos.ts",
       "accessCount": 1,
       "lastAccessed": 1783651989528,
@@ -432,21 +468,9 @@
       "type": "file"
     },
     {
-      "path": "src/components/ui/sheet.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652004525,
-      "type": "file"
-    },
-    {
       "path": "src/components/shared/inline-status-alert.tsx",
       "accessCount": 1,
       "lastAccessed": 1783652004622,
-      "type": "file"
-    },
-    {
-      "path": "src/components/ui/dialog.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652004854,
       "type": "file"
     },
     {
@@ -492,33 +516,9 @@
       "type": "file"
     },
     {
-      "path": "src/modules/whatsapp/components/whatsapp-connection-scan-step.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652038346,
-      "type": "file"
-    },
-    {
-      "path": "src/modules/whatsapp/components/whatsapp-connection-wizard.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652038723,
-      "type": "file"
-    },
-    {
-      "path": "src/modules/whatsapp/components/whatsapp-connection-success-step.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652038754,
-      "type": "file"
-    },
-    {
       "path": "src/components/ui/card.tsx",
       "accessCount": 1,
       "lastAccessed": 1783652046706,
-      "type": "file"
-    },
-    {
-      "path": "src/components/ui/skeleton.tsx",
-      "accessCount": 1,
-      "lastAccessed": 1783652046863,
       "type": "file"
     },
     {
