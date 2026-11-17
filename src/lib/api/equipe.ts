@@ -8,11 +8,7 @@ import type {
   WhatsappInstancia,
 } from "@/modules/equipe/types";
 
-type ApiErro = { erro?: string };
-
-type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 
 export type FuncionarioCriadoApi = {
   funcionario: {
@@ -41,9 +37,7 @@ type ListagemEquipe = {
   kpis_totais?: KpisEquipe;
 };
 
-async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
+
 
 export async function listarEquipe(queryString: string): Promise<ResultadoApi<ListagemEquipe>> {
   const resposta = await fetch(`/api/funcionarios?${queryString}`, { cache: "no-store" });

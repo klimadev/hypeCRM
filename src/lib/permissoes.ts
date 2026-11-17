@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unauthorized } from "@/lib/api/http";
 import { obterSessaoNaRequest } from "@/lib/autenticacao";
 import { SessaoToken } from "@/lib/tipos";
 import { prisma } from "@/lib/prisma";
@@ -65,19 +66,11 @@ export async function exigirSessao(request: NextRequest): Promise<
   | { sessao: null; erro: NextResponse }
 > {
   const sessao = await obterSessaoNaRequest(request);
-  if (!sessao) {
-    return {
-      sessao: null,
-      erro: NextResponse.redirect(new URL("/login", request.url)),
-    };
-  }
-
-  const usuarioValido = await verificarUsuarioExiste(sessao);
-  if (!usuarioValido) {
-    return {
-      sessao: null,
-      erro: NextResponse.redirect(new URL("/login", request.url)),
-    };
+  if (!sessao || !(await verificarUsuarioExiste(sessao))) {
+    const erro = request.nextUrl.pathname.startsWith("/api/")
+      ? unauthorized()
+      : NextResponse.redirect(new URL("/login", request.url));
+    return { sessao: null, erro };
   }
 
   return { sessao, erro: null };

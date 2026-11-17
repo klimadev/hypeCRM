@@ -4,7 +4,7 @@ import type {
   WhatsappAutomacaoUpdateInput,
   WhatsappFollowUpDispatchResultado,
 } from "@/modules/whatsapp/types";
-import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./whatsapp.shared";
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 
 export async function listarAutomacoesWhatsapp(): Promise<ResultadoApi<{ automacoes: WhatsappAutomacao[] }>> {
   const resposta = await fetch("/api/whatsapp/automations");

@@ -1,5 +1,5 @@
 import type { EstagioFunilOption, WhatsappJobItem } from "@/modules/whatsapp/types";
-import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./whatsapp.shared";
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 import { normalizarListaJobsWhatsapp, normalizarResumoJobsWhatsapp } from "./whatsapp.utils";
 
 export async function listarJobsWhatsapp(): Promise<

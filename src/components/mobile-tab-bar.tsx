@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, Blocks, LayoutGrid, MessageCircle, MoreHorizontal, Settings2, Target, Users, WalletCards, MessageSquare } from "lucide-react";
+import { BarChart3, Blocks, LayoutGrid, MessageCircle, MoreHorizontal, Settings2, Users, WalletCards, MessageSquare } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ThemeToggleRow } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
@@ -22,16 +22,16 @@ type MobileTabBarProps = {
   isSuperAdmin?: boolean;
 };
 
-function getActiveTabIndex(pathname: string, _perfil: SessaoToken["perfil"]): number {
+function getActiveTabIndex(pathname: string, perfil: SessaoToken["perfil"]): number {
   if (pathname.startsWith("/resumo")) return 0;
   if (pathname.startsWith("/leads")) return 1;
   if (pathname.startsWith("/kanban")) return 2;
   if (
     pathname.startsWith("/recebimentos") ||
     pathname.startsWith("/equipe") ||
-    pathname.startsWith("/minhas-metas") ||
     pathname.startsWith("/qr-code")
   ) return 3;
+  if (perfil === "COLABORADOR" && pathname.startsWith("/chat")) return 3;
   return 4;
 }
 
@@ -46,7 +46,7 @@ export function MobileTabBar({ perfil, isSuperAdmin }: MobileTabBarProps) {
     ? { href: "/recebimentos", label: "Caixa", icon: WalletCards, match: ["/recebimentos", "/qr-code"] }
     : perfil !== "COLABORADOR"
       ? { href: "/equipe", label: "Equipe", icon: Users, match: ["/equipe"] }
-      : { href: "/minhas-metas", label: "Metas", icon: Target, match: ["/minhas-metas"] };
+      : { href: "/chat", label: "Chat", icon: MessageSquare, match: ["/chat"] };
 
   const tabs: TabConfig[] = [
     { href: "/resumo", label: "Resumo", icon: BarChart3, match: ["/resumo"] },

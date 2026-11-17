@@ -1,3 +1,5 @@
+import type { Perfil } from "@/lib/tipos";
+
 export type InstanciaChatInfo = {
   instanceName: string;
   remoteJid: string;
@@ -116,7 +118,7 @@ export type UseChatModuleReturn = {
   totalSemDono: number;
   totalSemNegocio: number;
   totalDuplicados: number;
-  perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
+  perfil: Perfil;
   idUsuario: string;
   onRegistrarComoLead: (params: OrphanRegistrarLeadParams) => Promise<void>;
   onCriarNegocio: (params: OrphanCriarNegocioParams) => Promise<void>;
@@ -126,6 +128,6 @@ export type UseChatModuleReturn = {
 };
 
 export type Props = {
-  perfil: "EMPRESA" | "GERENTE" | "COLABORADOR";
+  perfil: Perfil;
   idUsuario: string;
 };

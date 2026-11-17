@@ -105,10 +105,12 @@ export type Pipeline = {
   is_default?: boolean;
 };
 
-export type Pdv = {
+export type PdvContato = {
   id: string;
   nome: string;
 };
+
+export type Pdv = PdvContato;
 
 export type Lead = {
   id: string;

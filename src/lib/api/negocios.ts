@@ -1,12 +1,6 @@
 import type { Lead } from "@/modules/kanban/types";
 
-type ApiErro = {
-  erro?: string;
-};
-
-type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 
 export type ApiLeadVinculado = {
   id: string;
@@ -159,9 +153,7 @@ export type ResultadoRemocaoNegocio = {
   leads_removidos?: number;
 };
 
-async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
+
 
 export async function listarNegociosApi(): Promise<ResultadoApi<ListagemNegociosApi>> {
   const resposta = await fetch("/api/negocios", { cache: "no-store" });

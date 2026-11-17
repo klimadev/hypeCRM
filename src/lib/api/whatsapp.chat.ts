@@ -5,16 +5,14 @@ import type {
   ConversasStreamSnapshot,
   WhatsappChatMessage,
 } from "@/modules/whatsapp/types";
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 import {
-  type ApiErro,
   type ChatApiErro,
   type ChatApiResponse,
   type ChatMessagesStreamSnapshot,
   type MediaContent,
-  type ResultadoApi,
   type SseCallbacks,
   criarAssinaturaSse,
-  lerJsonSeguro,
 } from "./whatsapp.shared";
 import {
   criarBuscaConversasWhatsapp,

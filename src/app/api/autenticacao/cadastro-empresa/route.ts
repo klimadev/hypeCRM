@@ -151,6 +151,7 @@ export async function POST(request: Request) {
       id_empresa: empresa.id,
       perfil: "EMPRESA",
       id_pdv: null,
+      isSuperAdmin: empresa.isSuperAdmin,
     });
 
     const resposta = NextResponse.json({ ok: true });

@@ -10,7 +10,8 @@ import {
   listarNegociosKanban,
   montarDtoNegocio,
 } from "@/lib/negocios";
-import { esquemaCriarNegocio, mensagemErroValidacao } from "@/lib/validacoes";
+import { esquemaCriarNegocio } from "@/lib/validacoes";
+import { parseJson, validateBody } from "@/lib/api/route-validation";
 
 export async function GET(request: NextRequest) {
   const auth = await exigirSessao(request);
@@ -70,29 +71,33 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
-  const body = (await request.json()) as Record<string, unknown>;
+  const body = await parseJson<Record<string, unknown>>(request);
+  if (!body.ok) {
+    return body.response;
+  }
+
   const idFuncionario = auth.sessao.perfil === "COLABORADOR"
     ? auth.sessao.id_usuario
-    : typeof body.id_funcionario === "string"
-      ? body.id_funcionario
+    : typeof body.data.id_funcionario === "string"
+      ? body.data.id_funcionario
       : undefined;
 
-  const validacao = esquemaCriarNegocio.safeParse({
-    titulo: typeof body.titulo === "string" ? body.titulo.trim() : undefined,
-    valor_estimado: Number(body.valor_estimado ?? 0),
-    id_funil: typeof body.id_funil === "string" ? body.id_funil.trim() : undefined,
-    id_estagio: typeof body.id_estagio === "string" ? body.id_estagio.trim() : undefined,
+  const validacao = validateBody(esquemaCriarNegocio, {
+    titulo: typeof body.data.titulo === "string" ? body.data.titulo.trim() : undefined,
+    valor_estimado: Number(body.data.valor_estimado ?? 0),
+    id_funil: typeof body.data.id_funil === "string" ? body.data.id_funil.trim() : undefined,
+    id_estagio: typeof body.data.id_estagio === "string" ? body.data.id_estagio.trim() : undefined,
     id_funcionario: idFuncionario,
-    lead_ids: Array.isArray(body.lead_ids)
-      ? body.lead_ids.filter((leadId): leadId is string => typeof leadId === "string").map((leadId) => leadId.trim()).filter(Boolean)
+    lead_ids: Array.isArray(body.data.lead_ids)
+      ? body.data.lead_ids.filter((leadId): leadId is string => typeof leadId === "string").map((leadId) => leadId.trim()).filter(Boolean)
       : undefined,
-    probabilidade: typeof body.probabilidade === "number" ? body.probabilidade : undefined,
-    observacoes_comerciais: typeof body.observacoes_comerciais === "string" ? body.observacoes_comerciais.trim() : body.observacoes_comerciais === null ? null : undefined,
-    motivo_perda: typeof body.motivo_perda === "string" ? body.motivo_perda.trim() : body.motivo_perda === null ? null : undefined,
+    probabilidade: typeof body.data.probabilidade === "number" ? body.data.probabilidade : undefined,
+    observacoes_comerciais: typeof body.data.observacoes_comerciais === "string" ? body.data.observacoes_comerciais.trim() : body.data.observacoes_comerciais === null ? null : undefined,
+    motivo_perda: typeof body.data.motivo_perda === "string" ? body.data.motivo_perda.trim() : body.data.motivo_perda === null ? null : undefined,
   });
 
-  if (!validacao.success) {
-    return badRequest(mensagemErroValidacao(validacao.error));
+  if (!validacao.ok) {
+    return validacao.response;
   }
 
   const dados = validacao.data;

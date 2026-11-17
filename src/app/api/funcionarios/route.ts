@@ -26,7 +26,6 @@ import type {
   FuncionarioListagemItem,
   PayloadAcaoLoteFuncionarios,
   PayloadCriacaoFuncionarioBruto,
-  SessaoFuncionariosRoute,
 } from "./route.types";
 import {
   criarOrderByFuncionarios,
@@ -95,7 +94,7 @@ export async function GET(request: NextRequest) {
   const filtros = validacaoQuery.data as FiltrosFuncionariosRoute;
   const busca = normalizarBuscaFuncionarios(filtros.busca);
 
-  const sessao = auth.sessao as SessaoFuncionariosRoute;
+  const sessao = auth.sessao;
   const idPdvSessao = obterIdPdvRestritoPorSessao(sessao);
   if (auth.sessao.perfil === "GERENTE") {
     if (!idPdvSessao) {
@@ -339,7 +338,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const resultado = await processarAcaoLoteFuncionarios({
-    sessao: auth.sessao as SessaoFuncionariosRoute,
+    sessao: auth.sessao,
     ids,
     payload,
     funcionarios,

@@ -1,15 +1,17 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { obterSessaoNoServidor, validarSuperAdmin } from "@/lib/autenticacao";
+import { handleRouteError } from "@/lib/api/route-errors";
+import { validateJsonBody } from "@/lib/api/route-validation";
 import { z } from "zod";
 
 const esquemaEditar = z.object({
-  nome: z.string().min(1).optional(),
-  email: z.string().email().optional(),
-  tipo: z.enum(["empresa", "funcionario"]),
+  nome: z.string({ error: "Dados invalidos" }).min(1, "Dados invalidos").optional(),
+  email: z.string({ error: "Dados invalidos" }).email("Dados invalidos").optional(),
+  tipo: z.enum(["empresa", "funcionario"], { error: "Dados invalidos" }),
 });
 
-export async function PUT(request: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const sessao = await obterSessaoNoServidor();
   const eSuperAdmin = await validarSuperAdmin(sessao);
   if (!sessao || !eSuperAdmin) {
@@ -17,80 +19,83 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
   }
 
   const { id } = await params;
-  const body = await request.json();
-  const validacao = esquemaEditar.safeParse(body);
+  const validacao = await validateJsonBody(request, esquemaEditar);
 
-  if (!validacao.success) {
-    return NextResponse.json({ erro: "Dados invalidos" }, { status: 400 });
+  if (!validacao.ok) {
+    return validacao.response;
   }
 
   const { nome, email, tipo } = validacao.data;
 
-  if (tipo === "empresa") {
-    const existente = await prisma.empresa.findUnique({ where: { id } });
-    if (!existente) {
-      return NextResponse.json({ erro: "Usuario nao encontrado" }, { status: 404 });
-    }
-
-    if (email && email !== existente.email) {
-      const emUso = await prisma.empresa.findUnique({ where: { email } });
-      if (emUso) {
-        return NextResponse.json({ erro: "Email ja em uso" }, { status: 400 });
+  try {
+    if (tipo === "empresa") {
+      const existente = await prisma.empresa.findUnique({ where: { id } });
+      if (!existente) {
+        return NextResponse.json({ erro: "Usuario nao encontrado" }, { status: 404 });
       }
-    }
 
-    const usuario = await prisma.empresa.update({
-      where: { id },
-      data: {
-        ...(nome && { nome }),
-        ...(email && { email }),
-        atualizado_em: new Date(),
-      },
-    });
-
-    return NextResponse.json({
-      ok: true,
-      usuario: {
-        id: usuario.id,
-        tipo: "empresa",
-        nome: usuario.nome,
-        email: usuario.email,
-        isSuperAdmin: usuario.isSuperAdmin,
-        status: usuario.status_assinatura,
-      },
-    });
-  } else {
-    const existente = await prisma.funcionario.findUnique({ where: { id } });
-    if (!existente) {
-      return NextResponse.json({ erro: "Usuario nao encontrado" }, { status: 404 });
-    }
-
-    if (email && email !== existente.email) {
-      const emUso = await prisma.funcionario.findUnique({ where: { email } });
-      if (emUso) {
-        return NextResponse.json({ erro: "Email ja em uso" }, { status: 400 });
+      if (email && email !== existente.email) {
+        const emUso = await prisma.empresa.findUnique({ where: { email } });
+        if (emUso) {
+          return NextResponse.json({ erro: "Email ja em uso" }, { status: 400 });
+        }
       }
+
+      const usuario = await prisma.empresa.update({
+        where: { id },
+        data: {
+          ...(nome && { nome }),
+          ...(email && { email }),
+          atualizado_em: new Date(),
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        usuario: {
+          id: usuario.id,
+          tipo: "empresa",
+          nome: usuario.nome,
+          email: usuario.email,
+          isSuperAdmin: usuario.isSuperAdmin,
+          status: usuario.status_assinatura,
+        },
+      });
+    } else {
+      const existente = await prisma.funcionario.findUnique({ where: { id } });
+      if (!existente) {
+        return NextResponse.json({ erro: "Usuario nao encontrado" }, { status: 404 });
+      }
+
+      if (email && email !== existente.email) {
+        const emUso = await prisma.funcionario.findUnique({ where: { email } });
+        if (emUso) {
+          return NextResponse.json({ erro: "Email ja em uso" }, { status: 400 });
+        }
+      }
+
+      const usuario = await prisma.funcionario.update({
+        where: { id },
+        data: {
+          ...(nome && { nome }),
+          ...(email && { email }),
+          atualizado_em: new Date(),
+        },
+      });
+
+      return NextResponse.json({
+        ok: true,
+        usuario: {
+          id: usuario.id,
+          tipo: "funcionario",
+          nome: usuario.nome,
+          email: usuario.email,
+          ativo: usuario.ativo,
+        },
+      });
     }
-
-    const usuario = await prisma.funcionario.update({
-      where: { id },
-      data: {
-        ...(nome && { nome }),
-        ...(email && { email }),
-        atualizado_em: new Date(),
-      },
-    });
-
-    return NextResponse.json({
-      ok: true,
-      usuario: {
-        id: usuario.id,
-        tipo: "funcionario",
-        nome: usuario.nome,
-        email: usuario.email,
-        ativo: usuario.ativo,
-      },
-    });
+  } catch (erro) {
+    return handleRouteError(erro, "Erro ao atualizar usuario.", "Erro ao atualizar usuario:");
   }
 }
 
@@ -160,8 +165,7 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     return NextResponse.json({ erro: "Tipo invalido" }, { status: 400 });
-  } catch (e) {
-    console.error("DELETE usuario erro:", e);
-    return NextResponse.json({ erro: "Erro ao excluir: " + (e as Error).message }, { status: 500 });
+  } catch (erro) {
+    return handleRouteError(erro, "Erro ao excluir usuario.", "Erro ao excluir usuario:");
   }
 }

@@ -1,4 +1,4 @@
-export const CARGOS_EQUIPE = ["COLABORADOR", "GERENTE", "ADMINISTRADOR"] as const;
+export { CARGOS_EQUIPE } from "@/lib/tipos";
 
 export const PASTEL_COLORS = [
   { bg: "bg-violet-100", text: "text-violet-700", ring: "ring-violet-200" },

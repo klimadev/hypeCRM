@@ -4,6 +4,7 @@ import type {
   CampanhaResumoApi,
   ApiFuncionarioContato,
   ApiLeadContato,
+  ApiPdvContato,
   PayloadImportarLeadsCsv,
   PayloadCriarCampanhaDisparo,
 } from "@/lib/api/leads";
@@ -67,7 +68,7 @@ export type UseLeadsModuleReturn = {
   idsSelecionados: string[];
   totalSelecionados: number;
   todosFiltradosSelecionados: boolean;
-  pdvsPresentesNaSelecao: Array<{ id: string; nome: string }>;
+  pdvsPresentesNaSelecao: ApiPdvContato[];
   semPdvSelecionados: number;
   instanciasWhatsapp: Array<{ id: string; nome: string; instance_name: string }>;
   formularioDisparo: PayloadCriarCampanhaDisparo;

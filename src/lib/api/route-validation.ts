@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { z } from "zod";
 import { badRequest } from "@/lib/api/http";
-import { mensagemErroValidacao } from "@/lib/validacoes";
 
 type ResultadoValidacao<T> =
   | { ok: true; data: T }
   | { ok: false; response: NextResponse };
+
+export function mensagemErroValidacao(erro: z.ZodError): string {
+  return erro.issues[0]?.message ?? "Dados invalidos.";
+}
 
 export async function parseJson<T>(request: NextRequest): Promise<ResultadoValidacao<T>> {
   try {
@@ -13,6 +16,17 @@ export async function parseJson<T>(request: NextRequest): Promise<ResultadoValid
   } catch {
     return { ok: false, response: badRequest("JSON invalido.") };
   }
+}
+
+export async function validateJsonBody<TSchema extends z.ZodTypeAny>(
+  request: NextRequest,
+  schema: TSchema,
+): Promise<ResultadoValidacao<z.infer<TSchema>>> {
+  const parsed = await parseJson<unknown>(request);
+  if (!parsed.ok) {
+    return parsed;
+  }
+  return validateBody(schema, parsed.data);
 }
 
 export function validateBody<TSchema extends z.ZodTypeAny>(

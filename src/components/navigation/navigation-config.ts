@@ -15,7 +15,6 @@ function getItemDescricao(label: string) {
     Recebimentos: "Fluxo financeiro e caixa",
     Equipe: "Gestão de pessoas e metas",
     Metas: "Objetivos e acompanhamento",
-    "Minhas Metas": "Acompanhamento individual",
     Integrações: "Conexões e agenda externa",
     Automações: "Builder visual e jornadas",
     WhatsApp: "Automação e atendimento",
@@ -50,7 +49,7 @@ export function construirSecoesNavegacao(sessao: SessaoToken): NavigationSection
         { href: "/chat", label: "Chat", descricao: getItemDescricao("Chat"), icon: MessageSquare },
         
         ...(sessao.perfil === "EMPRESA" ? [{ href: "/recebimentos", label: "Recebimentos", descricao: getItemDescricao("Recebimentos"), icon: WalletCards, limpo: true }] : []),
-        ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target }] : [{ href: "/minhas-metas", label: "Minhas Metas", descricao: getItemDescricao("Minhas Metas"), icon: Target }]),
+        ...(sessao.perfil !== "COLABORADOR" ? [{ href: "/equipe", label: "Equipe", descricao: getItemDescricao("Equipe"), icon: Target }] : []),
       ],
     },
     {

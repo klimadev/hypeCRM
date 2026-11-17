@@ -1,12 +1,10 @@
 import type { WhatsappInstancia } from "@/modules/whatsapp/types";
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 import {
-  type ApiErro,
   type InstanciaPayload,
   type InstanciasPayload,
-  type ResultadoApi,
   type WhatsappConexaoPayload,
   type WhatsappStats,
-  lerJsonSeguro,
 } from "./whatsapp.shared";
 
 export async function listarInstanciasWhatsapp(): Promise<ResultadoApi<{ instancias: WhatsappInstancia[] }>> {

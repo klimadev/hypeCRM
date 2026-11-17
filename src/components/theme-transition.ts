@@ -20,6 +20,8 @@ type ThemeTransitionRoot = {
 type ThemeViewTransitionOptions = {
   commit: () => void;
   origin: ThemeTransitionOrigin;
+  root?: ThemeTransitionRoot;
+  flush?: (commit: () => void) => void;
   viewport?: {
     width: number;
     height: number;
@@ -28,6 +30,18 @@ type ThemeViewTransitionOptions = {
 
 const EASING = "cubic-bezier(0.16, 1, 0.3, 1)";
 const DURATION = 450;
+
+export function getThemeTransitionOriginFromRect(rect: {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}): ThemeTransitionOrigin {
+  return {
+    x: rect.left + rect.width / 2,
+    y: rect.top + rect.height / 2,
+  };
+}
 
 function getExpandedRadius(
   origin: ThemeTransitionOrigin,
@@ -55,17 +69,17 @@ function createClipPathKeyframes(
 export async function startThemeViewTransition({
   commit,
   origin,
+  root = document,
+  flush = flushSync,
   viewport = { width: window.innerWidth, height: window.innerHeight },
 }: ThemeViewTransitionOptions) {
-  const root = document;
-
   if (!root.startViewTransition) {
-    flushSync(commit);
+    flush(commit);
     return;
   }
 
   const transition = root.startViewTransition(() => {
-    flushSync(commit);
+    flush(commit);
   });
 
   await transition.ready;

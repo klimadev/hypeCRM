@@ -1,5 +1,15 @@
 import { NextResponse } from "next/server";
 
+export type ApiErro = { erro?: string };
+
+export type ResultadoApi<T> =
+  | { ok: true; dados: T }
+  | { ok: false; erro: string };
+
+export async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
+  return (await resposta.json().catch(() => ({}))) as T;
+}
+
 export function ok<T>(data: T, status = 200, wrapWithDados = false) {
   const payload = wrapWithDados ? { dados: data } : data;
   return NextResponse.json(payload, { status });
@@ -7,6 +17,10 @@ export function ok<T>(data: T, status = 200, wrapWithDados = false) {
 
 export function badRequest(message: string) {
   return NextResponse.json({ erro: message }, { status: 400 });
+}
+
+export function unauthorized(message = "Nao autenticado.") {
+  return NextResponse.json({ erro: message }, { status: 401 });
 }
 
 export function forbidden(message = "Sem permissao.") {

@@ -3,9 +3,45 @@ import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { prisma } from "@/lib/prisma";
 import { obterEstagioIndefinido } from "@/lib/estagios-fixos";
 import { extrairCampoMapeado } from "@/lib/meta-campos";
-import type { CampoMapping, CampoMappingForm } from "@/lib/meta-campos";
+import type { CampoMappingForm } from "@/lib/meta-campos";
 
 const API_BASE = "https://graph.facebook.com/v22.0";
+
+type MetaApiError = { code?: number; message?: string };
+type MetaApiResponse<T> = { data?: T[]; error?: MetaApiError };
+type MetaForm = { id: string; name: string; status?: string };
+type StoredCampoMapping = {
+  _skip?: string[];
+} & Record<string, CampoMappingForm | string[] | undefined>;
+
+function isCampoMappingForm(value: unknown): value is CampoMappingForm {
+  if (!value || typeof value !== "object") return false;
+  const form = value as Record<string, unknown>;
+  return (
+    typeof form.nome === "string" &&
+    typeof form.telefone === "string" &&
+    (form.email === null || typeof form.email === "string")
+  );
+}
+
+function parseStoredCampoMapping(value: unknown): StoredCampoMapping {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const stored = value as Record<string, unknown>;
+  const mapping: StoredCampoMapping = {};
+
+  for (const [key, entry] of Object.entries(stored)) {
+    if (key === "_skip") {
+      if (Array.isArray(entry)) {
+        const skipForms = entry.filter((item): item is string => typeof item === "string");
+        if (skipForms.length === entry.length) mapping[key] = skipForms;
+      }
+    } else if (isCampoMappingForm(entry)) {
+      mapping[key] = entry;
+    }
+  }
+
+  return mapping;
+}
 
 const _debugLogs: string[] = [];
 function addLog(step: string, detail: unknown) {
@@ -16,18 +52,18 @@ function addLog(step: string, detail: unknown) {
   console.error(`[meta-leads:sync] ${line}`);
 }
 
-async function apiCall(url: string, token: string, label: string) {
+async function apiCall<T>(url: string, token: string, label: string): Promise<T> {
   const qs = new URLSearchParams({ access_token: token });
   const fullUrl = `${url}&${qs.toString()}`;
   addLog(`REQ ${label}`, fullUrl.replace(token, "TOKEN_REDACTED"));
   const res = await fetch(fullUrl);
-  const json = await res.json();
+  const json: unknown = await res.json();
   addLog(`RES ${label} status=${res.status}`, json);
-  return json;
+  return json as T;
 }
 
-async function buscarForms(pageId: string, token: string) {
-  const data = await apiCall(
+async function buscarForms(pageId: string, token: string): Promise<MetaForm[]> {
+  const data = await apiCall<MetaApiResponse<MetaForm>>(
     `${API_BASE}/${pageId}/leadgen_forms?fields=id,name,status`,
     token,
     `forms:${pageId}`,
@@ -37,21 +73,23 @@ async function buscarForms(pageId: string, token: string) {
 
 async function fetchLeads(formId: string, pageId: string, token: string) {
   const url = `${API_BASE}/${formId}/leads?fields=id,created_time,ad_id,form_id,field_data&limit=100`;
-  let data = await apiCall(url, token, `leads-form:${formId}`);
+  let data = await apiCall<MetaApiResponse<MetaLead>>(
+    url,
+    token,
+    `leads-form:${formId}`,
+  );
   if (!data?.error) return data?.data ?? [];
 
   addLog(`FALLBACK leads-form:${formId}`, `erro #${data.error.code}: ${data.error.message}`);
 
   // Fallback: /{page_id}/leads
-  data = await apiCall(
+  data = await apiCall<MetaApiResponse<MetaLead>>(
     `${API_BASE}/${pageId}/leads?fields=id,created_time,ad_id,form_id,field_data&limit=100`,
     token,
     `leads-page:${pageId}`,
   );
   if (data?.data) {
-    const filtered = data.data.filter(
-      (l: { form_id?: string }) => l.form_id === formId,
-    );
+    const filtered = data.data.filter((l) => l.form_id === formId);
     addLog(`FALLBACK OK leads-page:${pageId}`, `${filtered.length} leads filtrados form ${formId}`);
     return filtered;
   }
@@ -132,12 +170,14 @@ export async function POST(request: NextRequest) {
   try { pageTokens = JSON.parse(config.page_tokens); } catch { pageTokens = []; }
 
   // ponytail: campo_mapping via raw query, campo n ta no schema source
-  let campoMapping: CampoMapping = {};
+  let campoMapping: StoredCampoMapping = {};
   try {
     const rows = await prisma.$queryRawUnsafe<Array<{ campo_mapping: string | null }>>(
       `SELECT campo_mapping FROM MetaLeadAdsConfig WHERE id_empresa = ?`, idEmpresa,
     );
-    if (rows?.[0]?.campo_mapping) campoMapping = JSON.parse(rows[0].campo_mapping);
+    if (rows?.[0]?.campo_mapping) {
+      campoMapping = parseStoredCampoMapping(JSON.parse(rows[0].campo_mapping));
+    }
   } catch { campoMapping = {}; }
   addLog("Campo mapping carregado", { forms: Object.keys(campoMapping).length });
 
@@ -174,7 +214,7 @@ export async function POST(request: NextRequest) {
           const leads = await fetchLeads(form.id, p.pageId, p.token);
           addLog(`Leads form ${form.name}`, { formId: form.id, count: leads.length });
 
-          const skipForms: string[] = (campoMapping as any)._skip ?? [];
+          const skipForms = campoMapping._skip ?? [];
 
           for (const lead of leads) {
             // ponytail: check skip list before any processing
@@ -188,7 +228,10 @@ export async function POST(request: NextRequest) {
               where: { id_empresa_id: { id_empresa: idEmpresa, id: lead.id } },
             });
 
-            const formMapping = campoMapping[lead.form_id] ?? null;
+            const storedFormMapping = campoMapping[lead.form_id];
+            const formMapping = isCampoMappingForm(storedFormMapping)
+              ? storedFormMapping
+              : null;
 
             if (existente) {
               // Se o metaLeadAdsLead existe mas o lead CRM foi deletado, reimporta

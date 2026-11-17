@@ -1,4 +1,5 @@
-export type { MediaContent, ResultadoApi, WhatsappStats } from "./whatsapp.shared";
+export type { ResultadoApi } from "./http";
+export type { MediaContent, WhatsappStats } from "./whatsapp.shared";
 
 export {
   atualizarStatusInstanciaWhatsapp,

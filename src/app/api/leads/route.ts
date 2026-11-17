@@ -4,7 +4,7 @@ import { exigirSessao, podeGerenciarRecursoNoPdv, whereLeadsPorPerfil } from "@/
 import { esquemaCriarLead } from "@/lib/validacoes";
 import { badRequest, forbidden } from "@/lib/api/http";
 import { handleRouteError } from "@/lib/api/route-errors";
-import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { validateJsonBody } from "@/lib/api/route-validation";
 import { criarLeadContato, listarLeadsContato } from "@/lib/leads";
 import { disparaAutomacoesPorEvento } from "@/lib/automacoes";
 
@@ -50,12 +50,7 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
-  const body = await parseJson<unknown>(request);
-  if (!body.ok) {
-    return body.response;
-  }
-
-  const validacao = validateBody(esquemaCriarLead, body.data);
+  const validacao = await validateJsonBody(request, esquemaCriarLead);
   if (!validacao.ok) {
     return validacao.response;
   }

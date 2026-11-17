@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { enviarMensagemInstagram } from "@/lib/integracoes/instagram-inbox";
-import { mensagemErroValidacao } from "@/lib/validacoes";
+import { handleRouteError } from "@/lib/api/route-errors";
+import { validateBody } from "@/lib/api/route-validation";
 import { z } from "zod";
 
 const esquemaEnviarMensagemInstagram = z.object({
@@ -18,10 +19,9 @@ export async function POST(request: NextRequest) {
   }
 
   const payload = await request.json().catch(() => null);
-  const validacao = esquemaEnviarMensagemInstagram.safeParse(payload);
-
-  if (!validacao.success) {
-    return NextResponse.json({ erro: mensagemErroValidacao(validacao.error) }, { status: 400 });
+  const validacao = validateBody(esquemaEnviarMensagemInstagram, payload);
+  if (!validacao.ok) {
+    return validacao.response;
   }
 
   try {
@@ -33,7 +33,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(resultado);
   } catch (erro) {
-    const mensagem = erro instanceof Error ? erro.message : "Erro ao enviar mensagem.";
-    return NextResponse.json({ erro: mensagem }, { status: 500 });
+    return handleRouteError(erro, "Erro ao enviar mensagem.", "Erro ao enviar mensagem:");
   }
 }

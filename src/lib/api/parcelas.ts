@@ -1,10 +1,4 @@
-type ApiErro = {
-  erro?: string;
-};
-
-type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 
 export type StatusParcela = "PENDENTE" | "PAGO" | "ATRASADO";
 
@@ -54,9 +48,7 @@ export type PayloadPagarParcela = {
 
 export type TabFinanceiro = "proximos" | "atrasados" | "recebidos";
 
-async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
+
 
 export async function listarParcelasNegocio(idNegocio: string): Promise<ResultadoApi<{ parcelas: ParcelaComNegocio[] }>> {
   const resposta = await fetch(`/api/parcelas?id_negocio=${idNegocio}`);

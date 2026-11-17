@@ -4,6 +4,7 @@ import { Moon, Sun } from "lucide-react";
 import { motion, type Transition } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
+import { getThemeTransitionOriginFromRect } from "@/components/theme-transition";
 
 const spring: Transition = {
   type: "spring",
@@ -79,11 +80,8 @@ export function ThemeToggleRow({ className }: { className?: string }) {
     if ("clientX" in e) {
       origin = { x: e.clientX, y: e.clientY };
     } else {
-      const rect = (e.target as HTMLElement).getBoundingClientRect();
-      origin = {
-        x: rect.left + rect.width / 2,
-        y: rect.top + rect.height / 2,
-      };
+      const target = e.target instanceof HTMLElement ? e.target : e.currentTarget;
+      origin = getThemeTransitionOriginFromRect(target.getBoundingClientRect());
     }
 
     if (isSystem) {

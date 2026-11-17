@@ -4,7 +4,7 @@ import { Bug, Lightbulb, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import type { FeedbackItem } from "../types";
+import type { FeedbackItem } from "@/modules/feedback/types";
 
 type FeedbackAdminTableProps = {
   items: FeedbackItem[];

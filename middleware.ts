@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import { unauthorized } from "@/lib/api/http";
 import { NOME_COOKIE_SESSAO } from "@/lib/autenticacao";
 
-const rotasProtegidas = ["/resumo", "/kanban", "/equipe", "/configs", "/api/upload"];
+const rotasProtegidas = ["/resumo", "/kanban", "/equipe", "/configs", "/api/upload", "/api/trial"];
 
 export function middleware(request: NextRequest) {
   const rotaProtegida = rotasProtegidas.some((rota) => request.nextUrl.pathname.startsWith(rota));
@@ -12,6 +13,9 @@ export function middleware(request: NextRequest) {
 
   const token = request.cookies.get(NOME_COOKIE_SESSAO)?.value;
   if (!token) {
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return unauthorized();
+    }
     const url = new URL("/login", request.url);
     return NextResponse.redirect(url);
   }

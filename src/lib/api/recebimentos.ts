@@ -1,10 +1,4 @@
-type ApiErro = {
-  erro?: string;
-};
-
-type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "@/lib/api/http";
 
 export type AbaRecebimentos = "todos" | "recebidos" | "a_vencer" | "atrasados";
 export type OrdenacaoRecebimentos = "vencimento" | "pagamento" | "valor";
@@ -87,10 +81,6 @@ export type FiltrosRecebimentos = {
   pagina?: number;
   limite?: number;
 };
-
-async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
 
 export async function listarRecebimentos(filtros: FiltrosRecebimentos): Promise<ResultadoApi<RecebimentosResposta>> {
   const searchParams = new URLSearchParams();

@@ -1,12 +1,4 @@
-type ApiErro = { erro?: string };
-
-type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
-
-async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
+import { type ApiErro, type ResultadoApi, lerJsonSeguro } from "./http";
 
 export async function verificarBootstrapConfigs(): Promise<ResultadoApi<null>> {
   const resposta = await fetch("/api/estagios");

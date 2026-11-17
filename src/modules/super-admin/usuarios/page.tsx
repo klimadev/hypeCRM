@@ -7,7 +7,7 @@ import { ModulePageHeader } from "@/components/shared/module-page-header";
 import { useSuperAdminUsers } from "./hooks/use-super-admin-users";
 import { SuperAdminUsersTable } from "./components/super-admin-users-table";
 import { SuperAdminUsersDialogs } from "./components/super-admin-users-dialogs";
-import type { Usuario } from "../../types";
+import type { Usuario } from "@/modules/super-admin/types";
 
 export function ModuloSuperAdminUsuarios() {
   const vm = useSuperAdminUsers();
@@ -22,7 +22,9 @@ export function ModuloSuperAdminUsuarios() {
   const handleEditar = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalEditar) return;
-    const formData = new FormData(e.target as HTMLFormElement);
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const formData = new FormData(form);
     const res = await fetch(`/api/super-admin/usuarios/${modalEditar.id}?tipo=${modalEditar.tipo}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
@@ -41,7 +43,9 @@ export function ModuloSuperAdminUsuarios() {
   const handleSenha = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!modalSenha) return;
-    const formData = new FormData(e.target as HTMLFormElement);
+    const form = e.target;
+    if (!(form instanceof HTMLFormElement)) return;
+    const formData = new FormData(form);
     const res = await fetch(`/api/super-admin/usuarios/${modalSenha.id}/senha?tipo=${modalSenha.tipo}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },

@@ -1,16 +1,16 @@
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
 import { podeGerenciarRecursoNoPdv } from "@/lib/permissoes";
+import type { SessaoToken } from "@/lib/tipos";
 import type {
   DestinoInativacaoFuncionario,
   FuncionarioAcaoLoteItem,
   PayloadAcaoLoteFuncionarios,
   ResultadoAcaoLoteFuncionarios,
-  SessaoFuncionariosRoute,
 } from "./route.types";
 
 type ProcessarAcaoLoteParams = {
-  sessao: SessaoFuncionariosRoute;
+  sessao: SessaoToken;
   ids: string[];
   payload: PayloadAcaoLoteFuncionarios;
   funcionarios: FuncionarioAcaoLoteItem[];

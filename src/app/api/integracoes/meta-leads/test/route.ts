@@ -1,8 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { exigirSessao, respostaSemPermissao } from "@/lib/permissoes";
 import { autoDetectMapping } from "@/lib/meta-campos";
+import type { CampoMappingForm } from "@/lib/meta-campos";
 
 const API_BASE = "https://graph.facebook.com/v22.0";
+
+type MetaApiError = { code?: number; message?: string };
+type MetaApiResponse<T> = { data?: T[]; error?: MetaApiError };
+type MetaForm = { id: string; name: string; status?: string; locale?: string };
+type MetaLead = {
+  id: string;
+  created_time: string;
+  ad_id?: string;
+  form_id: string;
+  field_data: Array<{ name: string; values: string[] }>;
+};
 
 function debugLog(step: string, detail: unknown) {
   const ts = new Date().toISOString();
@@ -10,18 +22,18 @@ function debugLog(step: string, detail: unknown) {
   console.error(`[meta-leads:test] [${ts}] ${step}:\n${body}`);
 }
 
-async function apiCall(url: string, token: string, label: string) {
+async function apiCall<T>(url: string, token: string, label: string): Promise<T> {
   const qs = new URLSearchParams({ access_token: token });
   const fullUrl = `${url}&${qs.toString()}`;
   debugLog(`REQ ${label}`, fullUrl.replace(token, "TOKEN_REDACTED"));
   const res = await fetch(fullUrl);
-  const json = await res.json();
+  const json: unknown = await res.json();
   debugLog(`RES ${label} status=${res.status}`, json);
-  return json;
+  return json as T;
 }
 
-async function buscarForms(pageId: string, token: string) {
-  const data = await apiCall(
+async function buscarForms(pageId: string, token: string): Promise<MetaForm[]> {
+  const data = await apiCall<MetaApiResponse<MetaForm>>(
     `${API_BASE}/${pageId}/leadgen_forms?fields=id,name,status,locale`,
     token,
     `forms:${pageId}`,
@@ -31,7 +43,7 @@ async function buscarForms(pageId: string, token: string) {
 
 async function buscarLeads(formId: string, pageId: string, token: string, maxLeads = 5) {
   // Tentativa 1: /{form_id}/leads
-  let data = await apiCall(
+  let data = await apiCall<MetaApiResponse<MetaLead>>(
     `${API_BASE}/${formId}/leads?fields=id,created_time,ad_id,form_id,field_data&limit=${maxLeads}`,
     token,
     `leads-form:${formId}`,
@@ -41,13 +53,13 @@ async function buscarLeads(formId: string, pageId: string, token: string, maxLea
   debugLog(`FALLBACK leads-form:${formId}`, `erro #${data.error.code}: ${data.error.message}`);
 
   // Fallback: /{page_id}/leads
-  data = await apiCall(
+  data = await apiCall<MetaApiResponse<MetaLead>>(
     `${API_BASE}/${pageId}/leads?fields=id,created_time,ad_id,form_id,field_data&limit=${maxLeads}`,
     token,
     `leads-page:${pageId}`,
   );
   if (!data?.error && data?.data) {
-    const filtered = data.data.filter((l: { form_id?: string }) => l.form_id === formId);
+    const filtered = data.data.filter((l) => l.form_id === formId);
     debugLog(`FALLBACK OK leads-page:${pageId}`, `${filtered.length} leads filtrados do form ${formId}`);
     return filtered;
   }
@@ -60,10 +72,11 @@ async function buscarLeads(formId: string, pageId: string, token: string, maxLea
 }
 
 async function extrairPageTokens(userToken: string) {
-  const res = await fetch(
-    `${API_BASE}/me/accounts?fields=id,name,access_token&access_token=${userToken}`,
+  const data = await apiCall<MetaApiResponse<{ id: string; name: string; access_token: string }>>(
+    `${API_BASE}/me/accounts?fields=id,name,access_token`,
+    userToken,
+    "me/accounts",
   );
-  const data = await res.json();
   debugLog("me/accounts", data);
 
   if (data?.error) {
@@ -76,7 +89,7 @@ async function extrairPageTokens(userToken: string) {
     debugLog("me/accounts WARN", "array vazio — sem paginas. Token expirado ou sem permissao pages_show_list?");
   }
 
-  return pages.map((p: { id: string; name: string; access_token: string }) => ({
+  return pages.map((p) => ({
     pageId: p.id,
     pageName: p.name,
     token: p.access_token,
@@ -92,9 +105,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const body = await request.json();
+    const body: unknown = await request.json();
     // Aceita user tokens (raw) ou page tokens (já com pageId)
-    const rawTokens: Array<{ raw: string; pageId?: string; pageName?: string }> = body.tokens ?? [];
+    const bodyTokens: unknown[] =
+      body && typeof body === "object" && "tokens" in body && Array.isArray(body.tokens)
+        ? (body.tokens as unknown[])
+        : [];
+    const rawTokens = bodyTokens.flatMap((token) => {
+      if (!token || typeof token !== "object" || !("raw" in token) || typeof token.raw !== "string") {
+        return [];
+      }
+
+      const pageId = "pageId" in token && typeof token.pageId === "string" ? token.pageId : undefined;
+      const pageName = "pageName" in token && typeof token.pageName === "string" ? token.pageName : undefined;
+      return [{ raw: token.raw, pageId, pageName }];
+    });
 
     debugLog("BODY recebido", { count: rawTokens.length, tipos: rawTokens.map(t => t.pageId ? "page-token" : "user-token") });
 
@@ -133,11 +158,33 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
 
-    const pages = [];
+    const pages: Array<{
+      pageId: string;
+      pageName: string;
+      token: string;
+      forms: Array<{
+        id: string;
+        name: string;
+        status?: string;
+        locale?: string;
+        campos_disponiveis: string[];
+        auto_mapping: CampoMappingForm;
+        leads: MetaLead[];
+      }>;
+      leads: MetaLead[];
+    }> = [];
     for (const t of tokens) {
       const forms = await buscarForms(t.pageId, t.token);
-      const formObjects = [];
-      const pageLeads = [];
+      const formObjects: Array<{
+        id: string;
+        name: string;
+        status?: string;
+        locale?: string;
+        campos_disponiveis: string[];
+        auto_mapping: CampoMappingForm;
+        leads: MetaLead[];
+      }> = [];
+      const pageLeads: MetaLead[] = [];
       for (const form of forms.slice(0, 5)) {
         const leads = await buscarLeads(form.id, t.pageId, t.token, 5);
         const camposDisponiveis = [...new Set(leads.flatMap(l => l.field_data.map(fd => fd.name)))];

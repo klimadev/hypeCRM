@@ -17,7 +17,17 @@
     "test:coverage": "NODE_ENV=test vitest run --config vitest.config.ts --coverage",
     "seed": "prisma db seed",
     "setup": "node scripts/setup-wizard.js",
-    "deploy": "next build && systemctl restart hypecrm-web hypecrm-chat-scheduler"
+    "deploy": "next build && systemctl restart hypecrm-web hypecrm-chat-scheduler",
+    "pm2:mode": "node scripts/pm2-mode.cjs",
+    "pm2:prod": "corepack pnpm run build && node scripts/pm2-mode.cjs prod",
+    "pm2:dev": "node scripts/pm2-mode.cjs dev",
+    "pm2:restart": "corepack pnpm run pm2:prod",
+    "pm2:list": "pm2 list",
+    "pm2:logs": "pm2 logs hypecrm-web-prod --lines 100",
+    "pm2:logs:web:prod": "pm2 logs hypecrm-web-prod --lines 100",
+    "pm2:logs:web:dev": "pm2 logs hypecrm-web-dev --lines 100",
+    "pm2:logs:scheduler:prod": "pm2 logs hypecrm-chat-scheduler-prod --lines 100",
+    "pm2:logs:scheduler:dev": "pm2 logs hypecrm-chat-scheduler-dev --lines 100"
   },
   "dependencies": {
     "@floating-ui/react": "^0.27.19",

@@ -1,3 +1,10 @@
+import type { PdvContato } from "@/modules/kanban/types";
+import type {
+  AtualizarLeadOutput,
+  CriarLeadOutput,
+  ImportarLeadsOutput,
+} from "@/lib/validacoes.crm";
+
 type ApiErro = {
   erro?: string;
 };
@@ -29,10 +36,7 @@ export type ApiFuncionarioContato = {
   id_pdv?: string | null;
 };
 
-export type ApiPdvContato = {
-  id: string;
-  nome: string;
-};
+export type ApiPdvContato = PdvContato;
 
 export type ListagemLeadsApi = {
   leads: ApiLeadContato[];
@@ -44,33 +48,13 @@ export type PayloadRemoverLead = {
   remover_negocios_vinculados?: boolean;
 };
 
-export type PayloadCriarLead = {
-  nome: string;
-  telefone: string;
-  id_funcionario?: string;
-  email?: string | null;
-  fonte?: string | null;
-  empresa_origem?: string | null;
-  observacoes?: string | null;
-  origem?: "MANUAL" | "SINCRONIZACAO_WHATSAPP" | "ANUNCIO_CTWA";
-  anuncio_titulo?: string | null;
-  anuncio_descricao?: string | null;
-  anuncio_url?: string | null;
-  dados_extras?: string | null;
+export type PayloadCriarLead = Omit<CriarLeadOutput, "id_funcionario" | "fonte" | "empresa_origem"> & {
+  id_funcionario?: CriarLeadOutput["id_funcionario"];
+  fonte?: CriarLeadOutput["fonte"] | null;
+  empresa_origem?: CriarLeadOutput["empresa_origem"] | null;
 };
 
-export type PayloadImportarLeadsCsv = {
-  id_funcionario: string;
-  deduplicar: boolean;
-  leads: Array<{
-    nome: string;
-    telefone: string;
-    email?: string | null;
-    fonte?: string | null;
-    empresa_origem?: string | null;
-    observacoes?: string | null;
-  }>;
-};
+export type PayloadImportarLeadsCsv = ImportarLeadsOutput;
 
 export type ResultadoImportacaoLeads = {
   criados: number;
@@ -80,15 +64,9 @@ export type ResultadoImportacaoLeads = {
   duplicadosNoSistema: number;
 };
 
-export type PayloadAtualizarLead = {
-  nome?: string;
-  telefone?: string;
-  id_funcionario?: string;
-  email?: string | null;
-  fonte?: string | null;
-  empresa_origem?: string | null;
-  observacoes?: string | null;
-  ativo?: boolean;
+export type PayloadAtualizarLead = Omit<AtualizarLeadOutput, "fonte" | "empresa_origem"> & {
+  fonte?: AtualizarLeadOutput["fonte"] | null;
+  empresa_origem?: AtualizarLeadOutput["empresa_origem"] | null;
 };
 
 export type LeadInformacoesApi = {

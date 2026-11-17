@@ -3,18 +3,13 @@ import type {
   WhatsappChatMessage,
   WhatsappInstancia,
 } from "@/modules/whatsapp/types";
-
-export type ApiErro = { erro?: string };
+import type { ApiErro } from "./http";
 
 export type ChatApiErro = ApiErro & {
   codigo?: string;
   pdv?: { id: string; nome: string } | null;
   rotaConfiguracao?: string | null;
 };
-
-export type ResultadoApi<T> =
-  | { ok: true; dados: T }
-  | { ok: false; erro: string };
 
 export type WhatsappConexaoPayload = {
   qrCode?: string | null;
@@ -59,10 +54,6 @@ export type WhatsappStats = {
     status: string;
   }>;
 };
-
-export async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
-  return (await resposta.json().catch(() => ({}))) as T;
-}
 
 export function criarAssinaturaSse<T>(url: string, callbacks: SseCallbacks<T>) {
   if (typeof EventSource === "undefined") {

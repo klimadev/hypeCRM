@@ -1,4 +1,4 @@
-type ResultadoApi<T> = { ok: true; dados: T } | { ok: false; erro: string };
+import { type ResultadoApi } from "@/lib/api/http";
 
 export type FollowUpTemplateEtapa = {
   id: string;

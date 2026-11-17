@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 import { obterSessaoNaRequest } from "@/lib/autenticacao";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
@@ -17,7 +17,7 @@ const esquemaFeedback = z.object({
   build_ref: z.string().optional(),
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   const sessao = await obterSessaoNaRequest(request);
   if (!sessao) {
     return NextResponse.json({ erro: "Sessao invalida." }, { status: 401 });

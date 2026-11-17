@@ -51,7 +51,7 @@ describe("theme view transition", () => {
         ],
       },
       expect.objectContaining({
-        duration: 500,
+        duration: 450,
         pseudoElement: "::view-transition-new(root)",
       }),
     );

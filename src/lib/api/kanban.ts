@@ -1,4 +1,10 @@
-import type { Estagio, Funcionario, Lead, Pipeline } from "@/modules/kanban/types";
+import type { Estagio, Funcionario, Lead, Pipeline, PdvContato } from "@/modules/kanban/types";
+import type {
+  AtualizarNegocioOutput,
+  CriarNegocioOutput,
+  MoverNegocioOutput,
+  RedistribuirLeadsEmAtendimentoOutput,
+} from "@/lib/validacoes.crm";
 
 type ApiErro = {
   erro?: string;
@@ -14,39 +20,20 @@ export type ListagemKanban = {
   estagios: Estagio[];
   negocios: Lead[];
   funcionarios: Funcionario[];
-  pdvs: Array<{ id: string; nome: string }>;
+  pdvs: PdvContato[];
 };
 
-export type PayloadCriarNegocio = {
-  titulo: string;
-  valor_estimado: number;
-  id_estagio: string;
-  id_funcionario: string;
-  lead_ids?: string[];
-  id_funil?: string;
-  probabilidade?: number;
-  observacoes_comerciais?: string | null;
-  motivo_perda?: string | null;
-};
+export type PayloadCriarNegocio = CriarNegocioOutput;
 
-export type PayloadMoverNegocioKanban = {
-  id_estagio: string;
-  motivo_perda?: string;
-};
+export type PayloadMoverNegocioKanban = MoverNegocioOutput;
 
-export type PayloadAtualizarNegocioKanban = {
-  observacoes_comerciais: Lead["observacoes"];
-  valor_estimado: number;
-  id_funcionario: Lead["id_funcionario"];
-  id_produto_principal?: Lead["id_produto_principal"];
-};
+export type PayloadAtualizarNegocioKanban = Pick<
+  AtualizarNegocioOutput,
+  "observacoes_comerciais" | "valor_estimado" | "id_funcionario" | "id_produto_principal"
+> &
+  Required<Pick<AtualizarNegocioOutput, "observacoes_comerciais" | "valor_estimado" | "id_funcionario">>;
 
-export type PayloadRedistribuirEmAtendimentoKanban = {
-  minutosSemAtendimento?: number;
-  limite?: number;
-  id_pdv?: string;
-  nomeEstagio?: string;
-};
+export type PayloadRedistribuirEmAtendimentoKanban = Partial<RedistribuirLeadsEmAtendimentoOutput>;
 
 async function lerJsonSeguro<T>(resposta: Response): Promise<T> {
   return (await resposta.json().catch(() => ({}))) as T;

@@ -1,6 +1,7 @@
 import { z } from "zod";
+import { CARGOS_EQUIPE } from "@/lib/tipos";
 
-export const CARGOS_EQUIPE = ["COLABORADOR", "GERENTE", "ADMINISTRADOR"] as const;
+export { CARGOS_EQUIPE } from "@/lib/tipos";
 
 export const schemaAtualizarFuncionario = z.object({
   nome: z.string().trim().min(2, "Nome deve ter ao menos 2 caracteres."),
@@ -9,10 +10,16 @@ export const schemaAtualizarFuncionario = z.object({
   id_pdv: z.string().trim().min(1, "PDV obrigatorio."),
 });
 
+export type AtualizarFuncionarioInput = z.input<typeof schemaAtualizarFuncionario>;
+export type AtualizarFuncionarioOutput = z.output<typeof schemaAtualizarFuncionario>;
+
 export const schemaInativarFuncionario = z.object({
   id_funcionario_destino: z.string().trim().min(1, "Destino obrigatorio."),
   observacao: z.string().trim().max(500, "Observacao muito longa.").optional(),
 });
+
+export type InativarFuncionarioInput = z.input<typeof schemaInativarFuncionario>;
+export type InativarFuncionarioOutput = z.output<typeof schemaInativarFuncionario>;
 
 export const schemaListarFuncionarios = z.object({
   busca: z.string().trim().optional(),
@@ -25,6 +32,9 @@ export const schemaListarFuncionarios = z.object({
   por_pagina: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+export type ListarFuncionariosInput = z.input<typeof schemaListarFuncionarios>;
+export type ListarFuncionariosOutput = z.output<typeof schemaListarFuncionarios>;
+
 export const schemaAcaoLoteFuncionarios = z.object({
   ids: z.array(z.string().trim().min(1)).min(1, "Selecione ao menos um colaborador."),
   acao: z.enum(["ATIVAR", "INATIVAR", "ALTERAR_CARGO", "ALTERAR_PDV"]),
@@ -34,4 +44,6 @@ export const schemaAcaoLoteFuncionarios = z.object({
   observacao: z.string().trim().max(500, "Observacao muito longa.").optional(),
 });
 
+export type AcaoLoteFuncionariosInput = z.input<typeof schemaAcaoLoteFuncionarios>;
+export type AcaoLoteFuncionariosOutput = z.output<typeof schemaAcaoLoteFuncionarios>;
 export type AcaoLoteFuncionarios = z.infer<typeof schemaAcaoLoteFuncionarios>;

@@ -4,7 +4,8 @@ import { prisma } from "@/lib/prisma";
 import { exigirSessao } from "@/lib/permissoes";
 import { esquemaCriarProduto } from "@/lib/validacoes";
 import { badRequest, ok } from "@/lib/api/http";
-import { parseJson, validateBody } from "@/lib/api/route-validation";
+import { handleRouteError } from "@/lib/api/route-errors";
+import { validateJsonBody } from "@/lib/api/route-validation";
 
 function gerarSlugProduto(nome: string) {
   return nome
@@ -64,44 +65,44 @@ export async function POST(request: NextRequest) {
     return auth.erro;
   }
 
-  const body = await parseJson<unknown>(request);
-  if (!body.ok) {
-    return body.response;
-  }
-
-  const validacao = validateBody(esquemaCriarProduto, body.data);
+  const validacao = await validateJsonBody(request, esquemaCriarProduto);
   if (!validacao.ok) {
     return validacao.response;
   }
 
   const dados = validacao.data;
-  const slug = await gerarSlugDisponivel(auth.sessao.id_empresa, dados.nome);
 
-  const produto = await prisma.produto.create({
-    data: {
-      id: randomUUID(),
-      id_empresa: auth.sessao.id_empresa,
-      nome: dados.nome,
-      slug,
-      descricao: dados.descricao ?? null,
-      ativo: dados.ativo ?? true,
-      schema_layout: "{}",
-    },
-    select: {
-      id: true,
-      id_empresa: true,
-      nome: true,
-      slug: true,
-      descricao: true,
-      ativo: true,
-      criado_em: true,
-      atualizado_em: true,
-    },
-  });
+  try {
+    const slug = await gerarSlugDisponivel(auth.sessao.id_empresa, dados.nome);
 
-  if (!produto) {
-    return badRequest("Nao foi possivel criar o produto.");
+    const produto = await prisma.produto.create({
+      data: {
+        id: randomUUID(),
+        id_empresa: auth.sessao.id_empresa,
+        nome: dados.nome,
+        slug,
+        descricao: dados.descricao ?? null,
+        ativo: dados.ativo ?? true,
+        schema_layout: "{}",
+      },
+      select: {
+        id: true,
+        id_empresa: true,
+        nome: true,
+        slug: true,
+        descricao: true,
+        ativo: true,
+        criado_em: true,
+        atualizado_em: true,
+      },
+    });
+
+    if (!produto) {
+      return badRequest("Nao foi possivel criar o produto.");
+    }
+
+    return ok({ produto }, 201);
+  } catch (erro) {
+    return handleRouteError(erro, "Erro ao criar produto.", "Erro ao criar produto:");
   }
-
-  return ok({ produto }, 201);
 }
